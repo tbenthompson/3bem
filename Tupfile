@@ -1,0 +1,48 @@
+INCLUDE += -I./src
+INCLUDE += -I./lib/UnitTest++/src
+
+CPPFLAGS += -fopenmp
+CPPFLAGS += -Wall
+CPPFLAGS += -std=c++11
+CPPFLAGS += -Winvalid-pch
+CPPFLAGS += -pipe
+CPPFLAGS += $(INCLUDE)
+
+DEBUGFLAGS += -g 
+DEBUGFLAGS += -Og
+DEBUGFLAGS += -DDEBUG=1
+
+RELEASEFLAGS += -DNDEBUG=1 
+RELEASEFLAGS += -Ofast
+
+PROFILEFLAGS += $(RELEASEFLAGS)
+PROFILEFLAGS += -g
+
+// PROFILEFLAGS += -S
+// PROFILEFLAGS += -fverbose-asm
+
+# Currently a debug build.
+// CPPFLAGS += $(DEBUGFLAGS)
+// CPPFLAGS += $(RELEASEFLAGS)
+CPPFLAGS += $(PROFILEFLAGS)
+
+SHAREDLIBFLAGS += $(CPPFLAGS) 
+SHAREDLIBFLAGS += -fPIC
+
+LINKFLAGS += -lm
+LIBLINKFLAGS += -shared
+LIBLINKFLAGS += $(LINKFLAGS)
+
+LIBNAME = fmm.so
+
+TESTLINKFLAGS += -L./lib/UnitTest++
+TESTLINKFLAGS += -Wl,-rpath=.
+TESTLINKFLAGS += -l:$(LIBNAME)
+TESTLINKFLAGS += -lUnitTest++
+TESTLINKFLAGS += $(LINKFLAGS)
+
+: foreach src/*.cpp |> g++ $(SHAREDLIBFLAGS) -c %f -o %o |> src/%B.o
+: src/*.o |> g++ %f -o %o $(LIBLINKFLAGS) |> $(LIBNAME)
+: foreach test/*.cpp |> g++ $(CPPFLAGS) -c %f -o %o |> test/%B.o
+: test/*.o | $(LIBNAME) |> g++ %f -o %o $(TESTLINKFLAGS) |> test/run_tests
+: test/run_tests |> ./%f |>
