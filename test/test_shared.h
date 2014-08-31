@@ -6,7 +6,6 @@
 #include <random>
 #include <iostream>
 #include <chrono>
-#include "geom.h"
 
 #define TIC\
     std::chrono::high_resolution_clock::time_point start =\
@@ -20,20 +19,21 @@
               << "ms.\n";
 
 
-std::unique_ptr<std::vector<Vec<3> > > three_pts();
+inline std::array<std::vector<double>,3> three_pts() {
+    std::array<std::vector<double>,3> es;
+    es[0] = {1.0, -1.0, 0.0};
+    es[1] = {2.0, 0.0, -2.0};
+    es[2] = {0.0, -3.0, 3.0};
+    return es;
+}
 
-template<int dim>
-std::unique_ptr<std::vector<Vec<dim> > > random_pts(int N) {
+inline std::vector<double> random_list(int N) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0, 1);
-    std::unique_ptr<std::vector<Vec<dim> > > es(new std::vector<Vec<dim> >);;
+    std::vector<double> es(N);
     for (int i = 0; i < N; ++i) {
-        Vec<dim> v;
-        for (int d = 0; d < dim; ++d) {
-            v.loc[d] = dis(gen); 
-        }
-        es->push_back(v);
+        es[i] = dis(gen);
     }
     return es;
 }

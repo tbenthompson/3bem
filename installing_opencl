@@ -1,0 +1,10 @@
+use the intel sdk, convert rpms to debs using alien 
+
+two main components:
+--icd loader
+--opencl library
+--icds
+
+fix the ubuntu deb package postinst files to use a more 
+appropriate update alternatives priority
+fix all /usr/sbin/update-alternatives to just update-alternatives

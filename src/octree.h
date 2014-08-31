@@ -1,137 +1,104 @@
-#ifndef __OCTREE_H
-#define __OCTREE_H
+#ifndef _OCTREE2_H
+#define _OCTREE2_H
 
 #include <algorithm>
-#include <vector>
-#include <array>
-#include <iostream>
 #include <memory>
-#include <omp.h>
-#include "geom.h"
+#include <vector>
+#include <iostream>
+#include <limits>
 
-/* A shared static class to define some compile time information about
- * octrees.
+/* A templated vector class. Can be used to represent a 2D or 3D
+ * vector. The class is a thin wrapper over an array.
  */
-template <int dim>
-class OctreeInfo {
+class Vec3 {
 public:
-    static const int n_octants = (int)pow(2, dim);
+    double loc[3];
+
+    inline bool operator==(const Vec3& rhs) const {
+        bool retval = true;
+        for(int i = 0; i < 3; ++i) {
+            retval &= (loc[i] == rhs.loc[i]);
+        }
+        return retval;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Vec3& obj)
+    {
+        os << "{";
+        for (int d = 0; d < 3 - 1; ++d) {
+            os << obj.loc[d] << ", ";
+        }
+        return os << obj.loc[3 - 1] << "}";
+    }
+
+    friend Vec3 operator+(Vec3 lhs, const Vec3& rhs) {
+        for(int i = 0; i < 3; ++i) {
+            lhs.loc[i] += rhs.loc[i];
+        }
+        return lhs;
+    }
+
+    friend Vec3 operator-(Vec3 lhs, const Vec3& rhs) {
+        for(int i = 0; i < 3; ++i) {
+            lhs.loc[i] -= rhs.loc[i];
+        }
+        return lhs;
+    }
+
+    friend Vec3 operator*(Vec3 lhs, const double& rhs) {
+        for(int i = 0; i < 3; ++i) {
+            lhs.loc[i] *= rhs;
+        }
+        return lhs;
+    }
+
+    friend Vec3 operator/(Vec3 lhs, const double& rhs) {
+        for(int i = 0; i < 3; ++i) {
+            lhs.loc[i] /= rhs;
+        }
+        return lhs;
+    }
 };
 
-template <typename T, int dim>
-class OctreeNode {
+
+/* A box class defined by its center and half_width. These are using as
+ * bounding boxes for the nodes in the octree hierarchy.
+ */
+class Box {
 public:
-    OctreeNode(std::vector<T>& elements,
-               int leaf_elements,
-               const std::vector<int> &indices);
+    Vec3 center;
+    Vec3 half_width;
 
-    Box<dim> extents;
-    std::vector<OctreeNode<T, dim>> children;
-    std::vector<int> indices;
-
-    friend std::ostream& operator<<(std::ostream& os,
-                                    const OctreeNode<T, dim>& obj)
+    friend std::ostream& operator<<(std::ostream& os, const Box& obj)
     {
-        os << "{OctreeNode extents=" << obj.extents << ", children={";
-        for (auto c: obj.children) {
-            os << c << ","; 
-        }
-        os << "}, indices={";
-        for (auto i: obj.indices) {
-            os << i << ","; 
-        }
-        os << "}}";
+        os << "{Box center=" << obj.center << 
+               ", half_width=" << obj.half_width << "}";
         return os;
     }
 };
 
-template <typename T, int dim>
-OctreeNode<T, dim>::OctreeNode(std::vector<T>& elements,
-                            int leaf_elements,
-                            const std::vector<int> &indices)
-{
-    if (indices.size() == 0) {
-        return;
-    }
-
-    extents = bounding_box_subset(elements, indices);
-
-    if (indices.size() <= leaf_elements) {
-        this->indices = indices;
-        return;
-    }
-
-    const int n_oct = OctreeInfo<dim>::n_octants;
-    children.reserve(n_oct);
-    const auto octant_indices = partition(elements, indices, extents.center);
-
-    for(int i = 0; i < n_oct; ++i) {
-        children.push_back(OctreeNode<T, dim>(elements, leaf_elements, octant_indices[i]));
-    }
-}
-
-template <typename T, int dim>
-std::array<std::vector<int>, OctreeInfo<dim>::n_octants> partition(
-                                    const std::vector<T> &elements,
-                                    const std::vector<int>& indices,
-                                    const Vec<dim>& center) {
-    // Partitioning happens in two steps. First, the octant for each element
-    // is calculated. Then, afterwards, the elements are grouped into an array
-    // where each list contains all of that octants indices.
-    const int n_oct = OctreeInfo<dim>::n_octants;
-    std::vector<int> octant(indices.size());
-    std::array<int, n_oct> counts;
-    for (int o = 0; o < n_oct; ++o) {
-        counts[o] = 0;
-    }
-
-    for (int i = 0; i < indices.size(); ++i) {
-        octant[i] = find_octant(elements[indices[i]], center);
-        counts[octant[i]] += 1;
-    }
-    std::array<std::vector<int>, n_oct> octants;
-    for (int o = 0; o < n_oct; ++o) {
-        octants[o].resize(counts[o]);
-        counts[o] = 0;
-    }
-
-    for (int i = 0; i < indices.size(); ++i) {
-        const int which_octant = octant[i];
-        octants[which_octant][counts[which_octant]] = indices[i];
-        counts[which_octant] += 1;
-    }
-    return octants;
-}
+Box bounding_box(const std::array<std::vector<double>,3>& x);
+std::vector<int> naturals(int min, int max);
+std::vector<int> naturals(int max);
 
 
-template <typename T, int dim>
-int find_octant(const T& point, const Vec<dim>& center) {
-    int which_octant = 0;
-    for(int d = 0; d < dim; ++d) {
-        bool sign = point.loc[d] < center.loc[d];
-        which_octant |= sign * (1 << d);
-    }
-    return which_octant;
-}
+int to_octree_space(double x, double center, double half_width, int leaves);
 
-
-template <typename T, int dim> 
+/* One quirk to the behavior of this octree implementation. 
+ * All points must be on the interior of the octree, they cannot be on
+ * the boundaries. This allows the "to_octree_space" function to ignore the
+ * edge cases involving the boundaries.
+ */
 class Octree {
 public:
-    Octree(std::unique_ptr<std::vector<T>> &elements,
-           int leaf_elements);
+    Octree(std::array<std::vector<double>,3>& elements,
+           int depth);
     
-    const int leaf_elements;
-    const std::unique_ptr<std::vector<T>> elements;
-    const OctreeNode<T, dim> root;
+    const static int n_octants = 8;
+    const int depth;
+    const int n_leaves_1d;
+    const std::array<std::vector<double>, 3> elements;
+    std::vector<std::array<int, 3>> leaf_indices;
+    Box bounds;
 };
-
-template <typename T, int dim>
-Octree<T, dim>::Octree(std::unique_ptr<std::vector<T>> &elements,
-                    int leaf_elements): 
-    leaf_elements(leaf_elements),
-    elements(std::move(elements)),
-    root(*this->elements, leaf_elements, naturals(this->elements->size()))
-{}
-
 #endif
