@@ -1,0 +1,38 @@
+Currently, the octree is designed to be semi-adaptive. For each level, a
+bounding box is formed and then split. This mean that if there are regions
+that are far from each other, they will optimally separated in the octree.
+Further, no cells are created in areas where there are no points.
+
+A standard octree decides the splitting of space before hand and then just
+shuffles the points off into their pre-destined location. This results in
+faster construction (by quite a lot, actually!), but makes nearest neighbor 
+or fmm evaluations slower.
+
+Interesting extensions: because the splitting of space is not predestined,
+the construction of each node must involve finding its center and extents.
+For a small cost in the quality of the octree, this could be done 
+probabalistically -- choose 1000 points rather than using all the points. 
+This would probably cut construction time in half.
+
+Using the centroid of a cell as the splitting point would be interesting.
+This might result in faster evaluation for non-uniform distributions of pts.
+
+Fastest way is probably a morton order tree construction:
+-- determine extents
+-- convert positions to integers in the relevant range
+-- construct -- predestined node location
+             -- also predestined cell location
+-- prune empty leaves and branches
+-- delete branches with only one sub-branch or leaf
+Does this actually reduce evaluation performance?
+This is linear time.
+Morton codes can be computed very very quickly via:
+http://www.forceflow.be/2013/10/07/morton-encodingdecoding-through-bit-interleaving-implementations/
+Probably could be computed much more quickly on the gpu
+Compute the bounding box for the whole region and then the bounding box for 
+each leaf. 
+
+Morton order makes construction easily parallelized, because all steps are 
+predetermined and independent. 
+
+

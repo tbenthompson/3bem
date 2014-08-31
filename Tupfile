@@ -1,7 +1,6 @@
 INCLUDE += -I./src
 INCLUDE += -I./lib/UnitTest++/src
 
-CPPFLAGS += -fopenmp
 CPPFLAGS += -Wall
 CPPFLAGS += -std=c++11
 CPPFLAGS += -Winvalid-pch
@@ -17,9 +16,6 @@ RELEASEFLAGS += -Ofast
 
 PROFILEFLAGS += $(RELEASEFLAGS)
 PROFILEFLAGS += -g
-
-// PROFILEFLAGS += -S
-// PROFILEFLAGS += -fverbose-asm
 
 # Currently a debug build.
 // CPPFLAGS += $(DEBUGFLAGS)

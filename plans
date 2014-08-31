@@ -1,0 +1,8 @@
+use std::thread to parallelize the octree construction
+make sure that no copying is incurred by the multithreaded version
+-- use pointers and std::move or something like that
+play with avx or sse a bit
+think about how i would do this in the case of a actor-style concurrency model
+
+template out the element type of the Octree
+onwards to upwards traversal and then a treecode

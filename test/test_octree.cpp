@@ -1,18 +1,6 @@
 #include "UnitTest++.h"
 #include "octree.h"
-#include <random>
-#include <chrono>
-
-#define TIC\
-    std::chrono::high_resolution_clock::time_point start =\
-        std::chrono::high_resolution_clock::now();
-#define TIC2\
-    start = std::chrono::high_resolution_clock::now();
-#define TOC(name)\
-    std::cout << name << " took "\
-              << std::chrono::duration_cast<std::chrono::milliseconds>\
-                (std::chrono::high_resolution_clock::now() - start).count()\
-              << "ms.\n";
+#include "test_shared.h"
 
 std::unique_ptr<std::vector<Vec<3> > > three_pts() {
     std::unique_ptr<std::vector<Vec<3> > > es(new std::vector<Vec<3> >);
@@ -22,41 +10,30 @@ std::unique_ptr<std::vector<Vec<3> > > three_pts() {
     return es;
 }
 
-std::unique_ptr<std::vector<Vec<3> > > random_pts(int N) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0, 1);
-    std::unique_ptr<std::vector<Vec<3> > > es(new std::vector<Vec<3> >);;
-    for (int i = 0; i < N; i++) {
-        Vec<3> v = {dis(gen), dis(gen), dis(gen)};
-        es->push_back(v);
+unsigned int check_invariant(OctreeNode<Vec<3>, 3> node) {
+    if (node.children.size() == 0) {
+        return node.indices.size();
     }
-    return es;
+    unsigned int contained_indices = 0;
+    for (auto n: node.children) {
+        contained_indices += check_invariant(n);
+    }
+    CHECK(contained_indices > 0);
+    return contained_indices;
 }
 
-// int check_invariant(OctreeNode<3> node) {
-//     if (node.children.size() == 0) {
-//         return node.indices.size();
-//     }
-//     int contained_indices = 0;
-//     for (auto n: node.children) {
-//         contained_indices += check_invariant(n);
-//     }
-//     CHECK(contained_indices > 0);
-//     return contained_indices;
-// }
-
 TEST(BigBig) {
-    auto es = random_pts(10000000);
+    auto es = random_pts<1>(100000);
     TIC
-    Octree<3> octree(es, 1);
+    Octree<Vec<1>, 1> octree(es, 10);
     TOC("Octree assembly");
-    // check_invariant(octree.root);
+    // unsigned int total_indices = check_invariant(octree.root);
+    // CHECK(total_indices == octree.elements->size());
 }
 
 TEST(CreateOnlyLeaf) {
     auto es = three_pts();
-    Octree<3> octree(es, 4);
+    Octree<Vec<3>, 3> octree(es, 4);
     if (es) {
         CHECK(false);
     }
@@ -65,7 +42,7 @@ TEST(CreateOnlyLeaf) {
 
 TEST(OneLevel) {
     auto es = three_pts();
-    Octree<3> octree(es, 1);
+    Octree<Vec<3>, 3> octree(es, 1);
     CHECK(octree.root.indices.size() == 0);
     CHECK(octree.root.children[0].indices[0] == 0);
     CHECK(octree.root.children[4].indices[0] == 1);
@@ -85,7 +62,7 @@ double centers[8][3] = {
 
 TEST(FindOctant) {
     auto zero = Vec<3>({0.0, 0.0, 0.0});
-    for(int i = 0; i < 8; i++) {
+    for(int i = 0; i < 8; ++i) {
         Vec<3> vec = {{centers[i][0], centers[i][1], centers[i][2]}};
         CHECK(find_octant(vec, zero) == i);
     }
@@ -93,7 +70,7 @@ TEST(FindOctant) {
 
 TEST(BoundingBox) {
     std::vector<int> idxs = {0, 1, 2};
-    auto bb = bounding_box(*three_pts(), idxs);
+    auto bb = bounding_box_subset(*three_pts(), idxs);
     double min[] = {-1.0, -2.0, -3.0};
     double max[] = {1.0, 2.0, 3.0};
     CHECK_ARRAY_CLOSE((bb.center + bb.half_width).loc, max, 3, 1e-14);
