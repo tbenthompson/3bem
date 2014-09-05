@@ -1,0 +1,7 @@
+perf stat gives info on branch prediction successes.
+perf record gives some info on where time was spent using sampling
+perf report shows that info
+oprofile also does a decent job
+zoom is a more advanced profiler with a gui etc
+using gdb plus interupting the running process occassionally is very easy and
+highly effective

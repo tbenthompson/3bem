@@ -18,7 +18,7 @@ TEST(Naturals) {
 }
 
 TEST(BigBig2) {
-    const int n = (int)1e5;
+    const int n = (int)1e8;
     std::array<std::vector<double>,3> es =
         {random_list(n), random_list(n), random_list(n)};
     TIC

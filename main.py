@@ -2,9 +2,8 @@ import pyopencl as cl
 import pyopencl.clrandom
 import pyopencl.array
 import pyopencl.characterize
-import time
+import time, sys, warnings
 import numpy as np
-import warnings
 import matplotlib.pyplot as plt
 
 def cheb_polys(x, n_max, a = -1, b = 1):
@@ -31,6 +30,9 @@ def s_n(x, y, n, a = -1, b = 1):
     y_cheb = cheb_polys(y, n - 1, a, b)[0, 1:]
     return (1.0 / n) + (2.0 / n) * np.sum(x_cheb * y_cheb)
 
+def s_n_matrix(x_vec, y_vec, n, a_vec, b_vec):
+    pass
+
 def cheb_pts(n, a = -1, b = 1):
     """Chebyshev points (of the second kind). Includes -1 and 1."""
     m = np.arange(1, n + 1)
@@ -45,12 +47,12 @@ def tests():
     exact = np.cos(np.outer(np.arange(11), theta).T)
     np.testing.assert_almost_equal(exact, cheb_test)
 
-    fnc = lambda x: np.sin(2 * x)
-    n_pts_interp = 10
+    fnc = lambda x: np.sin(16 * x)
+    n_pts_interp = 32
 
-    n_locs = 100
-    a = 0.0
-    b = 0.5
+    n_locs = 300
+    a = -1.0
+    b = 1.0
     eval_locs = np.linspace(-1, 1, n_locs)
     exact = fnc(eval_locs)
 
@@ -68,19 +70,20 @@ def tests():
     plt.show()
     plt.plot(eval_locs, np.log(np.abs(exact - est) + 1e-16) / np.log(10))
     plt.show()
-tests()
+# tests()
+# sys.exit()
 ctx = cl.create_some_context(interactive = False)
 queue = cl.CommandQueue(ctx)
 
-n = np.int(4e3)
+n = np.int(10)
 depth = 1
 leaves_1d = 2 ** depth
 
 x = np.random.rand(n, 3).astype(np.float32)
 x[:, 1] -= 1
 x[:, 2] += 1
-values = np.random.rand(n).astype(np.float32)
-# values = np.ones(n).astype(np.float32)
+# values = np.random.rand(n).astype(np.float32)
+values = np.ones(n).astype(np.float32)
 kernel = lambda x, y: 1.0 / np.sqrt(np.sum((x - y) ** 2, axis = 1))
 kernel2 = lambda x, y: 1.0 / np.sqrt(np.sum((x - y) ** 2))
 # kernel = lambda x, y: np.ones(y.shape[0])
@@ -100,6 +103,7 @@ half_width *= 1 + eps
 
 min_octree = center - half_width
 max_octree = center + half_width
+print half_width
 index = np.floor(((x - center) / (2 * half_width) + 0.5) * leaves_1d).astype(np.uint32)
 
 # start = time.time()
@@ -133,49 +137,82 @@ index = np.floor(((x - center) / (2 * half_width) + 0.5) * leaves_1d).astype(np.
 # end = time.time()
 # print("ELAPSED: " + str(end - start))
 
-start = time.time()
-vec = np.empty(n)
-for i in range(n):
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        K = kernel(x[i, :], x)
-    K[K == np.inf] = 0
-    vec[i] = np.sum(values * K)
-print("Direct sum: " + str(time.time() - start))
+def direct():
+    start = time.time()
+    vec = np.empty(n)
+    for i in range(n):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            K = kernel(x[i, :], x)
+        K[K == np.inf] = 0
+        vec[i] = np.sum(values * K)
+    print("Direct sum: " + str(time.time() - start))
+    return vec
 
 start = time.time()
-expansion_order = 4
+expansion_order = 12
 
-cell_nodes = []
-for i in range(0, depth + 1):
-    n_cells_1d = 2 ** i
-    cell_width = 2 * half_width / n_cells_1d
-    cell_nodes.append(np.empty((n_cells_1d, 3, expansion_order)))
-    for d in range(3):
-        min_cell = np.linspace(min_octree[d], max_octree[d], n_cells_1d + 1)
-        max_cell = min_cell + cell_width[d]
-        for c in range(n_cells_1d):
-            cell_nodes[i][c, d, :] =\
-                    cheb_pts(expansion_order, min_cell[c], max_cell[c])
-cell_nodes = np.array(cell_nodes)
-import ipdb; ipdb.set_trace()
+n_cells_1d = 2 ** depth
+cell_width = 2 * half_width / n_cells_1d
+leaf_locs = np.empty((n_cells_1d, 3, expansion_order))
+leaf_min = np.empty((n_cells_1d, 3))
+leaf_max = np.empty((n_cells_1d, 3))
+for d in range(3):
+    leaf_min[:, d] = np.linspace(min_octree[d], max_octree[d], n_cells_1d + 1)[:-1]
+    leaf_max[:, d] = leaf_min[:, d] + cell_width[d]
+    # Check the pt locations
+    for pt in range(n):
+        assert(leaf_min[index[pt, d], d] < x[pt, d] < leaf_max[index[pt, d], d])
+    for c in range(n_cells_1d):
+        leaf_locs[c, d, :] =\
+                cheb_pts(expansion_order, leaf_min[c, d], leaf_max[c, d])
 
-leaf_weights = np.zeros((leaves_1d, leaves_1d, leaves_1d, expansion_order, expansion_order, expansion_order))
+leaf_weights = np.zeros((leaves_1d, leaves_1d, leaves_1d,
+                         expansion_order, expansion_order, expansion_order))
 for i in range(index.shape[0]):
     idx = index[i]
-    leaf_weights[idx[0], idx[1], idx[2], 0, 0, 0] += values[i]
+    for p0 in range(expansion_order):
+        for p1 in range(expansion_order):
+            for p2 in range(expansion_order):
+                anterp = 1.0
+                pabc = [p0, p1, p2]
+                for d in range(3):
+                    anterp *= s_n(leaf_locs[idx[d], d, pabc[d]], x[i, d],
+                                  expansion_order,
+                                  a = leaf_min[idx[d], d],
+                                  b = leaf_max[idx[d], d])
+                leaf_weights[idx[0], idx[1], idx[2], p0, p1, p2] += anterp * values[i]
 
-vec_treecode = np.empty(n)
+vec_treecode = np.zeros(n)
 for i in range(n):
-    K = np.empty((leaves_1d, leaves_1d, leaves_1d))
-    for l1 in range(leaves_1d):
-        for l2 in range(leaves_1d):
-            for l3 in range(leaves_1d):
-                center = np.array([cell_centers[-1][l1, 0],
-                                   cell_centers[-1][l2, 1],
-                                   cell_centers[-1][l3, 2]])
-                K[l1, l2, l3] = kernel2(x[i, :], center)
-    vec_treecode[i] = np.sum(leaf_weights * K)
+    K = np.zeros((leaves_1d, leaves_1d, leaves_1d,
+                  expansion_order, expansion_order, expansion_order))
+    for l0 in range(leaves_1d):
+        for l1 in range(leaves_1d):
+            for l2 in range(leaves_1d):
+                lall = [l0, l1, l2]
+                is_close = True
+                for d in range(3):
+                    is_close = is_close and (lall[d] == index[i, d])
+                if is_close:
+                    for j in range(n):
+                        is_close_j = True
+                        for d in range(3):
+                            is_close_j = is_close_j and (lall[d] == index[j, d])
+                        if is_close_j:
+                            res = values[j] * kernel2(x[i, :], x[j, :])
+                            if np.isinf(res):
+                                res = 0
+                            vec_treecode[i] += res
+                else:
+                    for p0 in range(expansion_order):
+                        for p1 in range(expansion_order):
+                            for p2 in range(expansion_order):
+                                pt = np.array([leaf_locs[l0, 0, p0],
+                                               leaf_locs[l1, 1, p1],
+                                               leaf_locs[l2, 2, p2]])
+                                K[l0, l1, l2, p0, p1, p2] = kernel2(x[i, :], pt)
+    vec_treecode[i] += np.sum(leaf_weights * K)
 print("Treecode: " + str(time.time() - start))
 
-# np.testing.assert_almost_equal(vec_treecode, vec)
+np.testing.assert_almost_equal(vec_treecode, direct())
