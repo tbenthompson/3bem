@@ -1,5 +1,6 @@
 #include "UnitTest++.h"
 #include "octree.h"
+
 #include "test_shared.h"
 
 TEST(BoundingBox) {
@@ -12,20 +13,31 @@ TEST(BoundingBox) {
 }
 
 TEST(Naturals) {
-    auto nats5 = naturals(5);
-    double correct[] = {0, 1, 2, 3, 4};
+    auto nats5 = naturals(3, 8);
+    double correct[] = {3, 4, 5, 6, 7};
     CHECK_ARRAY_EQUAL(nats5, correct, 5);
 }
 
 TEST(BigBig2) {
-    const int n = (int)1e8;
+    const int n = (int)1e7;
     std::array<std::vector<double>,3> es =
         {random_list(n), random_list(n), random_list(n)};
     TIC
-    Octree octree(es, 7);
+    Octree octree(es, 5); 
     TOC("Octree assembly");
     // unsigned int total_indices = check_invariant(octree.root);
     // CHECK(total_indices == octree.elements->size());
+}
+
+TEST(LevelCellInfo) {
+
+}
+
+TEST(ToOctreeSpace1Cell) {
+    int val = to_octree_space(0.3, 0.5, 0.5, 1);
+    CHECK(val == 0);
+    val = to_octree_space(0.8, 0.5, 0.5, 1);
+    CHECK(val == 0);
 }
 
 TEST(ToOctreeSpace) {
@@ -34,6 +46,10 @@ TEST(ToOctreeSpace) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < sub_n; j++) {
             double loc = (i / n) + j / (sub_n * n);
+            if (j == 0) {
+                // Behavior is undefined on the boundary. This is okay.
+                loc += 0.001;
+            }
             int val = to_octree_space(loc, 0.5, 0.5, n);
             CHECK(val == i);
         }

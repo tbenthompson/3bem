@@ -38,5 +38,4 @@ inline std::vector<double> random_list(int N) {
     return es;
 }
 
-
 #endif

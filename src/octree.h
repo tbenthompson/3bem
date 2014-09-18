@@ -81,8 +81,53 @@ Box bounding_box(const std::array<std::vector<double>,3>& x);
 std::vector<int> naturals(int min, int max);
 std::vector<int> naturals(int max);
 
+inline int to_octree_space(double x, double center, 
+                    double half_width, int leaves) {
+    int res = std::floor(((x - center) / (2 * half_width) + 0.5) * leaves);
+    return res;
+}
+//
+// method to seperate bits from a given integer 3 positions apart
+inline uint64_t split_by_3(unsigned int a){
+    uint64_t x = a & 0x1fffff; // we only look at the first 21 bits
+    // shift left 32 bits, OR with self, and 
+    // 00011111000000000000000000000000000000001111111111111111
+    x = (x | x << 32) & 0x1f00000000ffff;  
+    // shift left 32 bits, OR with self, and 
+    // 00011111000000000000000011111111000000000000000011111111
+    x = (x | x << 16) & 0x1f0000ff0000ff;  
+    // shift left 32 bits, OR with self, and
+    // 0001000000001111000000001111000000001111000000001111000000000000
+    x = (x | x << 8) & 0x100f00f00f00f00f;
+    // shift left 32 bits, OR with self, and 
+    // 0001000011000011000011000011000011000011000011000011000100000000
+    x = (x | x << 4) & 0x10c30c30c30c30c3; 
+    x = (x | x << 2) & 0x1249249249249249;
+    return x;
+}
 
-int to_octree_space(double x, double center, double half_width, int leaves);
+inline uint64_t morton_encode(unsigned int x, unsigned int y, unsigned int z){
+    uint64_t answer = 0 | split_by_3(x) | split_by_3(y) << 1 | split_by_3(z) << 2;
+    return answer;
+}
+
+#define threed_to_1d(x, y, z, n_c) n_c * n_c * x + n_c * y + z
+class Level {
+public:
+    Level(const std::array<std::vector<double>,3>& elements,
+          int depth,
+          Box& bounds);
+
+    const static int n_octants = 8;
+    const int depth;
+    const int n_cells_1d;
+    std::vector<std::array<int,3>> indices;
+    std::vector<std::vector<int>> buckets;
+private:
+    void init_indices(const std::array<std::vector<double>,3>& p_elements,
+                      Box& bounds);
+};
+
 
 /* One quirk to the behavior of this octree implementation. 
  * All points must be on the interior of the octree, they cannot be on
@@ -92,13 +137,11 @@ int to_octree_space(double x, double center, double half_width, int leaves);
 class Octree {
 public:
     Octree(std::array<std::vector<double>,3>& elements,
-           int depth);
+           int max_depth);
     
-    const static int n_octants = 8;
-    const int depth;
-    const int n_leaves_1d;
+    const int max_depth;
     const std::array<std::vector<double>, 3> elements;
-    std::vector<std::array<int, 3>> leaf_indices;
+    std::vector<Level> levels;
     Box bounds;
 };
 #endif
