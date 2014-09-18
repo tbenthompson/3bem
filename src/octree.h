@@ -111,24 +111,6 @@ inline uint64_t morton_encode(unsigned int x, unsigned int y, unsigned int z){
     return answer;
 }
 
-#define threed_to_1d(x, y, z, n_c) n_c * n_c * x + n_c * y + z
-class Level {
-public:
-    Level(const std::array<std::vector<double>,3>& elements,
-          int depth,
-          Box& bounds);
-
-    const static int n_octants = 8;
-    const int depth;
-    const int n_cells_1d;
-    std::vector<std::array<int,3>> indices;
-    std::vector<std::vector<int>> buckets;
-private:
-    void init_indices(const std::array<std::vector<double>,3>& p_elements,
-                      Box& bounds);
-};
-
-
 /* One quirk to the behavior of this octree implementation. 
  * All points must be on the interior of the octree, they cannot be on
  * the boundaries. This allows the "to_octree_space" function to ignore the
@@ -141,7 +123,6 @@ public:
     
     const int max_depth;
     const std::array<std::vector<double>, 3> elements;
-    std::vector<Level> levels;
     Box bounds;
 };
 #endif

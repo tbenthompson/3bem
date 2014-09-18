@@ -17,6 +17,9 @@ inline double laplace_single(double ox, double oy, double oz,
     const double r = sqrt((ox - sx) * (ox - sx) + 
                           (oy - sy) * (oy - sy) +
                           (oz - sz) * (oz - sz));
+    if (r < 0.4) {
+        return 0.0;
+    }
     return 1.0 / (4.0 * PI * r);
 }
 
@@ -32,9 +35,14 @@ TEST(ChebPolys) {
     }
 }
 
-TEST(ChebPts) {
-    auto pts = cheb_pts(4);
+TEST(ChebPtsFirstKind) {
+    auto pts = cheb_pts_first_kind(4);
     CHECK_CLOSE(pts[0], 0.92388, 1e-4);
+}
+TEST(ChebPtsSecondKind) {
+    auto pts = cheb_pts_second_kind(4);
+    CHECK_CLOSE(pts[0], 1.0, 1e-4);
+    CHECK_CLOSE(pts[1], 0.5, 1e-4);
 }
 
 TEST(ChebInterp) {
@@ -43,7 +51,7 @@ TEST(ChebInterp) {
     auto fnc = [](double x){return std::sin(16 * x);};
     std::vector<double> est(n_test_locs);
     std::vector<double> exact(n_test_locs);
-    auto cheb_nodes = cheb_pts(n_pts_interp);
+    auto cheb_nodes = cheb_pts_first_kind(n_pts_interp);
     for(int i = 0; i < n_test_locs; i++) {
         double loc = -1.0 + (2.0 / (n_test_locs - 1)) * i;
         for (int m = 0; m < n_pts_interp; m++) {
@@ -57,7 +65,7 @@ TEST(ChebInterp) {
 TEST(Direct) {
     CHECK_CLOSE(one_kernel(0, 0, 0, 0, 0, 0), 1.0, 1e-14);
 
-    int n = (int)1e2;
+    int n = (int)5e3;
     std::array<std::vector<double>,3> src =
         {random_list(n), random_list(n), random_list(n)};
     std::array<std::vector<double>,3> obs =

@@ -2,10 +2,10 @@
 #include "octree.h"
 #include "cheb.h"
 
-std::vector<double> P2M(Octree& oct, int order, std::vector<double> p_values)
+std::vector<double> P2M(Octree& oct, int n_nodes, std::vector<double> p_values)
 {
     // int level = oct.max_depth - 1;
-    auto cheb_nodes = cheb_pts(order);
+    auto cheb_nodes = cheb_pts_first_kind(n_nodes);
     return cheb_nodes;
 
     // int total_nodes = (int)(pow(oct.levels[level].n_cells_1d, 3) * pow(order, 3));

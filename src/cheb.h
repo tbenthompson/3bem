@@ -33,10 +33,18 @@ double s_n(double x_hat, double y_hat, int n) {
     return result;
 }
 
-std::vector<double> cheb_pts(unsigned int n) {
-    std::vector<double> x(n);
-    for (unsigned int i = 1; i <= n; i++) {
-        x[i - 1] = std::cos((2 * i - 1) * M_PI / (2 * n));
+std::vector<double> cheb_pts_first_kind(unsigned int n_pts) {
+    std::vector<double> x(n_pts);
+    for (unsigned int i = 1; i <= n_pts; i++) {
+        x[i - 1] = std::cos((2 * i - 1) * M_PI / (2 * n_pts));
+    }
+    return x;
+}
+
+std::vector<double> cheb_pts_second_kind(unsigned int n_pts) {
+    std::vector<double> x(n_pts);
+    for (unsigned int i = 0; i < n_pts; i++) {
+        x[i] = std::cos(i * M_PI / (n_pts - 1));
     }
     return x;
 }

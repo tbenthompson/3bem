@@ -37,8 +37,11 @@ TESTLINKFLAGS += -l:$(LIBNAME)
 TESTLINKFLAGS += -lUnitTest++
 TESTLINKFLAGS += $(LINKFLAGS)
 
-: foreach src/*.cpp |> g++ $(SHAREDLIBFLAGS) -c %f -o %o |> src/%B.o
-: src/*.o |> g++ %f -o %o $(LIBLINKFLAGS) |> $(LIBNAME)
-: foreach test/*.cpp |> g++ $(CPPFLAGS) -c %f -o %o |> test/%B.o
-: test/*.o | $(LIBNAME) |> g++ %f -o %o $(TESTLINKFLAGS) |> test/run_tests
-: test/run_tests |> ./%f |>
+// COMPILER = g++
+COMPILER = mpic++
+
+: foreach src/*.cpp |> $(COMPILER) $(SHAREDLIBFLAGS) -c %f -o %o |> src/%B.o
+: src/*.o |> $(COMPILER) %f -o %o $(LIBLINKFLAGS) |> $(LIBNAME)
+: foreach test/*.cpp |> $(COMPILER) $(CPPFLAGS) -c %f -o %o |> test/%B.o
+: test/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(TESTLINKFLAGS) |> test/run_tests
+: test/run_tests |> mpirun -n 1 ./%f |>
