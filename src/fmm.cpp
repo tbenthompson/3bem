@@ -1,6 +1,6 @@
 #include "fmm.h"
 #include "octree.h"
-#include "cheb.h"
+#include "numerics.h"
 
 std::vector<double> P2M(Octree& oct, int n_nodes, std::vector<double> p_values)
 {

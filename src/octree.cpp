@@ -114,17 +114,17 @@ Octree::Octree(std::array<std::vector<double>,3>& p_elements,
     }
     std::sort(morton_codes.begin(), morton_codes.end());
 
-    std::cout << morton_codes[0] << std::endl;
+    // std::cout << morton_codes[0] << std::endl;
 
     uint64_t center = morton_encode(0, 0, 2);
-    std::cout << "Center = " << center << std::endl;
+    // std::cout << "Center = " << center << std::endl;
     int n_less = 0;
     for (unsigned int i = 0; i < this->elements[0].size(); i++) {
         if (morton_codes[i] < center) {
             n_less++;
         }
     }
-    std::cout << n_less << std::endl;
+    // std::cout << n_less << std::endl;
 // 
 //     for (int d = 0; d < max_depth; d++) {
 //         levels.emplace_back(this->elements, d, bounds);

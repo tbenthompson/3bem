@@ -123,6 +123,7 @@ public:
     
     const int max_depth;
     const std::array<std::vector<double>, 3> elements;
+
     Box bounds;
 };
 #endif
