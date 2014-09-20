@@ -43,7 +43,7 @@ Mesh refine_mesh(const Mesh& m, std::vector<int> refine_these) {
     return new_mesh;
 }
 
-Subsegments build_ref_subsegs(QuadratureRule& quad) {
+Subsegments build_ref_subsegs(const QuadratureRule& quad) {
     Subsegments ref;
     ref.ref_left.resize(quad.size());
     ref.ref_center.resize(quad.size());
@@ -62,8 +62,7 @@ Subsegments build_ref_subsegs(QuadratureRule& quad) {
     return ref;
 }
 
-Subsegments get_src_obs(Mesh& m, QuadratureRule& quad_rule)
-{
+Subsegments get_src_obs(Mesh& m, const QuadratureRule& quad_rule) {
     auto subsegs = build_ref_subsegs(quad_rule);
     for (unsigned int i = 0; i < m.segments.size(); i++) {
         const auto v0 = m.vertices[m.segments[i][0]];
@@ -76,4 +75,48 @@ Subsegments get_src_obs(Mesh& m, QuadratureRule& quad_rule)
         }
     }
     return subsegs;
+}
+
+std::vector<double> direct_interact(Mesh& src_mesh,
+                                    Subsegments& src, 
+                                    Subsegments& obs,
+                                    std::vector<double> src_strength) {
+    int n_obs = obs.center.size();
+    int n_src = src.center.size();
+    std::cout << "Total interactions: " << (n_obs * n_src) << std::endl;
+    std::vector<double> obs_value(n_obs);
+
+    int a = 0;
+    for (int i = 0; i < n_obs; i++) {
+        for (int j = 0; j < n_src; j++) {
+            auto obs_loc = obs.center[i];
+            auto src_loc = src.center[j];
+            auto seg = src_mesh.segments[src.owner[j]];
+            auto v0 = src_mesh.vertices[seg[0]];
+            auto v1 = src_mesh.vertices[seg[1]];
+
+            double dx = obs_loc[0] - src_loc[0];
+            double dy = obs_loc[1] - src_loc[1];
+            double r = sqrt(dx * dx + dy * dy);
+
+            double seg_length = sqrt(pow(v0[0] - v1[0], 2) + pow(v0[1] - v1[1], 2));
+
+            double v0_val = src_strength[seg[0]];
+            double v1_val = src_strength[seg[1]];
+            double x_hat = src.ref_center[j % src_mesh.segments.size()];
+            double interp_value = 0.5 * ((1 + x_hat) * v0_val + 
+                                         (1 - x_hat) * v1_val);
+
+
+            // if near-field, do something more complex.
+            if (r < 3 * seg_length) {
+                a++;   
+            } else {
+            // if far-field, just compute the interaction.
+                obs_value[i] += (1.0 / (4 * M_PI * r)) * interp_value;
+            }
+        }
+    }
+    std::cout << "Near-field interactions: " << a << std::endl;
+    return obs_value;
 }

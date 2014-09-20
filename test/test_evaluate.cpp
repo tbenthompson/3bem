@@ -22,7 +22,7 @@ inline double laplace_single(double ox, double oy, double oz,
 TEST(Direct) {
     CHECK_CLOSE(one_kernel(0, 0, 0, 0, 0, 0), 1.0, 1e-14);
 
-    int n = (int)5e2;
+    int n = 500;
     std::array<std::vector<double>,3> src =
         {random_list(n), random_list(n), random_list(n)};
     std::array<std::vector<double>,3> obs =

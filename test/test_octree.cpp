@@ -12,12 +12,6 @@ TEST(BoundingBox) {
     CHECK_ARRAY_CLOSE(((bb.center - bb.half_width) / 1.001).loc, min, 3, 1e-14);
 }
 
-TEST(Naturals) {
-    auto nats5 = naturals(3, 8);
-    double correct[] = {3, 4, 5, 6, 7};
-    CHECK_ARRAY_EQUAL(nats5, correct, 5);
-}
-
 TEST(BigBig2) {
     //TODO: Replace with an mpi_setup procedure.
     int p;

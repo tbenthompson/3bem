@@ -3,6 +3,12 @@
 #include <iostream>
 #include "test_shared.h"
 
+TEST(Naturals) {
+    auto nats5 = naturals(3, 8);
+    double correct[] = {3, 4, 5, 6, 7};
+    CHECK_ARRAY_EQUAL(nats5, correct, 5);
+}
+
 TEST(LinearMapping) {
     int n = 10;
     auto vals = random_list(n);

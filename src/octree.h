@@ -78,8 +78,6 @@ public:
 };
 
 Box bounding_box(const std::array<std::vector<double>,3>& x);
-std::vector<int> naturals(int min, int max);
-std::vector<int> naturals(int max);
 
 inline int to_octree_space(double x, double center, 
                     double half_width, int leaves) {

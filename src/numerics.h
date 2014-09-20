@@ -15,6 +15,9 @@ inline double ref_to_real(double x_hat, double a, double b) {
 
 typedef std::vector<std::pair<double, double>> QuadratureRule;
 
+std::vector<int> naturals(int min, int max);
+std::vector<int> naturals(int max);
+
 std::vector<double> cheb_polys(double x_hat, int n_max);
 double s_n(double x_hat, double y_hat, int n);
 std::vector<double> cheb_pts_first_kind(unsigned int n_pts);

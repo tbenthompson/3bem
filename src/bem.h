@@ -4,8 +4,15 @@
 #include <array>
 #include <vector>
 #include "numerics.h"
+/* [NOTE - What quadrature to use]
+ * Since sources are meant the represent the far-field where kernels are smooth, gauss quadrature is a good choice. Double exponential quadrature would also work, though it will be less efficient for low orders. For higher order, p, computing a Gauss quadrature rule costs time O(p^2) or requires complex O(p) algorithms. Double exponential quadrature is very simple for any order.  
+ * For observation points, the outer integral of a galerkin method may be weakly singular at its endpoints. As a result, Gauss quadrature is not a good choice. A simple alternative that can handle endpoint singularities is the Double Exponential (also known as Tanh-Sinh) quadrature rule.
+ */
 
-/* A relatively brainless mesh class. There are many operations that modify a mesh to be in a more friendly state.
+/* A relatively brainless mesh class. There are many operations that modify a mesh to be in a more friendly state. 
+ * Better data structures are possible. For example a quad-edge or winged-edge structure
+ * has better cache-locality and makes it mucher easier to refine. However, this is simple
+ * and sufficient!
  */
 class Mesh {
 public:
@@ -13,9 +20,11 @@ public:
     std::vector<std::array<int, 2>> segments;
 };
 
+
 /* Refine a 2D mesh by simply placing vertices in the middle of the requested edges. The list of requested edges is pass by value and not referenced, because it is internally sorted and thus will be modified if passed by reference. Note that this function entirely reconstructs the mesh -- the original mesh is not modified.
  */
 Mesh refine_mesh(const Mesh& m, std::vector<int> refine_these);
+
 
 class Subsegments {
 public:
@@ -28,12 +37,13 @@ public:
 
 /* Use a quadrature rule to convert a mesh into a set of point sources or observation points with identifying information.  Point sources are useful for treating the BEM problem as an N-body problem.  Observation points are used for the outer integral in a galerkin boundary element method.  
  *
- * The information in each subsegment is provided in order to locate the surrounding region of the point. Near-field evaluations may require higher quadrature order and thus the subsegments will need to be effectively "refined".  Since sources are meant the represent the far-field where kernels are smooth, gauss quadrature is a good choice.
- *
- * For observation points, the outer integral of a galerkin method may be weakly singular at its endpoints. As a result, Gauss quadrature is not a good choice. A simple alternative that can handle endpoint singularities is the Double Exponential (also known as Tanh-Sinh) quadrature rule.
+ * The information in each subsegment is provided in order to locate the surrounding region of the point. Near-field evaluations may require higher quadrature order and thus the subsegments will need to be effectively "refined".
  */
-Subsegments get_src_obs(Mesh& m, QuadratureRule& quad_rule);
+Subsegments get_src_obs(Mesh& m, const QuadratureRule& quad_rule);
 
+std::vector<double> direct_interact(Mesh& src_mesh, Subsegments& src,
+                                    Subsegments& obs, 
+                                    std::vector<double> src_strength);
 // chunks to write:
 // mesh cleaning and region determination
 // only inputs are vertices, segments and boundary conditions on those segments

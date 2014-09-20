@@ -41,17 +41,6 @@ Box bounding_box(const std::array<std::vector<double>,3>& x)
     return ext;
 }
 
-std::vector<int> naturals(int min, int max) {
-    std::vector<int> indices(max);
-    std::iota(indices.begin(), indices.end(), min);
-    return indices;
-}
-
-/* equivalent to range(0, max) in python */
-std::vector<int> naturals(int max) {
-    return naturals(0, max);
-}
-
 // Level::Level(const std::array<std::vector<double>,3>& p_elements,
 //              int depth,
 //              Box& bounds):
