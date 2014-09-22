@@ -58,6 +58,7 @@ public:
  */
 Subsegments get_src_obs(Mesh& m, const QuadratureRule& quad_rule);
 
+
 std::vector<double> direct_interact(Mesh& src_mesh,
                                     Subsegments& src,
                                     Subsegments& obs, 
