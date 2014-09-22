@@ -5,14 +5,12 @@
 #include <vector>
 #include "numerics.h"
 /* [NOTE - What quadrature to use]
- * Since sources are meant the represent the far-field where kernels are smooth, gauss quadrature is a good choice. Double exponential quadrature would also work, though it will be less efficient for low orders. For higher order, p, computing a Gauss quadrature rule costs time O(p^2) or requires complex O(p) algorithms. Double exponential quadrature is very simple for any order.  
- * For observation points, the outer integral of a galerkin method may be weakly singular at its endpoints. As a result, Gauss quadrature is not a good choice. A simple alternative that can handle endpoint singularities is the Double Exponential (also known as Tanh-Sinh) quadrature rule.
+ * Source integrals are always smooth because of the numerical limit taken by the Richardson Extrapolation Quadrature method. Gauss quadrature works well for smooth integrals. The order of the quadrature will need to be increased for the nearfield integrals, especially the ones where the limiting parameter is small. For higher order, p, computing a Gauss quadrature rule costs time O(p^2) or requires complex O(p) algorithms. Double exponential quadrature is very simple for any order, so for high order quadrature using a double exponential quadrature formula may be better.  
+ * For observation integrals, the outer integral of a galerkin method may be weakly singular at its endpoints. As a result, Gauss quadrature is not a good choice. A simple alternative that can handle endpoint singularities is the Double Exponential (also known as Tanh-Sinh) quadrature rule.
  */
 
 /* A relatively brainless mesh class. There are many operations that modify a mesh to be in a more friendly state. 
- * Better data structures are possible. For example a quad-edge or winged-edge structure
- * has better cache-locality and makes it mucher easier to refine. However, this is simple
- * and sufficient!
+ * Better data structures are possible. For example a quad-edge or winged-edge structure has better cache-locality and makes it mucher easier to refine. However, this is simple and sufficient!
  */
 class Mesh {
 public:
@@ -26,44 +24,53 @@ public:
 Mesh refine_mesh(const Mesh& m, std::vector<int> refine_these);
 
 
-class Subsegments {
-public:
-    std::vector<double> ref_left;
-    std::vector<double> ref_center;
-    std::vector<double> ref_right;
-    std::vector<double> ref_weight;
-    std::vector<std::array<double,2>> left;
-    std::vector<std::array<double,2>> center;
-    std::vector<std::array<double,2>> right;
-    std::vector<int> owner;
-};
-
+/* Data for the evaluation of nearfield integrals. */
 class NearEval {
 public:
-    NearEval(int n_near_steps, int n_obs);
+    NearEval(int n_steps, int n_obs);
 
     void zero_nears(int i);
 
     static constexpr double initial_dist = 1.0;
 
-    const int n_near_steps;
-    std::vector<std::vector<double>> near_steps;
-    std::vector<QuadratureRule> near_quad;
-    std::vector<double> near_dist;
+    const int n_steps;
+    std::vector<std::vector<double>> steps;
+    std::vector<QuadratureRule> quad;
+    std::vector<double> dist;
 };
 
-/* Use a quadrature rule to convert a mesh into a set of point sources or observation points with identifying information.  Point sources are useful for treating the BEM problem as an N-body problem.  Observation points are used for the outer integral in a galerkin boundary element method.  
- *
- * The information in each subsegment is provided in order to locate the surrounding region of the point. Near-field evaluations may require higher quadrature order and thus the subsegments will need to be effectively "refined".
- */
-Subsegments get_src_obs(Mesh& m, const QuadratureRule& quad_rule);
+class SegmentInfo {
+public:
+    std::array<double, 2> v0;
+    std::array<double, 2> v1;
+    double length;
+    double v0_val;
+    double v1_val;
+};
+
+/* Compute the minimum distance between the vertices of two segments. This does not strictly compute the distance between arbitrary segments, because if the segments intersect at a non-vertex location, the distance should be 0 and will be non-zero. However, for meshes input to the direct_interact function, there should be no vertices that intersect anywhere except the vertices. */
+double appx_segment_distance(std::array<double, 2> v00,
+                             std::array<double, 2> v01, 
+                             std::array<double, 2> v10, 
+                             std::array<double, 2> v11);
 
 
+inline double laplace_single(double r, double dx, double dy) {
+    return (1.0 / (4 * M_PI * r));
+}
+
+inline double one(double, double, double) {
+    return 1.0;
+}
+
+typedef std::function<double (double, double, double)> KernelFnc;
 std::vector<double> direct_interact(Mesh& src_mesh,
-                                    Subsegments& src,
-                                    Subsegments& obs, 
-                                    std::vector<double> src_strength,
-                                    int n_near_steps);
+                                    Mesh& obs_mesh,
+                                    QuadratureRule src_quad,
+                                    QuadratureRule obs_quad,
+                                    KernelFnc kernel,
+                                    std::vector<double>& src_strength,
+                                    int n_steps); 
 // chunks to write:
 // mesh cleaning and region determination
 // only inputs are vertices, segments and boundary conditions on those segments
@@ -80,6 +87,5 @@ std::vector<double> direct_interact(Mesh& src_mesh,
 // evaluate solution on the surface after calculation -- just use the 
 //     integral equation again
 // interior meshing and evaluation
-
 
 #endif

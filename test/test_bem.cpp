@@ -19,10 +19,40 @@ Mesh square_mesh() {
 }
 
 Mesh refined_square_mesh(int levels) {
+
     Mesh m = square_mesh();
     for (int i = 0; i < levels; i++) {
         m = refine_mesh(m, naturals(m.segments.size()));
     }
+    return m;
+}
+
+Mesh fast_refined_square_mesh(int levels) {
+    int n_per_side = (int)pow(2, levels);
+    std::vector<std::array<double, 2>> vertices;
+    std::vector<std::array<int, 2>> segs;
+    std::vector<double> x_hat(n_per_side);
+    for (int i = 0; i < n_per_side; i++) {
+        x_hat[i] = i / n_per_side;
+    }
+    for(auto x: x_hat) {
+        vertices.push_back({x, 0.0});
+    }
+    for(auto x: x_hat) {
+        vertices.push_back({1.0, x});
+    }
+    for(auto x: x_hat) {
+        vertices.push_back({1.0 - x, 1.0});
+    }
+    for(auto x: x_hat) {
+        vertices.push_back({0.0, 1.0 - x});
+    }
+    for (int i = 0; i < 4 * n_per_side; i++) {
+        segs.push_back({i, i + 1});
+    }
+    // Loop back
+    segs[segs.size() - 1][1] = 0;
+    Mesh m = {vertices, segs};
     return m;
 }
 
@@ -40,29 +70,6 @@ TEST(RefineMesh) {
     CHECK_ARRAY_EQUAL(refined.segments[4], new_segs[3], 2);
 }
 
-void check_mesh_to_points(QuadratureRule quad) {
-    Mesh m = square_mesh();
-
-    auto subsegs = get_src_obs(m, quad);
-    /* CHECK(subsegs.center.size() == quad.size() * 4); */
-    for (int i = 0; i < 5; i++) {
-        CHECK_CLOSE(subsegs.center[i][0], ((quad[i].first + 1.0) / 2.0), 1e-14);
-        CHECK_CLOSE(subsegs.center[i][1], 0.0, 1e-14);
-    }
-    // TODO: Good tests for successful subsegmentation?
-    // for (auto s: subsegs.center) {
-    //     std::cout << "X: " << s[0] << " Y:" << s[1] << std::endl;
-    // }
-}
-
-TEST(MeshToPointsGauss) {
-    check_mesh_to_points(gauss(5));
-}
-
-TEST(MeshToPointsTanhSinh) {
-    check_mesh_to_points(double_exp(8, 0.3));
-}
-
 TEST(HeavyLoadMeshRefine) {
     auto m = refined_square_mesh(17);
     
@@ -71,40 +78,32 @@ TEST(HeavyLoadMeshRefine) {
     TOC("refine_mesh to " + std::to_string(m.segments.size()) + " segments");
 }
 
-TEST(HeavyLoadMeshToPoints) {
-    auto m = refined_square_mesh(1);
+TEST(InteractOneKernel) {
+    for (int refinement = 0; refinement < 5; refinement++) {
+        for (int q_order = 0; q_order < 3; q_order++) {
+            for (int n_near_steps = 1; n_near_steps < 4; n_near_steps++) {
+                auto m = refined_square_mesh(refinement); 
 
-    auto quad = gauss(5);
-    TIC
-    auto subsegs = get_src_obs(m, quad);
-    TOC("get_src_obs on " + std::to_string(m.segments.size()) + " segments");
+                int n_verts = m.vertices.size();
+                std::vector<double> src_str(n_verts);
+                for (int i = 0; i < n_verts; i++) {
+                    src_str[i] = 1.0;
+                }
+
+                auto obs_quad = double_exp(q_order, 0.3);
+                auto src_quad = gauss(q_order + 1);
+                auto obs_values = direct_interact(m, m, src_quad, obs_quad,
+                                                  one, src_str, n_near_steps);
+                for (auto o: obs_values) {
+                    CHECK_CLOSE(o, 4.0, 1e-8);
+                }
+            }
+        }
+    }
 }
 
-// TEST(InteractOneKernel) {
-//     for (int refinement = 0; refinement < 5; refinement++) {
-//         for (int q_order = 0; q_order < 3; q_order++) {
-//             for (int n_near_steps = 1; n_near_steps < 4; n_near_steps++) {
-//                 auto m = refined_square_mesh(refinement); 
-//                 int n_verts = m.vertices.size();
-//                 std::vector<double> src_str(n_verts);
-//                 for (int i = 0; i < n_verts; i++) {
-//                     src_str[i] = 1.0;
-//                 }
-//                 auto obs = get_src_obs(m, double_exp(q_order, 0.3));
-//                 auto srcs = get_src_obs(m, gauss(q_order + 1));
-//                 auto obs_values = direct_interact(m, srcs, obs, src_str, n_near_steps);
-//                 for (auto o: obs_values) {
-//                     CHECK_CLOSE(o, 4.0, 1e-8);
-//                 }
-//             }
-//         }
-//     }
-// }
-
-TEST(Interact) {
-    auto m = refined_square_mesh(0); 
-    auto obs = get_src_obs(m, double_exp(0, 0.3));
-    auto srcs = get_src_obs(m, gauss(3));
+TEST(HeavyInteract) {
+    auto m = refined_square_mesh(10); 
 
     int n_verts = m.vertices.size();
     std::vector<double> src_str(n_verts);
@@ -113,12 +112,13 @@ TEST(Interact) {
     }
 
     TIC
-    auto obs_values = direct_interact(m, srcs, obs, src_str, 6);
+    auto obs_values = direct_interact(m, m, gauss(1), double_exp(0, 0.3),
+                                      laplace_single, src_str, 1);
     TOC("direct_interact on " + std::to_string(m.segments.size()) + " segments");
-    for(auto o: obs_values) 
-    {
-        std::cout << o << std::endl;
-    }
+    // for(auto o: obs_values) 
+    // {
+    //     std::cout << o << std::endl;
+    // }
     //TODO: Codify the perimeter tests for the boundary element summation using
     // the one kernel.
 }
