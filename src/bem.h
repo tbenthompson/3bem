@@ -68,7 +68,7 @@ std::vector<double> direct_interact(Mesh& src_mesh,
 // mesh cleaning and region determination
 // only inputs are vertices, segments and boundary conditions on those segments
 // subsegmentation (DONE)
-// refine func (DONE)
+// refine func (DONE) make it cache-friendly
 // summation func
 // richardson extrapolation quadrature
 // mappings from reference to real space
