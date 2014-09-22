@@ -31,8 +31,25 @@ public:
     std::vector<double> ref_left;
     std::vector<double> ref_center;
     std::vector<double> ref_right;
+    std::vector<double> ref_weight;
+    std::vector<std::array<double,2>> left;
     std::vector<std::array<double,2>> center;
+    std::vector<std::array<double,2>> right;
     std::vector<int> owner;
+};
+
+class NearEval {
+public:
+    NearEval(int n_near_steps, int n_obs);
+
+    void zero_nears(int i);
+
+    static constexpr double initial_dist = 1.0;
+
+    const int n_near_steps;
+    std::vector<std::vector<double>> near_steps;
+    std::vector<QuadratureRule> near_quad;
+    std::vector<double> near_dist;
 };
 
 /* Use a quadrature rule to convert a mesh into a set of point sources or observation points with identifying information.  Point sources are useful for treating the BEM problem as an N-body problem.  Observation points are used for the outer integral in a galerkin boundary element method.  
@@ -41,9 +58,11 @@ public:
  */
 Subsegments get_src_obs(Mesh& m, const QuadratureRule& quad_rule);
 
-std::vector<double> direct_interact(Mesh& src_mesh, Subsegments& src,
+std::vector<double> direct_interact(Mesh& src_mesh,
+                                    Subsegments& src,
                                     Subsegments& obs, 
-                                    std::vector<double> src_strength);
+                                    std::vector<double> src_strength,
+                                    int n_near_steps);
 // chunks to write:
 // mesh cleaning and region determination
 // only inputs are vertices, segments and boundary conditions on those segments

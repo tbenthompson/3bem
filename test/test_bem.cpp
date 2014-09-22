@@ -80,10 +80,31 @@ TEST(HeavyLoadMeshToPoints) {
     TOC("get_src_obs on " + std::to_string(m.segments.size()) + " segments");
 }
 
+// TEST(InteractOneKernel) {
+//     for (int refinement = 0; refinement < 5; refinement++) {
+//         for (int q_order = 0; q_order < 3; q_order++) {
+//             for (int n_near_steps = 1; n_near_steps < 4; n_near_steps++) {
+//                 auto m = refined_square_mesh(refinement); 
+//                 int n_verts = m.vertices.size();
+//                 std::vector<double> src_str(n_verts);
+//                 for (int i = 0; i < n_verts; i++) {
+//                     src_str[i] = 1.0;
+//                 }
+//                 auto obs = get_src_obs(m, double_exp(q_order, 0.3));
+//                 auto srcs = get_src_obs(m, gauss(q_order + 1));
+//                 auto obs_values = direct_interact(m, srcs, obs, src_str, n_near_steps);
+//                 for (auto o: obs_values) {
+//                     CHECK_CLOSE(o, 4.0, 1e-8);
+//                 }
+//             }
+//         }
+//     }
+// }
+
 TEST(Interact) {
-    auto m = refined_square_mesh(11); 
-    auto srcs = get_src_obs(m, gauss(2));
-    auto obs = get_src_obs(m, double_exp(1, 0.3));
+    auto m = refined_square_mesh(0); 
+    auto obs = get_src_obs(m, double_exp(0, 0.3));
+    auto srcs = get_src_obs(m, gauss(3));
 
     int n_verts = m.vertices.size();
     std::vector<double> src_str(n_verts);
@@ -92,6 +113,12 @@ TEST(Interact) {
     }
 
     TIC
-    direct_interact(m, srcs, obs, src_str);
+    auto obs_values = direct_interact(m, srcs, obs, src_str, 6);
     TOC("direct_interact on " + std::to_string(m.segments.size()) + " segments");
+    for(auto o: obs_values) 
+    {
+        std::cout << o << std::endl;
+    }
+    //TODO: Codify the perimeter tests for the boundary element summation using
+    // the one kernel.
 }
