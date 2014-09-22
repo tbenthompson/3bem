@@ -27,35 +27,6 @@ Mesh refined_square_mesh(int levels) {
     return m;
 }
 
-Mesh fast_refined_square_mesh(int levels) {
-    int n_per_side = (int)pow(2, levels);
-    std::vector<std::array<double, 2>> vertices;
-    std::vector<std::array<int, 2>> segs;
-    std::vector<double> x_hat(n_per_side);
-    for (int i = 0; i < n_per_side; i++) {
-        x_hat[i] = i / n_per_side;
-    }
-    for(auto x: x_hat) {
-        vertices.push_back({x, 0.0});
-    }
-    for(auto x: x_hat) {
-        vertices.push_back({1.0, x});
-    }
-    for(auto x: x_hat) {
-        vertices.push_back({1.0 - x, 1.0});
-    }
-    for(auto x: x_hat) {
-        vertices.push_back({0.0, 1.0 - x});
-    }
-    for (int i = 0; i < 4 * n_per_side; i++) {
-        segs.push_back({i, i + 1});
-    }
-    // Loop back
-    segs[segs.size() - 1][1] = 0;
-    Mesh m = {vertices, segs};
-    return m;
-}
-
 TEST(RefineMesh) {
     Mesh m = square_mesh();
     Mesh refined = refine_mesh(m, {0, 2});
