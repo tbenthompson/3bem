@@ -67,20 +67,20 @@ inline double linear_interp(double x_hat, double v0_val, double v1_val) {
 
 
 
-double dist(std::array<double, 2> v0, std::array<double, 2> v1) {
+double dist2(std::array<double, 2> v0, std::array<double, 2> v1) {
     double dx = (v0[0] - v1[0]);
     double dy = (v0[1] - v1[1]);
-    return sqrt(dx * dx + dy * dy);
+    return dx * dx + dy * dy;
 }
 
 double appx_segment_distance(std::array<double, 2> v00,
                              std::array<double, 2> v01, 
                              std::array<double, 2> v10, 
                              std::array<double, 2> v11) {
-    double d0 = dist(v00, v10);
-    double d1 = dist(v00, v11);
-    double d2 = dist(v01, v10);
-    double d3 = dist(v01, v11);
+    double d0 = dist2(v00, v10);
+    double d1 = dist2(v00, v11);
+    double d2 = dist2(v01, v10);
+    double d3 = dist2(v01, v11);
     return std::min(d0, std::min(d1, std::min(d2, d3)));
 }
 
@@ -133,8 +133,8 @@ std::vector<double> direct_interact(Mesh& src_mesh,
         auto obs_seg = obs_mesh.segments[obs_idx];
         auto obs_v0 = obs_mesh.vertices[obs_seg[0]];
         auto obs_v1 = obs_mesh.vertices[obs_seg[1]];
-        double obs_length = dist(obs_v0, obs_v1);
-        double avg_quad_spacing = obs_length / nq_obs;
+        double obs_length2 = dist2(obs_v0, obs_v1);
+        double five_avg_quad_spacing = 5 * sqrt(obs_length2) / nq_obs;
         for (int obs_q = 0; obs_q < nq_obs; obs_q++) {
             double obs_x = ref_to_real(obs_quad[obs_q].first, obs_v0[0], obs_v1[0]);
             double obs_y = ref_to_real(obs_quad[obs_q].first, obs_v0[1], obs_v1[1]);
@@ -145,29 +145,29 @@ std::vector<double> direct_interact(Mesh& src_mesh,
             for (auto src_seg: src_mesh.segments) {
                 auto src_v0 = src_mesh.vertices[src_seg[0]];
                 auto src_v1 = src_mesh.vertices[src_seg[1]];
-                auto src_length = dist(src_v0, src_v1);
-                double dist = appx_segment_distance(obs_v0, obs_v1,
+                auto src_length = sqrt(dist2(src_v0, src_v1));
+                double dist2 = appx_segment_distance(obs_v0, obs_v1,
                                                     src_v0, src_v1);
 
                 auto v0_val = src_strength[src_seg[0]];
                 auto v1_val = src_strength[src_seg[1]];
-                if (dist < 3 * obs_length) {
+                if (dist2 < sqrt(3) * obs_length2) {
                     //nearfield
                     for (int nf = 0; nf < n_steps; nf++) {
-                        auto quad_rule = near_eval.quad[nf];
-                        double nfdz = 5 * avg_quad_spacing * near_eval.dist[nf];
-                        double addme = integral(quad_rule, kernel, src_v0, src_v1, 
-                                                src_length, v0_val, v1_val, obs_x,
+                        double nfdz = five_avg_quad_spacing * near_eval.dist[nf];
+                        double addme = integral(near_eval.quad[nf],
+                                                kernel, src_v0, src_v1, 
+                                                src_length, v0_val,
+                                                v1_val, obs_x,
                                                 obs_y, nfdz);
                         near_eval.steps[nf][obs_value_idx] += addme;
                     }
                 } else {
                     //farfield
-                    auto quad_rule = src_quad;
-                    double addme = integral(quad_rule, kernel, src_v0, src_v1, 
-                                            src_length, v0_val, v1_val, obs_x,
-                                            obs_y, 0.0);
-                    obs_value[obs_value_idx] += addme;
+                     obs_value[obs_value_idx] += 
+                         integral(src_quad, kernel, src_v0, src_v1, 
+                                  src_length, v0_val, v1_val, obs_x,
+                                  obs_y, 0.0);
                 }
             }
             obs_value[obs_value_idx] += near_eval.steps[n_steps - 1][obs_value_idx];

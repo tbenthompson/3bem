@@ -74,7 +74,7 @@ TEST(InteractOneKernel) {
 }
 
 TEST(HeavyInteract) {
-    auto m = refined_square_mesh(10); 
+    auto m = refined_square_mesh(13); 
 
     int n_verts = m.vertices.size();
     std::vector<double> src_str(n_verts);
