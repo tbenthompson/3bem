@@ -1,5 +1,6 @@
 #include "numerics.h"
 #include <algorithm>
+#include <iostream>
 
 
 /* equivalent to range(min, max) in python */
@@ -132,6 +133,42 @@ QuadratureRule gauss(unsigned int n) {
         retval[n - i - 1] = std::make_pair(x, w);
     }
 
+    return retval;
+}
+
+inline double from_11_to_01(double x) {
+    return 0.5 * x + 0.5;
+}
+
+inline double from_01_to_11(double x) {
+    return 2 * x - 1;
+}
+
+/* A nonlinear mapping that smooths out a singular or near-singular integral.
+ *
+ * n is the number of points of the underlying Gauss quadrature rule.
+ * x0 is the location in reference space of the singularity or most singular point.
+ * q specifies how smooth to make the integrand. It must be an odd positive integer.
+ *
+ * This quadrature rule is presented in section 4.1 of the paper:
+ * Aimi, a., and M. Diligenti. “Numerical Integration in 3D Galerkin BEM Solution of HBIEs.” Computational Mechanics 28, no. 3–4 (April 01, 2002): 233–49. doi:10.1007/s00466-001-0284-9.
+ * To derive the version used below:
+ */
+QuadratureRule diligenti_mapping(unsigned int n, double x0, int q) {
+    double x0_mapped = from_11_to_01(x0);
+    double inv_q = 1.0 / q;
+    double qth_root_x0 = pow(x0_mapped, inv_q);
+    double qth_root_1mx0 = pow(1 - x0_mapped, inv_q);
+    double zs = qth_root_x0 / (qth_root_x0 + qth_root_1mx0);
+    double delta = (1 - x0_mapped) / pow((1 - zs), q);
+
+    auto underlying = gauss(n);
+    QuadratureRule retval(n);
+    for (unsigned int i = 0; i < n; i++) {
+        double z_hat = from_11_to_01(underlying[i].first) - zs;
+        retval[i].first = from_01_to_11(x0_mapped + delta * pow(z_hat, q));
+        retval[i].second = underlying[i].second * q * delta * pow(z_hat, q - 1);
+    }
     return retval;
 }
 

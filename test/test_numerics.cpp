@@ -91,3 +91,19 @@ TEST(GaussQuadrature) {
     auto qr_odd = gauss(5);
     CHECK(qr_odd.size() == 5);
 }
+
+TEST(DiligentiMapping) {
+    auto quad = diligenti_mapping(18, -0.3, 7);
+    double result = integrate(quad, 
+        [](double x) { return log(std::fabs(x + 0.3));});
+    CHECK_CLOSE(result, -1.908598917, 1e-6);
+
+    quad = diligenti_mapping(18, 0.0, 7);
+    result = integrate(quad, 
+        [](double x) { return log(sqrt(pow(x, 4) + pow(x, 3) + pow(x,2)));});
+    CHECK_CLOSE(result, -1.81569, 1e-5);
+
+    result = integrate(quad, 
+        [](double x) { return pow(x, 4) * log(sqrt(pow(x, 4) + pow(x, 3) + pow(x,2)));});
+    CHECK_CLOSE(result, -0.000611395, 1e-6);
+}

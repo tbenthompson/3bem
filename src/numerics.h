@@ -24,5 +24,6 @@ std::vector<double> cheb_pts_first_kind(unsigned int n_pts);
 std::pair<double, double> legendre_and_n_minus_1(unsigned int n, double x);
 QuadratureRule double_exp(int n, double h);
 QuadratureRule gauss(unsigned int n);
+QuadratureRule diligenti_mapping(unsigned int n, double x0, int q);
 double integrate(QuadratureRule& qr, std::function<double (double)> fnc);
 #endif
