@@ -71,11 +71,14 @@ TEST(GaussQuadrature) {
     auto qr = gauss(4);
     CHECK(qr.size() == 4);
 
-    //Check that the weights are in the right range
+    //Check that the weights are in the right range and sum properly
+    double wt_sum = 0.0;
     for (auto xw: qr) {
         CHECK(std::fabs(xw.first) <= 1);
+        wt_sum += xw.second;
         // std::cout << "x: " << xw.first << "   w: " << xw.second << std::endl;
     }
+    CHECK_CLOSE(wt_sum, 2.0, 1e-12);
 
     double result = integrate(qr, [](double x) {return 3 * x * x;});
     CHECK_CLOSE(2.0, result, 1e-12);

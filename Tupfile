@@ -6,6 +6,7 @@ CPPFLAGS += -std=c++11
 CPPFLAGS += -Winvalid-pch
 CPPFLAGS += -pipe
 CPPFLAGS += $(INCLUDE)
+CPPFLAGS += -fopenmp
 
 DEBUGFLAGS += -g 
 DEBUGFLAGS += -Og
@@ -26,6 +27,7 @@ SHAREDLIBFLAGS += $(CPPFLAGS)
 SHAREDLIBFLAGS += -fPIC
 
 LINKFLAGS += -lm
+LINKFLAGS += -fopenmp
 LIBLINKFLAGS += -shared
 LIBLINKFLAGS += $(LINKFLAGS)
 

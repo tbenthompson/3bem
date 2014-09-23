@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <unordered_map>
+#include <iomanip>
 
 void refine_edge(Mesh& new_mesh, std::array<int, 2> seg) {
     // Find the new vertex and segments.
@@ -50,8 +51,10 @@ NearEval::NearEval(int n_steps, int n_obs):
     dist(n_steps)
 {
     for (int nf = 0; nf < n_steps; nf++) {
-        quad[nf] = gauss((int)pow(2, nf + 1));
-        dist[nf] = initial_dist / (pow(2, nf));
+        //TODO: need a much better distribution of points in the nearfield.
+        //Gauss seems unlikely to be optimal.
+        quad[nf] = gauss((int)pow(2, nf + 2));
+        dist[nf] = initial_dist / (pow(2, nf + 1));
     }
 }
 
@@ -129,6 +132,7 @@ std::vector<double> direct_interact(Mesh& src_mesh,
     std::vector<double> obs_value(n_obs);
     NearEval near_eval(n_steps, n_obs);
 
+#pragma omp parallel for
     for (int obs_idx = 0; obs_idx < n_obs_segs; obs_idx++) {
         auto obs_seg = obs_mesh.segments[obs_idx];
         auto obs_v0 = obs_mesh.vertices[obs_seg[0]];
@@ -151,16 +155,14 @@ std::vector<double> direct_interact(Mesh& src_mesh,
 
                 auto v0_val = src_strength[src_seg[0]];
                 auto v1_val = src_strength[src_seg[1]];
-                if (dist2 < sqrt(3) * obs_length2) {
+                if (dist2 < 100 * obs_length2) {
                     //nearfield
                     for (int nf = 0; nf < n_steps; nf++) {
                         double nfdz = five_avg_quad_spacing * near_eval.dist[nf];
-                        double addme = integral(near_eval.quad[nf],
-                                                kernel, src_v0, src_v1, 
-                                                src_length, v0_val,
-                                                v1_val, obs_x,
-                                                obs_y, nfdz);
-                        near_eval.steps[nf][obs_value_idx] += addme;
+                        near_eval.steps[nf][obs_value_idx] += 
+                            integral(near_eval.quad[nf], kernel, src_v0, src_v1, 
+                                     src_length, v0_val, v1_val, obs_x,
+                                     obs_y, nfdz);
                     }
                 } else {
                     //farfield
@@ -173,107 +175,32 @@ std::vector<double> direct_interact(Mesh& src_mesh,
             obs_value[obs_value_idx] += near_eval.steps[n_steps - 1][obs_value_idx];
         }
     }
+    std::vector<double> max_error(n_steps - 1);
+    for(int obs_idx = 0; obs_idx < n_obs; obs_idx++) {
+        std::vector<double> last_level(n_steps);
+        std::vector<double> this_level;
+        for (int m = 0; m < n_steps; m++) {
+            last_level[m] = near_eval.steps[m][obs_idx];
+        }
+        int error_order = 1;
+        for (int m = 1; m < n_steps; m++) {
+            this_level.resize(n_steps - m);
+            for (int i = 0; i < n_steps - m; i++) {
+                const double mult = pow(2, error_order);
+                const double factor = 1.0 / (mult - 1.0);
+                double low = last_level[i];
+                double high = last_level[i + 1];
+                double moreacc = factor * (mult * high - low);
+                this_level[i] = moreacc;
+                // std::cout << near_eval.steps[i][0] << std::endl;
+            }
+            error_order++;
+            max_error[m - 1] = std::max(std::fabs(this_level[0] - last_level[0]), max_error[m - 1]);
+            last_level = this_level;
+        }
+    }
+    for(int m = 0; m < n_steps - 1; m++) {
+        std::cout << std::scientific << std::setprecision(15) << max_error[m] << std::endl;
+    }
     return obs_value;
 }
-
-//     int n_obs = obs.center.size();
-//     int n_src = src.center.size();
-//     std::cout << "Total interactions: " << (n_obs * n_src) << std::endl;
-//     std::vector<double> obs_value(n_obs);
-// 
-// 
-//     NearEval near_eval(n_steps, n_obs);
-// 
-//     int a = 0;
-//     for (int i = 0; i < n_obs; i++) {
-//         obs_value[i] = 0.0;
-//         near_eval.zero_nears(i);
-// 
-//         for (int j = 0; j < n_src; j++) {
-//             int which_ref = j % src.ref_center.size();
-//             auto obs_loc = obs.center[i];
-//             auto src_loc = src.center[j];
-//             auto src_left = src.left[j];
-//             auto src_right = src.right[j];
-// 
-// 
-//             double dx = obs_loc[0] - src_loc[0];
-//             double dy = obs_loc[1] - src_loc[1];
-//             double r = sqrt(dx * dx + dy * dy);
-// 
-//             // this should be subsegment length, not segment length
-//             double subseg_length = sqrt(pow(src_left[0] - src_right[0], 2) +
-//                                         pow(src_left[1] - src_right[1], 2));
-// 
-//             auto seg = src_mesh.segments[src.owner[j]];
-//             // auto v0 = src_mesh.vertices[seg[0]];
-//             // auto v1 = src_mesh.vertices[seg[1]];
-//             // double seg_length = sqrt(pow(v0[0] - v1[0], 2) +
-//             //                             pow(v0[1] - v1[1], 2));
-// 
-//             double v0_val = src_strength[seg[0]];
-//             double v1_val = src_strength[seg[1]];
-//             double x_hat = src.ref_center[which_ref];
-//             double interp_value = linear_interp(x_hat, v0_val, v1_val);
-// 
-//             // if near-field, do something more complex.
-//             // std::cout << r << " " << seg_length << std::endl;
-//             if (r < 0 * subseg_length) {
-//                 //create a series of new result vectors that hold the steps of
-//                 //the sequence converging to the correct result.
-//                 //add to these result vectors the integral over this subseg
-//                 //the integral over this subseg should be re-quadratured, 
-//                 //maybe using a simple trapezoidal rule or something. since,
-//                 //the point is nearby gauss does not have a big advantage 
-//                 //anymore and trapezoidal is very simple.
-//                 //
-//                 //then perform the richardson extrapolation after the whole
-//                 //summation loop is over
-//                 //
-//                 // maybe use 2 + nf as the number of quadrature points. ad hoc
-//                 // but perhaps effective
-//                 a++;
-//                 for (int nf = 0; nf < n_steps; nf++) {
-//                     double nfdz = r * near_eval.dist[nf];
-//                     for (unsigned int qpi = 0;
-//                          qpi < near_eval.quad[nf].size();
-//                          qpi++) {
-//                         auto qp = near_eval.quad[nf][qpi];
-//                         double nfx_hat = ref_to_real(qp.first,
-//                                                      src.ref_left[which_ref],
-//                                                      src.ref_right[which_ref]);
-//                         double nfx = ref_to_real(qp.first, src_left[0], src_right[0]);
-//                         double nfy = ref_to_real(qp.first, src_left[1], src_right[1]);
-//                         double nfdx = obs_loc[0] - nfx;
-//                         double nfdy = obs_loc[1] - nfy;
-//                         double nfr = sqrt(nfdx * nfdx + nfdy * nfdy + nfdz * nfdz);
-//                         double interp_value = linear_interp(nfx_hat, v0_val, v1_val);
-//                         double kernel_val = kernel(nfr, nfdx, nfdy);
-//                         double jacobian = subseg_length / 2.0;
-//                         near_eval.steps[nf][i] += 
-//                             qp.second * kernel_val * interp_value * jacobian;
-//                         // std::cout << which_ref << 
-//                         //     " " << qp.second << 
-//                         //     " " << kernel_val << 
-//                         //     " " << interp_value << 
-//                         //     " " << jacobian << std::endl;
-//                     }
-//                 }
-//             } else {
-//                 // if far-field, just compute the interaction.
-//                 double kernel_val = kernel(r, dx, dy); 
-//                 double jacobian = subseg_length;
-//                 double quad_weight = src.ref_weight[which_ref];
-//                 obs_value[i] += kernel_val * interp_value * jacobian;
-//                 std::cout << which_ref << 
-//                     " " << quad_weight << 
-//                     " " << kernel_val << 
-//                     " " << interp_value << 
-//                     " " << jacobian << std::endl;
-//             }
-//         }
-//         obs_value[i] += near_eval.steps[n_steps - 1][i];
-//     }
-//     std::cout << "Near-field interactions: " << a << std::endl;
-//     return obs_value;
-// }

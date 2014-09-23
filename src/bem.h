@@ -56,7 +56,7 @@ double appx_segment_distance(std::array<double, 2> v00,
 
 
 inline double laplace_single(double r, double dx, double dy) {
-    return (1.0 / (4 * M_PI * r));
+    return -1.0 / (2 * M_PI) * log(r);
 }
 
 inline double one(double, double, double) {
@@ -75,9 +75,9 @@ std::vector<double> direct_interact(Mesh& src_mesh,
 // mesh cleaning and region determination
 // only inputs are vertices, segments and boundary conditions on those segments
 // subsegmentation (DONE)
-// refine func (DONE) make it cache-friendly
-// summation func
-// richardson extrapolation quadrature
+// refine func (DONE)
+// summation func (PARTIAL)
+// richardson extrapolation quadrature (PARTIAL)
 // mappings from reference to real space
 // --linear (DONE)
 // --polynomial

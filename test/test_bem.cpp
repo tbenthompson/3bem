@@ -50,6 +50,7 @@ TEST(HeavyLoadMeshRefine) {
 }
 
 TEST(InteractOneKernel) {
+    return;
     for (int refinement = 0; refinement < 5; refinement++) {
         for (int q_order = 0; q_order < 3; q_order++) {
             for (int n_near_steps = 1; n_near_steps < 4; n_near_steps++) {
@@ -74,7 +75,7 @@ TEST(InteractOneKernel) {
 }
 
 TEST(HeavyInteract) {
-    auto m = refined_square_mesh(13); 
+    auto m = refined_square_mesh(3); 
 
     int n_verts = m.vertices.size();
     std::vector<double> src_str(n_verts);
@@ -83,13 +84,11 @@ TEST(HeavyInteract) {
     }
 
     TIC
-    auto obs_values = direct_interact(m, m, gauss(1), double_exp(0, 0.3),
-                                      laplace_single, src_str, 1);
+    auto obs_values = direct_interact(m, m, gauss(2), double_exp(2, 0.3),
+                                      laplace_single, src_str, 6);
     TOC("direct_interact on " + std::to_string(m.segments.size()) + " segments");
     // for(auto o: obs_values) 
     // {
     //     std::cout << o << std::endl;
     // }
-    //TODO: Codify the perimeter tests for the boundary element summation using
-    // the one kernel.
 }
