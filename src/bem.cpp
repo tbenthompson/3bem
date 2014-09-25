@@ -78,6 +78,8 @@ double appx_segment_distance(std::array<double, 2> pt,
     return std::sqrt(std::min(d0, d1));
 }
 
+double simpler(double, double, double, double, double){return 1.0;}
+
 double integral(QuadratureRule& quad_rule,
                 KernelFnc& kernel,
                 const std::array<double, 2>& src_v0,
@@ -93,24 +95,27 @@ double integral(QuadratureRule& quad_rule,
         //TODO: Generalize to use an arbitrary polynomial shape function.
         const double src_x = ref_to_real(x_hat, src_v0[0], src_v1[0]);
         const double src_y = ref_to_real(x_hat, src_v0[1], src_v1[1]);
-        const double map_deriv_x = src_v1[0] - src_v0[0];
-        const double map_deriv_y = src_v1[1] - src_v0[1];
-        const double map_deriv_length = hypot(map_deriv_x, map_deriv_y);
-        const double n_x = -map_deriv_y / map_deriv_length;
-        const double n_y = map_deriv_x / map_deriv_length;
-        const double quad_weight = quad_rule[src_q].second; 
-
+        
         //TODO: Generalize to use an arbitrary polynomial shape function.
         const double interp_value = linear_interp(x_hat, v0_val, v1_val);
 
-        //TODO: Is it src - obs or obs - src?
+
+        const double map_deriv_x = src_v1[0] - src_v0[0];
+        const double map_deriv_y = src_v1[1] - src_v0[1];
+        const double map_deriv_length_inv = 1.0 / hypot(map_deriv_x, map_deriv_y);
+        const double nx = -map_deriv_y * map_deriv_length_inv;
+        const double ny = map_deriv_x * map_deriv_length_inv;
+
+
         const double dx = obs_x - src_x;
         const double dy = obs_y - src_y;
-        const double r = hypot(dx, dy);
+        const double r2 = dx * dx + dy * dy;
 
         //TODO: Need a way to specify which kernel parameters are necessary
-        const double kernel_val = kernel(r, dx, dy, n_x, n_y);
-        const double jacobian = src_length / 2.0;
+        const double kernel_val = kernel(r2, dx, dy, nx, ny);
+
+        const double jacobian = src_length * 0.5;
+        const double quad_weight = quad_rule[src_q].second; 
         result += quad_weight * interp_value * kernel_val * jacobian;
     }
     return result;
@@ -203,7 +208,7 @@ std::vector<double> direct_interact(Mesh& src_mesh,
     std::vector<double> obs_value(n_obs);
     NearEval near_eval(n_steps);
 
-// #pragma omp parallel for
+#pragma omp parallel for
     for (int obs_idx = 0; obs_idx < n_obs_segs; obs_idx++) {
         auto obs_seg = obs_mesh.segments[obs_idx];
         auto obs_v0 = obs_mesh.vertices[obs_seg[0]];

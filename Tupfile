@@ -7,6 +7,7 @@ CPPFLAGS += -Winvalid-pch
 CPPFLAGS += -pipe
 CPPFLAGS += $(INCLUDE)
 CPPFLAGS += -fopenmp
+CPPFLAGS += -mavx
 
 DEBUGFLAGS += -g 
 DEBUGFLAGS += -Og
@@ -39,6 +40,10 @@ TESTLINKFLAGS += -l:$(LIBNAME)
 TESTLINKFLAGS += -lUnitTest++
 TESTLINKFLAGS += $(LINKFLAGS)
 
+EXAMPLELINKFLAGS += -Wl,-rpath=.
+EXAMPLELINKFLAGS += -l:$(LIBNAME)
+EXAMPLELINKFLAGS += $(LINKFLAGS)
+
 // COMPILER = g++
 COMPILER = mpic++
 
@@ -47,5 +52,4 @@ COMPILER = mpic++
 : foreach test/*.cpp |> $(COMPILER) $(CPPFLAGS) -c %f -o %o |> test/%B.o
 : test/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(TESTLINKFLAGS) |> test/run_tests
 : foreach examples/*.cpp |> $(COMPILER) $(CPPFLAGS) -c %f -o %o |> examples/%B.o
-: foreach examples/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(TESTLINKFLAGS) |> test/%B
-: test/run_tests |> mpirun -n 1 ./%f |>
+: foreach examples/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(EXAMPLELINKFLAGS) |> examples/%B

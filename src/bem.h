@@ -52,14 +52,14 @@ double appx_segment_distance(std::array<double, 2> pt,
 
 
 //TODO: Autogenerate kernels using some python sympy script
-inline double laplace_single(double r, double dx, double dy,
+inline double laplace_single(double r2, double dx, double dy,
                              double nx, double ny) {
-    return -1.0 / (2 * M_PI) * log(r);
+    return -1.0 / (4 * M_PI) * log(r2);
 }
 
-inline double laplace_double(double r, double dx, double dy,
+inline double laplace_double(double r2, double dx, double dy,
                              double nx, double ny) {
-    return (dx * nx + dy * ny) / (2 * M_PI * r * r);
+    return (dx * nx + dy * ny) / (2 * M_PI * r2);
 }
 
 inline double one(double, double, double, double, double) {
