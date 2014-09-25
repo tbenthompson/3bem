@@ -11,7 +11,7 @@ inline double one_kernel(double ox, double oy, double oz,
     return 1.0;
 }
 
-inline double laplace_single(double ox, double oy, double oz,
+inline double laplace_single_1(double ox, double oy, double oz,
                              double sx, double sy, double sz) {
     const double r = sqrt((ox - sx) * (ox - sx) + 
                           (oy - sy) * (oy - sy) +
@@ -31,7 +31,7 @@ TEST(Direct) {
     for (int i = 0; i < n; ++i) values[i] = 1.0;
 
     TIC
-    auto result = direct_n_body(src, obs, laplace_single, values);
+    auto result = direct_n_body(src, obs, laplace_single_1, values);
     TOC("Direct N Body");
 
 

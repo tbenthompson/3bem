@@ -5,3 +5,5 @@ oprofile also does a decent job
 zoom is a more advanced profiler with a gui etc
 using gdb plus interupting the running process occassionally is very easy and
 highly effective
+
+pmu-tools toplev.py is great. use it.

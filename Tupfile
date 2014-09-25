@@ -46,4 +46,6 @@ COMPILER = mpic++
 : src/*.o |> $(COMPILER) %f -o %o $(LIBLINKFLAGS) |> $(LIBNAME)
 : foreach test/*.cpp |> $(COMPILER) $(CPPFLAGS) -c %f -o %o |> test/%B.o
 : test/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(TESTLINKFLAGS) |> test/run_tests
+: foreach examples/*.cpp |> $(COMPILER) $(CPPFLAGS) -c %f -o %o |> examples/%B.o
+: foreach examples/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(TESTLINKFLAGS) |> test/%B
 : test/run_tests |> mpirun -n 1 ./%f |>

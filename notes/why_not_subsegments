@@ -5,3 +5,6 @@ this ignores that high order (Gauss, etc..) quadrature rules are in fact
 global operations and removing a section of the integral and evaluating it
 more accurately results in a large error. This should have been obvious. 
 Otherwise, adaptive quadrature would be trivial.
+
+Subsegments are still a good idea in a broader sense that the domain of 
+integration does not need to be the same as the support of the basis functions.

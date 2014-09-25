@@ -13,6 +13,13 @@ inline double ref_to_real(double x_hat, double a, double b) {
     return a + (b - a) * ((x_hat + 1.0) / 2.0);
 }
 
+inline double hypot(double x, double y) {
+    return sqrt(x * x + y * y);
+}
+inline double hypot(double x, double y, double z) {
+    return sqrt(x * x + y * y + z * z);
+}
+
 typedef std::vector<std::pair<double, double>> QuadratureRule;
 
 std::vector<int> naturals(int min, int max);
