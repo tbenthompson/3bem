@@ -6,10 +6,10 @@
 TEST(BoundingBox) {
     auto es = three_pts();
     auto bb = bounding_box(es);
-    double min[] = {-1.0, -2.0, -3.0};
-    double max[] = {1.0, 2.0, 3.0};
-    CHECK_ARRAY_CLOSE(((bb.center + bb.half_width) / 1.001).loc, max, 3, 1e-14);
-    CHECK_ARRAY_CLOSE(((bb.center - bb.half_width) / 1.001).loc, min, 3, 1e-14);
+    double hw[] = {1.001, 2.002, 3.003};
+    double center[] = {0.0, 0.0, 0.0};
+    CHECK_ARRAY_CLOSE(bb.half_width, hw, 3, 1e-14);
+    CHECK_ARRAY_CLOSE(bb.center, center, 3, 1e-14);
 }
 
 TEST(BigBig2) {

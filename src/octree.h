@@ -7,72 +7,24 @@
 #include <iostream>
 #include <limits>
 
-/* A templated vector class. Can be used to represent a 2D or 3D
- * vector. The class is a thin wrapper over an array.
- */
-class Vec3 {
-public:
-    double loc[3];
-
-    inline bool operator==(const Vec3& rhs) const {
-        bool retval = true;
-        for(int i = 0; i < 3; ++i) {
-            retval &= (loc[i] == rhs.loc[i]);
-        }
-        return retval;
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const Vec3& obj)
-    {
-        os << "{";
-        for (int d = 0; d < 3 - 1; ++d) {
-            os << obj.loc[d] << ", ";
-        }
-        return os << obj.loc[3 - 1] << "}";
-    }
-
-    friend Vec3 operator+(Vec3 lhs, const Vec3& rhs) {
-        for(int i = 0; i < 3; ++i) {
-            lhs.loc[i] += rhs.loc[i];
-        }
-        return lhs;
-    }
-
-    friend Vec3 operator-(Vec3 lhs, const Vec3& rhs) {
-        for(int i = 0; i < 3; ++i) {
-            lhs.loc[i] -= rhs.loc[i];
-        }
-        return lhs;
-    }
-
-    friend Vec3 operator*(Vec3 lhs, const double& rhs) {
-        for(int i = 0; i < 3; ++i) {
-            lhs.loc[i] *= rhs;
-        }
-        return lhs;
-    }
-
-    friend Vec3 operator/(Vec3 lhs, const double& rhs) {
-        for(int i = 0; i < 3; ++i) {
-            lhs.loc[i] /= rhs;
-        }
-        return lhs;
-    }
-};
-
-
 /* A box class defined by its center and half_width. These are using as
  * bounding boxes for the nodes in the octree hierarchy.
  */
 class Box {
 public:
-    Vec3 center;
-    Vec3 half_width;
+    std::array<double,3> center;
+    std::array<double,3> half_width;
 
     friend std::ostream& operator<<(std::ostream& os, const Box& obj)
     {
-        os << "{Box center=" << obj.center << 
-               ", half_width=" << obj.half_width << "}";
+        os << "{Box center={";
+        os << obj.center[0] << ",";
+        os << obj.center[1] << ",";
+        os << obj.center[2] << "}";
+        os << ", half_width={";
+        os << obj.half_width[0] << ",";
+        os << obj.half_width[1] << ",";
+        os << obj.half_width[2] << "}}";
         return os;
     }
 };

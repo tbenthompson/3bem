@@ -92,28 +92,4 @@ double integral(QuadratureRule& quad_rule,
                 const double v1_val,
                 double obs_x, 
                 double obs_y);
-// chunks to write:
-// mesh cleaning and region determination 
-// only inputs are pairs/triplets of vertices boundary conditions on those segments
-// subsegmentation (NOT YET)
-// refine func (DONE)
-// summation func (DONE)
-// richardson extrapolation quadrature (PARTIAL)
-// mappings from reference to real space
-// --linear (DONE)
-// --polynomial (NOT YET)
-// basis 
-// --linear (DONE)
-// --polynomial (NOT YET)
-// constraints --> boundary conditions, non-singular traction BCs
-// which kernels to use for the different boundary integral equations
-// the kernels
-// evaluate solution on the surface after calculation -- just use the 
-//     integral equation again
-// interior meshing and evaluation
-// adaptivity?
-// that old list of good things to do!
-// transcribe all those old sheets of thoughts
-// look into UFL from Fenics as the 
-
 #endif

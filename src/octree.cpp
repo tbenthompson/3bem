@@ -4,40 +4,39 @@
 
 Box bounding_box(const std::array<std::vector<double>,3>& x)
 {
-    Vec3 min_corner = {x[0][0], x[1][0], x[2][0]};
-    Vec3 max_corner = {x[0][0], x[1][0], x[2][0]};
+    std::array<double,3> min_corner = {x[0][0], x[1][0], x[2][0]};
+    std::array<double,3> max_corner = {x[0][0], x[1][0], x[2][0]};
     for (unsigned int d = 0; d < 3; ++d) {
         for (unsigned int i = 1; i < x[0].size(); ++i) {
-            min_corner.loc[d] = std::min(min_corner.loc[d], x[d][i]);
-            max_corner.loc[d] = std::max(max_corner.loc[d], x[d][i]);
+            min_corner[d] = std::min(min_corner[d], x[d][i]);
+            max_corner[d] = std::max(max_corner[d], x[d][i]);
         }
 
         double min_val = 0.0;
-        MPI_Allreduce(&min_corner.loc[d], &min_val, 1, MPI_DOUBLE,
+        MPI_Allreduce(&min_corner[d], &min_val, 1, MPI_DOUBLE,
                       MPI_MIN, MPI_COMM_WORLD);
-        // std::cout << "Minimum in dimension: " << d << " = " << min_corner.loc[d] <<
+        // std::cout << "Minimum in dimension: " << d << " = " << min_corner[d] <<
         //              "    and After MPI_Allreduce:" << min_val << std::endl;
 
         double max_val = 0.0;
-        MPI_Allreduce(&max_corner.loc[d], &max_val, 1, MPI_DOUBLE,
+        MPI_Allreduce(&max_corner[d], &max_val, 1, MPI_DOUBLE,
                       MPI_MAX, MPI_COMM_WORLD);
-        // std::cout << "Maximum in dimension: " << d << " = " << max_corner.loc[d] <<
+        // std::cout << "Maximum in dimension: " << d << " = " << max_corner[d] <<
         //              "   and After MPI_Allreduce:" << max_val << std::endl;
 
-        min_corner.loc[d] = min_val;
-        max_corner.loc[d] = max_val;
+        min_corner[d] = min_val;
+        max_corner[d] = max_val;
     }
 
 
     Box ext;
+    for (int d = 0; d < 3; ++d) {
+        ext.center[d] = (max_corner[d] + min_corner[d]) / 2.0;
+        // Fudge the width to be slightly wider than necessary in order to make
+        // sure that no points on the bounding box boundary.
+        ext.half_width[d] = 1.001 * (max_corner[d] - min_corner[d]) / 2.0;
+    }
     /* std::cout << max_corner << " " << min_corner << std::endl; */
-    ext.center = (max_corner + min_corner) / 2.0;
-    ext.half_width = (max_corner - min_corner) / 2.0;
-    // Fudge the width to be slightly wider than necessary in order to make
-    // sure that no points on the bounding box boundary.
-    ext.half_width.loc[0] *= 1.001;
-    ext.half_width.loc[1] *= 1.001;
-    ext.half_width.loc[2] *= 1.001;
     return ext;
 }
 
@@ -58,11 +57,11 @@ Box bounding_box(const std::array<std::vector<double>,3>& x)
 //     for (unsigned int i = 0; i < p_elements[0].size(); ++i) {
 //         for (unsigned int d = 0; d < 3; d++) {
 //             indices[i][d] = to_octree_space(p_elements[d][i],
-//                                             bounds.center.loc[d],
-//                                             bounds.half_width.loc[d],
+//                                             bounds.center[d],
+//                                             bounds.half_width[d],
 //                                             n_cells_1d);
-//             // std::cout << p_elements[d][i] << " " << bounds.center.loc[d] <<
-//             //              " " << bounds.half_width.loc[d] << " " << n_cells_1d <<
+//             // std::cout << p_elements[d][i] << " " << bounds.center[d] <<
+//             //              " " << bounds.half_width[d] << " " << n_cells_1d <<
 //             //              " " << indices[i][d] << std::endl;
 //             // assert(indices[i][d] >= 0);
 //             // assert(indices[i][d] < n_cells_1d);
@@ -88,16 +87,16 @@ Octree::Octree(std::array<std::vector<double>,3>& p_elements,
     std::vector<uint64_t> morton_codes(this->elements[0].size());
     for (unsigned int i = 0; i < this->elements[0].size(); i++) {
         unsigned int x = to_octree_space(this->elements[0][i], 
-                                         bounds.center.loc[0],
-                                         bounds.half_width.loc[0],
+                                         bounds.center[0],
+                                         bounds.half_width[0],
                                          4);
         unsigned int y = to_octree_space(this->elements[1][i], 
-                                         bounds.center.loc[1],
-                                         bounds.half_width.loc[1],
+                                         bounds.center[1],
+                                         bounds.half_width[1],
                                          4);
         unsigned int z = to_octree_space(this->elements[2][i], 
-                                         bounds.center.loc[2],
-                                         bounds.half_width.loc[2],
+                                         bounds.center[2],
+                                         bounds.half_width[2],
                                          4);
         morton_codes[i] = morton_encode(x, y, z);
     }
