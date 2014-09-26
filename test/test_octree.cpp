@@ -1,6 +1,5 @@
 #include "UnitTest++.h"
 #include "octree.h"
-#include "mpi.h"
 #include "test_shared.h"
 
 TEST(BoundingBox) {
@@ -13,10 +12,7 @@ TEST(BoundingBox) {
 }
 
 TEST(BigBig2) {
-    //TODO: Replace with an mpi_setup procedure.
-    int p;
-    MPI_Comm_size(MPI_COMM_WORLD, &p);
-    const int n = (int)(1e4 / p);
+    const int n = 1e4;
     std::array<std::vector<double>,3> es =
         {random_list(n), random_list(n), random_list(n)};
     TIC

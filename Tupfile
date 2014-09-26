@@ -47,8 +47,8 @@ EXAMPLELINKFLAGS += -Wl,-rpath=.
 EXAMPLELINKFLAGS += -l:$(LIBNAME)
 EXAMPLELINKFLAGS += $(LINKFLAGS)
 
-// COMPILER = g++
-COMPILER = mpic++
+COMPILER = g++
+// COMPILER = mpic++
 
 : foreach src/*.cpp |> $(COMPILER) $(SHAREDLIBFLAGS) -c %f -o %o |> src/%B.o
 : src/*.o |> $(COMPILER) %f -o %o $(LIBLINKFLAGS) |> $(LIBNAME)

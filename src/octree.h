@@ -36,7 +36,7 @@ inline int to_octree_space(double x, double center,
     int res = std::floor(((x - center) / (2 * half_width) + 0.5) * leaves);
     return res;
 }
-//
+
 // method to seperate bits from a given integer 3 positions apart
 inline uint64_t split_by_3(unsigned int a){
     uint64_t x = a & 0x1fffff; // we only look at the first 21 bits
@@ -56,7 +56,7 @@ inline uint64_t split_by_3(unsigned int a){
     return x;
 }
 
-inline uint64_t morton_encode(unsigned int x, unsigned int y, unsigned int z){
+inline uint64_t morton_encode(unsigned int x, unsigned int y, unsigned int z) {
     uint64_t answer = 0 | split_by_3(x) | split_by_3(y) << 1 | split_by_3(z) << 2;
     return answer;
 }
