@@ -9,40 +9,26 @@ TEST(BoundingBox) {
     double center[] = {0.0, 0.0, 0.0};
     CHECK_ARRAY_CLOSE(bb.half_width, hw, 3, 1e-14);
     CHECK_ARRAY_CLOSE(bb.center, center, 3, 1e-14);
-}
-
-TEST(BigBig2) {
-    const int n = 1e4;
-    std::array<std::vector<double>,3> es =
-        {random_list(n), random_list(n), random_list(n)};
-    TIC
-    Octree octree(es, 5); 
-    TOC("Octree assembly");
-    // unsigned int total_indices = check_invariant(octree.root);
-    // CHECK(total_indices == octree.elements->size());
-}
-
-TEST(MortonEncode) {
-    int split = 2;
-    //TODO: This could be a property based test.
-    uint64_t center = morton_encode(0, 0, split);
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            for (int k = 0; k < 4; k++) {
-                uint64_t val = morton_encode(k, j, i); 
-                if (i < split) {
-                    CHECK(val < center);
-                } else if (i == split && j == 0 && k == 0) {
-                    CHECK(val == center); 
-                } else {
-                    CHECK(val > center);
-                }
-            }
-        }
+    for (int d = 0; d < 3; d++) {
+        CHECK_CLOSE(bb.center[d] - bb.half_width[d], bb.min_corner[d], 1e-12);
+        CHECK_CLOSE(bb.center[d] + bb.half_width[d], bb.max_corner[d], 1e-12);
     }
 }
 
-TEST(MortonEncodeCrossLevels) {
+TEST(GetChildBox) {
+    Box parent = {{0.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, 
+                  {-1.0, -1.0, -1.0}, {1.0, 1.0, 1.0}};
+    Box child = get_child_box({1, 0, 1}, parent);
+    double correct[2][3] = {
+        {0.5, -0.5, 0.5}, //center
+        {0.5, 0.5, 0.5} //half_width
+    };
+    CHECK_ARRAY_CLOSE(child.center, correct[0], 3, 1e-6);
+    CHECK_ARRAY_CLOSE(child.half_width, correct[1], 3, 1e-6);
+    for (int d = 0; d < 3; d++) {
+        CHECK_CLOSE(child.center[d] - child.half_width[d], child.min_corner[d], 1e-12);
+        CHECK_CLOSE(child.center[d] + child.half_width[d], child.max_corner[d], 1e-12);
+    }
 }
 
 TEST(ToOctreeSpace) {
@@ -72,3 +58,14 @@ TEST(ToOctreeSpace1Cell) {
     val = to_octree_space(0.8, 0.5, 0.5, 1);
     CHECK(val == 0);
 }
+
+TEST(BigBig2) {
+    const int n = 1e4;
+    auto pts = random_pts(n);
+    TIC
+    Octree octree(pts, 500000); 
+    TOC("Octree assembly");
+    // unsigned int total_indices = check_invariant(octree.root);
+    // CHECK(total_indices == octree.elements->size());
+}
+

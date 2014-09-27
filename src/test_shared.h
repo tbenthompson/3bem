@@ -20,11 +20,11 @@
               << "ms.\n";
 
 
-inline std::array<std::vector<double>,3> three_pts() {
-    std::array<std::vector<double>,3> es;
-    es[0] = {1.0, -1.0, 0.0};
-    es[1] = {2.0, 0.0, -2.0};
-    es[2] = {0.0, -3.0, 3.0};
+inline std::vector<std::array<double,3>> three_pts() {
+    std::vector<std::array<double,3>> es(3);
+    es[0] = {1.0, 2.0, 0.0};
+    es[1] = {-1.0, 0.0, -3.0};
+    es[2] = {0.0, -2.0, 3.0};
     return es;
 }
 
@@ -37,6 +37,16 @@ inline std::vector<double> random_list(int N) {
         es[i] = dis(gen);
     }
     return es;
+}
+
+inline std::vector<std::array<double,3>> random_pts(int N) {
+    std::array<std::vector<double>, 3> locs = 
+        {random_list(N), random_list(N), random_list(N)};
+    std::vector<std::array<double,3>> pts(locs[0].size());
+    for (unsigned int i = 0; i < locs[0].size(); i++) {
+        pts[i] = {locs[0][i], locs[1][i], locs[2][i]};
+    }
+    return pts;
 }
 
 inline Mesh square_mesh() {
