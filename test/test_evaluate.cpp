@@ -9,9 +9,9 @@ const double PI = 4.0 * std::atan(1.0);
 TEST(Direct) {
     CHECK_CLOSE(one_kernel({0, 0, 0}, {0, 0, 0}), 1.0, 1e-14);
 
-    int n = 500;
+    int n = 1024 * 10;
     auto src = random_pts(n);
-    auto obs = random_pts(n - 1);
+    auto obs = random_pts(n);
     std::vector<double> values(n);
     for (int i = 0; i < n; ++i) values[i] = 1.0;
 
@@ -19,6 +19,8 @@ TEST(Direct) {
     TIC
     auto result = direct_n_body(src, obs, k, values);
     TOC("Direct N Body");
+    std::cout << "number of interaction: " << n * n << std::endl;
+    
 
 
     // std::vector<double> correct(n);

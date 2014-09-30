@@ -7,6 +7,7 @@
 
 class OctreeCell;
 class Octree;
+class Box;
     
 typedef std::function<double (std::array<double,3>, std::array<double,3>)> Kernel;
 
@@ -36,33 +37,39 @@ public:
     // The observation effect strengths
     // obs_effect is the main output at the end of a FMM processing pass
     std::vector<double> obs_effect;
+
+
+    void P2M_pts_cell(int m_cell_idx);
+    void P2M_helper(int m_cell_idx);
+    void P2M();
+
+    //Multipole to point -- used by treecode but not FMM
+    void M2P_cell_pt(const Box& m_cell_bounds,
+                     int m_cell_idx, int pt_idx);
+
+    void treecode_eval_helper(int m_cell_idx, int pt_idx);
+    void treecode_eval();
+
+    void P2P_cell_pt(int m_cell_idx, int pt_idx);
 };
 
-FMMInfo setup_fmm_info(Octree& oct, int n_exp_pts, std::vector<double> values);
+//TODO: Make the functions for the different operations more uniform 
+// -- global operation (P2M, treecode, FMM)
+// -- cell-wise operations
+// -- node-wise operations
 
 //Particle to multipole
-double P2M_pt_node(const OctreeCell& cell,
-                   const std::array<double,3>& node,
-                   const std::array<double,3>& pt,
-                   int n_exp_pts);
-
-void P2M_pts_cell(FMMInfo& fmm_info, int m_cell_idx);
-
-// Particle to multipole -- whole upwards pass.
-void P2M(FMMInfo& fmm_info);
+double interp_operator(const OctreeCell& cell,
+                       const std::array<double,3>& node,
+                       const std::array<double,3>& pt,
+                       int n_exp_pts);
+// Multipole to local and local to particle -- used by FMM but not treecode 
+void M2L_cell_cell(FMMInfo& fmm_info, const Box& m_cell_bounds, int m_cell_idx, 
+                   const Box& l_cell_bounds, int l_cell_idx);
+void L2P_cell_pts(FMMInfo& fmm_info, int l_cell_idx);
+void L2P(FMMInfo& fmm_info);
 
 //Point to point. 
-void P2P_cell_pt(FMMInfo& fmm_info, int m_cell_idx, int pt_idx);
-
-//Multipole to point
-void M2P_cell_pt(FMMInfo& fmm_info, int m_cell_idx, int pt_idx);
-
-void treecode_eval_helper(FMMInfo& fmm_info, int m_cell_idx, int pt_idx);
-void treecode_eval(FMMInfo& fmm_info);
-
-void M2L(FMMInfo& fmm_info, int m_cell_idx, int l_cell_idx);
-
-void L2P(FMMInfo& fmm_info, int l_cell_idx, int pt_idx);
-
+void fmm(FMMInfo& fmm_info);
 
 #endif
