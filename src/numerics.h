@@ -13,11 +13,21 @@ inline double ref_to_real(double x_hat, double a, double b) {
     return a + (b - a) * ((x_hat + 1.0) / 2.0);
 }
 
-inline double hypot(double x, double y) {
-    return sqrt(x * x + y * y);
-}
-inline double hypot(double x, double y, double z) {
-    return sqrt(x * x + y * y + z * z);
+inline double hypot2(double x, double y) {return x * x + y * y;}
+inline double hypot2(double x, double y, double z) {return x * x + y * y + z * z;}
+inline double hypot2(std::array<double,3> v0) {return hypot2(v0[0], v0[1], v0[2]);}
+inline double hypot(double x, double y) {return sqrt(hypot2(x, y));}
+inline double hypot(double x, double y, double z) {return sqrt(hypot2(x, y, z));}
+
+template <int dim>
+inline double dist2(const std::array<double,dim> v0, 
+                    const std::array<double,dim> v1) {
+    double result = 0.0;
+    for (int d = 0; d < dim; d++) {
+        const double delta = (v0[d] - v1[d]);
+        result += delta * delta;
+    }
+    return result;
 }
 
 typedef std::vector<std::pair<double, double>> QuadratureRule;

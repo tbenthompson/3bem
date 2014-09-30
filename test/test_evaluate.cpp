@@ -6,32 +6,18 @@
 
 const double PI = 4.0 * std::atan(1.0);
 
-inline double one_kernel(double ox, double oy, double oz,
-                  double sx, double sy, double sz) {
-    return 1.0;
-}
-
-inline double laplace_single_1(double ox, double oy, double oz,
-                             double sx, double sy, double sz) {
-    const double r = sqrt((ox - sx) * (ox - sx) + 
-                          (oy - sy) * (oy - sy) +
-                          (oz - sz) * (oz - sz));
-    return 1.0 / (4.0 * PI * r);
-}
-
 TEST(Direct) {
-    CHECK_CLOSE(one_kernel(0, 0, 0, 0, 0, 0), 1.0, 1e-14);
+    CHECK_CLOSE(one_kernel({0, 0, 0}, {0, 0, 0}), 1.0, 1e-14);
 
     int n = 500;
-    std::array<std::vector<double>,3> src =
-        {random_list(n), random_list(n), random_list(n)};
-    std::array<std::vector<double>,3> obs =
-        {random_list(n - 1), random_list(n - 1), random_list(n - 1)};
+    auto src = random_pts(n);
+    auto obs = random_pts(n - 1);
     std::vector<double> values(n);
     for (int i = 0; i < n; ++i) values[i] = 1.0;
 
+    Kernel k = laplace_single;
     TIC
-    auto result = direct_n_body(src, obs, laplace_single_1, values);
+    auto result = direct_n_body(src, obs, k, values);
     TOC("Direct N Body");
 
 

@@ -32,9 +32,7 @@ public:
     }
 };
 
-Box bounding_box(const std::vector<std::array<double,3>>& x);
-
-Box get_child_box(std::array<int,3> which, Box& parent_bounds);
+Box bounding_box(const std::vector<std::array<double,3>>& x, int begin, int end);
 
 inline int to_octree_space(double x, double center, 
                            double half_width, int leaves) {
@@ -46,9 +44,8 @@ inline int to_octree_space(double x, double center,
 class OctreeCell {
 public:
     // Vertical depth of the cell. The root is level 0.
+    // TODO: May not be necessary to store this.
     unsigned int level;
-
-    Box bounds;
 
     // The location of the cell within this level. For example,
     // a level 2 cell would have a location ranging from 0 to 3
@@ -56,11 +53,16 @@ public:
     // TODO: May not be necessary to store this.
     std::array<int,3> loc;
 
+    // The bounding box for the surrounded particles.
+    Box bounds;
+
     // The beginning and end indices of the elements in this cell.
-    // The index range is [begin, end] (inclusive of end indices);
+    // The index range is [begin, end) (inclusive of beginning index);
     unsigned int begin;
     unsigned int end;
 
+    //The beginning and end morton codes of the cell.
+    //TODO: Are these necessary except for construction?
     uint64_t min_code;
     uint64_t max_code;
 
@@ -72,7 +74,11 @@ public:
     std::array<int,8> children;
 };
 
-/* One quirk to the behavior of this octree implementation. 
+//TODO: I could filter out parts of the tree where a cell has only one child.
+//----- this relies on the tree usage not being dependent on the 
+//      division by 2 for each axis.
+//TODO: Test the individual pieces of the construction
+/* One quirk to the behavior of this octree implementation:
  * All points must be on the interior of the octree, they cannot be on
  * the boundaries. This allows the "to_octree_space" function to ignore the
  * edge cases involving the boundaries.
@@ -82,10 +88,13 @@ public:
     Octree(std::vector<std::array<double,3>>& elements,
            unsigned int max_elements_per_cell);
 
-    uint64_t compute_morton(std::array<double,3> pt, const Box& bounds);
+    uint64_t compute_morton(std::array<double,3> pt);
     void sort_elements();
-    void build_children(OctreeCell& cell);
-    void build_child(OctreeCell& cur_cell, int i, int j, int k);
+    std::array<int,8> build_children(OctreeCell& cell);
+    int build_child(OctreeCell& cur_cell, int i, int j, int k);
+
+    OctreeCell& get_root(); 
+    int get_root_index() const;
 
     const unsigned int max_elements_per_cell;
     // The elements and z-order morton location codes of the points in the
@@ -94,8 +103,11 @@ public:
     std::vector<uint64_t> morton_codes;
 
     std::vector<OctreeCell> cells;
+
+    Box bounds;
+    Box morton_bounds;
     
     //The deepest possible depth
-    static const int deepest = 1 << 20;
+    static const int deepest = 1 << 18;
 };
 #endif

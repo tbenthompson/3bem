@@ -6,7 +6,6 @@
 #include <random>
 #include <iostream>
 #include <chrono>
-#include "bem.h"
 
 #define TIC\
     std::chrono::high_resolution_clock::time_point start =\
@@ -49,41 +48,11 @@ inline std::vector<std::array<double,3>> random_pts(int N) {
     return pts;
 }
 
-inline Mesh square_mesh() {
-    std::vector<std::array<double, 2>> vertices = {
-        {0.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0},
-    };
-    
-    std::vector<std::array<int, 2>> segs = {
-        {0, 1}, {1, 2}, {2, 3}, {3, 0}
-    };
+class Mesh;
 
-    Mesh m = {vertices, segs};
-    return m;
-}
-
-inline Mesh refined_square_mesh(int levels) {
-
-    Mesh m = square_mesh();
-    for (int i = 0; i < levels; i++) {
-        m = refine_mesh(m, naturals(m.segments.size()));
-    }
-    return m;
-}
-
-inline Mesh circle_mesh(std::array<double, 2> center, double r, int n_segments) {
-    std::vector<std::array<double, 2>> vertices(n_segments);
-    std::vector<std::array<int, 2>> segs(n_segments);
-
-    for (int i = 0; i < n_segments; i++) {
-        double theta = (2 * M_PI) * (i / (double)n_segments);
-        vertices[i] = {center[0] + r * cos(theta), center[1] + r * sin(theta)};
-        segs[i] = {i, i + 1};
-    }
-    segs[n_segments - 1][1] = 0;
-
-    Mesh m = {vertices, segs};
-    return m;
-}
+//TODO: Move these out to a mesh_gen module
+Mesh square_mesh();
+Mesh refined_square_mesh(int levels);
+Mesh circle_mesh(std::array<double, 2> center, double r, int n_segments);
 
 #endif

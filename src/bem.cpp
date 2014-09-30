@@ -63,18 +63,13 @@ inline double linear_interp(double x_hat, double v0_val, double v1_val) {
 
 
 
-double dist2(std::array<double, 2> v0, std::array<double, 2> v1) {
-    double dx = (v0[0] - v1[0]);
-    double dy = (v0[1] - v1[1]);
-    return dx * dx + dy * dy;
-}
 
 //TODO: test this
 double appx_segment_distance(std::array<double, 2> pt,
                              std::array<double, 2> v0, 
                              std::array<double, 2> v1) {
-    double d0 = dist2(pt, v0);
-    double d1 = dist2(pt, v1);
+    double d0 = dist2<2>(pt, v0);
+    double d1 = dist2<2>(pt, v1);
     return std::sqrt(std::min(d0, d1));
 }
 
@@ -162,12 +157,12 @@ double eval_integral_equation(Mesh& src_mesh,
                               std::vector<double>& src_strength) {
     double result = 0.0;
     std::vector<double> near_steps(near_eval.n_steps, 0.0);
-    for (int i = 0; i < src_mesh.segments.size(); i++) {
+    for (unsigned int i = 0; i < src_mesh.segments.size(); i++) {
         auto src_seg = src_mesh.segments[i];
         // std::cout << src_seg[0] << " " << src_seg[1] << std::endl;
         auto src_v0 = src_mesh.vertices[src_seg[0]];
         auto src_v1 = src_mesh.vertices[src_seg[1]];
-        double src_length = sqrt(dist2(src_v0, src_v1));
+        double src_length = sqrt(dist2<2>(src_v0, src_v1));
         double dist = appx_segment_distance(obs_pt, src_v0, src_v1);
 
         double v0_val = src_strength[src_seg[0]];
