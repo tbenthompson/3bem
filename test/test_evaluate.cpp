@@ -28,7 +28,7 @@ TEST(Direct) {
 }
 
 TEST(FastDirect) {
-    int n = 8 * 40000;
+    int n = 8 * 125000;
     bool check = n < 2000;
     std::array<std::vector<double>,3> src =
         {random_list(n), random_list(n), random_list(n)};
