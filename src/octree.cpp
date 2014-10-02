@@ -58,9 +58,12 @@ Octree::Octree(std::vector<std::array<double,3>>& p_elements,
                        0, (unsigned int)morton_codes.size(),
                        compute_morton(bounds.min_corner),
                        compute_morton(bounds.max_corner),
-                       {-1, -1, -1, -1, -1, -1, -1, -1}};
+                       {-1, -1, -1, -1, -1, -1, -1, -1},
+                       false};
     if (elements.size() > max_elements_per_cell) {
         root.children = build_children(root);
+    } else {
+        root.is_leaf = true;
     }
     cells.push_back(root);
 }
@@ -90,6 +93,7 @@ int Octree::build_child(OctreeCell& cur_cell, int i, int j, int k) {
     auto morton_steps = ((cur_cell.max_code - cur_cell.min_code) / 8);
     auto min_code = cur_cell.min_code + child_idx * morton_steps;
     auto max_code = cur_cell.max_code - (7 - child_idx) * morton_steps;
+    assert(max_code >= min_code);
 
 
     unsigned int begin = std::lower_bound(morton_codes.begin() + cur_cell.begin,
@@ -98,15 +102,28 @@ int Octree::build_child(OctreeCell& cur_cell, int i, int j, int k) {
     unsigned int end = std::upper_bound(morton_codes.begin() + cur_cell.begin,
                                morton_codes.begin() + cur_cell.end, max_code) 
              - morton_codes.begin();
+    assert(end >= begin);
 
-    if (begin == end) {
+    // Every cell must have at least two points in it.
+    if (end - begin == 0) {
         return -1;
     }
 
     //TODO: If computing bounding boxes from pts becomes too much work,
     //the current bounding box can be computed from the children's bounding
     //boxes.
-    auto box = bounding_box(elements, begin, end);
+    Box box;
+    if (end - begin == 1) {
+        //TODO: Extract this get_box or get_single_pt_box function or both.
+        for (int d = 0; d < 3; d++) {
+            box.center[d] = (elements[begin][d] + cur_cell.bounds.center[d]) / 2.0;
+            box.half_width[d] = std::fabs(elements[begin][d] - cur_cell.bounds.center[d]) / 2.5;
+            box.min_corner[d] = box.center[d] - box.half_width[d];
+            box.max_corner[d] = box.center[d] + box.half_width[d];
+        }
+    } else {
+        box = bounding_box(elements, begin, end);
+    }
 
     auto level = cur_cell.level + 1;
 
@@ -116,11 +133,13 @@ int Octree::build_child(OctreeCell& cur_cell, int i, int j, int k) {
     loc[2] = loc[2] * 2 + k;
 
     OctreeCell new_cell = {level, loc, box, begin, end, min_code, max_code,
-                          {-1, -1, -1, -1, -1, -1, -1, -1}};
+                          {-1, -1, -1, -1, -1, -1, -1, -1}, false};
     
     //build children recursively -- depth first
     if (end - begin > max_elements_per_cell) {
         new_cell.children = build_children(new_cell);
+    } else {
+        new_cell.is_leaf = true;
     }
     cells.push_back(new_cell);
     return cells.size() - 1;

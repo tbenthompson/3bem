@@ -21,7 +21,8 @@ double interp_operator(const OctreeCell& cell,
                        int n_exp_pts) {
     double effect = 1.0;
     for (int d = 0; d < 3; d++) {
-        double x_hat = real_to_ref(pt[d], cell.bounds.min_corner[d],
+        double x_hat = real_to_ref(pt[d], 
+                                   cell.bounds.min_corner[d],
                                    cell.bounds.max_corner[d]);
         effect *= s_n(node[d], x_hat, n_exp_pts);
     }
@@ -30,7 +31,8 @@ double interp_operator(const OctreeCell& cell,
 
 
 FMMInfo::FMMInfo(Kernel kernel, const Octree& src, std::vector<double>& values, 
-                 const Octree& obs, int n_exp_pts):
+                 const Octree& obs, int n_exp_pts, double mac2):
+    mac2(mac2),
     n_exp_pts(n_exp_pts),
     nodes(get_3d_expansion_nodes(n_exp_pts)),
     kernel(kernel),
@@ -39,7 +41,7 @@ FMMInfo::FMMInfo(Kernel kernel, const Octree& src, std::vector<double>& values,
     values(values),
     obs_oct(obs),
     local_weights(obs_oct.cells.size() * nodes.size(), 0.0),
-    obs_effect(obs_oct.elements.size())
+    obs_effect(obs_oct.elements.size(), 0.0)
 {}
 
 void FMMInfo::P2M_pts_cell(int m_cell_idx) {
@@ -58,13 +60,16 @@ void FMMInfo::P2M_pts_cell(int m_cell_idx) {
 
 void FMMInfo::P2M_helper(int m_cell_idx) {
     const auto cell = src_oct.cells[m_cell_idx];
-    bool children = false;
+    // If no children, do leaf P2M
+    if (cell.is_leaf) {
+        P2M_pts_cell(m_cell_idx);
+        return;
+    }
     for (int c = 0; c < 8; c++) {
         int child_idx = cell.children[c];
         if (child_idx == -1) {
             continue;
         }
-        children = true;
         // bottom-up tree traversal, recurse before doing work.
         P2M_helper(child_idx);
         auto child = src_oct.cells[child_idx];
@@ -85,10 +90,6 @@ void FMMInfo::P2M_helper(int m_cell_idx) {
                     multipole_weights[child_node_idx] * P2M_kernel;
             }
         }
-    }
-    // If no children, do leaf P2M
-    if (!children) {
-        P2M_pts_cell(m_cell_idx);
     }
 }
 
@@ -119,40 +120,42 @@ void FMMInfo::M2P_cell_pt(const Box& m_cell_bounds,
         }
         double M2P_kernel = 
             kernel(obs_oct.elements[pt_idx], src_node_loc);
-        obs_effect[pt_idx] += 
-            multipole_weights[node_idx] * M2P_kernel;
+        obs_effect[pt_idx] += multipole_weights[node_idx] * M2P_kernel;
     }
 }
 
-void FMMInfo::treecode_eval_helper(int m_cell_idx, int pt_idx) {
-    auto x = obs_oct.elements[pt_idx];
-    const auto cell = src_oct.cells[m_cell_idx];
+void FMMInfo::treecode_process_cell(const OctreeCell& cell, int cell_idx, int pt_idx) {
+    const auto x = obs_oct.elements[pt_idx];
     const double dist_squared = dist2<3>(x, cell.bounds.center);
     const double radius_squared = hypot2(cell.bounds.half_width); 
-    if (dist_squared < 9 * radius_squared) {
-        //too close
-        bool children = false;
-        for (int c = 0; c < 8; c++) {
-            int child_idx = cell.children[c];
-            if (child_idx == -1) {
-                continue;
-            }
-            children = true;
-            treecode_eval_helper(child_idx, pt_idx);
+    if (dist_squared > mac2 * radius_squared) {
+        M2P_cell_pt(cell.bounds, cell_idx, pt_idx);    
+        return;
+    } else if (cell.is_leaf) {
+        P2P_cell_pt(cell_idx, pt_idx);
+        return;
+    }
+    treecode_eval_helper(cell, pt_idx);
+}
+
+void FMMInfo::treecode_eval_helper(const OctreeCell& cell, int pt_idx) {
+    for (int c = 0; c < 8; c++) {
+        const int child_idx = cell.children[c];
+        if (child_idx == -1) {
+            continue;
         }
-        if (!children) {
-            P2P_cell_pt(m_cell_idx, pt_idx);
-        }
-    } else {
-        M2P_cell_pt(cell.bounds, m_cell_idx, pt_idx);
+        const auto child = src_oct.cells[child_idx];
+        treecode_process_cell(child, child_idx, pt_idx);
     }
 }
 
 void FMMInfo::treecode_eval() {
-    auto pts = obs_oct.elements;
+    const auto pts = obs_oct.elements;
+    const int root_idx = src_oct.get_root_index();
+    const auto root = src_oct.cells[root_idx];
 #pragma omp parallel for
     for(unsigned int i = 0; i < pts.size(); i++) {
-        treecode_eval_helper(src_oct.get_root_index(), i);
+        treecode_process_cell(root, root_idx, i);
     }
 }
 // 

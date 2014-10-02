@@ -72,6 +72,8 @@ public:
     // children of this cell.
     // cell index of -1 means no child.
     std::array<int,8> children;
+
+    bool is_leaf;
 };
 
 //TODO: I could filter out parts of the tree where a cell has only one child.

@@ -14,7 +14,14 @@ typedef std::function<double (std::array<double,3>, std::array<double,3>)> Kerne
 class FMMInfo {
 public:
     FMMInfo(Kernel kernel, const Octree& src, std::vector<double>& values,
-            const Octree& obs, int n_exp_pts);
+            const Octree& obs, int n_exp_pts, double mac2);
+
+    // The squared multipole acceptance criteria. This represents how far away
+    // a cell needs to be before the multipole to local operator is used 
+    // instead of the particle to particle operator. See Yokota's Dual Tree
+    // Traversal paper for details on the implementation of a MAC in an FMM.
+    double mac2;
+
     // The n_exp_pts of interpolation.
     int n_exp_pts;
 
@@ -47,7 +54,8 @@ public:
     void M2P_cell_pt(const Box& m_cell_bounds,
                      int m_cell_idx, int pt_idx);
 
-    void treecode_eval_helper(int m_cell_idx, int pt_idx);
+    void treecode_process_cell(const OctreeCell& cell, int cell_idx, int pt_idx);
+    void treecode_eval_helper(const OctreeCell& cell, int pt_idx);
     void treecode_eval();
 
     void P2P_cell_pt(int m_cell_idx, int pt_idx);

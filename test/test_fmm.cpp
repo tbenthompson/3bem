@@ -14,7 +14,7 @@ TEST(SetupFMM) {
     int n = 500;
     auto oct = simple_pts_tree(n, 10);
     auto strength = random_list(n);
-    FMMInfo fmm_info(one_kernel, oct, strength, oct, 2);
+    FMMInfo fmm_info(one_kernel, oct, strength, oct, 2, 9.0);
     CHECK_EQUAL(fmm_info.multipole_weights.size(), oct.cells.size() * 8);
     CHECK_EQUAL(fmm_info.local_weights.size(), oct.cells.size() * 8);
     CHECK_EQUAL(fmm_info.n_exp_pts, 2);
@@ -30,7 +30,7 @@ TEST(P2M_M2P_OneCell) {
     int n = 100;
     auto oct = simple_pts_tree(n, n+1);
     std::vector<double> strength(n, 1.0);
-    FMMInfo fmm_info(one_kernel, oct, strength, oct, 1);
+    FMMInfo fmm_info(one_kernel, oct, strength, oct, 1, 9.0);
     fmm_info.P2M_pts_cell(0);
     CHECK_EQUAL(fmm_info.nodes.size(), 1);
     CHECK_CLOSE(fmm_info.multipole_weights[0], n, 1e-14);
@@ -42,53 +42,29 @@ TEST(P2M_M2P_OneCell) {
     }
 }
 
-TEST(P2M_M2P_OneKernel) {
-    int n = 1e3;
-    TIC
-    auto oct = simple_pts_tree(n, 10);
+TEST(TreecodeOneKernel) {
+    int n = 6;
+    auto oct = simple_pts_tree(n, 5);
     std::vector<double> strength(n, 1.0);
-    FMMInfo fmm_info(laplace_single, oct, strength, oct, 1);
+    FMMInfo fmm_info(one_kernel, oct, strength, oct, 1, 9.0);
     fmm_info.P2M();
     fmm_info.treecode_eval();
-    TOC("treecode");
-    // for (unsigned int i = 0; i < oct.elements.size(); i++) {
-    //     // CHECK_CLOSE(fmm_info.obs_effect[i], n, 1e-14);
-    // }
-// 
-    // TIC2
-    // auto exact = direct_n_body(oct.elements, oct.elements, laplace_single, strength);
-    // TOC("Direct");
-
-    // std::vector<double> error(exact.size()); 
-    // for(unsigned int i = 0; i < exact.size(); i++) {
-    //     error[i] = std::fabs((exact[i] - fmm_info.obs_effect[i]) / exact[i]);
-    // }
-    // std::vector<double> zeros(n, 0.0);
-    // CHECK_ARRAY_CLOSE(error, zeros, n, 1e-2);
+    std::vector<double> exact(n, n);
+    CHECK_ARRAY_CLOSE(fmm_info.obs_effect, exact, n, 1e-14);
 }
 
-TEST(Fmm) {
-    // int n = 1e5;
-    // TIC;
-    // auto oct = simple_pts_tree(n, 200);
-    // std::vector<double> strength(n, 1.0);
-    // Kernel k = one_kernel;
-    // FMMInfo fmm_info(k, oct, strength, oct, 1);
-    // P2M(fmm_info);
-    // fmm(fmm_info);
-    // TOC("M2L + P2P");
-    // TIC2
-    // L2P(fmm_info);
-    // TOC("L2P")
-
-    // TIC2
-    // auto exact = direct_n_body(oct.elements, oct.elements, k, strength);
-    // TOC("Direct");
-
-    // std::vector<double> error(exact.size()); 
-    // for(unsigned int i = 0; i < exact.size(); i++) {
-    //     error[i] = std::fabs((exact[i] - fmm_info.obs_effect[i]) / exact[i]);
-    // }
-    // std::vector<double> zeros(n, 0.0);
-    // CHECK_ARRAY_CLOSE(error, zeros, n, 1e-2);
+TEST(TreecodeLaplace) {
+    int n = 50;
+    auto oct = simple_pts_tree(n, 2);
+    std::vector<double> strength(n, 1.0);
+    FMMInfo fmm_info(laplace_single, oct, strength, oct, 4, 9.0);
+    fmm_info.P2M();
+    fmm_info.treecode_eval();
+    auto exact = direct_n_body(oct.elements, oct.elements, laplace_single, strength);
+    std::vector<double> error(n);
+    for (unsigned int i = 0; i < error.size(); i++) {
+        error[i] = std::fabs((fmm_info.obs_effect[i] - exact[i]) / exact[i]);
+    }
+    std::vector<double> zeros(n, 0.0);
+    CHECK_ARRAY_CLOSE(error, zeros, n, 1e-3);
 }

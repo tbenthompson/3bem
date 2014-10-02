@@ -15,6 +15,15 @@ TEST(BoundingBox) {
     }
 }
 
+TEST(DegenerateBoundingBox) {
+    std::vector<std::array<double,3>> pts = {{0.0, 0.0, 0.0}};
+    auto bb = bounding_box(pts, 0, 1);
+    double hw[] = {0.0, 0.0, 0.0};
+    double center[] = {0.0, 0.0, 0.0};
+    CHECK_ARRAY_CLOSE(bb.half_width, hw, 3, 1e-14);
+    CHECK_ARRAY_CLOSE(bb.center, center, 3, 1e-14);
+}
+
 TEST(ToOctreeSpace) {
     const double n = 10;
     const double sub_n = 10;

@@ -15,7 +15,10 @@ inline double one_kernel(std::array<double,3>, std::array<double,3>) {
 const double eps = 1e-15;
 inline double laplace_single(std::array<double,3> x0, std::array<double,3> x1) {
     double r2 = dist2<3>(x0, x1);
-    return 1.0 / (4 * M_PI * sqrt(r2 + eps));
+    if (r2 < eps) {
+        return 0.0;
+    }
+    return 1.0 / (4 * M_PI * sqrt(r2));
 }
 
 inline std::vector<double> direct_n_body(std::vector<std::array<double,3>>& src_locs,
@@ -27,12 +30,14 @@ inline std::vector<double> direct_n_body(std::vector<std::array<double,3>>& src_
 #pragma omp parallel for
     for (unsigned int i = 0; i < obs_locs.size(); ++i) {
         for (unsigned int j = 0; j < src_locs.size(); ++j) {
-            out_vals[i] += kernel(obs_locs[i], src_locs[j]);
+            double kernel_val = kernel(obs_locs[i], src_locs[j]);
+            out_vals[i] += values[j] * kernel_val;
         }
     }
     return out_vals;
 }
 
+//TODO: Try this with aligned float arrays.
 inline std::vector<float> vec_direct_n_body(std::array<std::vector<float>,3>& src_locs,
                                   std::array<std::vector<float>,3>& obs_locs,
                                   std::vector<float>& values) 

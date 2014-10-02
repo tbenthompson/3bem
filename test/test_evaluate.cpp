@@ -9,7 +9,7 @@ const double PI = 4.0 * std::atan(1.0);
 TEST(Direct) {
     CHECK_CLOSE(one_kernel({0, 0, 0}, {0, 0, 0}), 1.0, 1e-14);
 
-    int n = 8 * 1000;
+    int n = 8 * 250;
     auto src = random_pts(n);
     auto obs = random_pts(n);
     std::vector<double> values(n, 1.0);
@@ -28,7 +28,7 @@ TEST(Direct) {
 }
 
 TEST(FastDirect) {
-    int n = 8 * 125000;
+    int n = 8 * 250;
     bool check = n < 2000;
     std::array<std::vector<double>,3> src =
         {random_list(n), random_list(n), random_list(n)};
@@ -38,6 +38,7 @@ TEST(FastDirect) {
     std::array<std::vector<float>,3> obsf;
     std::vector<std::array<double, 3>> slow_src(n);
     std::vector<std::array<double, 3>> slow_obs(n);
+    std::vector<double> slow_values = random_list(n);
     for (int d = 0; d < 3; d++) {
         srcf[d].resize(n);
         obsf[d].resize(n);
@@ -49,11 +50,10 @@ TEST(FastDirect) {
         }
     }
     std::vector<float> values(n, 1.0f);
-    std::vector<double> slow_values(n, 1.0);
     TIC
     auto result = vec_direct_n_body(srcf, obsf, values);
     TOC("Fast Direct N Body");
-    std::cout << "number of interaction: " << ((long)n) * ((long)n) << std::endl;
+    // std::cout << "number of interaction: " << ((long)n) * ((long)n) << std::endl;
 
     if (check) {
         Kernel k = laplace_single;
