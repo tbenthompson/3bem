@@ -48,12 +48,20 @@ public:
 
     void P2M_pts_cell(int m_cell_idx);
     void P2M_helper(int m_cell_idx);
+    // The particle to multipole operator computes cell expansions from the
+    // values of the particles in those cells. The recursively proceeds up the
+    // tree by considering the nodes of the interpolation on child cell as the
+    // particles for the next level.
     void P2M();
 
     //Multipole to point -- used by treecode but not FMM
     void M2P_cell_pt(const Box& m_cell_bounds,
                      int m_cell_idx, int pt_idx);
 
+    // A treecode evaluation computes interactions between cells and points.
+    // In contrast, a FMM evaluation also computes interactions between cells
+    // and other cells. This results in a O(n log n) vs a O(n) method.
+    // However, treecodes are simpler, and more easily parallelizable.
     void treecode_process_cell(const OctreeCell& cell, int cell_idx, int pt_idx);
     void treecode_eval_helper(const OctreeCell& cell, int pt_idx);
     void treecode_eval();
@@ -77,7 +85,6 @@ void M2L_cell_cell(FMMInfo& fmm_info, const Box& m_cell_bounds, int m_cell_idx,
 void L2P_cell_pts(FMMInfo& fmm_info, int l_cell_idx);
 void L2P(FMMInfo& fmm_info);
 
-//Point to point. 
 void fmm(FMMInfo& fmm_info);
 
 #endif

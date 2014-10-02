@@ -21,6 +21,8 @@ double interp_operator(const OctreeCell& cell,
                        int n_exp_pts) {
     double effect = 1.0;
     for (int d = 0; d < 3; d++) {
+        // Interpolation operators are computed in reference [-1, 1] space, so
+        // the point must be linearly transformed to that range.
         double x_hat = real_to_ref(pt[d], 
                                    cell.bounds.min_corner[d],
                                    cell.bounds.max_corner[d]);

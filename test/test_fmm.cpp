@@ -54,13 +54,17 @@ TEST(TreecodeOneKernel) {
 }
 
 TEST(TreecodeLaplace) {
-    int n = 50;
+    int n = 2000;
     auto oct = simple_pts_tree(n, 2);
     std::vector<double> strength(n, 1.0);
-    FMMInfo fmm_info(laplace_single, oct, strength, oct, 4, 9.0);
+    FMMInfo fmm_info(laplace_single, oct, strength, oct, 2, 15.0);
     fmm_info.P2M();
+    TIC
     fmm_info.treecode_eval();
+    TOC("treecode_eval");
+    TIC2
     auto exact = direct_n_body(oct.elements, oct.elements, laplace_single, strength);
+    TOC("Direct");
     std::vector<double> error(n);
     for (unsigned int i = 0; i < error.size(); i++) {
         error[i] = std::fabs((fmm_info.obs_effect[i] - exact[i]) / exact[i]);

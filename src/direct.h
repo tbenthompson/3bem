@@ -21,6 +21,7 @@ inline double laplace_single(std::array<double,3> x0, std::array<double,3> x1) {
     return 1.0 / (4 * M_PI * sqrt(r2));
 }
 
+//Naive double for loop version of direct_n_body
 inline std::vector<double> direct_n_body(std::vector<std::array<double,3>>& src_locs,
                                   std::vector<std::array<double,3>>& obs_locs,
                                   Kernel kernel,
@@ -37,7 +38,7 @@ inline std::vector<double> direct_n_body(std::vector<std::array<double,3>>& src_
     return out_vals;
 }
 
-//TODO: Try this with aligned float arrays.
+//This version uses OpenMP/AVX on std::vectors.
 inline std::vector<float> vec_direct_n_body(std::array<std::vector<float>,3>& src_locs,
                                   std::array<std::vector<float>,3>& obs_locs,
                                   std::vector<float>& values) 
@@ -45,7 +46,7 @@ inline std::vector<float> vec_direct_n_body(std::array<std::vector<float>,3>& sr
     const float factor = 1.0 / (4 * M_PI);
     const __m256 factor_rep = _mm256_broadcast_ss(&factor);
 
-    std::vector<float> out_vals(obs_locs[0].size(), 0.0);
+    std::vector<float> out_vals(obs_locs[0].size());
 #pragma omp parallel for
     for (unsigned int i = 0; i < obs_locs[0].size(); i += 8) {
         __m256 temp_out = _mm256_setzero_ps();
@@ -70,6 +71,44 @@ inline std::vector<float> vec_direct_n_body(std::array<std::vector<float>,3>& sr
             temp_out = _mm256_add_ps(o, temp_out);
         }
         _mm256_storeu_ps(&out_vals[i], temp_out);
+    }
+    return out_vals;
+}
+
+//This version uses OpenMP/AVX on aligned float arrays. It is not or is barely faster
+//than the unaligned version. Experimentation!
+inline float* really_fast_vec_direct_n_body(float* srcfx, float* srcfy, float* srcfz,
+                                            float* obsfx, float* obsfy, float* obsfz,
+                                            float* values, int n_src, int n_obs)
+{
+    const float factor = 1.0 / (4 * M_PI);
+    const __m256 factor_rep = _mm256_broadcast_ss(&factor);
+
+    float* out_vals = (float*)_mm_malloc(n_obs * sizeof(float), 32);
+#pragma omp parallel for
+    for (int i = 0; i < n_obs; i += 8) {
+        __m256 temp_out = _mm256_setzero_ps();
+        __m256 obs_loc_x = _mm256_load_ps(&obsfx[i]);
+        __m256 obs_loc_y = _mm256_load_ps(&obsfy[i]);
+        __m256 obs_loc_z = _mm256_load_ps(&obsfz[i]);
+        for (int j = 0; j < n_src; j++) {
+            __m256 src_loc_x = _mm256_broadcast_ss(&srcfx[j]);
+            __m256 src_loc_y = _mm256_broadcast_ss(&srcfy[j]);
+            __m256 src_loc_z = _mm256_broadcast_ss(&srcfz[j]);
+            __m256 src_values = _mm256_broadcast_ss(&values[j]);
+            __m256 dx = _mm256_sub_ps(obs_loc_x, src_loc_x);
+            __m256 dy = _mm256_sub_ps(obs_loc_y, src_loc_y);
+            __m256 dz = _mm256_sub_ps(obs_loc_z, src_loc_z);
+            __m256 dx2 = _mm256_mul_ps(dx, dx);
+            __m256 dy2 = _mm256_mul_ps(dy, dy);
+            __m256 dz2 = _mm256_mul_ps(dz, dz);
+            __m256 r2 = _mm256_add_ps(_mm256_add_ps(dx2, dy2), dz2);
+            __m256 inv_r = _mm256_rsqrt_ps(r2);
+            __m256 kernel_eval = _mm256_mul_ps(inv_r, factor_rep);
+            __m256 o = _mm256_mul_ps(kernel_eval, src_values);
+            temp_out = _mm256_add_ps(o, temp_out);
+        }
+        _mm256_store_ps(&out_vals[i], temp_out);
     }
     return out_vals;
 }
