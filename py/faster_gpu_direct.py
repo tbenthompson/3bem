@@ -13,6 +13,7 @@ def calc_speed(total_time, n):
     cycles = total_time * proc
     instr_per_cycle = (interactions * ops_per_interact) / cycles;
     gigaflops = instr_per_cycle * proc / 1e9
+    print("# of instructions: " + str(interactions))
     print("Instructions/cycle: " + str(instr_per_cycle))
     print("GFlop/s: " + str(gigaflops))
     print("Time: " + str(total_time))
