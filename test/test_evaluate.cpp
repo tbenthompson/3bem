@@ -28,7 +28,7 @@ TEST(Direct) {
 }
 
 TEST(FastDirect) {
-    int n = 8 * 12500;
+    int n = 12 * 800 * 105;
     bool check = n < 2000;
     std::array<std::vector<double>,3> src =
         {random_list(n), random_list(n), random_list(n)};
@@ -65,18 +65,28 @@ TEST(FastDirect) {
         }
     }
     TIC;
-    auto result1 = vec_direct_n_body(srcf, obsf, values);
+    // auto result1 = vec_direct_n_body(srcf, obsf, values);
     TOC("Fast Direct N Body");
     TIC2;
     auto result2 = really_fast_vec_direct_n_body(srcfx, srcfy, srcfz, obsfx, obsfy, obsfz, fast_values, n, n);
-    TOC("Not Really Faster Direct N Body");
+    TOC("Not Really Much Faster Direct N Body");
+    long interacts = ((long)n) * ((long)n);
+    // In order: 3 Subtracts, 1 multiply, 2 FMAs (count 2), 1 multiply, 1 inv_sqrt (count for 4), 1 FMA (count 2)
+    double ops_per_interact = 15;
+    double proc = 3.4e9;
+    double cycles = (((double)time_ms) / 1000.0) * proc;
+    double instr_per_cycle = (interacts * ops_per_interact) / cycles;
+    double gigaflops = instr_per_cycle * proc / 1e9;
     // Conclusion: aligned memory access is not actually faster.
-    // std::cout << "number of interaction: " << ((long)n) * ((long)n) << std::endl;
+    // approximate instructions per cycle = 72 --> very close to optimal
+    std::cout << "Cycles: " << cycles << std::endl;
+    std::cout << "Instructions/cycle: " << instr_per_cycle << std::endl;
+    std::cout << "GFlop/s: " << gigaflops << std::endl;
 
     if (check) {
         Kernel k = laplace_single;
         auto exact = direct_n_body(slow_src, slow_obs, k, slow_values);
-        CHECK_ARRAY_CLOSE(exact, result1, n, 1e-1);
+        // CHECK_ARRAY_CLOSE(exact, result1, n, 1e-1);
         CHECK_ARRAY_CLOSE(exact, result2, n, 1e-1);
     }
     // for (auto r: result) {

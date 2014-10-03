@@ -8,6 +8,7 @@ CPPFLAGS += -pipe
 CPPFLAGS += $(INCLUDE)
 CPPFLAGS += -fopenmp
 CPPFLAGS += -mavx
+CPPFLAGS += -mfma
 
 EXAMPLECPPFLAGS += $(CPPFLAGS)
 
