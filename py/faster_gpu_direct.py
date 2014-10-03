@@ -19,7 +19,7 @@ def calc_speed(total_time, n):
 
 
 items_per_tile = 256 * 4
-tiles_per_row = 256 * 2
+tiles_per_row = 768
 n = items_per_tile * tiles_per_row
 check = n < 10001
 src = np.random.rand(n, 4).astype(np.float32)
@@ -33,7 +33,7 @@ queue = cl.CommandQueue(ctx)
 mf = cl.mem_flags
 src_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=src)
 obs_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=obs)
-str_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=strength)
+# str_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=strength)
 intermediate_buf = cl.Buffer(ctx, mf.READ_WRITE, strength.nbytes * tiles_per_row)
 lmem = cl.LocalMemory(items_per_tile * 4 * np.dtype('float32').itemsize)
 dest_buf = cl.Buffer(ctx, mf.WRITE_ONLY, strength.nbytes)
@@ -79,9 +79,9 @@ inline float interact(float4 src, float4 obs) {
 #define ROW_DIM 0
 #define COL_DIM 1
 // Tiled direct n body calculation.
+// src.w is the strength of the source
 __kernel void direct_n_body2(global const float4 *src,
                              global const float4 *obs,
-                             global const float *str,
                              const unsigned n_src,
                              const unsigned n_obs,
                              global float *intermediate_result,
@@ -139,7 +139,7 @@ start = time.time()
 # print global_size, local_size
 # prg.direct_n_body1(queue, global_size, local_size, *args)
 
-direct_args = [src_buf, obs_buf, str_buf, np.uint32(n), np.uint32(n), intermediate_buf, lmem]
+direct_args = [src_buf, obs_buf, np.uint32(n), np.uint32(n), intermediate_buf, lmem]
 global_size = (n, tiles_per_row)
 local_size = (items_per_tile, 1)
 prg.direct_n_body2(queue, global_size, local_size, *direct_args)
