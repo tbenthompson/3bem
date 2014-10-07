@@ -62,8 +62,6 @@ std::vector<double> cheb_pts_first_kind(unsigned int n_pts) {
     return x;
 }
 
-
-
 /* Compute the Double exponential (also called Tanh-Sinh) 
  * quadrature rule with n points.
  */
@@ -134,14 +132,6 @@ QuadratureRule gauss(unsigned int n) {
     }
 
     return retval;
-}
-
-inline double from_11_to_01(double x) {
-    return 0.5 * x + 0.5;
-}
-
-inline double from_01_to_11(double x) {
-    return 2 * x - 1;
 }
 
 /* A nonlinear mapping that smooths out a singular or near-singular integral.

@@ -5,10 +5,22 @@
 #include <cmath>
 #include <functional>
 
+// Map from [-1, 1] to [0, 1].
+inline double from_11_to_01(double x) {
+    return 0.5 * x + 0.5;
+}
+
+// Map from [0, 1] to [-1, 1].
+inline double from_01_to_11(double x) {
+    return 2 * x - 1;
+}
+
+// Map from [a, b] to [-1, 1]
 inline double real_to_ref(double x, double a, double b) {
     return 2.0 * ((x - a) / (b - a)) - 1.0;
 }
 
+// Map from [-1, 1] to [a, b]
 inline double ref_to_real(double x_hat, double a, double b) {
     return a + (b - a) * ((x_hat + 1.0) / 2.0);
 }
@@ -39,6 +51,7 @@ std::vector<double> cheb_polys(double x_hat, int n_max);
 double s_n(double x_hat, double y_hat, int n);
 std::vector<double> cheb_pts_first_kind(unsigned int n_pts);
 std::pair<double, double> legendre_and_n_minus_1(unsigned int n, double x);
+
 QuadratureRule double_exp(int n, double h);
 QuadratureRule gauss(unsigned int n);
 QuadratureRule diligenti_mapping(unsigned int n, double x0, int q);
