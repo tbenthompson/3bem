@@ -252,8 +252,6 @@ void FMMInfo::L2P() {
     L2P_helper(obs_oct.get_root_index()); 
 }
 
-static double P2P_count = 0;
-static double M2L_count = 0;
 void FMMInfo::fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
                            const OctreeCell& l_cell, int l_cell_idx) {
     const double dist_squared = dist2<3>(l_cell.bounds.center, 
@@ -261,12 +259,12 @@ void FMMInfo::fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
     const double m_radius_squared = hypot2(m_cell.bounds.half_width); 
     const double l_radius_squared = hypot2(l_cell.bounds.half_width); 
     if (dist_squared > mac2 * (m_radius_squared + l_radius_squared) / 2.0) {
-        M2L_cell_cell(m_cell.bounds, m_cell_idx, l_cell.bounds, l_cell_idx); 
-        M2L_count++;
+        // M2L_cell_cell(m_cell.bounds, m_cell_idx, l_cell.bounds, l_cell_idx); 
+        m2l_jobs.push_back({m_cell_idx, l_cell_idx});
         return;
     } else if (m_cell.is_leaf && l_cell.is_leaf) {
-        P2P_cell_cell(m_cell, l_cell);
-        P2P_count++;
+        // P2P_cell_cell(m_cell, l_cell);
+        p2p_jobs.push_back({m_cell_idx, l_cell_idx});
         return;
     }
     fmm_process_children(m_cell, m_cell_idx, l_cell, l_cell_idx);
@@ -305,6 +303,41 @@ void FMMInfo::fmm() {
     const int obs_root_idx = obs_oct.get_root_index();
     const auto obs_root = obs_oct.cells[obs_root_idx];
     fmm_process_cell_pair(src_root, src_root_idx, obs_root, obs_root_idx);
-    // std::cout << "P2P: " << P2P_count << std::endl;
-    // std::cout << "M2L: " << M2L_count << std::endl;
+    fmm_exec_jobs();
+}
+
+void FMMInfo::fmm_exec_jobs() {
+    std::cout << "P2P Jobs: " << p2p_jobs.size() << std::endl;
+    std::cout << "M2L Jobs: " << m2l_jobs.size() << std::endl;
+    std::sort(p2p_jobs.begin(), p2p_jobs.end(),
+              [] (std::array<int,2> a, std::array<int,2> b) {
+                if(a[0] == b[0]) {
+                    return a[1] < b[1];
+                }
+                return a[0] < b[0];
+              });
+
+    std::sort(m2l_jobs.begin(), m2l_jobs.end(),
+              [] (std::array<int,2> a, std::array<int,2> b) {
+                if(a[0] == b[0]) {
+                    return a[1] < b[1];
+                }
+                return a[0] < b[0];
+              });
+// #pragma omp parallel for
+    for (unsigned int i = 0; i < p2p_jobs.size(); i++) {
+        auto p2p = p2p_jobs[i];
+        std::cout << p2p[0] << " " << p2p[1] << std::endl;
+        auto m_cell = src_oct.cells[p2p[0]];
+        auto l_cell = obs_oct.cells[p2p[1]];
+        P2P_cell_cell(m_cell, l_cell);
+    }
+
+// #pragma omp parallel for
+    for (unsigned int i = 0; i < m2l_jobs.size(); i++) {
+        auto m2l = m2l_jobs[i];
+        auto m_cell = src_oct.cells[m2l[0]];
+        auto l_cell = obs_oct.cells[m2l[1]];
+        M2L_cell_cell(m_cell.bounds, m2l[0], l_cell.bounds, m2l[1]);
+    }
 }

@@ -39,9 +39,10 @@ inline std::vector<double> direct_n_body(std::vector<std::array<double,3>>& src_
 }
 
 //This version uses OpenMP/AVX on std::vectors.
-inline std::vector<float> vec_direct_n_body(std::array<std::vector<float>,3>& src_locs,
-                                  std::array<std::vector<float>,3>& obs_locs,
-                                  std::vector<float>& values) 
+inline 
+std::vector<float> vec_direct_n_body(std::array<std::vector<float>,3>& src_locs,
+                                     std::array<std::vector<float>,3>& obs_locs,
+                                     std::vector<float>& values) 
 {
     const float factor = 1.0 / (4 * M_PI);
     const __m256 factor_rep = _mm256_broadcast_ss(&factor);
