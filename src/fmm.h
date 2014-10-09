@@ -63,10 +63,23 @@ public:
     // and other cells. This results in a O(n log n) vs a O(n) method.
     // However, treecodes are simpler, and more easily parallelizable.
     void treecode_process_cell(const OctreeCell& cell, int cell_idx, int pt_idx);
-    void treecode_eval_helper(const OctreeCell& cell, int pt_idx);
-    void treecode_eval();
+    void treecode_helper(const OctreeCell& cell, int pt_idx);
+    void treecode();
 
-    void P2P_cell_pt(int m_cell_idx, int pt_idx);
+    void P2P_cell_pt(const OctreeCell& m_cell, int pt_idx);
+    void P2P_cell_cell(const OctreeCell& m_cell, const OctreeCell& l_cell);
+
+    void M2L_cell_cell(const Box& m_cell_bounds, int m_cell_idx, 
+                       const Box& l_cell_bounds, int l_cell_idx);
+    void L2P_cell_pts(int l_cell_idx);
+    void L2P_helper(int l_cell_idx);
+    void L2P();
+        
+    void fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
+                               const OctreeCell& l_cell, int l_cell_idx);
+    void fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
+                              const OctreeCell& l_cell, int l_cell_idx);
+    void fmm();
 };
 
 //TODO: Make the functions for the different operations more uniform 
@@ -79,12 +92,4 @@ double interp_operator(const OctreeCell& cell,
                        const std::array<double,3>& node,
                        const std::array<double,3>& pt,
                        int n_exp_pts);
-// Multipole to local and local to particle -- used by FMM but not treecode 
-void M2L_cell_cell(FMMInfo& fmm_info, const Box& m_cell_bounds, int m_cell_idx, 
-                   const Box& l_cell_bounds, int l_cell_idx);
-void L2P_cell_pts(FMMInfo& fmm_info, int l_cell_idx);
-void L2P(FMMInfo& fmm_info);
-
-void fmm(FMMInfo& fmm_info);
-
 #endif

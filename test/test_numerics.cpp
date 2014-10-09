@@ -33,6 +33,18 @@ TEST(ChebPolys) {
     }
 }
 
+TEST(SnFast) {
+    int n = 50;
+    auto x = random_list(n); 
+    auto y = random_list(n); 
+    for(int i = 0; i < n; i++) {
+        for (int j = 1;j < 9; j++) {
+            CHECK_CLOSE(s_n_fast(x[i], y[i], j),
+                        s_n(x[i], y[i], j), 1e-12);
+        }
+    }
+}
+
 TEST(ChebPtsFirstKind) {
     auto pts = cheb_pts_first_kind(4);
     CHECK_CLOSE(pts[0], 0.92388, 1e-4);

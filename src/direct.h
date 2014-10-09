@@ -80,7 +80,7 @@ inline std::vector<float> vec_direct_n_body(std::array<std::vector<float>,3>& sr
 // Further: does blocking help? Maybe not.
 // Further: fused multiply add -> a bit faster (~15 GFlop/s)
 // Further: loop unrolling? --> YES! (210 GFlop/s -> 255 GFlop/s
-// Best result so far: ~ 75 instr/cycle --> 254 Gigaflops
+// Best result so far: ~ 89 instr/cycle --> 302 Gigaflops
 inline float* really_fast_vec_direct_n_body(float* srcfx, float* srcfy, float* srcfz,
                                             float* obsfx, float* obsfy, float* obsfz,
                                             float* values, int n_src, int n_obs)
@@ -173,12 +173,5 @@ inline float* really_fast_vec_direct_n_body(float* srcfx, float* srcfy, float* s
         }
     }
     return out_vals;
-}
-
-// This version exports the problem to the GPU.
-inline float* gpu_direct_n_body(float* srcfx, float* srcfy, float* srcfz,
-                                float* obsfx, float* obsfy, float* obsfz,
-                                float* values, int n_src, int n_obs) {
-
 }
 #endif

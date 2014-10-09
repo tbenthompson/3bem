@@ -51,6 +51,36 @@ double s_n(double x_hat, double y_hat, int n) {
     return result;
 }
 
+/* Same as s_n above but optimized. Mainly, the cheb_polys function is folded
+ * in so there isn't a std::vector creation and deletion for every call*/
+double s_n_fast(double x_hat, double y_hat, int n) {
+    if (n == 1) {
+        return 1.0;
+    }
+    if (n == 2) {
+        return 0.5 + (x_hat * y_hat);
+    }
+    double result = x_hat * y_hat;
+    double prev_x_hat = x_hat;
+    double prev_prev_x_hat = 1.0;
+    double prev_y_hat = y_hat;
+    double prev_prev_y_hat = 1.0;
+    for (int i = 2; i < n; i++) {
+        // The Chebyshev polynomial recurrence relation.
+        double cur_x_hat = 2 * x_hat * prev_x_hat - prev_prev_x_hat;
+        double cur_y_hat = 2 * y_hat * prev_y_hat - prev_prev_y_hat;
+        result += cur_x_hat * cur_y_hat;
+
+        prev_prev_y_hat = prev_y_hat;
+        prev_y_hat = cur_y_hat;
+        prev_prev_x_hat = prev_x_hat;
+        prev_x_hat = cur_x_hat;
+    }
+    result *= 2.0 / n;
+    result += 1.0 / n;
+    return result;
+}
+
 /* Compute the Chebyshev points of the first kind. These are the roots
  * of the Chebyshev polynomial of degree n.
  */
