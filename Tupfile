@@ -1,3 +1,4 @@
+export LD_LIBRARY_PATH
 INCLUDE += -I./src
 INCLUDE += -I./lib/UnitTest++/src
 
@@ -29,7 +30,6 @@ CPPFLAGS += $(PROFILEFLAGS)
 SHAREDLIBFLAGS += $(CPPFLAGS) 
 SHAREDLIBFLAGS += -fPIC
 
-LINKFLAGS += -lm
 LINKFLAGS += -fopenmp
 LINKFLAGS += -lglut -lGL -lGLU -lGLEW
 LIBLINKFLAGS += -shared

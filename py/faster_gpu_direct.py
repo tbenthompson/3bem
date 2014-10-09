@@ -28,24 +28,22 @@ obs = np.random.rand(n, 4).astype(np.float32)
 strength = np.random.rand(n).astype(np.float32)
 
 dev = 0
-ctx = cl.create_some_context(dev)
+ctx = cl.create_some_context()
 queue = cl.CommandQueue(ctx)
 
 mf = cl.mem_flags
 src_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=src)
 obs_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=obs)
-# str_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=strength)
 intermediate_buf = cl.Buffer(ctx, mf.READ_WRITE, strength.nbytes * tiles_per_row)
 lmem = cl.LocalMemory(items_per_tile * 4 * np.dtype('float32').itemsize)
 dest_buf = cl.Buffer(ctx, mf.WRITE_ONLY, strength.nbytes)
 
 # Going from 3 float arrays to one float4 array boosts from 800 to 1200 gflops
-# Tiling the computation seems to hurt performance
+# Tiling the computation properly boosts from 1200 -> 2600 on "loose" with one GTX 780 Ti
 prg = cl.Program(ctx, """
 constant float factor = 1.0 / (4.0 * M_PI);
 __kernel void direct_n_body1(global const float4 *src,
                             global const float4 *obs,
-                            global const float *str,
                             const unsigned n_src,
                             const unsigned n_obs,
                             global float *result)
@@ -62,7 +60,7 @@ __kernel void direct_n_body1(global const float4 *src,
         r2 += dy * dy;
         r2 += dz * dz;
         float kernel_val = factor * native_rsqrt(r2);
-        sum += str[i] * kernel_val;
+        sum += cur_src.w * kernel_val;
     }
     result[gid] = sum;
 }
@@ -134,20 +132,20 @@ __kernel void reduce_rows(__global float* intermediate_result,
 print "START GPU"
 start = time.time()
 
-# args = [src_buf, obs_buf, str_buf, np.uint32(n), np.uint32(n), dest_buf]
-# global_size = (n,)
-# local_size = None#(items_per_tile,)
-# print global_size, local_size
-# prg.direct_n_body1(queue, global_size, local_size, *args)
+args = [src_buf, obs_buf, np.uint32(n), np.uint32(n), dest_buf]
+global_size = (n,)
+local_size = None#(items_per_tile,)
+print global_size, local_size
+prg.direct_n_body1(queue, global_size, local_size, *args)
 
-direct_args = [src_buf, obs_buf, np.uint32(n), np.uint32(n), intermediate_buf, lmem]
-global_size = (n, tiles_per_row)
-local_size = (items_per_tile, 1)
-prg.direct_n_body2(queue, global_size, local_size, *direct_args)
-
-reduce_size = (n,)
-reduce_args = [intermediate_buf, dest_buf, np.uint32(n), np.uint32(tiles_per_row)]
-prg.reduce_rows(queue, reduce_size, None, *reduce_args)
+# direct_args = [src_buf, obs_buf, np.uint32(n), np.uint32(n), intermediate_buf, lmem]
+# global_size = (n, tiles_per_row)
+# local_size = (items_per_tile, 1)
+# prg.direct_n_body2(queue, global_size, local_size, *direct_args)
+#
+# reduce_size = (n,)
+# reduce_args = [intermediate_buf, dest_buf, np.uint32(n), np.uint32(tiles_per_row)]
+# prg.reduce_rows(queue, reduce_size, None, *reduce_args)
 
 result = np.empty(n).astype(np.float32)
 cl.enqueue_copy(queue, result, dest_buf)
