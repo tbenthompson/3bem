@@ -45,6 +45,9 @@ public:
     // obs_effect is the main output at the end of a FMM processing pass
     std::vector<double> obs_effect;
 
+    std::vector<std::array<int, 2>> p2p_jobs;
+    std::vector<std::array<int, 2>> m2l_jobs;
+
 
     void P2M_pts_cell(int m_cell_idx);
     void P2M_helper(int m_cell_idx);
@@ -80,6 +83,7 @@ public:
     void fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
                               const OctreeCell& l_cell, int l_cell_idx);
     void fmm();
+    void fmm_exec_jobs();
 };
 
 //TODO: Make the functions for the different operations more uniform 
