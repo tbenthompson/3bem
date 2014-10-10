@@ -132,9 +132,9 @@ void FMMInfo::P2P_cell_cell(const OctreeCell& m_cell, const OctreeCell& l_cell) 
     // for(unsigned int i = l_cell.begin; i < l_cell.end; i++) {
     //     P2P_cell_pt(m_cell, i);
     // }
-    vec_direct_n_body(src_oct.elements, obs_oct.elements,
+    vec_direct_n_body(float_src_locs, float_obs_locs,
                       m_cell.begin, m_cell.end, 
-                      l_cell.begin, l_cell.end, values);
+                      l_cell.begin, l_cell.end, float_str);
 }
 
 void FMMInfo::M2P_cell_pt(const Box& m_cell_bounds,
@@ -359,6 +359,18 @@ bool fmm_compare(std::array<int,2> a, std::array<int,2> b) {
 void FMMInfo::fmm_exec_jobs() {
     //TODO: make this a templated function and make the P2P_cell_cell
     //and M2L_cell_cell interfaces uniform
+    for (int d = 0;d < 3;d++) {
+        float_src_locs[d].resize(src_oct.n_elements());
+        float_str.resize(src_oct.n_elements());
+        float_obs_locs[d].resize(obs_oct.n_elements());
+        for (int i = 0; i < src_oct.n_elements();i++) {
+            float_src_locs[d][i] = src_oct.elements[d][i];
+            float_str[i] = values[i];
+        }
+        for (int i = 0; i < obs_oct.n_elements();i++) {
+            float_obs_locs[d][i] = obs_oct.elements[d][i];
+        }
+    }
     std::vector<std::vector<int>>& job_set = p2p_jobs;
 #pragma omp parallel for
     for (unsigned int l_idx = 0; l_idx < job_set.size(); l_idx++) {

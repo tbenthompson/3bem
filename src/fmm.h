@@ -30,9 +30,6 @@ public:
 
     Kernel kernel;
 
-    //TODO: Think about the use of octree reference and the values reference
-    // Could be very dangerous.
-
     // The source points and tree structure
     const Octree& src_oct;
     // The multipole expansion weights in the source cells.
@@ -51,6 +48,10 @@ public:
     // A list of p2p and m2l jobs for each obs_oct cell
     std::vector<std::vector<int>> p2p_jobs;
     std::vector<std::vector<int>> m2l_jobs;
+    
+    std::array<std::vector<float>,3> float_src_locs;
+    std::array<std::vector<float>,3> float_obs_locs;
+    std::vector<float> float_str;
 
 
     void P2M_pts_cell(int m_cell_idx);
@@ -97,7 +98,7 @@ public:
 // -- node-wise operations
 
 //Particle to multipole
-double interp_operator(const Box& bounds,
+double interp_operator(const OctreeCell& cell,
                        double nodex, double nodey, double nodez,
                        double ptx, double pty, double ptz,
                        int n_exp_pts);
