@@ -54,14 +54,13 @@ std::vector<float> vec_direct_n_body(const std::array<std::vector<float>,3>& src
     const float factor = 1.0 / (4 * M_PI);
     const __m256 factor_rep = _mm256_broadcast_ss(&factor);
 
-    std::vector<float> out_vals(obs_locs[0].size());
-#pragma omp parallel for
+    std::vector<float> out_vals(obs_end - obs_start);
     for (unsigned int i = obs_start; i < obs_end; i += 8) {
         __m256 temp_out = _mm256_setzero_ps();
         __m256 obs_loc_x = _mm256_loadu_ps(&obs_locs[0][i]);
         __m256 obs_loc_y = _mm256_loadu_ps(&obs_locs[1][i]);
         __m256 obs_loc_z = _mm256_loadu_ps(&obs_locs[2][i]);
-        for (unsigned int j = 0; j < src_locs[0].size(); j++) {
+        for (unsigned int j = src_start; j < src_end; j++) {
             __m256 src_loc_x = _mm256_broadcast_ss(&src_locs[0][j]);
             __m256 src_loc_y = _mm256_broadcast_ss(&src_locs[1][j]);
             __m256 src_loc_z = _mm256_broadcast_ss(&src_locs[2][j]);
@@ -78,7 +77,7 @@ std::vector<float> vec_direct_n_body(const std::array<std::vector<float>,3>& src
             __m256 o = _mm256_mul_ps(kernel_eval, src_values);
             temp_out = _mm256_add_ps(o, temp_out);
         }
-        _mm256_storeu_ps(&out_vals[i], temp_out);
+        _mm256_storeu_ps(&out_vals[i - obs_start], temp_out);
     }
     return out_vals;
 }
@@ -86,7 +85,7 @@ std::vector<float> vec_direct_n_body(const std::array<std::vector<float>,3>& src
 inline 
 std::vector<float> vec_direct_n_body(const std::array<std::vector<float>,3>& src_locs,
                                      const std::array<std::vector<float>,3>& obs_locs,
-                                     const std::vector<float>& values) {
+                                     std::vector<float>& values) {
     return vec_direct_n_body(src_locs, obs_locs, 
                              0, src_locs.size(),
                              0, obs_locs.size(), values);
