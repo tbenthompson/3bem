@@ -5,7 +5,8 @@
 #include "direct.h"
 
 int main() {
-    int n = 12 * 800 * 10;
+    int n = 12 * 800 * 50;
+    std::cout << n << std::endl;
     bool check = n < 2000;
     std::array<std::vector<double>,3> src =
         {random_list(n), random_list(n), random_list(n)};
