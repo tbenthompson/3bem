@@ -30,6 +30,9 @@ public:
 
     Kernel kernel;
 
+    //TODO: Think about the use of octree reference and the values reference
+    // Could be very dangerous.
+
     // The source points and tree structure
     const Octree& src_oct;
     // The multipole expansion weights in the source cells.

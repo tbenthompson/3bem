@@ -45,16 +45,18 @@ inline std::vector<double> direct_n_body(std::array<std::vector<double>,3>& src_
 
 //This version uses OpenMP/AVX on std::vectors.
 inline 
-std::vector<float> vec_direct_n_body(std::array<std::vector<float>,3>& src_locs,
-                                     std::array<std::vector<float>,3>& obs_locs,
-                                     std::vector<float>& values) 
+std::vector<float> vec_direct_n_body(const std::array<std::vector<float>,3>& src_locs,
+                                     const std::array<std::vector<float>,3>& obs_locs,
+                                     unsigned int src_start, unsigned int src_end,
+                                     unsigned int obs_start, unsigned int obs_end,
+                                     const std::vector<float>& values) 
 {
     const float factor = 1.0 / (4 * M_PI);
     const __m256 factor_rep = _mm256_broadcast_ss(&factor);
 
     std::vector<float> out_vals(obs_locs[0].size());
 #pragma omp parallel for
-    for (unsigned int i = 0; i < obs_locs[0].size(); i += 8) {
+    for (unsigned int i = obs_start; i < obs_end; i += 8) {
         __m256 temp_out = _mm256_setzero_ps();
         __m256 obs_loc_x = _mm256_loadu_ps(&obs_locs[0][i]);
         __m256 obs_loc_y = _mm256_loadu_ps(&obs_locs[1][i]);
@@ -80,6 +82,16 @@ std::vector<float> vec_direct_n_body(std::array<std::vector<float>,3>& src_locs,
     }
     return out_vals;
 }
+
+inline 
+std::vector<float> vec_direct_n_body(const std::array<std::vector<float>,3>& src_locs,
+                                     const std::array<std::vector<float>,3>& obs_locs,
+                                     const std::vector<float>& values) {
+    return vec_direct_n_body(src_locs, obs_locs, 
+                             0, src_locs.size(),
+                             0, obs_locs.size(), values);
+}
+
 
 //This version uses OpenMP/AVX on aligned float arrays. It is not or is barely faster
 //than the unaligned version. Experimentation!
