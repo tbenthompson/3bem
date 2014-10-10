@@ -27,14 +27,14 @@ inline double ref_to_real(double x_hat, double a, double b) {
 
 inline double hypot2(double x, double y) {return x * x + y * y;}
 inline double hypot2(double x, double y, double z) {return x * x + y * y + z * z;}
-inline double hypot2(double x0, double y0, double z0,
-                     double x1, double y1, double z1) {
-    return hypot2(x1 - x0, y1 - x0, z1 - z0);
-}
 inline double hypot2(std::array<double,3> v0) {return hypot2(v0[0], v0[1], v0[2]);}
 inline double hypot(double x, double y) {return sqrt(hypot2(x, y));}
 inline double hypot(double x, double y, double z) {return sqrt(hypot2(x, y, z));}
 
+inline double dist2(double x0, double y0, double z0,
+                     double x1, double y1, double z1) {
+    return hypot2(x1 - x0, y1 - y0, z1 - z0);
+}
 template <int dim>
 inline double dist2(const std::array<double,dim> v0, 
                     const std::array<double,dim> v1) {

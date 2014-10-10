@@ -44,6 +44,7 @@ TEST(P2M_M2P_OneCell) {
 }
 
 TEST(TreecodeOneKernel) {
+    return;
     int n = 6;
     auto oct = simple_pts_tree(n, 5);
     std::vector<double> strength(n, 1.0);
@@ -120,11 +121,14 @@ TEST(FMMOneBothP2PM2L) {
     }
 }
 
-TEST(FMMLaplace) {
+void test_fmm_laplace(double mac2, double error_max, bool non_one_strength) {
     int n = 2000;
     auto oct = simple_pts_tree(n, 10);
     std::vector<double> strength(n, 1.0);
-    FMMInfo fmm_info(laplace_single, oct, strength, oct, 3, 10.0);
+    if (non_one_strength) {
+        strength = random_list(n);
+    }
+    FMMInfo fmm_info(laplace_single, oct, strength, oct, 3, mac2);
     fmm_info.P2M();
     fmm_info.fmm();
     fmm_info.L2P();
@@ -134,7 +138,20 @@ TEST(FMMLaplace) {
         error[i] = std::fabs((fmm_info.obs_effect[i] - exact[i]) / exact[i]);
     }
     std::vector<double> zeros(n, 0.0);
-    CHECK_ARRAY_CLOSE(error, zeros, n, 1e-3);
+    CHECK_ARRAY_CLOSE(error, zeros, n, error_max);
+}
+
+TEST(FMMLaplaceP2POnly) {
+    //Super big MAC forces only P2P
+    test_fmm_laplace(1e30, 1e-14, false);
+}
+
+TEST(FMMLaplace) {
+    test_fmm_laplace(10.0, 1e-3, false);
+}
+
+TEST(FMMLaplaceNonOneStrength) {
+    test_fmm_laplace(10.0, 1e-3, true);
 }
 
 int main(int, char const *[])

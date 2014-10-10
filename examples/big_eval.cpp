@@ -36,8 +36,8 @@ int main() {
             obsfy[i] = obs[1][i];
             srcfz[i] = src[2][i];
             obsfz[i] = obs[2][i];
-            slow_src[i][d] = src[d][i];
-            slow_obs[i][d] = obs[d][i];
+            slow_src[d][i] = src[d][i];
+            slow_obs[d][i] = obs[d][i];
             fast_values[i] = 1.0f;
             srcf[d][i] = src[d][i];
             obsf[d][i] = obs[d][i];
@@ -51,6 +51,7 @@ int main() {
     TOC("Not Really Much Faster Direct N Body");
     long interacts = ((long)n) * ((long)n);
     // In order: 3 Subtracts, 1 multiply, 2 FMAs (count 2), 1 multiply, 1 inv_sqrt (count for 4), 1 FMA (count 2)
+    // FMA = fused multiply add
     double ops_per_interact = 15;
     double proc = 3.4e9;
     double cycles = (((double)time_ms) / 1000.0) * proc;

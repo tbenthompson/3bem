@@ -120,6 +120,17 @@ TEST(DiligentiMapping) {
     CHECK_CLOSE(result, -0.000611395, 1e-6);
 }
 
+TEST(UnfriendlyDist2) {
+    int n = 20;
+    auto x = random_pts(n);
+    auto y = random_pts(n);
+    for (int i = 0; i < n; i++) {
+        double bad = dist2(x[0][i], x[1][i], x[2][i], y[0][i], y[1][i], y[2][i]);
+        double good = dist2<3>({x[0][i], x[1][i], x[2][i]}, {y[0][i], y[1][i], y[2][i]});
+        CHECK_CLOSE(bad, good, 1e-15);
+    }
+}
+
 int main(int, char const *[])
 {
     int retval = UnitTest::RunAllTests();
