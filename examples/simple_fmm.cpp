@@ -6,12 +6,18 @@
 
 int main() {
     int n = (int)1e6;
-    int pts_per_cell = 100;
+    int pts_per_cell = 50;
+    int n_exp_pts = 2;
+    double mac2 = 7.0;
     auto pts = random_pts(n);
-    Octree oct(pts, pts_per_cell);
     std::vector<double> strength(n, 1.0);
-    FMMInfo fmm_info(laplace_single, oct, strength, oct, 1, 10.0);
     TIC;
+    Octree oct(pts, pts_per_cell);
+    TOC("Octree");
+    TIC2;
+    FMMInfo fmm_info(laplace_single, oct, strength, oct, n_exp_pts, mac2);
+    TOC("Structures");
+    TIC2;
     fmm_info.P2M();
     TOC("P2M");
     TIC2;

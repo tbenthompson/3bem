@@ -32,7 +32,7 @@ public:
     }
 };
 
-Box bounding_box(const std::vector<std::array<double,3>>& x, int begin, int end);
+Box bounding_box(const std::array<std::vector<double,3>>& x, int begin, int end);
 
 inline int to_octree_space(double x, double center, 
                            double half_width, int leaves) {
@@ -87,7 +87,7 @@ public:
  */
 class Octree {
 public:
-    Octree(std::vector<std::array<double,3>>& elements,
+    Octree(std::array<std::vector<double,3>>& elements,
            unsigned int max_elements_per_cell);
 
     uint64_t compute_morton(std::array<double,3> pt);
@@ -101,7 +101,7 @@ public:
     const unsigned int max_elements_per_cell;
     // The elements and z-order morton location codes of the points in the
     // octree. These could be made into a simple POD class.
-    std::vector<std::array<double,3>> elements;
+    std::array<std::vector<double,3>> elements;
     std::vector<uint64_t> morton_codes;
 
     std::vector<OctreeCell> cells;

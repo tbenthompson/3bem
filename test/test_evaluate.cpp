@@ -16,7 +16,7 @@ TEST(Direct) {
 
     Kernel k = laplace_single;
     TIC
-    auto result = direct_n_body(src, obs, k, values);
+    auto result = vec_direct_n_body(src, obs, k, values);
     TOC("Direct N Body");
     // std::cout << "number of interaction: " << n * n << std::endl;
     
