@@ -1,6 +1,7 @@
 #include "fmm.h"
 #include "octree.h"
 #include "numerics.h"
+#include "direct.h"
 #include <cassert>
 
 std::array<std::vector<double>,3> get_3d_expansion_nodes(int n_exp_pts) {
@@ -128,9 +129,12 @@ void FMMInfo::P2P_cell_pt(const OctreeCell& m_cell, int pt_idx) {
 }
 
 void FMMInfo::P2P_cell_cell(const OctreeCell& m_cell, const OctreeCell& l_cell) {
-    for(unsigned int i = l_cell.begin; i < l_cell.end; i++) {
-        P2P_cell_pt(m_cell, i);
-    }
+    // for(unsigned int i = l_cell.begin; i < l_cell.end; i++) {
+    //     P2P_cell_pt(m_cell, i);
+    // }
+    vec_direct_n_body(src_oct.elements, obs_oct.elements,
+                      m_cell.begin, m_cell.end, 
+                      l_cell.begin, l_cell.end, values);
 }
 
 void FMMInfo::M2P_cell_pt(const Box& m_cell_bounds,
