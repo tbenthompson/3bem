@@ -44,7 +44,9 @@ FMMInfo::FMMInfo(Kernel kernel, const Octree& src, std::vector<double>& values,
     values(values),
     obs_oct(obs),
     local_weights(obs_oct.cells.size() * nodes.size(), 0.0),
-    obs_effect(obs_oct.elements.size(), 0.0)
+    obs_effect(obs_oct.elements.size(), 0.0),
+    p2p_jobs(obs_oct.cells.size()),
+    m2l_jobs(obs_oct.cells.size())
 {}
 
 void FMMInfo::P2M_pts_cell(int m_cell_idx) {
@@ -260,11 +262,11 @@ void FMMInfo::fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
     const double l_radius_squared = hypot2(l_cell.bounds.half_width); 
     if (dist_squared > mac2 * (m_radius_squared + l_radius_squared) / 2.0) {
         // M2L_cell_cell(m_cell.bounds, m_cell_idx, l_cell.bounds, l_cell_idx); 
-        m2l_jobs.push_back({m_cell_idx, l_cell_idx});
+        m2l_jobs[l_cell_idx].push_back(m_cell_idx);
         return;
     } else if (m_cell.is_leaf && l_cell.is_leaf) {
         // P2P_cell_cell(m_cell, l_cell);
-        p2p_jobs.push_back({m_cell_idx, l_cell_idx});
+        p2p_jobs[l_cell_idx].push_back(m_cell_idx);
         return;
     }
     fmm_process_children(m_cell, m_cell_idx, l_cell, l_cell_idx);
@@ -306,38 +308,32 @@ void FMMInfo::fmm() {
     fmm_exec_jobs();
 }
 
-void FMMInfo::fmm_exec_jobs() {
-    std::cout << "P2P Jobs: " << p2p_jobs.size() << std::endl;
-    std::cout << "M2L Jobs: " << m2l_jobs.size() << std::endl;
-    std::sort(p2p_jobs.begin(), p2p_jobs.end(),
-              [] (std::array<int,2> a, std::array<int,2> b) {
-                if(a[0] == b[0]) {
-                    return a[1] < b[1];
-                }
-                return a[0] < b[0];
-              });
+bool fmm_compare(std::array<int,2> a, std::array<int,2> b) {
+    if(a[1] == b[1]) {
+        return a[0] < b[0];
+    }
+    return a[1] < b[1];
+}
 
-    std::sort(m2l_jobs.begin(), m2l_jobs.end(),
-              [] (std::array<int,2> a, std::array<int,2> b) {
-                if(a[0] == b[0]) {
-                    return a[1] < b[1];
-                }
-                return a[0] < b[0];
-              });
-// #pragma omp parallel for
-    for (unsigned int i = 0; i < p2p_jobs.size(); i++) {
-        auto p2p = p2p_jobs[i];
-        std::cout << p2p[0] << " " << p2p[1] << std::endl;
-        auto m_cell = src_oct.cells[p2p[0]];
-        auto l_cell = obs_oct.cells[p2p[1]];
-        P2P_cell_cell(m_cell, l_cell);
+void FMMInfo::fmm_exec_jobs() {
+    //TODO: make this a templated function and make the P2P_cell_cell
+    //and M2L_cell_cell interfaces uniform
+    std::vector<std::vector<int>>& job_set = p2p_jobs;
+#pragma omp parallel for
+    for (unsigned int l_idx = 0; l_idx < job_set.size(); l_idx++) {
+        for (unsigned int j = 0; j < job_set[l_idx].size(); j++) {
+            int m_idx = job_set[l_idx][j];
+            P2P_cell_cell(src_oct.cells[m_idx], obs_oct.cells[l_idx]);
+        }
     }
 
-// #pragma omp parallel for
-    for (unsigned int i = 0; i < m2l_jobs.size(); i++) {
-        auto m2l = m2l_jobs[i];
-        auto m_cell = src_oct.cells[m2l[0]];
-        auto l_cell = obs_oct.cells[m2l[1]];
-        M2L_cell_cell(m_cell.bounds, m2l[0], l_cell.bounds, m2l[1]);
+    job_set = m2l_jobs;
+#pragma omp parallel for
+    for (unsigned int l_idx = 0; l_idx < job_set.size(); l_idx++) {
+        for (unsigned int j = 0; j < job_set[l_idx].size(); j++) {
+            int m_idx = job_set[l_idx][j];
+            M2L_cell_cell(src_oct.cells[m_idx].bounds, m_idx,
+                          obs_oct.cells[l_idx].bounds, l_idx);
+        }
     }
 }

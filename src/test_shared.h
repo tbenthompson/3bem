@@ -40,14 +40,10 @@ inline std::vector<double> random_list(int N) {
     return es;
 }
 
-inline std::vector<std::array<double,3>> random_pts(int N) {
-    std::array<std::vector<double>, 3> locs = 
+inline std::array<std::vector<double>,3> random_pts(int N) {
+    std::array<std::vector<double>,3> locs = 
         {random_list(N), random_list(N), random_list(N)};
-    std::vector<std::array<double,3>> pts(locs[0].size());
-    for (unsigned int i = 0; i < locs[0].size(); i++) {
-        pts[i] = {locs[0][i], locs[1][i], locs[2][i]};
-    }
-    return pts;
+    return locs;
 }
 
 class Mesh;
