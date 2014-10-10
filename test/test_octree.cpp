@@ -153,6 +153,16 @@ TEST(NotOneLevel) {
     CHECK(tree.cells.size() > 1);
 }
 
+TEST(RootIndex) {
+    auto pts = random_pts(10);
+    Octree tree(pts, 2);
+    int root_idx = tree.get_root_index();
+    CHECK_EQUAL(tree.cells[root_idx].begin, tree.get_root().begin);
+    CHECK_EQUAL(tree.cells[root_idx].end, tree.get_root().end);
+    CHECK_EQUAL(tree.get_root().begin, 0);
+    CHECK_EQUAL(tree.get_root().end, 10);
+}
+
 int main(int, char const *[])
 {
     int retval = UnitTest::RunAllTests();

@@ -94,7 +94,7 @@ public:
 // -- node-wise operations
 
 //Particle to multipole
-double interp_operator(const OctreeCell& cell,
+double interp_operator(const Box& bounds,
                        double nodex, double nodey, double nodez,
                        double ptx, double pty, double ptz,
                        int n_exp_pts);

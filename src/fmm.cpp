@@ -18,20 +18,19 @@ std::array<std::vector<double>,3> get_3d_expansion_nodes(int n_exp_pts) {
     return nodes_3d;
 }
 
-double interp_operator(const OctreeCell& cell,
+double interp_operator(const Box& bounds,
                        double nodex, double nodey, double nodez,
                        double ptx, double pty, double ptz,
                        int n_exp_pts) {
     double effect = 1.0;
     // X interp
-    double x_hat = real_to_ref(ptx, cell.bounds.min_corner[0],
-                               cell.bounds.max_corner[0]);
+    double x_hat = real_to_ref(ptx, bounds.min_corner[0], bounds.max_corner[0]);
     effect *= s_n_fast(nodex, x_hat, n_exp_pts);
     // Y interp
-    x_hat = real_to_ref(pty, cell.bounds.min_corner[1], cell.bounds.max_corner[1]);
+    x_hat = real_to_ref(pty, bounds.min_corner[1], bounds.max_corner[1]);
     effect *= s_n_fast(nodey, x_hat, n_exp_pts);
     // Z interp
-    x_hat = real_to_ref(ptz, cell.bounds.min_corner[2], cell.bounds.max_corner[2]);
+    x_hat = real_to_ref(ptz, bounds.min_corner[2], bounds.max_corner[2]);
     effect *= s_n_fast(nodez, x_hat, n_exp_pts);
     return effect;
 }
@@ -59,7 +58,7 @@ void FMMInfo::P2M_pts_cell(int m_cell_idx) {
     for(unsigned int i = cell.begin; i < cell.end; i++) {
         for(unsigned int j = 0; j < nodes[0].size(); j++) {
             int node_idx = cell_start_idx + j;   
-            double P2M_kernel = interp_operator(cell, nodes[0][j],
+            double P2M_kernel = interp_operator(cell.bounds, nodes[0][j],
                                                 nodes[1][j], nodes[2][j],
                                                 src_oct.elements[0][i], 
                                                 src_oct.elements[1][i],
@@ -96,7 +95,7 @@ void FMMInfo::P2M_helper(int m_cell_idx) {
             }
             for(unsigned int j = 0; j < nodes[0].size(); j++) {
                 int node_idx = nodes[0].size() * m_cell_idx + j;   
-                double P2M_kernel = interp_operator(cell,
+                double P2M_kernel = interp_operator(cell.bounds,
                                                     nodes[0][j],
                                                     nodes[1][j],
                                                     nodes[2][j],
@@ -157,7 +156,7 @@ void FMMInfo::M2P_cell_pt(const Box& m_cell_bounds,
 }
 
 void FMMInfo::treecode_process_cell(const OctreeCell& cell, int cell_idx, int pt_idx) {
-    const double dist_squared = hypot2(obs_oct.elements[0][pt_idx],
+    const double dist_squared = dist2(obs_oct.elements[0][pt_idx],
                                        obs_oct.elements[1][pt_idx],
                                        obs_oct.elements[2][pt_idx],
                                        cell.bounds.center[0],
@@ -188,8 +187,8 @@ void FMMInfo::treecode_helper(const OctreeCell& cell, int pt_idx) {
 void FMMInfo::treecode() {
     const int root_idx = src_oct.get_root_index();
     const auto root = src_oct.cells[root_idx];
-// #pragma omp parallel for
-    for(unsigned int i = 0; i < obs_oct.elements[0].size(); i++) {
+#pragma omp parallel for
+    for(unsigned int i = 0; i < obs_oct.n_elements(); i++) {
         treecode_process_cell(root, root_idx, i);
     }
 }
@@ -231,7 +230,7 @@ void FMMInfo::L2P_cell_pts(int l_cell_idx) {
     for(unsigned int i = cell.begin; i < cell.end; i++) {
         for(unsigned int j = 0; j < nodes[0].size(); j++) {
             int node_idx = cell_start_idx + j;   
-            double L2P_kernel = interp_operator(cell,
+            double L2P_kernel = interp_operator(cell.bounds,
                                                 nodes[0][j],
                                                 nodes[1][j],
                                                 nodes[2][j],
@@ -271,7 +270,7 @@ void FMMInfo::L2P_helper(int l_cell_idx) {
             }
             for(unsigned int j = 0; j < nodes[0].size(); j++) {
                 int node_idx = nodes[0].size() * l_cell_idx + j;   
-                double L2P_kernel = interp_operator(cell,
+                double L2P_kernel = interp_operator(cell.bounds,
                                                     nodes[0][j],
                                                     nodes[1][j],
                                                     nodes[2][j],
