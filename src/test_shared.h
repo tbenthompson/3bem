@@ -21,11 +21,11 @@
               << "ms.\n";
 
 
-inline std::vector<std::array<double,3>> three_pts() {
-    std::vector<std::array<double,3>> es(3);
-    es[0] = {1.0, 2.0, 0.0};
-    es[1] = {-1.0, 0.0, -3.0};
-    es[2] = {0.0, -2.0, 3.0};
+inline std::array<std::vector<double>,3> three_pts() {
+    std::array<std::vector<double>,3> es;
+    es[0] = {1.0, -1.0, 0.0};
+    es[1] = {2.0, 0.0, -2.0};
+    es[2] = {0.0, -3.0, 3.0};
     return es;
 }
 

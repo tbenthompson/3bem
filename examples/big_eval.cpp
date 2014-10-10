@@ -21,12 +21,14 @@ int main() {
     std::vector<float> values(n, 1.0f);
     std::array<std::vector<float>,3> srcf;
     std::array<std::vector<float>,3> obsf;
-    std::vector<std::array<double, 3>> slow_src(n);
-    std::vector<std::array<double, 3>> slow_obs(n);
+    std::array<std::vector<double>,3> slow_src;
+    std::array<std::vector<double>,3> slow_obs;
     std::vector<double> slow_values(n, 1.0);
     for (int d = 0; d < 3; d++) {
         srcf[d].resize(n);
         obsf[d].resize(n);
+        slow_src[d].resize(n);
+        slow_obs[d].resize(n);
         for (int i = 0; i < n; i++) {
             srcfx[i] = src[0][i];
             obsfx[i] = obs[0][i];

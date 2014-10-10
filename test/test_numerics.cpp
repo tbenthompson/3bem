@@ -119,3 +119,9 @@ TEST(DiligentiMapping) {
         [](double x) { return pow(x, 4) * log(sqrt(pow(x, 4) + pow(x, 3) + pow(x,2)));});
     CHECK_CLOSE(result, -0.000611395, 1e-6);
 }
+
+int main(int, char const *[])
+{
+    int retval = UnitTest::RunAllTests();
+    return retval;
+}

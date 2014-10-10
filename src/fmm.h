@@ -9,7 +9,7 @@ class OctreeCell;
 class Octree;
 class Box;
     
-typedef std::function<double (std::array<double,3>, std::array<double,3>)> Kernel;
+typedef std::function<double (double, double, double, double, double, double)> Kernel;
 
 class FMMInfo {
 public:
@@ -26,7 +26,7 @@ public:
     int n_exp_pts;
 
     // The interpolation expansion nodes in the reference cell.
-    std::vector<std::array<double,3>> nodes; 
+    std::array<std::vector<double>,3> nodes; 
 
     Kernel kernel;
 
@@ -95,7 +95,7 @@ public:
 
 //Particle to multipole
 double interp_operator(const OctreeCell& cell,
-                       const std::array<double,3>& node,
-                       const std::array<double,3>& pt,
+                       double nodex, double nodey, double nodez,
+                       double ptx, double pty, double ptz,
                        int n_exp_pts);
 #endif

@@ -53,6 +53,6 @@ COMPILER = g++
 : foreach src/*.cpp |> $(COMPILER) $(SHAREDLIBFLAGS) -c %f -o %o |> src/%B.o
 : src/*.o |> $(COMPILER) %f -o %o $(LIBLINKFLAGS) |> $(LIBNAME)
 : foreach test/*.cpp |> $(COMPILER) $(CPPFLAGS) -c %f -o %o |> test/%B.o
-: test/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(TESTLINKFLAGS) |> test/run_tests
+: foreach test/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(TESTLINKFLAGS) |> test/%B
 : foreach examples/*.cpp |> $(COMPILER) $(CPPFLAGS) -c %f -o %o |> examples/%B.o
 : foreach examples/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(EXAMPLELINKFLAGS) |> examples/%B
