@@ -55,7 +55,7 @@ std::vector<float> vec_direct_n_body(const std::array<std::vector<float>,3>& src
     const __m256 factor_rep = _mm256_broadcast_ss(&factor);
 
     std::vector<float> out_vals(obs_end - obs_start);
-    for (unsigned int i = obs_start; i < obs_end; i += 8) {
+    for (unsigned int i = obs_start; i < obs_end - 8; i += 8) {
         __m256 temp_out = _mm256_setzero_ps();
         __m256 obs_loc_x = _mm256_loadu_ps(&obs_locs[0][i]);
         __m256 obs_loc_y = _mm256_loadu_ps(&obs_locs[1][i]);
