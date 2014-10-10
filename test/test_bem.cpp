@@ -224,3 +224,9 @@ TEST(LaplaceTest) {
 }
 
 //TODO: Write a test for richardson convergence.
+
+int main(int, char const *[])
+{
+    int retval = UnitTest::RunAllTests();
+    return retval;
+}

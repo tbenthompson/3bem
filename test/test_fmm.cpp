@@ -17,6 +17,7 @@ TEST(SetupFMM) {
     FMMInfo fmm_info(one_kernel, oct, strength, oct, 2, 9.0);
     CHECK_EQUAL(fmm_info.multipole_weights.size(), oct.cells.size() * 8);
     CHECK_EQUAL(fmm_info.local_weights.size(), oct.cells.size() * 8);
+    CHECK_EQUAL(fmm_info.obs_effect.size(), n);
     CHECK_EQUAL(fmm_info.n_exp_pts, 2);
     CHECK_CLOSE(fmm_info.nodes[0][0], 1.0 / sqrt(2), 1e-13);
     CHECK_CLOSE(fmm_info.nodes[1][2], -1.0 / sqrt(2), 1e-13);
@@ -32,7 +33,7 @@ TEST(P2M_M2P_OneCell) {
     std::vector<double> strength(n, 1.0);
     FMMInfo fmm_info(one_kernel, oct, strength, oct, 1, 9.0);
     fmm_info.P2M_pts_cell(0);
-    CHECK_EQUAL(fmm_info.nodes.size(), 1);
+    CHECK_EQUAL(fmm_info.nodes[0].size(), 1);
     CHECK_CLOSE(fmm_info.multipole_weights[0], n, 1e-14);
 
     for(int i = 0; i < n; i++) {
@@ -120,7 +121,7 @@ TEST(FMMOneBothP2PM2L) {
 }
 
 TEST(FMMLaplace) {
-    int n = 200;
+    int n = 2000;
     auto oct = simple_pts_tree(n, 10);
     std::vector<double> strength(n, 1.0);
     FMMInfo fmm_info(laplace_single, oct, strength, oct, 3, 10.0);
@@ -134,4 +135,10 @@ TEST(FMMLaplace) {
     }
     std::vector<double> zeros(n, 0.0);
     CHECK_ARRAY_CLOSE(error, zeros, n, 1e-3);
+}
+
+int main(int, char const *[])
+{
+    int retval = UnitTest::RunAllTests();
+    return retval;
 }

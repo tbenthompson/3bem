@@ -48,3 +48,9 @@ TEST(CleanMesh) {
     int correct[3] = {2, 1, 0};
     CHECK_ARRAY_CLOSE(cleaned.faces[0], correct, 3, 1e-5);
 }
+
+int main(int, char const *[])
+{
+    int retval = UnitTest::RunAllTests();
+    return retval;
+}

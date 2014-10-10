@@ -2,16 +2,16 @@
 #include "algs.h"
 #include <assert.h>
 
-Box bounding_box(const std::vector<std::array<double,3>>& x, int begin, int end)
+Box bounding_box(const std::array<std::vector<double>,3>& x, int begin, int end)
 {
     assert(begin < end);
     Box ext;
-    ext.min_corner = {x[begin][0], x[begin][1], x[begin][2]};
-    ext.max_corner = {x[begin][0], x[begin][1], x[begin][2]};
+    ext.min_corner = {x[0][begin], x[1][begin], x[2][begin]};
+    ext.max_corner = {x[0][begin], x[1][begin], x[2][begin]};
     for (int i = begin + 1; i < end; ++i) {
         for (unsigned int d = 0; d < 3; ++d) {
-            ext.min_corner[d] = std::min(ext.min_corner[d], x[i][d]);
-            ext.max_corner[d] = std::max(ext.max_corner[d], x[i][d]);
+            ext.min_corner[d] = std::min(ext.min_corner[d], x[d][i]);
+            ext.max_corner[d] = std::max(ext.max_corner[d], x[d][i]);
         }
     }
 
@@ -23,13 +23,13 @@ Box bounding_box(const std::vector<std::array<double,3>>& x, int begin, int end)
     return ext;
 }
 
-Octree::Octree(std::vector<std::array<double,3>>& p_elements,
+Octree::Octree(std::array<std::vector<double>,3>& p_elements,
                unsigned int max_elements_per_cell):
     max_elements_per_cell(max_elements_per_cell),
     elements(std::move(p_elements)),
-    morton_codes(elements.size())
+    morton_codes(elements[0].size())
 { 
-    bounds = bounding_box(elements, 0, elements.size());
+    bounds = bounding_box(elements, 0, n_elements());
 
     // 
     // Fudge the width for the box used to calculate morton codes
@@ -49,8 +49,10 @@ Octree::Octree(std::vector<std::array<double,3>>& p_elements,
     //lower nodes are already constructed, constructing the upper nodes
     //is not dependent on them -- in other words, this construction is
     //completely parallelizable.
-    for (unsigned int i = 0; i < elements.size(); i++) {
-        morton_codes[i] = compute_morton(elements[i]);
+    for (unsigned int i = 0; i < n_elements(); i++) {
+        morton_codes[i] = compute_morton(elements[0][i],
+                                         elements[1][i],
+                                         elements[2][i]);
     }
     sort_elements();
 
@@ -60,7 +62,7 @@ Octree::Octree(std::vector<std::array<double,3>>& p_elements,
                        compute_morton(bounds.max_corner),
                        {-1, -1, -1, -1, -1, -1, -1, -1},
                        false};
-    if (elements.size() > max_elements_per_cell) {
+    if (n_elements() > max_elements_per_cell) {
         root.children = build_children(root);
     } else {
         root.is_leaf = true;
@@ -69,20 +71,26 @@ Octree::Octree(std::vector<std::array<double,3>>& p_elements,
 }
 
 uint64_t Octree::compute_morton(std::array<double,3> pt) {
-    unsigned int x = to_octree_space(pt[0], morton_bounds.center[0],
+    return compute_morton(pt[0], pt[1], pt[2]);
+}
+
+uint64_t Octree::compute_morton(double ptx, double pty, double ptz) {
+    unsigned int x = to_octree_space(ptx, morton_bounds.center[0],
                                      morton_bounds.half_width[0], deepest);
-    unsigned int y = to_octree_space(pt[1], morton_bounds.center[1],
+    unsigned int y = to_octree_space(pty, morton_bounds.center[1],
                                      morton_bounds.half_width[1], deepest);
-    unsigned int z = to_octree_space(pt[2], morton_bounds.center[2],
+    unsigned int z = to_octree_space(ptz, morton_bounds.center[2],
                                      morton_bounds.half_width[2], deepest);
     return morton_encode(z, y, x);
 }
 
 void Octree::sort_elements() {
-    //replace with a parallel merge sort
-    auto p = sort_permutation(morton_codes, [](uint64_t a, uint64_t b) {return a < b;});
-    morton_codes = apply_permutation(morton_codes, p);
-    elements = apply_permutation(elements, p);
+    permutation = sort_permutation(morton_codes, 
+                              [](uint64_t a, uint64_t b) {return a < b;});
+    morton_codes = apply_permutation(morton_codes, permutation);
+    for (int d = 0; d < 3; d++) {
+        elements[d] = apply_permutation(elements[d], permutation);
+    }
 }
 
 int Octree::build_child(OctreeCell& cur_cell, int i, int j, int k) {
@@ -103,6 +111,7 @@ int Octree::build_child(OctreeCell& cur_cell, int i, int j, int k) {
                                morton_codes.begin() + cur_cell.end, max_code) 
              - morton_codes.begin();
     assert(end >= begin);
+    // std::cout << cur_cell.begin << " " << cur_cell.end << " " << begin << " " << end << std::endl;
 
     // Every cell must have at least two points in it.
     if (end - begin == 0) {
@@ -116,8 +125,10 @@ int Octree::build_child(OctreeCell& cur_cell, int i, int j, int k) {
     if (end - begin == 1) {
         //TODO: Extract this get_box or get_single_pt_box function or both.
         for (int d = 0; d < 3; d++) {
-            box.center[d] = (elements[begin][d] + cur_cell.bounds.center[d]) / 2.0;
-            box.half_width[d] = std::fabs(elements[begin][d] - cur_cell.bounds.center[d]) / 2.5;
+            box.center[d] = (elements[d][begin] +
+                             cur_cell.bounds.center[d]) / 2.0;
+            box.half_width[d] = std::fabs(elements[d][begin] - 
+                                          cur_cell.bounds.center[d]) / 2.5;
             box.min_corner[d] = box.center[d] - box.half_width[d];
             box.max_corner[d] = box.center[d] + box.half_width[d];
         }

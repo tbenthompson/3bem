@@ -34,3 +34,9 @@ TEST(MortonOrder) {
         }
     }
 }
+
+int main(int, char const *[])
+{
+    int retval = UnitTest::RunAllTests();
+    return retval;
+}

@@ -2,6 +2,7 @@
 #define __ALGS_H
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 template <typename T, typename Compare>
 std::vector<int> sort_permutation(std::vector<T> const& vec,

@@ -16,7 +16,10 @@ TEST(BoundingBox) {
 }
 
 TEST(DegenerateBoundingBox) {
-    std::vector<std::array<double,3>> pts = {{0.0, 0.0, 0.0}};
+    std::array<std::vector<double>,3> pts;
+    pts[0] = {0.0};
+    pts[1] = {0.0};
+    pts[2] = {0.0};
     auto bb = bounding_box(pts, 0, 1);
     double hw[] = {0.0, 0.0, 0.0};
     double center[] = {0.0, 0.0, 0.0};
@@ -50,6 +53,23 @@ TEST(ToOctreeSpace1Cell) {
     CHECK(val == 0);
     val = to_octree_space(0.8, 0.5, 0.5, 1);
     CHECK(val == 0);
+}
+
+TEST(ProperlySorted) {
+    auto pts = random_pts(50);
+    auto copied_pts = pts;
+    Octree oct(pts, 51);
+    for (int d = 0; d < 3; d++ ) {
+        CHECK_EQUAL(oct.elements[d].size(), 50);
+        for(int i = 0; i < 50; i++) {
+            int which = oct.permutation[i];
+            CHECK_EQUAL(oct.elements[d][i], copied_pts[d][which]);
+            double morton = oct.compute_morton(oct.elements[0][i],
+                                            oct.elements[1][i],
+                                            oct.elements[2][i]);
+            CHECK_EQUAL(oct.morton_codes[i], morton);
+        }
+    }
 }
 
 void check_nonoverlapping(OctreeCell& cell, Octree tree) {
@@ -114,7 +134,8 @@ TEST(CheckLawOfLargeNumbers) {
     Octree tree(pts, n / 4);
     for (int i = 0; i < 8; i++) {
         int n_pts = tree.cells[i].end - tree.cells[i].begin;
-        CHECK(abs(n_pts - (n / 8)) < 1000);
+        int diff = abs(n_pts - (n / 8));
+        CHECK(diff < 1000);
     }
 }
 
@@ -124,4 +145,16 @@ TEST(SmallOctree) {
     CHECK(oct.cells.size() == 1);
     CHECK(oct.cells[0].begin == 0);
     CHECK(oct.cells[0].end == 3);
+}
+
+TEST(NotOneLevel) {
+    auto pts = random_pts(1000);
+    Octree tree(pts, 4);
+    CHECK(tree.cells.size() > 1);
+}
+
+int main(int, char const *[])
+{
+    int retval = UnitTest::RunAllTests();
+    return retval;
 }

@@ -3,13 +3,15 @@
 #include "numerics.h"
 #include <cassert>
 
-std::vector<std::array<double,3>> get_3d_expansion_nodes(int n_exp_pts) {
+std::array<std::vector<double>,3> get_3d_expansion_nodes(int n_exp_pts) {
     auto nodes = cheb_pts_first_kind(n_exp_pts);
-    std::vector<std::array<double,3>> nodes_3d;
+    std::array<std::vector<double>,3> nodes_3d;
     for(int d0 = 0; d0 < n_exp_pts; d0++) {
         for(int d1 = 0; d1 < n_exp_pts; d1++) {
             for(int d2 = 0; d2 < n_exp_pts; d2++) {
-                nodes_3d.push_back({nodes[d0], nodes[d1], nodes[d2]});
+                nodes_3d[0].push_back(nodes[d0]);
+                nodes_3d[1].push_back(nodes[d1]);
+                nodes_3d[2].push_back(nodes[d2]);
             }
         }
     }
@@ -17,18 +19,20 @@ std::vector<std::array<double,3>> get_3d_expansion_nodes(int n_exp_pts) {
 }
 
 double interp_operator(const OctreeCell& cell,
-                       const std::array<double,3>& node,
-                       const std::array<double,3>& pt,
+                       double nodex, double nodey, double nodez,
+                       double ptx, double pty, double ptz,
                        int n_exp_pts) {
     double effect = 1.0;
-    for (int d = 0; d < 3; d++) {
-        // Interpolation operators are computed in reference [-1, 1] space, so
-        // the point must be linearly transformed to that range.
-        double x_hat = real_to_ref(pt[d], 
-                                   cell.bounds.min_corner[d],
-                                   cell.bounds.max_corner[d]);
-        effect *= s_n_fast(node[d], x_hat, n_exp_pts);
-    }
+    // X interp
+    double x_hat = real_to_ref(ptx, cell.bounds.min_corner[0],
+                               cell.bounds.max_corner[0]);
+    effect *= s_n_fast(nodex, x_hat, n_exp_pts);
+    // Y interp
+    x_hat = real_to_ref(pty, cell.bounds.min_corner[1], cell.bounds.max_corner[1]);
+    effect *= s_n_fast(nodey, x_hat, n_exp_pts);
+    // Z interp
+    x_hat = real_to_ref(ptz, cell.bounds.min_corner[2], cell.bounds.max_corner[2]);
+    effect *= s_n_fast(nodez, x_hat, n_exp_pts);
     return effect;
 }
 
@@ -40,23 +44,26 @@ FMMInfo::FMMInfo(Kernel kernel, const Octree& src, std::vector<double>& values,
     nodes(get_3d_expansion_nodes(n_exp_pts)),
     kernel(kernel),
     src_oct(src),
-    multipole_weights(src_oct.cells.size() * nodes.size(), 0.0),
+    multipole_weights(src_oct.cells.size() * nodes[0].size(), 0.0),
     values(values),
     obs_oct(obs),
-    local_weights(obs_oct.cells.size() * nodes.size(), 0.0),
-    obs_effect(obs_oct.elements.size(), 0.0),
+    local_weights(obs_oct.cells.size() * nodes[0].size(), 0.0),
+    obs_effect(obs_oct.elements[0].size(), 0.0),
     p2p_jobs(obs_oct.cells.size()),
     m2l_jobs(obs_oct.cells.size())
 {}
 
 void FMMInfo::P2M_pts_cell(int m_cell_idx) {
     const auto cell = src_oct.cells[m_cell_idx];
-    int cell_start_idx = m_cell_idx * nodes.size();
+    int cell_start_idx = m_cell_idx * nodes[0].size();
     for(unsigned int i = cell.begin; i < cell.end; i++) {
-        for(unsigned int j = 0; j < nodes.size(); j++) {
+        for(unsigned int j = 0; j < nodes[0].size(); j++) {
             int node_idx = cell_start_idx + j;   
-            double P2M_kernel = interp_operator(cell, nodes[j],
-                                                src_oct.elements[i], 
+            double P2M_kernel = interp_operator(cell, nodes[0][j],
+                                                nodes[1][j], nodes[2][j],
+                                                src_oct.elements[0][i], 
+                                                src_oct.elements[1][i],
+                                                src_oct.elements[2][i],
                                                 n_exp_pts);
             multipole_weights[node_idx] += values[i] * P2M_kernel;
         }
@@ -79,18 +86,24 @@ void FMMInfo::P2M_helper(int m_cell_idx) {
         P2M_helper(child_idx);
         auto child = src_oct.cells[child_idx];
         //TODO: Extract this function as P2M_cell_cell.
-        for(unsigned int i = 0; i < nodes.size(); i++) {
-            int child_node_idx = nodes.size() * child_idx + i;
+        for(unsigned int i = 0; i < nodes[0].size(); i++) {
+            int child_node_idx = nodes[0].size() * child_idx + i;
             std::array<double,3> mapped_pt_src;
             for(int d = 0; d < 3; d++) {
-                mapped_pt_src[d] = ref_to_real(nodes[i][d],
+                mapped_pt_src[d] = ref_to_real(nodes[d][i],
                                                child.bounds.min_corner[d],
                                                child.bounds.max_corner[d]);
             }
-            for(unsigned int j = 0; j < nodes.size(); j++) {
-                int node_idx = nodes.size() * m_cell_idx + j;   
-                double P2M_kernel = interp_operator(cell, nodes[j],
-                                                    mapped_pt_src, n_exp_pts);
+            for(unsigned int j = 0; j < nodes[0].size(); j++) {
+                int node_idx = nodes[0].size() * m_cell_idx + j;   
+                double P2M_kernel = interp_operator(cell,
+                                                    nodes[0][j],
+                                                    nodes[1][j],
+                                                    nodes[2][j],
+                                                    mapped_pt_src[0],
+                                                    mapped_pt_src[1],
+                                                    mapped_pt_src[2],
+                                                    n_exp_pts);
                 multipole_weights[node_idx] += 
                     multipole_weights[child_node_idx] * P2M_kernel;
             }
@@ -103,10 +116,14 @@ void FMMInfo::P2M() {
 }
 
 void FMMInfo::P2P_cell_pt(const OctreeCell& m_cell, int pt_idx) {
-    const auto obs_pt = obs_oct.elements[pt_idx];
     for(unsigned int i = m_cell.begin; i < m_cell.end; i++) {
-        const auto src_pt = src_oct.elements[i];
-        const double P2P_kernel = kernel(obs_pt, src_pt);
+        const double P2P_kernel = kernel(obs_oct.elements[0][pt_idx],
+                                         obs_oct.elements[1][pt_idx],
+                                         obs_oct.elements[2][pt_idx],
+                                         src_oct.elements[0][i],
+                                         src_oct.elements[1][i],
+                                         src_oct.elements[2][i]
+                                         );
         obs_effect[pt_idx] += values[i] * P2P_kernel;
     }
 }
@@ -119,24 +136,33 @@ void FMMInfo::P2P_cell_cell(const OctreeCell& m_cell, const OctreeCell& l_cell) 
 
 void FMMInfo::M2P_cell_pt(const Box& m_cell_bounds,
                  int m_cell_idx, int pt_idx) {
-    int cell_start_idx = m_cell_idx * nodes.size();
-    for(unsigned int j = 0; j < nodes.size(); j++) {
+    int cell_start_idx = m_cell_idx * nodes[0].size();
+    for(unsigned int j = 0; j < nodes[0].size(); j++) {
         int node_idx = cell_start_idx + j;   
         std::array<double,3> src_node_loc;
         for(int d = 0; d < 3; d++) {
-            src_node_loc[d] = ref_to_real(nodes[j][d],
+            src_node_loc[d] = ref_to_real(nodes[d][j],
                                           m_cell_bounds.min_corner[d],
                                           m_cell_bounds.max_corner[d]);
         }
-        double M2P_kernel = 
-            kernel(obs_oct.elements[pt_idx], src_node_loc);
+        const double M2P_kernel = kernel(obs_oct.elements[0][pt_idx],
+                                         obs_oct.elements[1][pt_idx],
+                                         obs_oct.elements[2][pt_idx],
+                                         src_node_loc[0],
+                                         src_node_loc[1],
+                                         src_node_loc[2]
+                                         );
         obs_effect[pt_idx] += multipole_weights[node_idx] * M2P_kernel;
     }
 }
 
 void FMMInfo::treecode_process_cell(const OctreeCell& cell, int cell_idx, int pt_idx) {
-    const auto x = obs_oct.elements[pt_idx];
-    const double dist_squared = dist2<3>(x, cell.bounds.center);
+    const double dist_squared = hypot2(obs_oct.elements[0][pt_idx],
+                                       obs_oct.elements[1][pt_idx],
+                                       obs_oct.elements[2][pt_idx],
+                                       cell.bounds.center[0],
+                                       cell.bounds.center[1],
+                                       cell.bounds.center[2]);
     const double radius_squared = hypot2(cell.bounds.half_width); 
     if (dist_squared > mac2 * radius_squared) {
         M2P_cell_pt(cell.bounds, cell_idx, pt_idx);    
@@ -160,38 +186,39 @@ void FMMInfo::treecode_helper(const OctreeCell& cell, int pt_idx) {
 }
 
 void FMMInfo::treecode() {
-    const auto pts = obs_oct.elements;
     const int root_idx = src_oct.get_root_index();
     const auto root = src_oct.cells[root_idx];
-#pragma omp parallel for
-    for(unsigned int i = 0; i < pts.size(); i++) {
+// #pragma omp parallel for
+    for(unsigned int i = 0; i < obs_oct.elements[0].size(); i++) {
         treecode_process_cell(root, root_idx, i);
     }
 }
 
 void FMMInfo::M2L_cell_cell(const Box& m_cell_bounds, int m_cell_idx, 
                             const Box& l_cell_bounds, int l_cell_idx) {
-    int m_cell_start_idx = m_cell_idx * nodes.size();
-    int l_cell_start_idx = l_cell_idx * nodes.size();
-    for(unsigned int i = 0; i < nodes.size(); i++) {
+    int m_cell_start_idx = m_cell_idx * nodes[0].size();
+    int l_cell_start_idx = l_cell_idx * nodes[0].size();
+    for(unsigned int i = 0; i < nodes[0].size(); i++) {
         int l_node_idx = l_cell_start_idx + i;
         std::array<double,3> obs_node_loc;
         for(int d = 0; d < 3; d++) {
-            obs_node_loc[d] = ref_to_real(nodes[i][d],
+            obs_node_loc[d] = ref_to_real(nodes[d][i],
                                           l_cell_bounds.min_corner[d],
                                           l_cell_bounds.max_corner[d]);
         }
 
-        for(unsigned int j = 0; j < nodes.size(); j++) {
+        for(unsigned int j = 0; j < nodes[0].size(); j++) {
             int m_node_idx = m_cell_start_idx + j;   
             std::array<double,3> src_node_loc;
             for(int d = 0; d < 3; d++) {
-                src_node_loc[d] = ref_to_real(nodes[j][d],
+                src_node_loc[d] = ref_to_real(nodes[d][j],
                                               m_cell_bounds.min_corner[d],
                                               m_cell_bounds.max_corner[d]);
             }
 
-            double M2L_kernel = kernel(obs_node_loc, src_node_loc);
+            double M2L_kernel = kernel(obs_node_loc[0], obs_node_loc[1],
+                                       obs_node_loc[2], src_node_loc[0],
+                                       src_node_loc[1], src_node_loc[2]);
             local_weights[l_node_idx] += 
                 multipole_weights[m_node_idx] * M2L_kernel;
         }
@@ -200,12 +227,17 @@ void FMMInfo::M2L_cell_cell(const Box& m_cell_bounds, int m_cell_idx,
 
 void FMMInfo::L2P_cell_pts(int l_cell_idx) {
     const auto cell = obs_oct.cells[l_cell_idx];
-    int cell_start_idx = l_cell_idx * nodes.size();
+    int cell_start_idx = l_cell_idx * nodes[0].size();
     for(unsigned int i = cell.begin; i < cell.end; i++) {
-        for(unsigned int j = 0; j < nodes.size(); j++) {
+        for(unsigned int j = 0; j < nodes[0].size(); j++) {
             int node_idx = cell_start_idx + j;   
-            double L2P_kernel = interp_operator(cell, nodes[j],
-                                                obs_oct.elements[i], 
+            double L2P_kernel = interp_operator(cell,
+                                                nodes[0][j],
+                                                nodes[1][j],
+                                                nodes[2][j],
+                                                obs_oct.elements[0][i],
+                                                obs_oct.elements[1][i],
+                                                obs_oct.elements[2][i],
                                                 n_exp_pts);
             obs_effect[i] += local_weights[node_idx] * L2P_kernel;
         }
@@ -229,18 +261,24 @@ void FMMInfo::L2P_helper(int l_cell_idx) {
         // top-down tree traversal, recurse after doing work
         auto child = obs_oct.cells[child_idx];
         //TODO: Extract this function as L2P_cell_cell.
-        for(unsigned int i = 0; i < nodes.size(); i++) {
-            int child_node_idx = nodes.size() * child_idx + i;
+        for(unsigned int i = 0; i < nodes[0].size(); i++) {
+            int child_node_idx = nodes[0].size() * child_idx + i;
             std::array<double,3> mapped_local_pt;
             for(int d = 0; d < 3; d++) {
-                mapped_local_pt[d] = ref_to_real(nodes[i][d],
+                mapped_local_pt[d] = ref_to_real(nodes[d][i],
                                                  child.bounds.min_corner[d],
                                                  child.bounds.max_corner[d]);
             }
-            for(unsigned int j = 0; j < nodes.size(); j++) {
-                int node_idx = nodes.size() * l_cell_idx + j;   
-                double L2P_kernel = interp_operator(cell, nodes[j],
-                                            mapped_local_pt, n_exp_pts);
+            for(unsigned int j = 0; j < nodes[0].size(); j++) {
+                int node_idx = nodes[0].size() * l_cell_idx + j;   
+                double L2P_kernel = interp_operator(cell,
+                                                    nodes[0][j],
+                                                    nodes[1][j],
+                                                    nodes[2][j],
+                                                    mapped_local_pt[0],
+                                                    mapped_local_pt[1],
+                                                    mapped_local_pt[2],
+                                                    n_exp_pts);
                 local_weights[child_node_idx] += 
                     local_weights[node_idx] * L2P_kernel;
             }
