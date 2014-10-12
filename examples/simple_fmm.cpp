@@ -6,7 +6,7 @@
 
 int main() {
     int n = (int)1e6;
-    int pts_per_cell = 400;
+    int pts_per_cell = 1;
     int n_exp_pts = 1;
     double mac2 = 10.0;
     auto pts = random_pts(n);
@@ -23,6 +23,7 @@ int main() {
     TIC2;
     fmm_info.fmm();
     TOC("M2L + P2P");
+    std::cout << "Total possible interactions: " << ((long)n * (long)n)/1e9 << std::endl;
     TIC2;
     fmm_info.L2P();
     TOC("L2P");

@@ -317,7 +317,11 @@ void FMMInfo::fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
                                          m_cell.bounds.center);
     if (2 * dist_squared > mac2 * (m_cell.bounds.radius2 + l_cell.bounds.radius2)) {
         if (l_cell.end - l_cell.begin < nodes[0].size()) {
-            m2p_jobs[l_cell_idx].push_back(m_cell_idx);
+            if (m_cell.end - m_cell.begin < nodes[0].size()) {
+                p2p_jobs[l_cell_idx].push_back(m_cell_idx);
+            } else {
+                m2p_jobs[l_cell_idx].push_back(m_cell_idx);
+            }
         } else {
             m2l_jobs[l_cell_idx].push_back(m_cell_idx);
         }
@@ -387,35 +391,52 @@ void FMMInfo::fmm_exec_jobs() {
     //and M2L_cell_cell and M2P_cell_cell interfaces uniform
     TIC
     std::vector<std::vector<int>>* job_set = &p2p_jobs;
+    long interactions = 0;
 #pragma omp parallel for
     for (unsigned int l_idx = 0; l_idx < job_set->size(); l_idx++) {
         for (unsigned int j = 0; j < (*job_set)[l_idx].size(); j++) {
             int m_idx = (*job_set)[l_idx][j];
             P2P_cell_cell(src_oct.cells[m_idx], obs_oct.cells[l_idx]);
+
+            auto m_cell = src_oct.cells[m_idx];
+            auto l_cell = obs_oct.cells[l_idx];
+            interactions += (m_cell.end - m_cell.begin) * (l_cell.end - l_cell.begin);
         }
     }
+    std::cout << "Number of interactions: " << interactions/1e9 << std::endl;
     TOC("P2P");
 
     TIC2
     job_set = &m2l_jobs;
+    long m2l_interactions = 0;
 #pragma omp parallel for
     for (unsigned int l_idx = 0; l_idx < job_set->size(); l_idx++) {
         for (unsigned int j = 0; j < (*job_set)[l_idx].size(); j++) {
             int m_idx = (*job_set)[l_idx][j];
             M2L_cell_cell(src_oct.cells[m_idx].bounds, m_idx,
                           obs_oct.cells[l_idx].bounds, l_idx);
+
+            m2l_interactions += (int)pow(n_exp_pts,6);
         }
     }
+    std::cout << "Number of M2L interactions: " << m2l_interactions/1e9 << std::endl;
     TOC("M2L");
 
     TIC2
     job_set = &m2p_jobs;
+    long m2p_interactions = 0;
 #pragma omp parallel for
     for (unsigned int l_idx = 0; l_idx < job_set->size(); l_idx++) {
         for (unsigned int j = 0; j < (*job_set)[l_idx].size(); j++) {
             int m_idx = (*job_set)[l_idx][j];
             M2P_cell_cell(src_oct.cells[m_idx].bounds, m_idx, obs_oct.cells[l_idx]);
+
+            auto l_cell = obs_oct.cells[l_idx];
+            m2p_interactions += (int)pow(n_exp_pts,3) * (l_cell.end - l_cell.begin);
         }
     }
+    std::cout << "Number of M2P interactions: " << m2p_interactions / 1e9 << std::endl;
     TOC("M2P");
+    int tot = interactions + m2l_interactions + m2p_interactions;
+    std::cout << "Total FMM interactions" << tot/1e9 << std::endl;
 }
