@@ -331,19 +331,27 @@ void FMMInfo::fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
 
 void FMMInfo::fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
                                    const OctreeCell& l_cell, int l_cell_idx) {
-    if ((m_cell.level > l_cell.level && !l_cell.is_leaf) || m_cell.is_leaf) {
+    //preferentially refine l_cell.
+    if ((l_cell.level <= m_cell.level && !l_cell.is_leaf) || m_cell.is_leaf) {
         //refine l_cell
         assert(!l_cell.is_leaf);
+
+#pragma omp parallel if(l_cell.level < 1)
+        {
+#pragma omp single
         for (int c = 0; c < 8; c++) {
             const int l_child_idx = l_cell.children[c];
             if (l_child_idx != -1) {
+#pragma omp task
                 fmm_process_cell_pair(m_cell, m_cell_idx, 
                                       obs_oct.cells[l_child_idx], l_child_idx);
             }
         }
+        }
     } else {
         //refine m_cell
         assert(!m_cell.is_leaf);
+
         for (int c = 0; c < 8; c++) {
             const int m_child_idx = m_cell.children[c];
             if (m_child_idx != -1) {
@@ -358,40 +366,9 @@ void FMMInfo::fmm() {
     TIC;
     const int src_root_idx = src_oct.get_root_index();
     const auto src_root = src_oct.cells[src_root_idx];
-    // const int obs_root_idx = obs_oct.get_root_index();
-    // const auto obs_root = obs_oct.cells[obs_root_idx];
-    // fmm_process_cell_pair(src_root, src_root_idx, obs_root, obs_root_idx);
-    unsigned int parallel_level = 4;
-    //TODO: This is not currently thread safe, but for some reason, still appears
-    //to work. FIX
-    //TODO: This is not currently thread safe, but for some reason, still appears
-    //to work. FIX
-    //TODO: This is not currently thread safe, but for some reason, still appears
-    //to work. FIX
-#pragma omp parallel 
-    {
-        std::vector<int> obs_cells = {obs_oct.get_root_index()};
-        unsigned int next = 0;
-#pragma omp single
-        while(next < obs_cells.size()) {
-            int l_cell_idx = obs_cells[next]; 
-            next++;
-            auto l_cell = obs_oct.cells[l_cell_idx];
-            if (l_cell.level >= parallel_level || l_cell.is_leaf) {
-#pragma omp task
-                {
-                    fmm_process_cell_pair(src_root, src_root_idx, l_cell, l_cell_idx); 
-                }
-            } else {
-                for (int c = 0;c < 8;c++) {
-                    const int l_child_idx = l_cell.children[c];
-                    if (l_child_idx != -1) {
-                        obs_cells.push_back(l_child_idx);
-                    }
-                }
-            }
-        }
-    }
+    const int obs_root_idx = obs_oct.get_root_index();
+    const auto obs_root = obs_oct.cells[obs_root_idx];
+    fmm_process_cell_pair(src_root, src_root_idx, obs_root, obs_root_idx);
     TOC("Tree traverse");
     TIC2
     fmm_exec_jobs();
@@ -408,35 +385,35 @@ bool fmm_compare(std::array<int,2> a, std::array<int,2> b) {
 void FMMInfo::fmm_exec_jobs() {
     //TODO: make this a templated function and make the P2P_cell_cell
     //and M2L_cell_cell and M2P_cell_cell interfaces uniform
-    std::vector<std::vector<int>>& job_set = p2p_jobs;
     TIC
+    std::vector<std::vector<int>>* job_set = &p2p_jobs;
 #pragma omp parallel for
-    for (unsigned int l_idx = 0; l_idx < job_set.size(); l_idx++) {
-        for (unsigned int j = 0; j < job_set[l_idx].size(); j++) {
-            int m_idx = job_set[l_idx][j];
+    for (unsigned int l_idx = 0; l_idx < job_set->size(); l_idx++) {
+        for (unsigned int j = 0; j < (*job_set)[l_idx].size(); j++) {
+            int m_idx = (*job_set)[l_idx][j];
             P2P_cell_cell(src_oct.cells[m_idx], obs_oct.cells[l_idx]);
         }
     }
     TOC("P2P");
 
-    job_set = m2l_jobs;
     TIC2
+    job_set = &m2l_jobs;
 #pragma omp parallel for
-    for (unsigned int l_idx = 0; l_idx < job_set.size(); l_idx++) {
-        for (unsigned int j = 0; j < job_set[l_idx].size(); j++) {
-            int m_idx = job_set[l_idx][j];
+    for (unsigned int l_idx = 0; l_idx < job_set->size(); l_idx++) {
+        for (unsigned int j = 0; j < (*job_set)[l_idx].size(); j++) {
+            int m_idx = (*job_set)[l_idx][j];
             M2L_cell_cell(src_oct.cells[m_idx].bounds, m_idx,
                           obs_oct.cells[l_idx].bounds, l_idx);
         }
     }
     TOC("M2L");
 
-    job_set = m2p_jobs;
     TIC2
+    job_set = &m2p_jobs;
 #pragma omp parallel for
-    for (unsigned int l_idx = 0; l_idx < job_set.size(); l_idx++) {
-        for (unsigned int j = 0; j < job_set[l_idx].size(); j++) {
-            int m_idx = job_set[l_idx][j];
+    for (unsigned int l_idx = 0; l_idx < job_set->size(); l_idx++) {
+        for (unsigned int j = 0; j < (*job_set)[l_idx].size(); j++) {
+            int m_idx = (*job_set)[l_idx][j];
             M2P_cell_cell(src_oct.cells[m_idx].bounds, m_idx, obs_oct.cells[l_idx]);
         }
     }
