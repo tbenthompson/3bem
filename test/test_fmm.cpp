@@ -81,9 +81,8 @@ TEST(M2L_Kernel) {
     for(unsigned int i = 0; i < fmm_info.src_oct.cells.size(); i++) {
         auto src_cell =  fmm_info.src_oct.cells[i];
         for(unsigned int j = 0; j < fmm_info.obs_oct.cells.size(); j++) {
-            auto obs_cell =  fmm_info.obs_oct.cells[j];
             fmm_info.local_weights[j] = 0.0;
-            fmm_info.M2L_cell_cell(src_cell.bounds, i, obs_cell.bounds, j);
+            fmm_info.M2L_cell_cell(i, j);
             CHECK_EQUAL(fmm_info.local_weights[j], src_cell.end - src_cell.begin);
         }
     }
@@ -151,7 +150,7 @@ TEST(FMMLaplace) {
 }
 
 TEST(FMMLaplaceNonOneStrength) {
-    test_fmm_laplace(10.0, 1e-3, true);
+    test_fmm_laplace(5.0, 3e-3, true);
 }
 
 int main(int, char const *[])
