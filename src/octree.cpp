@@ -3,6 +3,7 @@
 #include "algs.h"
 #include <assert.h>
 
+// TODO: Should these box_from_* functions be Box constructors?
 Box box_from_min_max(const std::array<double, 3> min_corner,
                      const std::array<double, 3> max_corner) {
     Box ext;
