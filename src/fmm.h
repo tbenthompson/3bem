@@ -63,9 +63,12 @@ public:
     // particles for the next level.
     void P2M();
 
-    //Multipole to point -- used by treecode but not FMM
+    //Multipole to point -- used by treecode and only by FMM when the number of
+    //points in a target cell is less than the number of expansion nodes.
     void M2P_cell_pt(const Box& m_cell_bounds,
                      int m_cell_idx, int pt_idx);
+    void M2P_cell_cell(const Box& m_cell_bounds, int m_cell_idx,
+                            const OctreeCell& l_cell);
 
     // A treecode evaluation computes interactions between cells and points.
     // In contrast, a FMM evaluation also computes interactions between cells
@@ -80,6 +83,10 @@ public:
 
     void M2L_cell_cell(const Box& m_cell_bounds, int m_cell_idx, 
                        const Box& l_cell_bounds, int l_cell_idx);
+
+    // The local to particle operator computes the effect of far field points
+    // on the local particles. This recursively goes down the tree computing
+    // child local weights from parent local weights until the leaves.
     void L2P_cell_pts(int l_cell_idx);
     void L2P_helper(int l_cell_idx);
     void L2P();
@@ -89,7 +96,6 @@ public:
     void fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
                               const OctreeCell& l_cell, int l_cell_idx);
     void fmm();
-    
     void fmm_exec_jobs();
 };
 

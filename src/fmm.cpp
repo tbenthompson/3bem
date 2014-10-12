@@ -1,3 +1,4 @@
+#include <omp.h>
 #include "fmm.h"
 #include "octree.h"
 #include "numerics.h"
@@ -80,35 +81,40 @@ void FMMInfo::P2M_helper(int m_cell_idx) {
         P2M_pts_cell(m_cell_idx);
         return;
     }
-    for (int c = 0; c < 8; c++) {
-        int child_idx = cell.children[c];
-        if (child_idx == -1) {
-            continue;
-        }
-        // bottom-up tree traversal, recurse before doing work.
-        P2M_helper(child_idx);
-        auto child = src_oct.cells[child_idx];
-        //TODO: Extract this function as P2M_cell_cell.
-        for(unsigned int i = 0; i < nodes[0].size(); i++) {
-            int child_node_idx = nodes[0].size() * child_idx + i;
-            std::array<double,3> mapped_pt_src;
-            for(int d = 0; d < 3; d++) {
-                mapped_pt_src[d] = ref_to_real(nodes[d][i],
-                                               child.bounds.min_corner[d],
-                                               child.bounds.max_corner[d]);
+#pragma omp parallel if(cell.level < 2)
+    {
+#pragma omp single
+        for (int c = 0; c < 8; c++) {
+            int child_idx = cell.children[c];
+            if (child_idx == -1) {
+                continue;
             }
-            for(unsigned int j = 0; j < nodes[0].size(); j++) {
-                int node_idx = nodes[0].size() * m_cell_idx + j;   
-                double P2M_kernel = interp_operator(cell.bounds,
-                                                    nodes[0][j],
-                                                    nodes[1][j],
-                                                    nodes[2][j],
-                                                    mapped_pt_src[0],
-                                                    mapped_pt_src[1],
-                                                    mapped_pt_src[2],
-                                                    n_exp_pts);
-                multipole_weights[node_idx] += 
-                    multipole_weights[child_node_idx] * P2M_kernel;
+            // bottom-up tree traversal, recurse before doing work.
+#pragma omp task
+            P2M_helper(child_idx);
+            auto child = src_oct.cells[child_idx];
+            //TODO: Extract this function as P2M_cell_cell.
+            for(unsigned int i = 0; i < nodes[0].size(); i++) {
+                int child_node_idx = nodes[0].size() * child_idx + i;
+                std::array<double,3> mapped_pt_src;
+                for(int d = 0; d < 3; d++) {
+                    mapped_pt_src[d] = ref_to_real(nodes[d][i],
+                                                   child.bounds.min_corner[d],
+                                                   child.bounds.max_corner[d]);
+                }
+                for(unsigned int j = 0; j < nodes[0].size(); j++) {
+                    int node_idx = nodes[0].size() * m_cell_idx + j;   
+                    double P2M_kernel = interp_operator(cell.bounds,
+                                                        nodes[0][j],
+                                                        nodes[1][j],
+                                                        nodes[2][j],
+                                                        mapped_pt_src[0],
+                                                        mapped_pt_src[1],
+                                                        mapped_pt_src[2],
+                                                        n_exp_pts);
+                    multipole_weights[node_idx] += 
+                        multipole_weights[child_node_idx] * P2M_kernel;
+                }
             }
         }
     }
@@ -156,6 +162,13 @@ void FMMInfo::M2P_cell_pt(const Box& m_cell_bounds,
                                          src_node_loc[2]
                                          );
         obs_effect[pt_idx] += multipole_weights[node_idx] * M2P_kernel;
+    }
+}
+
+void FMMInfo::M2P_cell_cell(const Box& m_cell_bounds, int m_cell_idx,
+                            const OctreeCell& l_cell) {
+    for (int i = l_cell.begin; i < (int)l_cell.end; i++) {
+        M2P_cell_pt(m_cell_bounds, m_cell_idx, i);
     }
 }
 
@@ -255,39 +268,44 @@ void FMMInfo::L2P_helper(int l_cell_idx) {
         return;
     }
 
-    for (int c = 0; c < 8; c++) {
-        int child_idx = cell.children[c];
-        if (child_idx == -1) {
-            continue;
-        }
+#pragma omp parallel if(cell.level < 2)
+    {
+#pragma omp single
+        for (int c = 0; c < 8; c++) {
+            int child_idx = cell.children[c];
+            if (child_idx == -1) {
+                continue;
+            }
 
-        // top-down tree traversal, recurse after doing work
-        auto child = obs_oct.cells[child_idx];
-        //TODO: Extract this function as L2P_cell_cell.
-        for(unsigned int i = 0; i < nodes[0].size(); i++) {
-            int child_node_idx = nodes[0].size() * child_idx + i;
-            std::array<double,3> mapped_local_pt;
-            for(int d = 0; d < 3; d++) {
-                mapped_local_pt[d] = ref_to_real(nodes[d][i],
-                                                 child.bounds.min_corner[d],
-                                                 child.bounds.max_corner[d]);
+            // top-down tree traversal, recurse after doing work
+            auto child = obs_oct.cells[child_idx];
+            //TODO: Extract this function as L2P_cell_cell.
+            for(unsigned int i = 0; i < nodes[0].size(); i++) {
+                int child_node_idx = nodes[0].size() * child_idx + i;
+                std::array<double,3> mapped_local_pt;
+                for(int d = 0; d < 3; d++) {
+                    mapped_local_pt[d] = ref_to_real(nodes[d][i],
+                                                     child.bounds.min_corner[d],
+                                                     child.bounds.max_corner[d]);
+                }
+                for(unsigned int j = 0; j < nodes[0].size(); j++) {
+                    int node_idx = nodes[0].size() * l_cell_idx + j;   
+                    double L2P_kernel = interp_operator(cell.bounds,
+                                                        nodes[0][j],
+                                                        nodes[1][j],
+                                                        nodes[2][j],
+                                                        mapped_local_pt[0],
+                                                        mapped_local_pt[1],
+                                                        mapped_local_pt[2],
+                                                        n_exp_pts);
+                    local_weights[child_node_idx] += 
+                        local_weights[node_idx] * L2P_kernel;
+                }
             }
-            for(unsigned int j = 0; j < nodes[0].size(); j++) {
-                int node_idx = nodes[0].size() * l_cell_idx + j;   
-                double L2P_kernel = interp_operator(cell.bounds,
-                                                    nodes[0][j],
-                                                    nodes[1][j],
-                                                    nodes[2][j],
-                                                    mapped_local_pt[0],
-                                                    mapped_local_pt[1],
-                                                    mapped_local_pt[2],
-                                                    n_exp_pts);
-                local_weights[child_node_idx] += 
-                    local_weights[node_idx] * L2P_kernel;
-            }
+
+#pragma omp task 
+            L2P_helper(child_idx);
         }
-        
-        L2P_helper(child_idx);
     }
 }
 
@@ -300,12 +318,11 @@ void FMMInfo::fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
     const double dist_squared = dist2<3>(l_cell.bounds.center, 
                                          m_cell.bounds.center);
     if (2 * dist_squared > mac2 * (m_cell.bounds.radius2 + l_cell.bounds.radius2)) {
-        // if (l_cell.end - l_cell.begin < nodes[0].size()) {
-        //     m2p_jobs[l_cell_idx].push_back(m_cell_idx);
-        // } else {
-        //     m2l_jobs[l_cell_idx].push_back(m_cell_idx);
-        // }
-        m2l_jobs[l_cell_idx].push_back(m_cell_idx);
+        if (l_cell.end - l_cell.begin < nodes[0].size()) {
+            m2p_jobs[l_cell_idx].push_back(m_cell_idx);
+        } else {
+            m2l_jobs[l_cell_idx].push_back(m_cell_idx);
+        }
         return;
     } else if (m_cell.is_leaf && l_cell.is_leaf) {
         p2p_jobs[l_cell_idx].push_back(m_cell_idx);
@@ -321,22 +338,20 @@ void FMMInfo::fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
         assert(!l_cell.is_leaf);
         for (int c = 0; c < 8; c++) {
             const int l_child_idx = l_cell.children[c];
-            if (l_child_idx == -1) {
-                continue;
+            if (l_child_idx != -1) {
+                fmm_process_cell_pair(m_cell, m_cell_idx, 
+                                      obs_oct.cells[l_child_idx], l_child_idx);
             }
-            fmm_process_cell_pair(m_cell, m_cell_idx, 
-                                  obs_oct.cells[l_child_idx], l_child_idx);
         }
     } else {
         //refine m_cell
         assert(!m_cell.is_leaf);
         for (int c = 0; c < 8; c++) {
             const int m_child_idx = m_cell.children[c];
-            if (m_child_idx == -1) {
-                continue;
-            }
-            fmm_process_cell_pair(src_oct.cells[m_child_idx], m_child_idx,
+            if (m_child_idx != -1) {
+                fmm_process_cell_pair(src_oct.cells[m_child_idx], m_child_idx,
                                   l_cell, l_cell_idx);
+            }
         }
     }
 }
@@ -345,9 +360,40 @@ void FMMInfo::fmm() {
     TIC;
     const int src_root_idx = src_oct.get_root_index();
     const auto src_root = src_oct.cells[src_root_idx];
-    const int obs_root_idx = obs_oct.get_root_index();
-    const auto obs_root = obs_oct.cells[obs_root_idx];
-    fmm_process_cell_pair(src_root, src_root_idx, obs_root, obs_root_idx);
+    // const int obs_root_idx = obs_oct.get_root_index();
+    // const auto obs_root = obs_oct.cells[obs_root_idx];
+    // fmm_process_cell_pair(src_root, src_root_idx, obs_root, obs_root_idx);
+    unsigned int parallel_level = 4;
+    //TODO: This is not currently thread safe, but for some reason, still appears
+    //to work. FIX
+    //TODO: This is not currently thread safe, but for some reason, still appears
+    //to work. FIX
+    //TODO: This is not currently thread safe, but for some reason, still appears
+    //to work. FIX
+#pragma omp parallel num_threads(6)
+    {
+        std::vector<int> obs_cells = {obs_oct.get_root_index()};
+        unsigned int next = 0;
+#pragma omp single
+        while(next < obs_cells.size()) {
+            int l_cell_idx = obs_cells[next]; 
+            next++;
+            auto l_cell = obs_oct.cells[l_cell_idx];
+            if (l_cell.level >= parallel_level || l_cell.is_leaf) {
+#pragma omp task
+                {
+                    fmm_process_cell_pair(src_root, src_root_idx, l_cell, l_cell_idx); 
+                }
+            } else {
+                for (int c = 0;c < 8;c++) {
+                    const int l_child_idx = l_cell.children[c];
+                    if (l_child_idx != -1) {
+                        obs_cells.push_back(l_child_idx);
+                    }
+                }
+            }
+        }
+    }
     TOC("Tree traverse");
     TIC2
     fmm_exec_jobs();
@@ -363,8 +409,9 @@ bool fmm_compare(std::array<int,2> a, std::array<int,2> b) {
 
 void FMMInfo::fmm_exec_jobs() {
     //TODO: make this a templated function and make the P2P_cell_cell
-    //and M2L_cell_cell interfaces uniform
+    //and M2L_cell_cell and M2P_cell_cell interfaces uniform
     std::vector<std::vector<int>>& job_set = p2p_jobs;
+    TIC
 #pragma omp parallel for
     for (unsigned int l_idx = 0; l_idx < job_set.size(); l_idx++) {
         for (unsigned int j = 0; j < job_set[l_idx].size(); j++) {
@@ -372,8 +419,10 @@ void FMMInfo::fmm_exec_jobs() {
             P2P_cell_cell(src_oct.cells[m_idx], obs_oct.cells[l_idx]);
         }
     }
+    TOC("P2P");
 
     job_set = m2l_jobs;
+    TIC2
 #pragma omp parallel for
     for (unsigned int l_idx = 0; l_idx < job_set.size(); l_idx++) {
         for (unsigned int j = 0; j < job_set[l_idx].size(); j++) {
@@ -382,4 +431,16 @@ void FMMInfo::fmm_exec_jobs() {
                           obs_oct.cells[l_idx].bounds, l_idx);
         }
     }
+    TOC("M2L");
+
+    job_set = m2p_jobs;
+    TIC2
+#pragma omp parallel for
+    for (unsigned int l_idx = 0; l_idx < job_set.size(); l_idx++) {
+        for (unsigned int j = 0; j < job_set[l_idx].size(); j++) {
+            int m_idx = job_set[l_idx][j];
+            M2P_cell_cell(src_oct.cells[m_idx].bounds, m_idx, obs_oct.cells[l_idx]);
+        }
+    }
+    TOC("M2P");
 }
