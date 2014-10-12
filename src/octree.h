@@ -17,6 +17,7 @@ public:
     std::array<double,3> half_width;
     std::array<double,3> min_corner;
     std::array<double,3> max_corner;
+    double radius2;
 
     friend std::ostream& operator<<(std::ostream& os, const Box& obj)
     {
