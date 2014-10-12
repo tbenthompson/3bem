@@ -20,7 +20,7 @@ def calc_speed(total_time, n):
 
 
 items_per_tile = 256 * 4
-tiles_per_row = 768
+tiles_per_row = 128
 n = items_per_tile * tiles_per_row
 check = n < 10001
 src = np.random.rand(n, 4).astype(np.float32)
@@ -132,20 +132,21 @@ __kernel void reduce_rows(__global float* intermediate_result,
 print "START GPU"
 start = time.time()
 
-args = [src_buf, obs_buf, np.uint32(n), np.uint32(n), dest_buf]
-global_size = (n,)
-local_size = None#(items_per_tile,)
-print global_size, local_size
-prg.direct_n_body1(queue, global_size, local_size, *args)
+# args = [src_buf, obs_buf, np.uint32(n), np.uint32(n), dest_buf]
+# global_size = (n,)
+# local_size = None#(items_per_tile,)
+# print global_size, local_size
+# prg.direct_n_body1(queue, global_size, local_size, *args)
 
-# direct_args = [src_buf, obs_buf, np.uint32(n), np.uint32(n), intermediate_buf, lmem]
-# global_size = (n, tiles_per_row)
-# local_size = (items_per_tile, 1)
-# prg.direct_n_body2(queue, global_size, local_size, *direct_args)
-#
-# reduce_size = (n,)
-# reduce_args = [intermediate_buf, dest_buf, np.uint32(n), np.uint32(tiles_per_row)]
-# prg.reduce_rows(queue, reduce_size, None, *reduce_args)
+direct_args = [src_buf, obs_buf, np.uint32(n), np.uint32(n), intermediate_buf, lmem]
+global_size = (n, tiles_per_row)
+local_size = (items_per_tile, 1)
+print global_size, local_size
+prg.direct_n_body2(queue, global_size, local_size, *direct_args)
+
+reduce_size = (n,)
+reduce_args = [intermediate_buf, dest_buf, np.uint32(n), np.uint32(tiles_per_row)]
+prg.reduce_rows(queue, reduce_size, None, *reduce_args)
 
 result = np.empty(n).astype(np.float32)
 cl.enqueue_copy(queue, result, dest_buf)
