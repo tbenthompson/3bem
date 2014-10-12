@@ -6,7 +6,7 @@
 
 int main() {
     int n = (int)1e6;
-    int pts_per_cell = 20;
+    int pts_per_cell = 400;
     int n_exp_pts = 1;
     double mac2 = 10.0;
     auto pts = random_pts(n);
