@@ -6,9 +6,9 @@
 
 int main() {
     int n = (int)1e6;
-    int pts_per_cell = 1;
-    int n_exp_pts = 1;
-    double mac2 = 10.0;
+    int pts_per_cell = 100;
+    int n_exp_pts = 2;
+    double mac2 = 4.0;
     auto pts = random_pts(n);
     std::vector<double> strength(n, 1.0);
     TIC;
@@ -23,11 +23,12 @@ int main() {
     TIC2;
     fmm_info.fmm();
     TOC("M2L + P2P");
-    std::cout << "Total possible interactions: " << ((long)n * (long)n)/1e9 << std::endl;
+    std::cout << "Total possible billions of interactions: " << ((long)n * (long)n)/1e9 << std::endl;
     TIC2;
     fmm_info.L2P();
     TOC("L2P");
-    TIC2;   
-    fmm_info.treecode();
-    TOC("treecode");
+
+    TIC2;
+    direct_n_body(oct.elements, oct.elements, laplace_single, strength);
+    TOC("Direct");
 }

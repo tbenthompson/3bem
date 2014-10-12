@@ -67,8 +67,7 @@ public:
     //points in a target cell is less than the number of expansion nodes.
     void M2P_cell_pt(const Box& m_cell_bounds,
                      int m_cell_idx, int pt_idx);
-    void M2P_cell_cell(const Box& m_cell_bounds, int m_cell_idx,
-                            const OctreeCell& l_cell);
+    void M2P_cell_cell(int m_cell_idx, int l_cell_idx);
 
     // A treecode evaluation computes interactions between cells and points.
     // In contrast, a FMM evaluation also computes interactions between cells
@@ -79,10 +78,9 @@ public:
     void treecode();
 
     void P2P_cell_pt(const OctreeCell& m_cell, int pt_idx);
-    void P2P_cell_cell(const OctreeCell& m_cell, const OctreeCell& l_cell);
+    void P2P_cell_cell(int m_cell_idx, int l_cell_idx);
 
-    void M2L_cell_cell(const Box& m_cell_bounds, int m_cell_idx, 
-                       const Box& l_cell_bounds, int l_cell_idx);
+    void M2L_cell_cell(int m_cell_idx, int l_cell_idx);
 
     // The local to particle operator computes the effect of far field points
     // on the local particles. This recursively goes down the tree computing
@@ -96,7 +94,6 @@ public:
     void fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
                               const OctreeCell& l_cell, int l_cell_idx);
     void fmm();
-    void fmm_exec_jobs();
 };
 
 //TODO: Make the functions for the different operations more uniform 

@@ -81,15 +81,25 @@ void FMMInfo::P2M_helper(int m_cell_idx) {
         P2M_pts_cell(m_cell_idx);
         return;
     }
-    //TODO: How to parallelize this?
+#pragma omp parallel if(cell.level < 1)
     {
+#pragma omp single
         for (int c = 0; c < 8; c++) {
             int child_idx = cell.children[c];
             if (child_idx == -1) {
                 continue;
             }
             // bottom-up tree traversal, recurse before doing work.
+#pragma omp task
             P2M_helper(child_idx);
+        }
+#pragma omp taskwait
+#pragma omp single
+        for (int c = 0; c < 8; c++) {
+            int child_idx = cell.children[c];
+            if (child_idx == -1) {
+                continue;
+            }
             auto child = src_oct.cells[child_idx];
             //TODO: Extract this function as P2M_cell_cell.
             for(unsigned int i = 0; i < nodes[0].size(); i++) {
@@ -135,7 +145,9 @@ void FMMInfo::P2P_cell_pt(const OctreeCell& m_cell, int pt_idx) {
     }
 }
 
-void FMMInfo::P2P_cell_cell(const OctreeCell& m_cell, const OctreeCell& l_cell) {
+void FMMInfo::P2P_cell_cell(int m_cell_idx, int l_cell_idx) {
+    auto m_cell = src_oct.cells[m_cell_idx];
+    auto l_cell = obs_oct.cells[l_cell_idx];
     for(unsigned int i = l_cell.begin; i < l_cell.end; i++) {
         P2P_cell_pt(m_cell, i);
     }
@@ -163,8 +175,9 @@ void FMMInfo::M2P_cell_pt(const Box& m_cell_bounds,
     }
 }
 
-void FMMInfo::M2P_cell_cell(const Box& m_cell_bounds, int m_cell_idx,
-                            const OctreeCell& l_cell) {
+void FMMInfo::M2P_cell_cell(int m_cell_idx, int l_cell_idx) {
+    auto m_cell_bounds = src_oct.cells[m_cell_idx].bounds;
+    auto l_cell = obs_oct.cells[l_cell_idx];
     for (int i = l_cell.begin; i < (int)l_cell.end; i++) {
         M2P_cell_pt(m_cell_bounds, m_cell_idx, i);
     }
@@ -208,10 +221,11 @@ void FMMInfo::treecode() {
     }
 }
 
-void FMMInfo::M2L_cell_cell(const Box& m_cell_bounds, int m_cell_idx, 
-                            const Box& l_cell_bounds, int l_cell_idx) {
+void FMMInfo::M2L_cell_cell(int m_cell_idx, int l_cell_idx) {
     int m_cell_start_idx = m_cell_idx * nodes[0].size();
     int l_cell_start_idx = l_cell_idx * nodes[0].size();
+    auto m_cell_bounds = src_oct.cells[m_cell_idx].bounds;
+    auto l_cell_bounds = obs_oct.cells[l_cell_idx].bounds;
     for(unsigned int i = 0; i < nodes[0].size(); i++) {
         int l_node_idx = l_cell_start_idx + i;
         std::array<double,3> obs_node_loc;
@@ -266,7 +280,7 @@ void FMMInfo::L2P_helper(int l_cell_idx) {
         return;
     }
 
-#pragma omp parallel if(cell.level < 2)
+#pragma omp parallel if(cell.level < 1)
     {
 #pragma omp single
         for (int c = 0; c < 8; c++) {
@@ -315,6 +329,19 @@ void FMMInfo::fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
                                     const OctreeCell& l_cell, int l_cell_idx) {
     const double dist_squared = dist2<3>(l_cell.bounds.center, 
                                          m_cell.bounds.center);
+    //Logic is:
+    // If the cell is far enough away, as determined by comparing 
+    // the ratio of distance to radius with the multipole acceptance criteria (MAC)
+    // then perform an interaction. Which interaction depends on how costly each 
+    // interaction is. The number of particles in each cell are compared. If the
+    // number of particles in the source cell is greater than the
+    // number of expansion pts, then the M2L or M2P is used depending on the
+    // number of particles in the observation cell. If the number of particles
+    // is low enough not to justify the M2L or M2P operators, the P2P is used.
+    //
+    // Otherwise, if both cells are leaves, perform a P2P.
+    //
+    // If neither case is true, recurse to comparing the child cells.
     if (2 * dist_squared > mac2 * (m_cell.bounds.radius2 + l_cell.bounds.radius2)) {
         if (l_cell.end - l_cell.begin < nodes[0].size()) {
             if (m_cell.end - m_cell.begin < nodes[0].size()) {
@@ -325,12 +352,11 @@ void FMMInfo::fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
         } else {
             m2l_jobs[l_cell_idx].push_back(m_cell_idx);
         }
-        return;
     } else if (m_cell.is_leaf && l_cell.is_leaf) {
         p2p_jobs[l_cell_idx].push_back(m_cell_idx);
-        return;
+    } else {
+        fmm_process_children(m_cell, m_cell_idx, l_cell, l_cell_idx);
     }
-    fmm_process_children(m_cell, m_cell_idx, l_cell, l_cell_idx);
 }
 
 void FMMInfo::fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
@@ -340,6 +366,9 @@ void FMMInfo::fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
         //refine l_cell
         assert(!l_cell.is_leaf);
 
+// Threads must be split along observation cell lines. Otherwise multiple
+// threads will be working on the same output and locking and synchronization
+// will be required. So, the task farming is only done when an l_cell is refined.
 #pragma omp parallel if(l_cell.level < 1)
         {
 #pragma omp single
@@ -366,6 +395,31 @@ void FMMInfo::fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
     }
 }
 
+template <void (FMMInfo::*op) (int, int)>
+void exec_jobs(FMMInfo& fmm_info, std::vector<std::vector<int>>& job_set, std::string name) {
+    long interactions = 0;
+#pragma omp parallel for
+    for (unsigned int l_idx = 0; l_idx < job_set.size(); l_idx++) {
+        for (unsigned int j = 0; j < job_set[l_idx].size(); j++) {
+            int m_idx = job_set[l_idx][j];
+            (fmm_info.*op)(m_idx, l_idx);
+
+            auto m_cell = fmm_info.src_oct.cells[m_idx];
+            auto l_cell = fmm_info.obs_oct.cells[l_idx];
+            if (name == "M2L") {
+                interactions += pow(fmm_info.n_exp_pts, 6);
+            } else if (name == "M2P") {
+                interactions += pow(fmm_info.n_exp_pts, 3) * (l_cell.end - l_cell.begin);
+            } else {
+                interactions += (m_cell.end - m_cell.begin) * (l_cell.end - l_cell.begin);
+            }
+        }
+    }
+    std::cout << "Billions of interactions for " << name
+              << ": " << interactions/1e9 << " and an average of: "
+              << (interactions / job_set.size()) << std::endl;
+}
+
 void FMMInfo::fmm() {
     TIC;
     const int src_root_idx = src_oct.get_root_index();
@@ -374,69 +428,16 @@ void FMMInfo::fmm() {
     const auto obs_root = obs_oct.cells[obs_root_idx];
     fmm_process_cell_pair(src_root, src_root_idx, obs_root, obs_root_idx);
     TOC("Tree traverse");
+
     TIC2
-    fmm_exec_jobs();
-    TOC("EXEC");
-}
-
-bool fmm_compare(std::array<int,2> a, std::array<int,2> b) {
-    if(a[1] == b[1]) {
-        return a[0] < b[0];
-    }
-    return a[1] < b[1];
-}
-
-void FMMInfo::fmm_exec_jobs() {
-    //TODO: make this a templated function and make the P2P_cell_cell
-    //and M2L_cell_cell and M2P_cell_cell interfaces uniform
-    TIC
-    std::vector<std::vector<int>>* job_set = &p2p_jobs;
-    long interactions = 0;
-#pragma omp parallel for
-    for (unsigned int l_idx = 0; l_idx < job_set->size(); l_idx++) {
-        for (unsigned int j = 0; j < (*job_set)[l_idx].size(); j++) {
-            int m_idx = (*job_set)[l_idx][j];
-            P2P_cell_cell(src_oct.cells[m_idx], obs_oct.cells[l_idx]);
-
-            auto m_cell = src_oct.cells[m_idx];
-            auto l_cell = obs_oct.cells[l_idx];
-            interactions += (m_cell.end - m_cell.begin) * (l_cell.end - l_cell.begin);
-        }
-    }
-    std::cout << "Number of interactions: " << interactions/1e9 << std::endl;
+    exec_jobs<&FMMInfo::P2P_cell_cell>(*this, p2p_jobs, "P2P");
     TOC("P2P");
 
     TIC2
-    job_set = &m2l_jobs;
-    long m2l_interactions = 0;
-#pragma omp parallel for
-    for (unsigned int l_idx = 0; l_idx < job_set->size(); l_idx++) {
-        for (unsigned int j = 0; j < (*job_set)[l_idx].size(); j++) {
-            int m_idx = (*job_set)[l_idx][j];
-            M2L_cell_cell(src_oct.cells[m_idx].bounds, m_idx,
-                          obs_oct.cells[l_idx].bounds, l_idx);
-
-            m2l_interactions += (int)pow(n_exp_pts,6);
-        }
-    }
-    std::cout << "Number of M2L interactions: " << m2l_interactions/1e9 << std::endl;
+    exec_jobs<&FMMInfo::M2L_cell_cell>(*this, m2l_jobs, "M2L");
     TOC("M2L");
 
     TIC2
-    job_set = &m2p_jobs;
-    long m2p_interactions = 0;
-#pragma omp parallel for
-    for (unsigned int l_idx = 0; l_idx < job_set->size(); l_idx++) {
-        for (unsigned int j = 0; j < (*job_set)[l_idx].size(); j++) {
-            int m_idx = (*job_set)[l_idx][j];
-            M2P_cell_cell(src_oct.cells[m_idx].bounds, m_idx, obs_oct.cells[l_idx]);
-
-            auto l_cell = obs_oct.cells[l_idx];
-            m2p_interactions += (int)pow(n_exp_pts,3) * (l_cell.end - l_cell.begin);
-        }
-    }
-    std::cout << "Number of M2P interactions: " << m2p_interactions / 1e9 << std::endl;
+    exec_jobs<&FMMInfo::M2P_cell_cell>(*this, m2p_jobs, "M2P");
     TOC("M2P");
-    int tot = interactions + m2l_interactions + m2p_interactions;
-    std::cout << "Total FMM interactions" << tot/1e9 << std::endl;
 }
