@@ -3,6 +3,8 @@
 #include "numerics.h"
 #include "direct.h"
 #include <cassert>
+#include "test_shared.h"
+#include <list>
 
 std::array<std::vector<double>,3> get_3d_expansion_nodes(int n_exp_pts) {
     auto nodes = cheb_pts_first_kind(n_exp_pts);
@@ -50,7 +52,8 @@ FMMInfo::FMMInfo(Kernel kernel, const Octree& src, std::vector<double>& values,
     local_weights(obs_oct.cells.size() * nodes[0].size(), 0.0),
     obs_effect(obs_oct.elements[0].size(), 0.0),
     p2p_jobs(obs_oct.cells.size()),
-    m2l_jobs(obs_oct.cells.size())
+    m2l_jobs(obs_oct.cells.size()),
+    m2p_jobs(obs_oct.cells.size())
 {}
 
 void FMMInfo::P2M_pts_cell(int m_cell_idx) {
@@ -129,12 +132,9 @@ void FMMInfo::P2P_cell_pt(const OctreeCell& m_cell, int pt_idx) {
 }
 
 void FMMInfo::P2P_cell_cell(const OctreeCell& m_cell, const OctreeCell& l_cell) {
-    // for(unsigned int i = l_cell.begin; i < l_cell.end; i++) {
-    //     P2P_cell_pt(m_cell, i);
-    // }
-    vec_direct_n_body(float_src_locs, float_obs_locs,
-                      m_cell.begin, m_cell.end, 
-                      l_cell.begin, l_cell.end, float_str);
+    for(unsigned int i = l_cell.begin; i < l_cell.end; i++) {
+        P2P_cell_pt(m_cell, i);
+    }
 }
 
 void FMMInfo::M2P_cell_pt(const Box& m_cell_bounds,
@@ -296,17 +296,18 @@ void FMMInfo::L2P() {
 }
 
 void FMMInfo::fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
-                           const OctreeCell& l_cell, int l_cell_idx) {
+                                    const OctreeCell& l_cell, int l_cell_idx) {
     const double dist_squared = dist2<3>(l_cell.bounds.center, 
                                          m_cell.bounds.center);
-    const double m_radius_squared = hypot2(m_cell.bounds.half_width); 
-    const double l_radius_squared = hypot2(l_cell.bounds.half_width); 
-    if (dist_squared > mac2 * (m_radius_squared + l_radius_squared) / 2.0) {
-        // M2L_cell_cell(m_cell.bounds, m_cell_idx, l_cell.bounds, l_cell_idx); 
+    if (2 * dist_squared > mac2 * (m_cell.bounds.radius2 + l_cell.bounds.radius2)) {
+        // if (l_cell.end - l_cell.begin < nodes.size()) {
+        //     m2p_jobs[l_cell_idx].push_back(m_cell_idx);
+        // } else {
+        //     m2l_jobs[l_cell_idx].push_back(m_cell_idx);
+        // }
         m2l_jobs[l_cell_idx].push_back(m_cell_idx);
         return;
     } else if (m_cell.is_leaf && l_cell.is_leaf) {
-        // P2P_cell_cell(m_cell, l_cell);
         p2p_jobs[l_cell_idx].push_back(m_cell_idx);
         return;
     }
@@ -323,8 +324,8 @@ void FMMInfo::fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
             if (l_child_idx == -1) {
                 continue;
             }
-            const auto l_child = obs_oct.cells[l_child_idx];
-            fmm_process_cell_pair(m_cell, m_cell_idx, l_child, l_child_idx);
+            fmm_process_cell_pair(m_cell, m_cell_idx, 
+                                  obs_oct.cells[l_child_idx], l_child_idx);
         }
     } else {
         //refine m_cell
@@ -334,19 +335,63 @@ void FMMInfo::fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
             if (m_child_idx == -1) {
                 continue;
             }
-            const auto m_child = src_oct.cells[m_child_idx];
-            fmm_process_cell_pair(m_child, m_child_idx, l_cell, l_cell_idx);
+            fmm_process_cell_pair(src_oct.cells[m_child_idx], m_child_idx,
+                                  l_cell, l_cell_idx);
+        }
+    }
+}
+
+void FMMInfo::fmm_process_pairs_iterative() {
+    std::vector<int> m_to_process = {src_oct.get_root_index()};
+    std::vector<int> l_to_process = {obs_oct.get_root_index()};
+    int next = 0;
+    while (next < m_to_process.size()) {
+        auto m_cell_idx = m_to_process[next];
+        auto l_cell_idx = l_to_process[next];
+        next++;
+        auto m_cell = src_oct.cells[m_cell_idx];
+        auto l_cell = obs_oct.cells[l_cell_idx];
+        const double dist_squared = dist2<3>(l_cell.bounds.center, 
+                                             m_cell.bounds.center);
+        if (2 * dist_squared > mac2 * (m_cell.bounds.radius2 + l_cell.bounds.radius2)) {
+            m2l_jobs[l_cell_idx].push_back(m_cell_idx);
+            continue;
+        } else if (m_cell.is_leaf && l_cell.is_leaf) {
+            p2p_jobs[l_cell_idx].push_back(m_cell_idx);
+            continue;
+        }
+        if ((m_cell.level > l_cell.level && !l_cell.is_leaf) || m_cell.is_leaf) {
+            for (int c = 0; c < 8; c++) {
+                const int l_child_idx = l_cell.children[c];
+                if (l_child_idx != -1) {
+                    m_to_process.push_back(m_cell_idx);
+                    l_to_process.push_back(l_child_idx);
+                }
+            }
+        } else {
+            for (int c = 0; c < 8; c++) {
+                const int m_child_idx = m_cell.children[c];
+                if (m_child_idx != -1) {
+                    m_to_process.push_back(m_child_idx);
+                    l_to_process.push_back(l_cell_idx);
+                }
+            }
         }
     }
 }
 
 void FMMInfo::fmm() {
+    TIC;
     const int src_root_idx = src_oct.get_root_index();
     const auto src_root = src_oct.cells[src_root_idx];
     const int obs_root_idx = obs_oct.get_root_index();
     const auto obs_root = obs_oct.cells[obs_root_idx];
     fmm_process_cell_pair(src_root, src_root_idx, obs_root, obs_root_idx);
+    // fmm_process_pairs_iterative();
+    TOC("Tree traverse");
+    TIC2
     fmm_exec_jobs();
+    TOC("EXEC");
 }
 
 bool fmm_compare(std::array<int,2> a, std::array<int,2> b) {
@@ -359,18 +404,6 @@ bool fmm_compare(std::array<int,2> a, std::array<int,2> b) {
 void FMMInfo::fmm_exec_jobs() {
     //TODO: make this a templated function and make the P2P_cell_cell
     //and M2L_cell_cell interfaces uniform
-    for (int d = 0;d < 3;d++) {
-        float_src_locs[d].resize(src_oct.n_elements());
-        float_str.resize(src_oct.n_elements());
-        float_obs_locs[d].resize(obs_oct.n_elements());
-        for (int i = 0; i < src_oct.n_elements();i++) {
-            float_src_locs[d][i] = src_oct.elements[d][i];
-            float_str[i] = values[i];
-        }
-        for (int i = 0; i < obs_oct.n_elements();i++) {
-            float_obs_locs[d][i] = obs_oct.elements[d][i];
-        }
-    }
     std::vector<std::vector<int>>& job_set = p2p_jobs;
 #pragma omp parallel for
     for (unsigned int l_idx = 0; l_idx < job_set.size(); l_idx++) {

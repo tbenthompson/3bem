@@ -48,6 +48,7 @@ public:
     // A list of p2p and m2l jobs for each obs_oct cell
     std::vector<std::vector<int>> p2p_jobs;
     std::vector<std::vector<int>> m2l_jobs;
+    std::vector<std::vector<int>> m2p_jobs;
     
     std::array<std::vector<float>,3> float_src_locs;
     std::array<std::vector<float>,3> float_obs_locs;
@@ -87,6 +88,7 @@ public:
                                const OctreeCell& l_cell, int l_cell_idx);
     void fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
                               const OctreeCell& l_cell, int l_cell_idx);
+    void fmm_process_pairs_iterative();
     void fmm();
     
     void fmm_exec_jobs();
