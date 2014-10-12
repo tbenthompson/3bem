@@ -81,16 +81,14 @@ void FMMInfo::P2M_helper(int m_cell_idx) {
         P2M_pts_cell(m_cell_idx);
         return;
     }
-#pragma omp parallel if(cell.level < 2)
+    //TODO: How to parallelize this?
     {
-#pragma omp single
         for (int c = 0; c < 8; c++) {
             int child_idx = cell.children[c];
             if (child_idx == -1) {
                 continue;
             }
             // bottom-up tree traversal, recurse before doing work.
-#pragma omp task
             P2M_helper(child_idx);
             auto child = src_oct.cells[child_idx];
             //TODO: Extract this function as P2M_cell_cell.
@@ -370,7 +368,7 @@ void FMMInfo::fmm() {
     //to work. FIX
     //TODO: This is not currently thread safe, but for some reason, still appears
     //to work. FIX
-#pragma omp parallel num_threads(6)
+#pragma omp parallel 
     {
         std::vector<int> obs_cells = {obs_oct.get_root_index()};
         unsigned int next = 0;
