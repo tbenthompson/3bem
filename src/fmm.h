@@ -88,7 +88,6 @@ public:
                                const OctreeCell& l_cell, int l_cell_idx);
     void fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
                               const OctreeCell& l_cell, int l_cell_idx);
-    void fmm_process_pairs_iterative();
     void fmm();
     
     void fmm_exec_jobs();
