@@ -300,7 +300,7 @@ void FMMInfo::fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
     const double dist_squared = dist2<3>(l_cell.bounds.center, 
                                          m_cell.bounds.center);
     if (2 * dist_squared > mac2 * (m_cell.bounds.radius2 + l_cell.bounds.radius2)) {
-        // if (l_cell.end - l_cell.begin < nodes.size()) {
+        // if (l_cell.end - l_cell.begin < nodes[0].size()) {
         //     m2p_jobs[l_cell_idx].push_back(m_cell_idx);
         // } else {
         //     m2l_jobs[l_cell_idx].push_back(m_cell_idx);
@@ -341,45 +341,6 @@ void FMMInfo::fmm_process_children(const OctreeCell& m_cell, int m_cell_idx,
     }
 }
 
-void FMMInfo::fmm_process_pairs_iterative() {
-    std::vector<int> m_to_process = {src_oct.get_root_index()};
-    std::vector<int> l_to_process = {obs_oct.get_root_index()};
-    int next = 0;
-    while (next < m_to_process.size()) {
-        auto m_cell_idx = m_to_process[next];
-        auto l_cell_idx = l_to_process[next];
-        next++;
-        auto m_cell = src_oct.cells[m_cell_idx];
-        auto l_cell = obs_oct.cells[l_cell_idx];
-        const double dist_squared = dist2<3>(l_cell.bounds.center, 
-                                             m_cell.bounds.center);
-        if (2 * dist_squared > mac2 * (m_cell.bounds.radius2 + l_cell.bounds.radius2)) {
-            m2l_jobs[l_cell_idx].push_back(m_cell_idx);
-            continue;
-        } else if (m_cell.is_leaf && l_cell.is_leaf) {
-            p2p_jobs[l_cell_idx].push_back(m_cell_idx);
-            continue;
-        }
-        if ((m_cell.level > l_cell.level && !l_cell.is_leaf) || m_cell.is_leaf) {
-            for (int c = 0; c < 8; c++) {
-                const int l_child_idx = l_cell.children[c];
-                if (l_child_idx != -1) {
-                    m_to_process.push_back(m_cell_idx);
-                    l_to_process.push_back(l_child_idx);
-                }
-            }
-        } else {
-            for (int c = 0; c < 8; c++) {
-                const int m_child_idx = m_cell.children[c];
-                if (m_child_idx != -1) {
-                    m_to_process.push_back(m_child_idx);
-                    l_to_process.push_back(l_cell_idx);
-                }
-            }
-        }
-    }
-}
-
 void FMMInfo::fmm() {
     TIC;
     const int src_root_idx = src_oct.get_root_index();
@@ -387,7 +348,6 @@ void FMMInfo::fmm() {
     const int obs_root_idx = obs_oct.get_root_index();
     const auto obs_root = obs_oct.cells[obs_root_idx];
     fmm_process_cell_pair(src_root, src_root_idx, obs_root, obs_root_idx);
-    // fmm_process_pairs_iterative();
     TOC("Tree traverse");
     TIC2
     fmm_exec_jobs();
