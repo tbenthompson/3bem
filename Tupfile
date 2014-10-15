@@ -1,6 +1,6 @@
 export LD_LIBRARY_PATH
 INCLUDE += -I./src
-INCLUDE += -I./lib/UnitTest++/src
+INCLUDE += -I./lib/unittest-cpp/src
 
 CPPFLAGS += -Wall
 CPPFLAGS += -std=c++11
@@ -38,7 +38,7 @@ LIBLINKFLAGS += $(LINKFLAGS)
 
 LIBNAME = fmm.so
 
-TESTLINKFLAGS += -L./lib/UnitTest++
+TESTLINKFLAGS += -L./lib/unittest-cpp
 TESTLINKFLAGS += -Wl,-rpath=.
 TESTLINKFLAGS += -l:$(LIBNAME)
 TESTLINKFLAGS += -lUnitTest++
