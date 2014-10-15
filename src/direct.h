@@ -32,7 +32,7 @@ inline std::vector<double> direct_n_body(std::array<std::vector<double>,3>& src_
                                          std::vector<double>& values) 
 {
     std::vector<double> out_vals(obs_locs[0].size(), 0.0);
-#pragma omp parallel for
+#pragma omp parallel for 
     for (unsigned int i = 0; i < obs_locs[0].size(); ++i) {
         for (unsigned int j = 0; j < src_locs[0].size(); ++j) {
             double kernel_val = kernel(obs_locs[0][i], obs_locs[1][i], obs_locs[2][i],

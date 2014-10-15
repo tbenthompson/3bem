@@ -5,9 +5,9 @@
 #include "direct.h"
 
 int main() {
-    int n = 12 * 800 * 50;
+    int n = 12 * 800 * 3;
     std::cout << n << std::endl;
-    bool check = n < 2000;
+    bool check = true;//n < 20000;
     std::array<std::vector<double>,3> src =
         {random_list(n), random_list(n), random_list(n)};
     std::array<std::vector<double>,3> obs =
@@ -45,7 +45,7 @@ int main() {
         }
     }
     TIC;
-    auto result1 = vec_direct_n_body(srcf, obsf, values);
+    // auto result1 = vec_direct_n_body(srcf, obsf, values);
     TOC("Fast Direct N Body");
     TIC2;
     auto result2 = really_fast_vec_direct_n_body(srcfx, srcfy, srcfz, obsfx, obsfy, obsfz, fast_values, n, n);
@@ -66,11 +66,13 @@ int main() {
 
     if (check) {
         Kernel k = laplace_single;
+        TIC2;
         auto exact = direct_n_body(slow_src, slow_obs, k, slow_values);
+        TOC("Really slow direct n body");
         // CHECK_ARRAY_CLOSE(exact, result1, n, 1e-1);
-        CHECK_ARRAY_CLOSE(exact, result2, n, 1e-1);
     }
     // for (auto r: result) {
     //     std::cout << r << std::endl;
     // }
+    result2[0] -= 1e-15;
 }
