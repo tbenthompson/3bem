@@ -49,6 +49,22 @@ TEST(CleanMesh) {
     CHECK_ARRAY_CLOSE(cleaned.faces[0], correct, 3, 1e-5);
 }
 
+TEST(RefineMesh) {
+    Mesh3D mesh;
+    mesh.vertices.push_back({0.0, 0.0, 0.0});
+    mesh.vertices.push_back({1.0, 0.0, 0.0});
+    mesh.vertices.push_back({0.0, 1.0, 0.0});
+    mesh.faces.push_back({{0,1,2}});
+    Mesh3D refined = refine_mesh(mesh, {0});
+    for (int i = 0; i < refined.faces.size(); i++) {
+        for (int d = 0; d < 3; d++) {
+            auto v = refined.vertices[refined.faces[i][d]];
+            std::cout << v[0] << " " << v[1] << " " << v[2] << std::endl;
+        }
+        std::cout << " " << std::endl;
+    }
+}
+
 int main(int, char const *[])
 {
     int retval = UnitTest::RunAllTests();

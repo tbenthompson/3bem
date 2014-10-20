@@ -1,6 +1,8 @@
 export LD_LIBRARY_PATH
 INCLUDE += -I./src
 INCLUDE += -I./lib/unittest-cpp/src
+INCLUDE += -I./lib/actor-framework/libcaf_core
+INCLUDE += -I./lib/actor-framework/libcaf_opencl
 
 CPPFLAGS += -Wall
 CPPFLAGS += -std=c++11
@@ -33,6 +35,9 @@ SHAREDLIBFLAGS += -fPIC
 LINKFLAGS += -fopenmp
 LINKFLAGS += -lglut -lGL -lGLU -lGLEW
 LINKFLAGS += -lOpenCL
+LINKFLAGS += -Wl,-rpath=./lib/actor-framework/build/lib
+LINKFLAGS += -L./lib/actor-framework/build/lib
+LINKFLAGS += -lcaf_core -lcaf_opencl
 LIBLINKFLAGS += -shared
 LIBLINKFLAGS += $(LINKFLAGS)
 
@@ -44,7 +49,7 @@ TESTLINKFLAGS += -l:$(LIBNAME)
 TESTLINKFLAGS += -lUnitTest++
 TESTLINKFLAGS += $(LINKFLAGS)
 
-EXAMPLELINKFLAGS -Wl,-rpath=.
+EXAMPLELINKFLAGS += -Wl,-rpath=.
 EXAMPLELINKFLAGS += -l:$(LIBNAME)
 EXAMPLELINKFLAGS += $(LINKFLAGS)
 

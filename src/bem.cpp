@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <iomanip>
 
-void refine_edge(Mesh& new_mesh, std::array<int, 2> seg) {
+void refine_edge(Mesh& new_mesh, const std::array<int, 2>& seg) {
     // Find the new vertex and segments.
     const auto v0 = new_mesh.vertices[seg[0]];
     const auto v1 = new_mesh.vertices[seg[1]];
@@ -51,7 +51,8 @@ NearEval::NearEval(int n_steps):
 {
     for (int nf = 0; nf < n_steps; nf++) {
         //TODO: need a much better distribution of points in the nearfield.
-        //Gauss seems unlikely to be optimal.
+        //TODO: use the diligenti and aimi distribution per the 
+        //nearly_singular_quad_test example
         quad[nf] = gauss((int)pow(2, nf + 2));
         dist[nf] = initial_dist / (pow(2, nf + 1));
     }

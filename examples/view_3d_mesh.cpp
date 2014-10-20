@@ -1,5 +1,6 @@
 #include "UnitTest++.h"
 #include "mesh_3d.h"
+#include "numerics.h"
 #include <GL/glut.h>
 
 std::vector<std::array<double, 3>> vertices = {
@@ -95,6 +96,8 @@ int main(int argc, char **argv) {
     std::cout << "Raw mesh has " << cube.vertices.size() << " vertices." << std::endl;
     cube = clean_mesh(cube);
     std::cout << "Cleaned mesh has " << cube.vertices.size() << " vertices." << std::endl;
+    cube = refine_mesh(cube, naturals(cube.faces.size()));
+    std::cout << "Refined mesh has " << cube.vertices.size() << " vertices." << std::endl;
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);

@@ -4,8 +4,11 @@
 #include <array>
 #include <unordered_map>
 #include <iostream>
+#include <algorithm>
 #include <GL/gl.h>
 
+//TODO: Much of this code is identical for a 2D mesh (in bem.h), see if
+//integrating the two would be worthwhile. Or template it..
 //TODO: move this code to a cpp file
 //TODO: fix the O(N^2) problem in the find_duplicate_map function
 //      possibilities: use a locality-sensitive hashing scheme
@@ -90,6 +93,72 @@ Mesh3D clean_mesh(Mesh3D& mesh, double vertex_smear = 1e-5) {
 
     Mesh3D retval = {new_vertices, new_faces};
     return retval;
+}
+
+std::array<double,3> midpt(std::array<double,3> a, std::array<double,3> b) {
+    return {(a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0, (a[2] + b[2])/ 2.0};
+}
+
+/* Produces 4 new triangles from an initial triangle by adding a
+ * vertex to each edge of the triangle
+ *         /\          /\
+ *        /  \   ->   /__\
+ *       /    \      /\  /\
+ *      /______\    /__\/__\
+ *      (My first ever ASCII art, a masterpiece that will
+ *      stand the test of time!)
+ */
+void refine_face(Mesh3D& new_mesh, std::array<int, 3> face) {
+    // Find the new vertex and faces.
+    const auto v0 = new_mesh.vertices[face[0]];
+    const auto v1 = new_mesh.vertices[face[1]];
+    const auto v2 = new_mesh.vertices[face[2]];
+
+    // Calculate the midpoints of each edge of the triangle. These
+    // are used to refine the triangle
+    const auto midpt01 = midpt(v0, v1);
+    const auto midpt12 = midpt(v1, v2);
+    const auto midpt20 = midpt(v2, v0);
+
+    // Add the vertices while grabbing their indices.
+    int midpt01_idx = new_mesh.vertices.size();
+    new_mesh.vertices.push_back(midpt01);
+    int midpt12_idx = new_mesh.vertices.size();
+    new_mesh.vertices.push_back(midpt12);
+    int midpt20_idx = new_mesh.vertices.size();
+    new_mesh.vertices.push_back(midpt20);
+
+    //Maintain the orientation. Since vertex 1 is "next" after vertex 0 
+    //in the original triangle, midpt01 should be "next" after vertex 0
+    //in the refined triangle. Following this principle for all the triangles
+    //gives this set of new faces
+    new_mesh.faces.push_back({face[0], midpt01_idx, midpt20_idx});
+    new_mesh.faces.push_back({face[1], midpt12_idx, midpt01_idx});
+    new_mesh.faces.push_back({face[2], midpt20_idx, midpt12_idx});
+    new_mesh.faces.push_back({midpt01_idx, midpt12_idx, midpt20_idx});
+}
+
+Mesh3D refine_mesh(Mesh3D& m, std::vector<int> refine_these) {
+    Mesh3D new_mesh;
+    new_mesh.vertices = m.vertices;
+
+    // Sort the refined edges so that we only have to check the
+    // next one at any point in the loop.
+    std::sort(refine_these.begin(), refine_these.end());
+
+    // The next refined edge.
+    int current = 0;
+
+    for (int i = 0; i < (int)m.faces.size(); i++) {
+        if (i == refine_these[current]) {
+            current += 1;
+            refine_face(new_mesh, m.faces[i]);
+        } else {
+            new_mesh.faces.push_back(m.faces[i]);
+        }
+    }
+
+    return new_mesh;
 }
 
 void draw_mesh(Mesh3D& msh) {

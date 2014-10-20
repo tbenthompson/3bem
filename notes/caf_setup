@@ -1,0 +1,7 @@
+git clone https://github.com/actor-framework/actor-framework.git
+cd actor-framework
+git submodule init
+git submodule update
+./configure --no-cash
+make -j12
+make test
