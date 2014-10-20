@@ -1,6 +1,7 @@
 #include "UnitTest++.h"
 #include "algs.h"
 #include "test_shared.h"
+#include "shared.h"
 
 TEST(MortonEncode) {
     int split = 2;
@@ -37,6 +38,6 @@ TEST(MortonOrder) {
 
 int main(int, char const *[])
 {
-    int retval = UnitTest::RunAllTests();
-    return retval;
+    // return UnitTest::RunAllTests();
+    return RunOneTest("MortonOrder");
 }

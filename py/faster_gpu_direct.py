@@ -3,6 +3,8 @@ import pyopencl as cl
 import numpy as np
 import numpy.linalg as la
 
+#Best result -- 2.6 TFlop/s -- 1 million particles in 3.5 seconds
+
 def calc_speed(total_time, n):
     interactions = n ** 2
     ops_per_interact = 15
