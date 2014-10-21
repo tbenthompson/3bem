@@ -1,7 +1,20 @@
 #include "UnitTest++.h"
-#include "mesh_3d.h"
+#include "mesh.h"
 #include "numerics.h"
 #include <GL/glut.h>
+
+void draw_mesh(Mesh3D& msh) {
+    glBegin(GL_TRIANGLES);
+    for (unsigned int i = 0; i < msh.faces.size(); i++) {
+        for (int v = 0; v < 3; v++) {
+            int vert = msh.faces[i][v];
+            glVertex3f(msh.vertices[vert][0],
+                       msh.vertices[vert][1],
+                       msh.vertices[vert][2]);
+        }
+    }
+    glEnd();
+}
 
 std::vector<std::array<double, 3>> vertices = {
     {0.0,0.0,0.0},
