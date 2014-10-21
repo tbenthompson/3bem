@@ -118,7 +118,7 @@ TEST(GaussExactness) {
             auto q = gauss(n);
             double result = integrate(q, [=](double x) {return (g + 1) * pow(x, g);});
             double exact = 2.0 * ((g + 1) % 2);
-            return std::fabs(exact - result) < 1e-11;
+            return std::fabs(exact - result) < 1e-13;
         }, 100, arb);
 }
 
