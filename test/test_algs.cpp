@@ -1,6 +1,6 @@
 #include "UnitTest++.h"
 #include "algs.h"
-#include "test_shared.h"
+#include "util.h"
 #include "shared.h"
 
 TEST(MortonEncode) {

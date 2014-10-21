@@ -1,5 +1,5 @@
 #include "bem.h"
-#include "test_shared.h"
+#include "util.h"
 
 int main() {
     auto m = circle_mesh({0.0, 0.0}, 1.0, 8000); 

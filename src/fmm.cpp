@@ -4,7 +4,7 @@
 #include "numerics.h"
 #include "direct.h"
 #include <cassert>
-#include "test_shared.h"
+#include "util.h"
 #include <list>
 
 std::array<std::vector<double>,3> get_3d_expansion_nodes(int n_exp_pts) {
@@ -415,29 +415,29 @@ void exec_jobs(FMMInfo& fmm_info, std::vector<std::vector<int>>& job_set, std::s
             }
         }
     }
-    std::cout << "Billions of interactions for " << name
-              << ": " << interactions/1e9 << " and an average of: "
-              << (interactions / job_set.size()) << std::endl;
+    // std::cout << "Billions of interactions for " << name
+    //           << ": " << interactions/1e9 << " and an average of: "
+    //           << (interactions / job_set.size()) << std::endl;
 }
 
 void FMMInfo::fmm() {
-    TIC;
+    // TIC;
     const int src_root_idx = src_oct.get_root_index();
     const auto src_root = src_oct.cells[src_root_idx];
     const int obs_root_idx = obs_oct.get_root_index();
     const auto obs_root = obs_oct.cells[obs_root_idx];
     fmm_process_cell_pair(src_root, src_root_idx, obs_root, obs_root_idx);
-    TOC("Tree traverse");
+    // TOC("Tree traverse");
 
-    TIC2
+    // TIC2
     exec_jobs<&FMMInfo::P2P_cell_cell>(*this, p2p_jobs, "P2P");
-    TOC("P2P");
+    // TOC("P2P");
 
-    TIC2
+    // TIC2
     exec_jobs<&FMMInfo::M2L_cell_cell>(*this, m2l_jobs, "M2L");
-    TOC("M2L");
+    // TOC("M2L");
 
-    TIC2
+    // TIC2
     exec_jobs<&FMMInfo::M2P_cell_cell>(*this, m2p_jobs, "M2P");
-    TOC("M2P");
+    // TOC("M2P");
 }

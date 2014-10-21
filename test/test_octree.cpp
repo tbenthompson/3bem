@@ -1,6 +1,6 @@
 #include "UnitTest++.h"
 #include "octree.h"
-#include "test_shared.h"
+#include "util.h"
 
 TEST(BoundingBox) {
     auto es = three_pts();
