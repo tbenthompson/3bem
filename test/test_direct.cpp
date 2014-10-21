@@ -1,7 +1,7 @@
 #include "UnitTest++.h"
 #include <iostream>
 #include <math.h>
-#include "test_shared.h"
+#include "util.h"
 #include "direct.h"
 
 const double PI = 4.0 * std::atan(1.0);

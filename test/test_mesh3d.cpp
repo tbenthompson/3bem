@@ -1,5 +1,5 @@
 #include "UnitTest++.h"
-#include "test_shared.h"
+#include "util.h"
 #include "mesh_3d.h"
 
 Mesh3D test_mesh() {
@@ -59,10 +59,28 @@ TEST(RefineMesh) {
     for (int i = 0; i < refined.faces.size(); i++) {
         for (int d = 0; d < 3; d++) {
             auto v = refined.vertices[refined.faces[i][d]];
-            std::cout << v[0] << " " << v[1] << " " << v[2] << std::endl;
+            // std::cout << v[0] << " " << v[1] << " " << v[2] << std::endl;
         }
-        std::cout << " " << std::endl;
+        // std::cout << " " << std::endl;
     }
+    //TODO: FINISH THIS TEST!
+/*
+0 0 0
+0.5 0 0
+0 0.5 0
+ 
+1 0 0
+0.5 0.5 0
+0.5 0 0
+ 
+0 1 0
+0 0.5 0
+0.5 0.5 0
+ 
+0.5 0 0
+0.5 0.5 0
+0 0.5 0
+*/
 }
 
 int main(int, char const *[])

@@ -1,5 +1,5 @@
 #include "octree.h"
-#include "test_shared.h"
+#include "util.h"
 
 int main() {
     const int n = 3e7;

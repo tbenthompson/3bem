@@ -1,7 +1,7 @@
 #include "UnitTest++.h"
 #include "bem.h"
 #include "numerics.h"
-#include "test_shared.h"
+#include "util.h"
 #include <iostream>
 #include <cmath>
 #include <iomanip>

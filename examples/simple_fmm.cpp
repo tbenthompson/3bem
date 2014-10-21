@@ -1,7 +1,7 @@
 #include "octree.h"
 #include "fmm.h"
 #include "numerics.h"
-#include "test_shared.h"
+#include "util.h"
 #include "direct.h"
 
 int main() {

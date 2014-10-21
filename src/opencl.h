@@ -123,7 +123,7 @@ void setup_ocl() {
     std::cout << source << std::endl;
     cl_program program = create_program(source, context);
 
-    int n = 1000;
+    unsigned int n = 1000;
     cl_mem memobj = clCreateBuffer(context, CL_MEM_READ_WRITE, n * sizeof(float), nullptr, &error);
     check_error(error);
 
@@ -145,8 +145,8 @@ void setup_ocl() {
     float* result = new float[n];
     error = clEnqueueReadBuffer(command_queue, memobj, CL_TRUE, 0, n * sizeof(float),
                                 result, 0, nullptr, nullptr); 
-    for (int i = 0; i < n; i++) {
-        std::cout << result[i] << std::endl;
+    for (unsigned int i = 0; i < n; i++) {
+        // std::cout << result[i] << std::endl;
     }
 
     error = clFlush(command_queue);

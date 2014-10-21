@@ -1,4 +1,4 @@
-#include "test_shared.h"
+#include "util.h"
 #include "bem.h"
 
 Mesh square_mesh() {

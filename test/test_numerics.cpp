@@ -1,7 +1,10 @@
 #include "UnitTest++.h"
+#include "autocheck/autocheck.hpp"
+namespace ac = autocheck;
+
 #include "numerics.h"
 #include <iostream>
-#include "test_shared.h"
+#include "util.h"
 
 TEST(Naturals) {
     auto nats5 = naturals(3, 8);
@@ -10,39 +13,41 @@ TEST(Naturals) {
 }
 
 TEST(LinearMapping) {
-    int n = 10;
-    auto vals = random_list(n);
-    for (auto v: vals) {
-        const double ref = real_to_ref(v, vals[0], vals[1]);
-        const double real = ref_to_real(ref, vals[0], vals[1]);
-        // std::cout << v << " " << ref << " " << real << " " << 
-        //              vals[0] << " " << vals[1] << std::endl;
-        CHECK_CLOSE(real, v, 1e-14);
-    }
+    auto gen100 = ac::fix(100, ac::generator<double>());
+    auto arb = ac::make_arbitrary(gen100, gen100, gen100);
+    ac::check<double, double, double>(
+        [](double real, double v0, double v1) {
+            double ref = real_to_ref(real, v0, v1);
+            double real2 = ref_to_real(ref, v0, v1);
+            return std::fabs(real - real2) < 1e-13;
+        }, 100, arb);
 }
 
 TEST(ChebPolys) {
-    std::vector<double> theta({0.0, 0.25, 0.5, 0.75});
-    for (int i = 0; i < 4; i++) {
-        std::vector<double> exact(11);
-        for (int j = 0; j < 11; j++) {
-            exact[j] = cos(theta[i] * j);
-        }
-        auto res = cheb_polys(exact[1], 10);
-        CHECK_ARRAY_CLOSE(res, exact, 11, 1e-12);
-    }
+    auto gen6pi = ac::fix(20, ac::generator<double>());
+    auto genint10 = ac::fix(10, ac::generator<unsigned int>());
+    auto arb = ac::make_arbitrary(gen6pi, genint10);
+    ac::check<double, unsigned int>(
+        [](double theta, unsigned int n_polys) {
+            auto res = cheb_polys(theta, n_polys);
+            bool prop_true = true;
+            for (unsigned int j = 0; j < n_polys + 1; j++) {
+                prop_true |= std::fabs(cos(theta * j) - res[j]) < 1e-12;
+            }
+            return prop_true; 
+        }, 100, arb);
 }
 
 TEST(SnFast) {
-    int n = 50;
-    auto x = random_list(n); 
-    auto y = random_list(n); 
-    for(int i = 0; i < n; i++) {
-        for (int j = 1;j < 9; j++) {
-            CHECK_CLOSE(s_n_fast(x[i], y[i], j),
-                        s_n(x[i], y[i], j), 1e-12);
-        }
-    }
+    auto gen11 = ac::fix(1, ac::generator<double>());
+    auto genint10 = ac::fix(10, ac::generator<unsigned int>());
+    auto arb = ac::make_arbitrary(gen11, gen11, genint10);
+    ac::check<double, double, unsigned int>(
+        [](double x, double y, unsigned int pts){
+            double val1 = s_n(x, y, pts + 1);
+            double val2 = s_n_fast(x, y, pts + 1);
+            return std::fabs(val1 - val2) < 1e-12;
+        }, 100, arb);
 }
 
 TEST(ChebPtsFirstKind) {
@@ -129,6 +134,60 @@ TEST(UnfriendlyDist2) {
         double good = dist2<3>({x[0][i], x[1][i], x[2][i]}, {y[0][i], y[1][i], y[2][i]});
         CHECK_CLOSE(bad, good, 1e-15);
     }
+}
+
+TEST(QuadratureRule2DConstructor) {
+    QuadratureRule2D q(10);
+    CHECK_EQUAL(q.x_hat.size(), 10);
+    CHECK_EQUAL(q.y_hat.size(), 10);
+    CHECK_EQUAL(q.weights.size(), 10);
+}
+
+TEST(TensorProduct) {
+    auto g1d = gauss(2);
+    auto g2d = tensor_product(g1d, g1d);
+    double x_hat[4] = {-0.57735, -0.57735, 0.57735, 0.57735};
+    double y_hat[4] = {-0.57735, 0.57735, -0.57735, 0.57735};
+    double weights[4] = {1,1,1,1};
+    CHECK_ARRAY_CLOSE(g2d.x_hat, x_hat, 4, 1e-4);
+    CHECK_ARRAY_CLOSE(g2d.y_hat, y_hat, 4, 1e-4);
+    CHECK_ARRAY_CLOSE(g2d.weights, weights, 4, 1e-4);
+}
+
+TEST(TensorProductIntegrate) {
+    auto g2d = tensor_gauss(2);
+    double result = integrate(g2d, [](double x,double y) {
+        return pow(x - 0.5,3) + pow(y, 2);
+    });
+    CHECK_CLOSE(result, -(7.0/6), 1e-6);
+}
+
+TEST(TensorProductIntegrate2) {
+    auto g2d = tensor_gauss(35);
+    double result = integrate(g2d, [](double x,double y) {
+        return std::exp(x / (y + 1.1));
+    });
+    CHECK_CLOSE(result, 38.6995, 1e-4);
+}
+
+TEST(AreaOfTriangle) {
+    auto q2d = tensor_gauss(2);
+    auto q2d_tri = square_to_tri(q2d);
+    double result = integrate(q2d_tri, [](double x, double y) {return 1.0;});
+    CHECK_CLOSE(result, 0.5, 1e-10);
+}
+
+TEST(TriangleIntegrate) {
+    auto q2d = tensor_gauss(8);
+    auto q2d_tri = square_to_tri(q2d);
+    double result = integrate(q2d_tri, [](double x,double y) {
+        return std::exp(x / (y - 1.1));
+    });
+    CHECK_CLOSE(result, 0.337429, 1e-6);
+    result = integrate(q2d_tri, [](double x,double y) {
+        return std::exp(x / (y + 1.1));
+    });
+    CHECK_CLOSE(result, 0.656602, 1e-6);
 }
 
 int main(int, char const *[])

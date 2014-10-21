@@ -24,7 +24,7 @@
 
 #include "caf/all.hpp"
 #include "caf/opencl/spawn_cl.hpp"
-#include "test_shared.h"
+#include "util.h"
 
 using namespace std;
 using namespace caf;

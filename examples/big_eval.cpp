@@ -1,7 +1,7 @@
 #include "UnitTest++.h"
 #include <iostream>
 #include <math.h>
-#include "test_shared.h"
+#include "util.h"
 #include "direct.h"
 
 int main() {
