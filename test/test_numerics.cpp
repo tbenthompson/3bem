@@ -109,6 +109,19 @@ TEST(GaussQuadrature) {
     CHECK(qr_odd.size() == 5);
 }
 
+TEST(GaussExactness) {
+    auto genint = ac::fix(500, ac::generator<unsigned int>());
+    auto arb = ac::make_arbitrary(genint);
+    ac::check<unsigned int>(
+        [](unsigned int n) {
+            int g = 2 * n - 1;
+            auto q = gauss(n);
+            double result = integrate(q, [=](double x) {return (g + 1) * pow(x, g);});
+            double exact = 2.0 * ((g + 1) % 2);
+            return std::fabs(exact - result) < 1e-11;
+        }, 100, arb);
+}
+
 TEST(DiligentiMapping) {
     auto quad = diligenti_mapping(18, -0.3, 7);
     double result = integrate(quad, 
