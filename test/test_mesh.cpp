@@ -1,6 +1,6 @@
 #include "UnitTest++.h"
 #include "util.h"
-#include "mesh_3d.h"
+#include "mesh.h"
 
 Mesh3D test_mesh() {
     Mesh3D mesh;
