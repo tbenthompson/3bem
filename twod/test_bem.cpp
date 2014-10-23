@@ -124,10 +124,7 @@ TEST(ConstantLaplace) {
     std::array<double, 2> center = {20.0, 0.0};
     Mesh src_circle = circle_mesh(center, 19.0, n_verts);
     KernelFnc double_layer = laplace_double;
-    std::vector<double> u(n_verts);
-    for (int i = 0; i < n_verts; i++) {
-        u[i] = 1.0;
-    }
+    std::vector<double> u(n_verts, 1.0);
     for (double i = 1.0; i < 18.0; i++) {
         Mesh obs_circle = circle_mesh(center, i, n_verts);
         auto obs_values = direct_interact(src_circle, obs_circle, 

@@ -5,7 +5,7 @@
 
 TEST(MortonEncode) {
     int split = 2;
-    //TODO: This could be a property based test.
+    //TODO: This could be a property based test. Use autocheck.
     uint64_t center = morton_encode(0, 0, split);
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -38,6 +38,5 @@ TEST(MortonOrder) {
 
 int main(int, char const *[])
 {
-    // return UnitTest::RunAllTests();
-    return RunOneTest("MortonOrder");
+    return UnitTest::RunAllTests();
 }

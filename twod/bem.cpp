@@ -63,8 +63,6 @@ inline double linear_interp(double x_hat, double v0_val, double v1_val) {
 }
 
 
-
-
 //TODO: test this
 double appx_segment_distance(std::array<double, 2> pt,
                              std::array<double, 2> v0, 
