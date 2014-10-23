@@ -164,7 +164,8 @@ TEST(LaplaceHarmonic) {
     //THIS IS HOT!
     const std::array<double,3> center = {5, 0, 0};
     double r = 3.0;
-    int refine_level = 5;
+    double obs_radius = 2.9;
+    int refine_level = 3;
     int near_field = 2;
     int far_gauss_pts = 2;
 
@@ -172,6 +173,7 @@ TEST(LaplaceHarmonic) {
     for (int i = 0; i < refine_level; i++) {
         sphere = refine_mesh(sphere);
     }
+    sphere = clean_mesh(sphere);
     auto q = tri_gauss(far_gauss_pts);
     KernelFnc K = laplace_single;
     KernelFnc Kdn = laplace_double;
@@ -187,7 +189,7 @@ TEST(LaplaceHarmonic) {
         dudn[i] = harmonic_dudn(sphere.vertices[i], center);
     }
 
-    auto arb = ac::make_arbitrary(SpherePtGenerator(center, r));
+    auto arb = ac::make_arbitrary(SpherePtGenerator(center, obs_radius));
     ac::check<Pt>(
         [&](Pt p) {
             auto obs_pt = p.x;
@@ -201,9 +203,8 @@ TEST(LaplaceHarmonic) {
             result += eval_integral_equation(sphere, q, K, ne, obs_pt,
                                              obs_normal, dudn);
             double exact = 1.0 / hypot(obs_pt);
-            // std::cout << result << " " << exact << std::endl;
             return std::fabs(exact - result) < 1e-2;
-        }, 100, arb);
+        }, 1000, arb);
 }
 
 int main(int, char const *[])

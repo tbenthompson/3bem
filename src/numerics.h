@@ -84,6 +84,13 @@ inline std::array<double,3>
 tri_unscaled_normal(const std::array<std::array<double,3>,3> corners) {
     return cross(diff(corners[2], corners[0]), diff(corners[2], corners[1]));
 }
+
+inline std::array<double,3> 
+tri_normal(const std::array<std::array<double,3>,3> corners) {
+    auto unscaled = tri_unscaled_normal(corners);
+    return normalize(unscaled);
+}
+
 inline double tri_area(const std::array<double,3> unscaled_normal) {
     return 0.5 * hypot(unscaled_normal);
 }

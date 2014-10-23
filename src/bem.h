@@ -24,16 +24,16 @@ typedef std::function<double (double,
                               std::array<double,3>,
                               std::array<double,3>)> KernelFnc;
 
-double integral(QuadratureRule2D& quad_rule,
-                KernelFnc& kernel,
+double integral(const QuadratureRule2D& quad_rule,
+                const KernelFnc& kernel,
                 const std::array<std::array<double,3>,3>& src_locs,
                 const std::array<double,3>& src_vals,
                 const std::array<double,3>& obs_loc);
 
-double eval_integral_equation(Mesh& src_mesh,
-                              QuadratureRule2D& src_quad,
-                              KernelFnc& kernel,
-                              NearEval& near_eval, 
+double eval_integral_equation(const Mesh& src_mesh,
+                              const QuadratureRule2D& src_quad,
+                              const KernelFnc& kernel,
+                              const NearEval& near_eval, 
                               std::array<double,3> obs_pt,
                               std::array<double,3> obs_normal,
                               std::vector<double>& src_strength);
