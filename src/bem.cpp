@@ -18,8 +18,8 @@ NearEval::NearEval(int n_steps):
 }
 
 //TODO: Pass in observation normal.
-double integral(QuadratureRule2D& quad_rule,
-                KernelFnc& kernel,
+double integral(const QuadratureRule2D& quad_rule,
+                const KernelFnc& kernel,
                 const std::array<std::array<double,3>,3>& src_locs,
                 const std::array<double,3>& src_vals,
                 const std::array<double,3>& obs_loc) {
@@ -106,10 +106,10 @@ double appx_face_dist2(std::array<double,3> pt,
 
 /* Evaluate the integral equation for a specific observation point.
  */
-double eval_integral_equation(Mesh& src_mesh,
-                              QuadratureRule2D& src_quad,
-                              KernelFnc& kernel,
-                              NearEval& near_eval, 
+double eval_integral_equation(const Mesh& src_mesh,
+                              const QuadratureRule2D& src_quad,
+                              const KernelFnc& kernel,
+                              const NearEval& near_eval, 
                               std::array<double,3> obs_pt,
                               std::array<double,3> obs_normal,
                               std::vector<double>& src_strength) {
@@ -162,4 +162,40 @@ double eval_integral_equation(Mesh& src_mesh,
     }
     result += richardson_step(near_steps);
     return result;
+}
+
+std::vector<double> direct_interact(Mesh& src_mesh,
+                                    Mesh& obs_mesh,
+                                    QuadratureRule2D& src_quad,
+                                    QuadratureRule2D& obs_quad,
+                                    KernelFnc& kernel,
+                                    std::vector<double>& src_strength,
+                                    int n_steps) {
+    int n_obs_faces = obs_mesh.faces.size();
+    int nq_obs = obs_quad.x_hat.size();
+    int n_obs = n_obs_faces * nq_obs;
+    std::vector<double> obs_value(n_obs);
+    NearEval near_eval(n_steps);
+
+#pragma omp parallel for
+    for (int obs_idx = 0; obs_idx < n_obs_faces; obs_idx++) {
+        auto obs_face = obs_mesh.faces[obs_idx];
+        auto obs_v0 = obs_mesh.vertices[obs_face[0]];
+        auto obs_v1 = obs_mesh.vertices[obs_face[1]];
+        auto obs_v2 = obs_mesh.vertices[obs_face[2]];
+        for (int obs_q = 0; obs_q < nq_obs; obs_q++) {
+            double x_hat = obs_quad.x_hat[obs_q];
+            double y_hat = obs_quad.y_hat[obs_q];
+            const std::array<double,3> obs_pt = {
+                linear_interp(x_hat, y_hat, {obs_v0[0], obs_v1[0], obs_v2[0]}),
+                linear_interp(x_hat, y_hat, {obs_v0[1], obs_v1[1], obs_v2[1]}),
+                linear_interp(x_hat, y_hat, {obs_v0[2], obs_v1[2], obs_v2[2]})
+            };
+            const auto obs_n = tri_normal({obs_v0, obs_v1, obs_v2});
+            const int idx = obs_idx * nq_obs + obs_q;
+            obs_value[idx] = eval_integral_equation(src_mesh, src_quad,
+                                kernel, near_eval, obs_pt, obs_n, src_strength);
+        }
+    }
+    return obs_value;
 }
