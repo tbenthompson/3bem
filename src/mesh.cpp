@@ -1,8 +1,10 @@
 #include "mesh.h"
+#include "numerics.h"
 
-std::unordered_map<int, int> find_duplicate_map(Mesh3D& mesh, double eps) {
+std::unordered_map<int, int> find_duplicate_map(Mesh& mesh, double eps) {
     std::unordered_map<int, int> old_to_new;
     for (unsigned int i = 0; i < mesh.vertices.size(); i++) {
+        //TODO: FIX THE O(N^2) problem
         for (unsigned int j = i + 1; j < mesh.vertices.size(); j++) {
             if (!same_vertex(mesh.vertices[i], mesh.vertices[j], eps)) {
                 continue;
@@ -43,7 +45,7 @@ int count_unique_vertices(std::unordered_map<int,int>& old_to_new) {
 }
 
 std::vector<std::array<double,3>> unique_vertices(
-        Mesh3D& mesh, std::unordered_map<int,int>& old_to_new) {
+        Mesh& mesh, std::unordered_map<int,int>& old_to_new) {
     int n_unique = count_unique_vertices(old_to_new);
     std::vector<std::array<double,3>> vertices(n_unique);
     for (unsigned int i = 0; i < mesh.vertices.size(); i++) {
@@ -52,10 +54,12 @@ std::vector<std::array<double,3>> unique_vertices(
     return vertices;
 }
             
-Mesh3D clean_mesh(Mesh3D& mesh, double vertex_smear) {
+Mesh clean_mesh(Mesh& mesh, double vertex_smear) {
     //Find duplicate vertices
     auto old_to_new = find_duplicate_map(mesh, vertex_smear);
     auto new_vertices = unique_vertices(mesh, old_to_new);
+    // std::cout << mesh.vertices.size() << " " << new_vertices.size() << " " << 
+        // count_unique_vertices(old_to_new) << std::endl;
 
     std::vector<std::array<int,3>> new_faces;
     for (unsigned int i = 0; i < mesh.faces.size(); i++) {
@@ -66,11 +70,11 @@ Mesh3D clean_mesh(Mesh3D& mesh, double vertex_smear) {
         new_faces.push_back(face);
     }
 
-    Mesh3D retval = {new_vertices, new_faces};
+    Mesh retval{new_vertices, new_faces, mesh.has_refine_mod, mesh.refine_mod};
     return retval;
 }
 
-void refine_face(Mesh3D& new_mesh, std::array<int, 3> face) {
+void refine_face(Mesh& new_mesh, std::array<int, 3> face) {
     // Find the new vertex and faces.
     const auto v0 = new_mesh.vertices[face[0]];
     const auto v1 = new_mesh.vertices[face[1]];
@@ -78,9 +82,14 @@ void refine_face(Mesh3D& new_mesh, std::array<int, 3> face) {
 
     // Calculate the midpoints of each edge of the triangle. These
     // are used to refine the triangle
-    const auto midpt01 = midpt(v0, v1);
-    const auto midpt12 = midpt(v1, v2);
-    const auto midpt20 = midpt(v2, v0);
+    auto midpt01 = midpt(v0, v1);
+    auto midpt12 = midpt(v1, v2);
+    auto midpt20 = midpt(v2, v0);
+    if (new_mesh.has_refine_mod) {
+        midpt01 = new_mesh.refine_mod(midpt01);
+        midpt12 = new_mesh.refine_mod(midpt12);
+        midpt20 = new_mesh.refine_mod(midpt20);
+    }
 
     // Add the vertices while grabbing their indices.
     int midpt01_idx = new_mesh.vertices.size();
@@ -100,8 +109,8 @@ void refine_face(Mesh3D& new_mesh, std::array<int, 3> face) {
     new_mesh.faces.push_back({midpt01_idx, midpt12_idx, midpt20_idx});
 }
 
-Mesh3D refine_mesh(Mesh3D& m, std::vector<int> refine_these) {
-    Mesh3D new_mesh;
+Mesh refine_mesh(Mesh& m, std::vector<int> refine_these) {
+    Mesh new_mesh {m.vertices, {}, m.has_refine_mod, m.refine_mod};
     new_mesh.vertices = m.vertices;
 
     // Sort the refined edges so that we only have to check the
@@ -123,3 +132,70 @@ Mesh3D refine_mesh(Mesh3D& m, std::vector<int> refine_these) {
     return new_mesh;
 }
 
+Mesh refine_mesh(Mesh& m) {
+    return refine_mesh(m, naturals(m.faces.size()));
+}
+
+Mesh cube_mesh() {
+    std::vector<std::array<double, 3>> vertices = {
+        {0.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,1.0,1.0},
+        {1.0,1.0,0.0}, {0.0,0.0,0.0}, {0.0,1.0,0.0},
+        {1.0,0.0,1.0}, {0.0,0.0,0.0}, {1.0,0.0,0.0},
+        {1.0,1.0,0.0}, {1.0,0.0,0.0}, {0.0,0.0,0.0},
+        {0.0,0.0,0.0}, {0.0,1.0,1.0}, {0.0,1.0,0.0},
+        {1.0,0.0,1.0}, {0.0,0.0,1.0}, {0.0,0.0,0.0},
+        {0.0,1.0,1.0}, {0.0,0.0,1.0}, {1.0,0.0,1.0},
+        {1.0,1.0,1.0}, {1.0,0.0,0.0}, {1.0,1.0,0.0},
+        {1.0,0.0,0.0}, {1.0,1.0,1.0}, {1.0,0.0,1.0},
+        {1.0,1.0,1.0}, {1.0,1.0,0.0}, {0.0,1.0,0.0},
+        {1.0,1.0,1.0}, {0.0,1.0,0.0}, {0.0,1.0,1.0},
+        {1.0,1.0,1.0}, {0.0,1.0,1.0}, {1.0,0.0,1.0}
+    };
+
+    std::vector<std::array<int, 3>> faces;
+    for (int i = 0; i < 12; i++) {
+        faces.push_back({3 * i, 3 * i + 1, 3 * i + 2});
+    }
+
+    Mesh cube{vertices, faces, false, nullptr};
+    cube = clean_mesh(cube);
+
+    return cube;
+}
+
+Mesh sphere_mesh(std::array<double,3> center, double r, bool interior) {
+    std::vector<std::array<double,3>> vertices =
+    {
+        {0.0, -r, 0.0}, {r, 0.0, 0.0}, {0.0, 0.0, r},
+        {-r, 0.0, 0.0}, {0.0, 0.0, -r}, {0.0, r, 0.0}
+    };
+
+    for (unsigned int i = 0; i < vertices.size(); i++) {
+        for (int d = 0; d < 3; d++) {
+            vertices[i][d] += center[d];
+        }
+    }
+
+    std::vector<std::array<int,3>> faces = 
+    {
+        {1, 0, 2}, {2, 0, 3}, {3, 0, 4}, {4, 0, 1},
+        {5, 1, 2}, {5, 2, 3}, {5, 3, 4}, {5, 4, 1}
+    };
+    if (!interior) {
+        for (int f = 0; f < faces.size(); f++) {
+            std::swap(faces[f][0], faces[f][1]);
+        }
+    }
+
+    Mesh octahedron{vertices, faces, true, 
+        [=](std::array<double,3> x) {
+            double dist = std::sqrt(dist2<3>(x, center));
+            x[0] = (r / dist) * (x[0] - center[0]) + center[0];
+            x[1] = (r / dist) * (x[1] - center[1]) + center[1];
+            x[2] = (r / dist) * (x[2] - center[2]) + center[2];
+            return x;
+        }
+    };
+
+    return octahedron;
+}

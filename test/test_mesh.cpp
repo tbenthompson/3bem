@@ -1,9 +1,10 @@
 #include "UnitTest++.h"
 #include "util.h"
+#include "numerics.h"
 #include "mesh.h"
 
-Mesh3D test_mesh() {
-    Mesh3D mesh;
+Mesh test_mesh() {
+    Mesh mesh;
     mesh.vertices.push_back({0.0, 1.0, 1.0});
     mesh.vertices.push_back({0.0, 0.0, 1.0});
     mesh.vertices.push_back({0.0, 0.0, 1.0 - 1e-8});
@@ -14,7 +15,7 @@ Mesh3D test_mesh() {
 }
 
 TEST(DuplicateMap) {
-    Mesh3D mesh = test_mesh();
+    Mesh mesh = test_mesh();
     auto map = find_duplicate_map(mesh, 1e-5);
     CHECK_CLOSE(map[0], 1, 1e-5);
     CHECK_CLOSE(map[1], 2, 1e-5);
@@ -24,14 +25,14 @@ TEST(DuplicateMap) {
 }
 
 TEST(CountUnique) {
-    Mesh3D mesh = test_mesh();
+    Mesh mesh = test_mesh();
     auto map = find_duplicate_map(mesh, 1e-5);
     int unique = count_unique_vertices(map);
     CHECK_CLOSE(unique, 3, 1e-5);
 }
 
 TEST(UniqueVertices) {
-    Mesh3D mesh = test_mesh();
+    Mesh mesh = test_mesh();
     auto map = find_duplicate_map(mesh, 1e-5);
     auto verts = unique_vertices(mesh, map);
     double correct[3][3] = {{1.0, 0.0, 0.0},
@@ -43,44 +44,33 @@ TEST(UniqueVertices) {
 }
 
 TEST(CleanMesh) {
-    Mesh3D mesh = test_mesh();
-    Mesh3D cleaned = clean_mesh(mesh);
+    Mesh mesh = test_mesh();
+    Mesh cleaned = clean_mesh(mesh);
     int correct[3] = {2, 1, 0};
     CHECK_ARRAY_CLOSE(cleaned.faces[0], correct, 3, 1e-5);
 }
 
-TEST(RefineMesh) {
-    Mesh3D mesh;
-    mesh.vertices.push_back({0.0, 0.0, 0.0});
-    mesh.vertices.push_back({1.0, 0.0, 0.0});
-    mesh.vertices.push_back({0.0, 1.0, 0.0});
-    mesh.faces.push_back({{0,1,2}});
-    Mesh3D refined = refine_mesh(mesh, {0});
-    for (int i = 0; i < refined.faces.size(); i++) {
+TEST(RefineSphereMesh) {
+    Mesh unrefined = sphere_mesh({0,0,0}, 1.0);
+    //TODO: This could be tested easily for general meshes using some kind of
+    //property based test
+    Mesh refined = refine_mesh(unrefined, naturals(unrefined.faces.size()));
+    int correct = unrefined.faces.size() * 3 + unrefined.vertices.size();
+    int correct_faces = unrefined.faces.size() * 4;
+    CHECK_EQUAL(refined.vertices.size(), correct);
+    CHECK_EQUAL(refined.faces.size(), correct_faces);
+
+    Mesh cleaned = clean_mesh(refined);
+    int correct_clean = 18;
+    CHECK_EQUAL(cleaned.vertices.size(), correct_clean);
+    CHECK_EQUAL(cleaned.faces.size(), correct_faces);
+    for (unsigned int i = 0; i < refined.faces.size(); i++) {
         for (int d = 0; d < 3; d++) {
             auto v = refined.vertices[refined.faces[i][d]];
-            // std::cout << v[0] << " " << v[1] << " " << v[2] << std::endl;
+            double dist = hypot2(v);
+            CHECK_CLOSE(dist, 1.0, 1e-8);
         }
-        // std::cout << " " << std::endl;
     }
-    //TODO: FINISH THIS TEST!
-/*
-0 0 0
-0.5 0 0
-0 0.5 0
- 
-1 0 0
-0.5 0.5 0
-0.5 0 0
- 
-0 1 0
-0 0.5 0
-0.5 0.5 0
- 
-0.5 0 0
-0.5 0.5 0
-0 0.5 0
-*/
 }
 
 int main(int, char const *[])

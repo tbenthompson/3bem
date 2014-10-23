@@ -235,14 +235,6 @@ QuadratureRule2D tensor_product(QuadratureRule xq, QuadratureRule yq) {
     return retval;
 }
 
-/* Produces a 2D tensor product gaussian quadrature rule. The number of gauss
- * points in each dimension is the same.
- */
-QuadratureRule2D tensor_gauss(int n_pts) {
-    auto g1d = gauss(n_pts);
-    return tensor_product(g1d, g1d);
-}
-
 /* Converts the square [-1,1]x[-1,1] to the triangle (0,0)-(1,0)-(0,1)
  */
 QuadratureRule2D square_to_tri(QuadratureRule2D square_quad) {
@@ -259,4 +251,19 @@ QuadratureRule2D square_to_tri(QuadratureRule2D square_quad) {
         retval.weights[i] = (square_quad.weights[i] / 4.0) * (1 - y_01);
     }
     return retval;
+}
+
+/* Produces a 2D tensor product gaussian quadrature rule. The number of gauss
+ * points in each dimension is the same.
+ */
+QuadratureRule2D tensor_gauss(int n_pts) {
+    auto g1d = gauss(n_pts);
+    return tensor_product(g1d, g1d);
+}
+
+/* Produces a 2D tensor product gaussian quadrature rule mapped into the unit
+ * triangle (0,0)-(1,0)-(0,1).
+ */
+QuadratureRule2D tri_gauss(int n_pts) {
+    return square_to_tri(tensor_gauss(n_pts));
 }

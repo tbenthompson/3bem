@@ -183,7 +183,7 @@ TEST(TensorProductIntegrate2) {
     CHECK_CLOSE(result, 38.6995, 1e-4);
 }
 
-TEST(AreaOfTriangle) {
+TEST(IntegrateAreaOfUnitTriangle) {
     auto q2d = tensor_gauss(2);
     auto q2d_tri = square_to_tri(q2d);
     double result = integrate(q2d_tri, [](double x, double y) {return 1.0;});
@@ -191,8 +191,7 @@ TEST(AreaOfTriangle) {
 }
 
 TEST(TriangleIntegrate) {
-    auto q2d = tensor_gauss(8);
-    auto q2d_tri = square_to_tri(q2d);
+    auto q2d_tri = tri_gauss(8);
     double result = integrate(q2d_tri, [](double x,double y) {
         return std::exp(x / (y - 1.1));
     });
@@ -201,6 +200,32 @@ TEST(TriangleIntegrate) {
         return std::exp(x / (y + 1.1));
     });
     CHECK_CLOSE(result, 0.656602, 1e-6);
+}
+
+TEST(AreaTri) {
+    double result = tri_area({{{0,0,0},{1,0,0},{0,1,0}}});
+    CHECK_CLOSE(result, 0.5, 1e-12);
+    result = tri_area({{{1,1,1},{3,1,1},{3,3,1}}});
+    CHECK_CLOSE(result, 2.0, 1e-12);
+}
+
+TEST(LinearInterp) {
+    CHECK_CLOSE(linear_interp(0,0,{1,0,0}), 1.0, 1e-12);
+    CHECK_CLOSE(linear_interp(1,0,{0,1,0}), 1.0, 1e-12);
+    CHECK_CLOSE(linear_interp(0,1,{0,0,1}), 1.0, 1e-12);
+    CHECK_CLOSE(linear_interp(0.5,0.5,{0,0,1}), 0.5, 1e-12);
+    CHECK_CLOSE(linear_interp(0.0,0.5,{0,0,1}), 0.5, 1e-12);
+}
+
+TEST(LinearInterpOnes) {
+    auto gen1 = ac::fix(1, ac::generator<double>());
+    auto arb = ac::make_arbitrary(gen1, gen1);
+    ac::check<double, double>(
+        [](double x_hat, double y_hat) {
+            double result = linear_interp(x_hat, y_hat, {1,1,1});
+            double exact = 1.0;
+            return std::fabs(result - exact) < 1e-12;
+        }, 100, arb);
 }
 
 int main(int, char const *[])
