@@ -95,7 +95,6 @@ std::vector<double> solve_system(std::vector<double> rhs,
     PetscInitialize(&argc, &args, (char*)0, "bem code"); 
 
     unsigned int n = rhs.size();
-    std::cout << "Vector length: " << n << std::endl;
     PetscErrorCode ierr;
     MPI_Comm comm = PETSC_COMM_WORLD;
 
