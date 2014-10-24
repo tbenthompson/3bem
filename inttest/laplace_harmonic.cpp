@@ -33,11 +33,11 @@ double harmonic_dudn(std::array<double,3> x,
 }
 
 //TODO: This should be in util.h i think
-double error(std::vector<double> a, 
+double error_inf(std::vector<double> a, 
              std::vector<double> b) {
     double error = 0.0;
     for (unsigned int i = 0; i < a.size(); i++) {
-        error += std::fabs((a[i] - b[i]) / b[i]) / b.size();
+        error = std::max(std::fabs(a[i] - b[i]), error);
     }
     return error;
 }
@@ -47,10 +47,10 @@ int main() {
     const std::array<double,3> center = {5, 0, 0};
     double r = 3.0;
     double obs_radius = 2.9;
-    int refine_level = 2;
+    int refine_level = 4;
     int near_field = 3;
-    int src_quad_pts = 4;
-    int obs_quad_pts = 4;
+    int src_quad_pts = 2;
+    int obs_quad_pts = 3;
 
     auto sphere = sphere_mesh(center, r);
     for (int i = 0; i < refine_level; i++) {
@@ -58,7 +58,7 @@ int main() {
     }
     sphere = clean_mesh(sphere);
     auto q_src = tri_gauss(src_quad_pts);
-    auto q_obs = tri_double_exp(obs_quad_pts, 0.3);
+    auto q_obs = tri_gauss(obs_quad_pts);
     KernelFnc K = BEMlaplace_single;
     KernelFnc Kdn = BEMlaplace_double;
     NearEval ne(near_field);
@@ -74,40 +74,55 @@ int main() {
         dudn[i] = harmonic_dudn(sphere.vertices[i], center);
     }
 
-    auto rhs = direct_interact(sphere, sphere, q_src, q_obs, 
-                               Kdn, u, near_field);
-    auto rhs_mass = mass_term(sphere, q_src, u);
-    for (unsigned int i = 0; i < rhs.size(); i++){
-        rhs[i] = rhs[i] + rhs_mass[i];
+    if (true) {
+        auto rhs = direct_interact(sphere, sphere, q_src, q_obs, 
+                                   Kdn, u, near_field);
+        auto rhs_mass = mass_term(sphere, q_src, u);
+        // auto lhs = direct_interact(sphere, sphere, q_src, q_obs,
+        //                            K, dudn, near_field);
+
+        // double max = 0;
+        for (unsigned int i = 0; i < rhs.size(); i++){
+            /* std::cout << lhs[i] << " " << rhs[i] << " " << rhs_mass[i] << std::endl; */
+            // double sum = lhs[i] + rhs[i] - rhs_mass[i];
+            // max = std::max(max, std::fabs(sum));
+            rhs[i] = -rhs[i] + rhs_mass[i];
+        }
+        /* std::cout << max << std::endl;  */
+
+        int count = 0;
+        auto dudn_solved = solve_system(rhs, 1e-5,
+            [&] (std::vector<double>& x, std::vector<double>& y) {
+                std::cout << "iteration " << count << std::endl;
+                count++;
+                TIC
+                auto y_temp = direct_interact(sphere, sphere, q_src, q_obs,
+                                              K, x, near_field);
+                TOC("Direct interact on " + std::to_string(sphere.faces.size()) + " segments");
+                std::copy(y_temp.begin(), y_temp.end(), y.begin());
+            });
+        std::cout << error_inf(dudn_solved, dudn) << std::endl;
+        for (unsigned int i = 0; i < dudn.size(); i++) {
+            std::cout << dudn[i] << " " << dudn_solved[i] << std::endl;
+        }
     }
 
-    int count = 0;
-    auto dudn_solved = solve_system(rhs, 1e-4,
-        [&] (std::vector<double>& x, std::vector<double>& y) {
-            std::cout << "iteration " << count << std::endl;
-            count++;
-            // TIC
-            auto y_temp = direct_interact(sphere, sphere, q_src, q_obs,
-                                          K, x, near_field);
-            // TOC("Direct interact on " + std::to_string(sphere.faces.size()) + " segments");
-            std::copy(y_temp.begin(), y_temp.end(), y.begin());
-        });
-    std::cout << error(dudn_solved, dudn) << std::endl;
-// 
-//     double obs_len_scale = get_len_scale(sphere, 0, obs_quad_pts);
-//     for(int i = 0; i < 100; i++) {
-//         std::array<double,3> obs_pt = random_pt_sphere(center, obs_radius);
-// 
-//         auto obs_normal = normalize(diff(center, obs_pt));
-// 
-//         double result = eval_integral_equation(sphere, q_src, Kdn, ne, obs_pt,
-//                                                obs_normal, obs_len_scale, u);
-//         result += eval_integral_equation(sphere, q_src, K, ne, obs_pt,
-//                                          obs_normal, obs_len_scale, dudn);
-//         double exact = 1.0 / hypot(obs_pt);
-//         double error = std::fabs(exact - result);
-//         if (error > 5e-2) {
-//             std::cout << "Failed with point: " << Pt{obs_pt} << std::endl;
-//         }
-//     }
+
+    double obs_len_scale = get_len_scale(sphere, 0, obs_quad_pts);
+    for(int i = 0; i < 100; i++) {
+        std::array<double,3> obs_pt = random_pt_sphere(center, obs_radius);
+
+        auto obs_normal = normalize(diff(center, obs_pt));
+
+        double u_effect = eval_integral_equation(sphere, q_src, Kdn, ne, obs_pt,
+                                               obs_normal, obs_len_scale, u);
+        double dudn_effect = eval_integral_equation(sphere, q_src, K, ne, obs_pt,
+                                         obs_normal, obs_len_scale, dudn);
+        double result = u_effect + dudn_effect;
+        double exact = 1.0 / hypot(obs_pt);
+        double error = std::fabs(exact - result);
+        if (error > 5e-2) {
+            std::cout << "Failed with point: " << Pt{obs_pt} << std::endl;
+        }
+    }
 }
