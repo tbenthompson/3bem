@@ -154,9 +154,9 @@ TEST(MassTerm) {
     CHECK_CLOSE(mass_area, (5.0 / 6.0) * true_area, 1e-12);
 }
 
-TEST(DirectInteractConstant) {
+TEST(DirectInteractOne) {
     Mesh sphere = clean_mesh(sphere_mesh({0,0,0}, 1.0));
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 4; i++) {
         sphere = refine_mesh(sphere);
     }
     sphere = clean_mesh(sphere);
@@ -169,11 +169,25 @@ TEST(DirectInteractConstant) {
     }
     double sa2 = pow(4 * M_PI, 2);
     double error = std::fabs((sa2 - total) / sa2);
-    CHECK_CLOSE(error, 0.0, 1e-2);
+    CHECK_CLOSE(error, 0.0, 6.4e-3);
+}
+
+TEST(DirectInteractConstantLaplace) {
+    Mesh sphere = clean_mesh(sphere_mesh({0,0,0}, 1.0));
+    for (int i = 0; i < 3; i++) {
+        sphere = refine_mesh(sphere);
+    }
+    sphere = clean_mesh(sphere);
+    auto q = tri_gauss(2);
+    std::vector<double> str(sphere.vertices.size(), 1.0);
+    auto res0 = direct_interact(sphere, sphere, q, q, BEMlaplace_double, str, 2);
+    auto res1 = direct_interact(sphere, sphere, q, q, BEMlaplace_single, str, 2);
+    auto res2 = mass_term(sphere, q, str);
+    CHECK_ARRAY_CLOSE(res0, res2, sphere.vertices.size(), 1e-3);
+    CHECK_ARRAY_CLOSE(res1, res2, sphere.vertices.size(), 1e-3);
 }
 
 int main(int, char const *[])
 {
-    // return UnitTest::RunAllTests();
-    return RunOneTest("DirectInteractConstant");
+    return UnitTest::RunAllTests();
 }

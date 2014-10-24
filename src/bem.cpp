@@ -220,7 +220,8 @@ std::vector<double> direct_interact(Mesh& src_mesh,
                 unscaled_normal[2] / jacobian
             };
 
-            const double obs_len_scale = std::sqrt(obs_area) / nq_obs;
+            //TODO: What to use?
+            const double obs_len_scale = std::sqrt(obs_area);
 
             const double inner_integral =
                 eval_integral_equation(src_mesh, src_quad, kernel,
