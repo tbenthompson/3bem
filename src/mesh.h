@@ -34,14 +34,14 @@ inline std::array<double,3> midpt(std::array<double,3> a, std::array<double,3> b
             (a[2] + b[2]) / 2.0};
 }
 
-std::unordered_map<int, int> find_duplicate_map(Mesh& mesh, double eps);
+std::unordered_map<int, int> find_duplicate_map(const Mesh& mesh, double eps);
 
 int count_unique_vertices(std::unordered_map<int,int>& old_to_new);
 
 std::vector<std::array<double,3>> unique_vertices(
-        Mesh& mesh, std::unordered_map<int,int>& old_to_new);
+        const Mesh& mesh, std::unordered_map<int,int>& old_to_new);
 
-Mesh clean_mesh(Mesh& mesh, double vertex_smear = 1e-6);
+Mesh clean_mesh(const Mesh& mesh, double vertex_smear = 1e-6);
 
 
 /* Produces 4 new triangles from an initial triangle by adding a
@@ -55,8 +55,8 @@ Mesh clean_mesh(Mesh& mesh, double vertex_smear = 1e-6);
  */
 void refine_face(Mesh& new_mesh, std::array<int, 3> face);
 
-Mesh refine_mesh(Mesh& m, std::vector<int> refine_these);
-Mesh refine_mesh(Mesh& m);
+Mesh refine_mesh(const Mesh& m, std::vector<int> refine_these);
+Mesh refine_mesh(const Mesh& m);
 
 /* MESH GENERATION FUNCTION */
 

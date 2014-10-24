@@ -95,7 +95,7 @@ inline double BEMlaplace_single(double r2,
 inline double BEMlaplace_double(double r2,
                              std::array<double,3> delta,
                              std::array<double,3> nsrc) {
-    return (nsrc[0] * delta[0] + nsrc[1] * delta[1] + nsrc[2] * delta[2]) / 
+    return -(nsrc[0] * delta[0] + nsrc[1] * delta[1] + nsrc[2] * delta[2]) / 
            (4 * M_PI * pow(r2, 1.5));
 }
 

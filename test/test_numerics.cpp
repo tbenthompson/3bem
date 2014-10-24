@@ -190,6 +190,14 @@ TEST(IntegrateAreaOfUnitTriangle) {
     CHECK_CLOSE(result, 0.5, 1e-10);
 }
 
+TEST(IntegrateTriPoly) {
+    auto g2d = tri_gauss(13);
+    double result = integrate(g2d, [](double x,double y) {
+        return pow(x,23) + pow(y, 19);
+    });
+    CHECK_CLOSE(result, 17. / 4200, 1e-15);
+}
+
 void test_tri_integrate(QuadratureRule2D q2d_tri) {
     double result = integrate(q2d_tri, [](double x,double y) {
         return std::exp(x / (y - 1.1));
