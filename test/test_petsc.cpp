@@ -40,7 +40,7 @@ TEST(Solve2X2) {
         (rhs[0] * matrix[1][1] - rhs[1] * matrix[0][1]) / denom,
         (rhs[1] * matrix[0][0] - rhs[0] * matrix[1][0]) / denom,
     };
-    CHECK_ARRAY_CLOSE(res, exact, 2, 1e-12);
+    CHECK_ARRAY_CLOSE(res, exact, 2, 1e-5);
 }
 
 int main(int, char const* args[])

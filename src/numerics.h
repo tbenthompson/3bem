@@ -70,7 +70,6 @@ inline std::array<double,3> diff(const std::array<double,3> x,
                                  const std::array<double,3> y) {
     return {x[0] - y[0], x[1] - y[1], x[2] - y[2]};
 }
-
 inline std::array<double,3> normalize(const std::array<double,3> x) {
     double mag = hypot(x);
     return {
@@ -78,6 +77,10 @@ inline std::array<double,3> normalize(const std::array<double,3> x) {
         x[1] / mag,
         x[2] / mag
     };
+}
+
+inline std::array<double,3> negate(const std::array<double,3> x) {
+    return {-x[0],-x[1],-x[2]};
 }
 
 inline std::array<double,3> 

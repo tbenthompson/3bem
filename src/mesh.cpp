@@ -1,7 +1,7 @@
 #include "mesh.h"
 #include "numerics.h"
 
-std::unordered_map<int, int> find_duplicate_map(Mesh& mesh, double eps) {
+std::unordered_map<int, int> find_duplicate_map(const Mesh& mesh, double eps) {
     std::unordered_map<int, int> old_to_new;
     for (unsigned int i = 0; i < mesh.vertices.size(); i++) {
         //TODO: FIX THE O(N^2) problem
@@ -45,7 +45,7 @@ int count_unique_vertices(std::unordered_map<int,int>& old_to_new) {
 }
 
 std::vector<std::array<double,3>> unique_vertices(
-        Mesh& mesh, std::unordered_map<int,int>& old_to_new) {
+        const Mesh& mesh, std::unordered_map<int,int>& old_to_new) {
     int n_unique = count_unique_vertices(old_to_new);
     std::vector<std::array<double,3>> vertices(n_unique);
     for (unsigned int i = 0; i < mesh.vertices.size(); i++) {
@@ -54,7 +54,7 @@ std::vector<std::array<double,3>> unique_vertices(
     return vertices;
 }
             
-Mesh clean_mesh(Mesh& mesh, double vertex_smear) {
+Mesh clean_mesh(const Mesh& mesh, double vertex_smear) {
     //Find duplicate vertices
     auto old_to_new = find_duplicate_map(mesh, vertex_smear);
     auto new_vertices = unique_vertices(mesh, old_to_new);
@@ -109,7 +109,7 @@ void refine_face(Mesh& new_mesh, std::array<int, 3> face) {
     new_mesh.faces.push_back({midpt01_idx, midpt12_idx, midpt20_idx});
 }
 
-Mesh refine_mesh(Mesh& m, std::vector<int> refine_these) {
+Mesh refine_mesh(const Mesh& m, std::vector<int> refine_these) {
     Mesh new_mesh {m.vertices, {}, m.has_refine_mod, m.refine_mod};
     new_mesh.vertices = m.vertices;
 
@@ -132,7 +132,7 @@ Mesh refine_mesh(Mesh& m, std::vector<int> refine_these) {
     return new_mesh;
 }
 
-Mesh refine_mesh(Mesh& m) {
+Mesh refine_mesh(const Mesh& m) {
     return refine_mesh(m, naturals(m.faces.size()));
 }
 
@@ -182,7 +182,7 @@ Mesh sphere_mesh(std::array<double,3> center, double r, bool interior) {
         {5, 1, 2}, {5, 2, 3}, {5, 3, 4}, {5, 4, 1}
     };
     if (!interior) {
-        for (int f = 0; f < faces.size(); f++) {
+        for (unsigned int f = 0; f < faces.size(); f++) {
             std::swap(faces[f][0], faces[f][1]);
         }
     }

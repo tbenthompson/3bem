@@ -150,7 +150,7 @@ TEST(FMMLaplace) {
 }
 
 TEST(FMMLaplaceNonOneStrength) {
-    test_fmm_laplace(5.0, 3e-3, true);
+    test_fmm_laplace(5.0, 5e-3, true);
 }
 
 int main(int, char const *[])

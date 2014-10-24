@@ -89,8 +89,7 @@ std::vector<double> solve_system(std::vector<double> rhs,
                                  double tolerance,
                                  MatVecFnc fnc) {
     int argc = 0;
-    char** args = new char*[1];
-    args[1] = (char*)"./test/test_petsc";
+    char** args = new char*[0];
     PetscInitialize(&argc, &args, (char*)0, "bem code"); 
 
     unsigned int n = rhs.size();
@@ -100,18 +99,18 @@ std::vector<double> solve_system(std::vector<double> rhs,
     Vec b;
     VecCreateMPIWithArray(comm, n, n, PETSC_DECIDE, rhs.data(), &b);
 
+    // USE VecCreateMPIWithArray to set the data location in the PETSc vector
+    // so that I don't need to copy.
+    std::vector<double> retval(n, 0.0);
+    Vec xo;
+    VecCreateMPIWithArray(comm, 1, n, PETSC_DECIDE, retval.data(), &xo);
+
     Mat mat;
     MatCreateShell(comm, n, n, PETSC_DETERMINE, PETSC_DETERMINE, &fnc, &mat);
     MatShellSetOperation(mat, MATOP_MULT, (void(*)(void))mult_wrapper);
 
     KSP ksp;
     setup_ksp(comm, ksp, mat, tolerance);
-
-    // USE VecCreateMPIWithArray to set the data location in the PETSc vector
-    // so that I don't need to copy.
-    std::vector<double> retval(n, 0.0);
-    Vec xo;
-    VecCreateMPIWithArray(comm, 1, n, PETSC_DECIDE, retval.data(), &xo);
 
     ierr = KSPSolve(ksp, b, xo);CHKERRABORT(comm,ierr);
     return retval;
