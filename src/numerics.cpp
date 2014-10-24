@@ -267,3 +267,16 @@ QuadratureRule2D tensor_gauss(int n_pts) {
 QuadratureRule2D tri_gauss(int n_pts) {
     return square_to_tri(tensor_gauss(n_pts));
 }
+
+/* Produces a 2D tensor product double exponential rule. */
+QuadratureRule2D tensor_double_exp(int n_pts, double h) {
+    auto de1d = double_exp(n_pts, h);
+    return tensor_product(de1d, de1d);
+}
+
+/* Produces a 2D tensor product double exponetial rule mapped into the unit
+ * triangle (0,0)-(1,0)-(0,1).
+ */
+QuadratureRule2D tri_double_exp(int n_pts, double h) {
+    return square_to_tri(tensor_double_exp(n_pts, h));
+}

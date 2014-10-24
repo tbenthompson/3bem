@@ -39,4 +39,12 @@ double eval_integral_equation(const Mesh& src_mesh,
                               std::vector<double>& src_strength);
 
 double richardson_step(const std::vector<double>& values);
+
+std::vector<double> direct_interact(Mesh& src_mesh,
+                                    Mesh& obs_mesh,
+                                    QuadratureRule2D& src_quad,
+                                    QuadratureRule2D& obs_quad,
+                                    KernelFnc& kernel,
+                                    std::vector<double>& src_strength,
+                                    int n_steps);
 #endif

@@ -37,9 +37,8 @@ void releaseVectorWrapper( std::vector<T, std::allocator<T> > &targetVector ) {
     vectorPtr->_M_start = vectorPtr->_M_finish = vectorPtr->_M_end_of_storage = NULL;
 }
 
-template <typename T>
 PetscErrorCode mult_wrapper(Mat A, Vec x, Vec y) {
-    T* fnc;
+    MatVecFnc* fnc;
     MatShellGetContext(A, (void**) &fnc);
 
     // Extract the data from the Petsc Vec objects
@@ -103,7 +102,7 @@ std::vector<double> solve_system(std::vector<double> rhs,
 
     Mat mat;
     MatCreateShell(comm, n, n, PETSC_DETERMINE, PETSC_DETERMINE, &fnc, &mat);
-    MatShellSetOperation(mat, MATOP_MULT, (void(*)(void))mult_wrapper<MatVecFnc>);
+    MatShellSetOperation(mat, MATOP_MULT, (void(*)(void))mult_wrapper);
 
     KSP ksp;
     setup_ksp(comm, ksp, mat, tolerance);
