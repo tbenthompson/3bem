@@ -190,8 +190,7 @@ TEST(IntegrateAreaOfUnitTriangle) {
     CHECK_CLOSE(result, 0.5, 1e-10);
 }
 
-TEST(TriangleIntegrate) {
-    auto q2d_tri = tri_gauss(8);
+void test_tri_integrate(QuadratureRule2D q2d_tri) {
     double result = integrate(q2d_tri, [](double x,double y) {
         return std::exp(x / (y - 1.1));
     });
@@ -200,6 +199,16 @@ TEST(TriangleIntegrate) {
         return std::exp(x / (y + 1.1));
     });
     CHECK_CLOSE(result, 0.656602, 1e-6);
+}
+
+TEST(TriangleIntegrate) {
+    auto q2d_tri = tri_gauss(8);
+    test_tri_integrate(q2d_tri);
+}
+
+TEST(TriangleIntegrateDoubleExp) {
+    auto q2d_tri = tri_double_exp(7, 0.3);
+    test_tri_integrate(q2d_tri);
 }
 
 TEST(AreaTri) {

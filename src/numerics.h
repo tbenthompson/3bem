@@ -125,7 +125,9 @@ struct QuadratureRule2D {
 
 QuadratureRule2D tensor_product(QuadratureRule xq, QuadratureRule yq);
 QuadratureRule2D tensor_gauss(int n_pts);
+QuadratureRule2D tensor_double_exp(int n_pts, double h);
 QuadratureRule2D tri_gauss(int n_pts);
+QuadratureRule2D tri_double_exp(int n_pts, double h);
 QuadratureRule2D square_to_tri(QuadratureRule2D square_quad);
 
 double integrate(QuadratureRule2D& qr, std::function<double (double,double)> fnc);

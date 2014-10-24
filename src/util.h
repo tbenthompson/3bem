@@ -1,8 +1,8 @@
 #ifndef __TEST_SHARED_H
 #define __TEST_SHARED_H
 
-#include <memory>
 #include <vector>
+#include <array>
 #include <random>
 #include <iostream>
 #include <chrono>
@@ -79,5 +79,24 @@ class Mesh;
 Mesh square_mesh();
 Mesh refined_square_mesh(int levels);
 Mesh circle_mesh(std::array<double, 2> center, double r, int n_segments);
+
+//TODO: Move these to a separate kernels module
+inline double BEMone(double r2, std::array<double,3> delta,
+                         std::array<double,3> n) {
+    return 1.0;
+}
+
+inline double BEMlaplace_single(double r2,
+                             std::array<double,3> delta,
+                             std::array<double,3> nsrc) {
+    return 1.0 / (4.0 * M_PI * std::sqrt(r2));
+}
+
+inline double BEMlaplace_double(double r2,
+                             std::array<double,3> delta,
+                             std::array<double,3> nsrc) {
+    return (nsrc[0] * delta[0] + nsrc[1] * delta[1] + nsrc[2] * delta[2]) / 
+           (4 * M_PI * pow(r2, 1.5));
+}
 
 #endif
