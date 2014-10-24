@@ -1,9 +1,13 @@
 export LD_LIBRARY_PATH
+PETSC_DIR = /home/tbent/applications/petsc-3.5.2 
+PETSC_ARCH = arch-linux2-c-debug
 INCLUDE += -I./src
 INCLUDE += -I./lib/unittest-cpp/src
 INCLUDE += -I./lib/actor-framework/libcaf_core
 INCLUDE += -I./lib/actor-framework/libcaf_opencl
 INCLUDE += -I./lib/autocheck/include
+INCLUDE += -I$(PETSC_DIR)/$(PETSC_ARCH)/include
+INCLUDE += -I$(PETSC_DIR)/include
 
 CPPFLAGS += -Wall
 CPPFLAGS += -std=c++11
@@ -39,6 +43,9 @@ LINKFLAGS += -lOpenCL
 LINKFLAGS += -Wl,-rpath=./lib/actor-framework/build/lib
 LINKFLAGS += -L./lib/actor-framework/build/lib
 LINKFLAGS += -lcaf_core -lcaf_opencl
+LINKFLAGS += -Wl,-rpath=$(PETSC_DIR)/$(PETSC_ARCH)/lib
+LINKFLAGS += -L$(PETSC_DIR)/$(PETSC_ARCH)/lib
+LINKFLAGS += -lpetsc
 LIBLINKFLAGS += -shared
 LIBLINKFLAGS += $(LINKFLAGS)
 
@@ -54,8 +61,8 @@ EXAMPLELINKFLAGS += -Wl,-rpath=.
 EXAMPLELINKFLAGS += -l:$(LIBNAME)
 EXAMPLELINKFLAGS += $(LINKFLAGS)
 
-COMPILER = g++
-// COMPILER = mpic++
+// COMPILER = g++
+COMPILER = mpic++
 
 : foreach src/*.cpp |> $(COMPILER) $(SHAREDLIBFLAGS) -c %f -o %o |> src/%B.o
 : src/*.o |> $(COMPILER) %f -o %o $(LIBLINKFLAGS) |> $(LIBNAME)
