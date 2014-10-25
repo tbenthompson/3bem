@@ -18,7 +18,7 @@ NearEval::NearEval(int n_steps):
     }
 }
 
-std::array<double,3> ref_to_real(double x_hat, double y_hat, 
+inline std::array<double,3> ref_to_real(double x_hat, double y_hat, 
                                  std::array<std::array<double,3>,3> locs) {
     return {
         linear_interp(x_hat, y_hat, {locs[0][0], locs[1][0], locs[2][0]}),
@@ -136,7 +136,8 @@ double eval_integral_equation(const Mesh& src_mesh,
                               std::array<double,3> obs_pt,
                               std::array<double,3> obs_normal,
                               double obs_len_scale,
-                              std::vector<double>& src_strength) {
+                              std::vector<double>& src_strength,
+                              const double far_threshold) {
     double result = 0.0;
     std::vector<double> near_steps(near_eval.n_steps, 0.0);
     for (unsigned int i = 0; i < src_mesh.faces.size(); i++) {
@@ -154,7 +155,7 @@ double eval_integral_equation(const Mesh& src_mesh,
 
         // Square of the threshold 
         // TODO: Make threshold a parameter
-        const double threshold2 = 6;
+        const double threshold2 = far_threshold * far_threshold;
 
         // Square of the approximate source "length scale"
         const double src_area = tri_area(src_locs);
@@ -166,6 +167,7 @@ double eval_integral_equation(const Mesh& src_mesh,
         //a further hierarchy -- identical, adjacent, near, far
         if (dist2 < threshold2 * src_area) {
             //nearfield
+            //cout
             
             for (int nf = 0; nf < near_eval.n_steps; nf++) {
                 auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
@@ -191,7 +193,8 @@ std::vector<double> direct_interact(Mesh& src_mesh,
                                     QuadratureRule2D& obs_quad,
                                     const KernelFnc& kernel,
                                     std::vector<double>& src_strength,
-                                    int n_steps) {
+                                    int n_steps,
+                                    double far_threshold) {
     int n_obs_faces = obs_mesh.faces.size();
     int n_obs_verts = obs_mesh.vertices.size();
     int nq_obs = obs_quad.x_hat.size();
@@ -226,7 +229,7 @@ std::vector<double> direct_interact(Mesh& src_mesh,
             const double inner_integral =
                 eval_integral_equation(src_mesh, src_quad, kernel,
                                        near_eval, obs_pt, obs_n, obs_len_scale,
-                                       src_strength);
+                                       src_strength, far_threshold);
             assert(!std::isnan(inner_integral));
             for(int v = 0; v < 3; v++) {
                 std::array<double,3> e_v = {0.0, 0.0, 0.0};

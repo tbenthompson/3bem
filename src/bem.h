@@ -37,7 +37,8 @@ double eval_integral_equation(const Mesh& src_mesh,
                               std::array<double,3> obs_pt,
                               std::array<double,3> obs_normal,
                               double obs_len_scale,
-                              std::vector<double>& src_strength);
+                              std::vector<double>& src_strength,
+                              const double far_threshold = 3.0);
 
 double richardson_step(const std::vector<double>& values);
 
@@ -48,7 +49,8 @@ std::vector<double> direct_interact(Mesh& src_mesh,
                                     QuadratureRule2D& obs_quad,
                                     const KernelFnc& kernel,
                                     std::vector<double>& src_strength,
-                                    int n_steps);
+                                    int n_steps, 
+                                    const double far_threshold = 3.0);
 
 //TODO: TEst me!
 std::vector<double> mass_term(const Mesh& obs_mesh,
