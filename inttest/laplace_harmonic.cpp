@@ -47,8 +47,9 @@ int main() {
     const std::array<double,3> center = {5, 0, 0};
     double r = 3.0;
     double obs_radius = 2.9;
-    int refine_level = 4;
-    int near_field = 3;
+    double far_threshold = 2.0;
+    int refine_level = 3;
+    int near_field = 5;
     int src_quad_pts = 2;
     int obs_quad_pts = 3;
 
@@ -76,7 +77,7 @@ int main() {
 
     if (true) {
         auto rhs = direct_interact(sphere, sphere, q_src, q_obs, 
-                                   Kdn, u, near_field);
+                                   Kdn, u, near_field, far_threshold);
         auto rhs_mass = mass_term(sphere, q_src, u);
         // auto lhs = direct_interact(sphere, sphere, q_src, q_obs,
         //                            K, dudn, near_field);
@@ -97,14 +98,14 @@ int main() {
                 count++;
                 TIC
                 auto y_temp = direct_interact(sphere, sphere, q_src, q_obs,
-                                              K, x, near_field);
+                                              K, x, near_field, far_threshold);
                 TOC("Direct interact on " + std::to_string(sphere.faces.size()) + " segments");
                 std::copy(y_temp.begin(), y_temp.end(), y.begin());
             });
         std::cout << error_inf(dudn_solved, dudn) << std::endl;
-        for (unsigned int i = 0; i < dudn.size(); i++) {
-            std::cout << dudn[i] << " " << dudn_solved[i] << std::endl;
-        }
+        // for (unsigned int i = 0; i < dudn.size(); i++) {
+        //     std::cout << dudn[i] << " " << dudn_solved[i] << std::endl;
+        // }
     }
 
 

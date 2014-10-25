@@ -183,8 +183,8 @@ TEST(DirectInteractConstantLaplace) {
     auto res0 = direct_interact(sphere, sphere, q, q, BEMlaplace_double, str, 2);
     auto res1 = direct_interact(sphere, sphere, q, q, BEMlaplace_single, str, 2);
     auto res2 = mass_term(sphere, q, str);
-    CHECK_ARRAY_CLOSE(res0, res2, sphere.vertices.size(), 1e-3);
-    CHECK_ARRAY_CLOSE(res1, res2, sphere.vertices.size(), 1e-3);
+    CHECK_ARRAY_CLOSE(res0, res2, sphere.vertices.size(), 1e-2);
+    CHECK_ARRAY_CLOSE(res1, res2, sphere.vertices.size(), 1e-2);
 }
 
 int main(int, char const *[])
