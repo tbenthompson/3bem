@@ -9,6 +9,7 @@ INCLUDE += -I./lib/actor-framework/libcaf_opencl
 INCLUDE += -I./lib/autocheck/include
 INCLUDE += -I$(PETSC_DIR)/$(PETSC_ARCH)/include
 INCLUDE += -I$(PETSC_DIR)/include
+INCLUDE += -I./lib/eigen-dev
 
 CPPFLAGS += -Wall
 CPPFLAGS += -std=c++11
@@ -32,8 +33,8 @@ PROFILEFLAGS += $(RELEASEFLAGS)
 PROFILEFLAGS += -g
 
 // CPPFLAGS += $(DEBUGFLAGS)
-// CPPFLAGS += $(RELEASEFLAGS)
-CPPFLAGS += $(PROFILEFLAGS)
+CPPFLAGS += $(RELEASEFLAGS)
+// CPPFLAGS += $(PROFILEFLAGS)
 
 SHAREDLIBFLAGS += $(CPPFLAGS) 
 SHAREDLIBFLAGS += -fPIC
@@ -72,6 +73,7 @@ COMPILER = mpic++
 : foreach test/*.cpp |> $(COMPILER) $(CPPFLAGS) -c %f -o %o |> test/%B.o
 : foreach test/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(TESTLINKFLAGS) |> test/%B
 : foreach examples/*.cpp |> $(COMPILER) $(CPPFLAGS) -c %f -o %o |> examples/%B.o
+: foreach examples/*.cpp |> $(COMPILER) $(CPPFLAGS) -S %f -o %o |> examples/%B.s
 : foreach examples/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(EXAMPLELINKFLAGS) |> examples/%B
 : foreach inttest/*.cpp |> $(COMPILER) $(CPPFLAGS) -c %f -o %o |> inttest/%B.o
 : foreach inttest/*.o | $(LIBNAME) |> $(COMPILER) %f -o %o $(INTTESTLINKFLAGS) |> inttest/%B
