@@ -171,21 +171,18 @@ inline float* really_fast_vec_direct_n_body(float* srcfx, float* srcfy, float* s
                 r21 = dz1 * dz1 + r21;
                 r22 = dz2 * dz2 + r22;
                 r23 = dz3 * dz3 + r23;
-                auto src_times_factor0 = _mm256_mul_ps(src_values0, factor_rep);
-                auto src_times_factor1 = _mm256_mul_ps(src_values1, factor_rep);
-                auto src_times_factor2 = _mm256_mul_ps(src_values2, factor_rep);
-                auto src_times_factor3 = _mm256_mul_ps(src_values3, factor_rep);
                 auto inv_r0 = _mm256_rsqrt_ps(r20);
                 auto inv_r1 = _mm256_rsqrt_ps(r21);
                 auto inv_r2 = _mm256_rsqrt_ps(r22);
                 auto inv_r3 = _mm256_rsqrt_ps(r23);
-                temp0 = inv_r0 * src_times_factor0 + temp0;
-                temp1 = inv_r1 * src_times_factor1 + temp1;
-                temp2 = inv_r2 * src_times_factor2 + temp2;
-                temp3 = inv_r3 * src_times_factor3 + temp3;
+                temp0 = inv_r0 * src_values0 + temp0;
+                temp1 = inv_r1 * src_values1 + temp1;
+                temp2 = inv_r2 * src_values2 + temp2;
+                temp3 = inv_r3 * src_values3 + temp3;
             }
             auto cur_value = _mm256_load_ps(&out_vals[i]);
             cur_value = cur_value + temp0 + temp1 + temp2 + temp3;
+            cur_value = _mm256_mul_ps(cur_value, factor_rep);
             _mm256_store_ps(&out_vals[i], cur_value);
         }
     }

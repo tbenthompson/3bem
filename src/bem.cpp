@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+#include "vec.h"
 
 NearEval::NearEval(int n_steps):
     n_steps(n_steps),
@@ -40,11 +41,7 @@ double integral(const QuadratureRule2D& quad_rule,
     const std::array<double,3> unscaled_normal = tri_unscaled_normal(src_locs);
     const double src_area = tri_area(unscaled_normal);
     const double jacobian = src_area * 2.0;
-    const std::array<double,3> scaled_normal = {
-        unscaled_normal[0] / jacobian,
-        unscaled_normal[1] / jacobian,
-        unscaled_normal[2] / jacobian
-    };
+    const auto scaled_normal = unscaled_normal / jacobian;
 
     double result = 0.0;
     for (unsigned int src_q = 0; src_q < quad_rule.x_hat.size(); src_q++) {
@@ -53,13 +50,9 @@ double integral(const QuadratureRule2D& quad_rule,
         const auto src_pt = ref_to_real(x_hat, y_hat, src_locs);
         const double interp_value = linear_interp(x_hat, y_hat, src_vals);
 
-        const std::array<double,3> d = {
-            src_pt[0] - obs_loc[0],
-            src_pt[1] - obs_loc[1],
-            src_pt[2] - obs_loc[2]
-        };
+        const auto d = src_pt - obs_loc;
 
-        const double r2 = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
+        const double r2 = sum(d * d);
 
         const double kernel_val = kernel(r2, d, scaled_normal);
         const double q_wt = quad_rule.weights[src_q];
@@ -120,11 +113,7 @@ std::array<double,3> near_field_point(double ref_dist,
 
     // The new observation point moved a little bit off the
     // source surface.
-    return {
-        obs_pt[0] + nfdn * obs_normal[0],
-        obs_pt[1] + nfdn * obs_normal[1],
-        obs_pt[2] + nfdn * obs_normal[2]
-    };
+    return obs_pt + nfdn * obs_normal;
 }
 
 /* Evaluate the integral equation for a specific observation point.
