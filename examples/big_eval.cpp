@@ -5,9 +5,9 @@
 #include "direct.h"
 
 int main() {
-    int n = 12 * 800 * 3;
+    int n = 12 * 800 * 30;
     std::cout << n << std::endl;
-    bool check = true;//n < 20000;
+    bool check = n < 50000;
     std::array<std::vector<double>,3> src =
         {random_list(n), random_list(n), random_list(n)};
     std::array<std::vector<double>,3> obs =
