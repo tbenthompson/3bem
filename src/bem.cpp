@@ -206,11 +206,7 @@ std::vector<double> direct_interact(Mesh& src_mesh,
                 tri_unscaled_normal({obs_v0, obs_v1, obs_v2});
             const double obs_area = tri_area(unscaled_normal);
             double jacobian = obs_area * 2.0;
-            const std::array<double,3> obs_n = {
-                unscaled_normal[0] / jacobian,
-                unscaled_normal[1] / jacobian,
-                unscaled_normal[2] / jacobian
-            };
+            const std::array<double,3> obs_n = unscaled_normal / jacobian;
 
             //TODO: What to use?
             const double obs_len_scale = std::sqrt(obs_area);

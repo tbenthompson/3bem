@@ -36,8 +36,8 @@ inline double linear_interp(double x_hat, double y_hat,
 inline double hypot2(double x, double y) {return x * x + y * y;}
 inline double hypot2(double x, double y, double z) {return x * x + y * y + z * z;}
 inline double hypot2(std::array<double,3> v0) {return hypot2(v0[0], v0[1], v0[2]);}
-inline double hypot(double x, double y) {return sqrt(hypot2(x, y));}
-inline double hypot(double x, double y, double z) {return sqrt(hypot2(x, y, z));}
+inline double hypot(double x, double y) {return std::sqrt(hypot2(x, y));}
+inline double hypot(double x, double y, double z) {return std::sqrt(hypot2(x, y, z));}
 inline double hypot(const std::array<double,3> a) {return hypot(a[0], a[1], a[2]);}
 
 inline double dist2(double x0, double y0, double z0,
