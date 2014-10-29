@@ -1,6 +1,6 @@
 #include "UnitTest++.h"
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include "util.h"
 #include "direct.h"
 

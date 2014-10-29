@@ -22,7 +22,7 @@ inline double laplace_single(double x0, double y0, double z0,
     if (r2 < eps) {
         return 0.0;
     }
-    return 1.0 / (4 * M_PI * sqrt(r2));
+    return 1.0 / (4 * M_PI * std::sqrt(r2));
 }
 
 //Naive double for loop version of direct_n_body
