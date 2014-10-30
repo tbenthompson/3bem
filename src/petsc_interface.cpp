@@ -75,7 +75,7 @@ void setup_ksp(MPI_Comm comm, KSP& ksp, Mat& mat, double tolerance) {
 
     ierr = KSPCreate(comm, &ksp);
     CHKERRABORT(comm,ierr);
-    ierr = KSPSetOperators(ksp, mat, mat);
+    ierr = KSPSetOperators(ksp, mat, mat, DIFFERENT_NONZERO_PATTERN);
     CHKERRABORT(comm,ierr);
     ierr = KSPGetPC(ksp, &pc);
     CHKERRABORT(comm,ierr);
