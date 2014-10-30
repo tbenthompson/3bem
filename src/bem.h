@@ -23,13 +23,15 @@ public:
 
 typedef std::function<double (double,
                               Vec3<double>,
+                              Vec3<double>,
                               Vec3<double>)> KernelFnc;
 
 double integral(const QuadratureRule2D& quad_rule,
                 const KernelFnc& kernel,
                 const std::array<Vec3<double>,3>& src_locs,
                 const Vec3<double>& src_vals,
-                const Vec3<double>& obs_loc);
+                const Vec3<double>& obs_loc,
+                const Vec3<double>& obs_n);
 
 double eval_integral_equation(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,
@@ -43,7 +45,6 @@ double eval_integral_equation(const Mesh& src_mesh,
 
 double richardson_step(const std::vector<double>& values);
 
-//TODO: TEst me!
 std::vector<double> direct_interact(Mesh& src_mesh,
                                     Mesh& obs_mesh,
                                     QuadratureRule2D& src_quad,
@@ -53,7 +54,6 @@ std::vector<double> direct_interact(Mesh& src_mesh,
                                     int n_steps, 
                                     const double far_threshold = 3.0);
 
-//TODO: TEst me!
 std::vector<double> mass_term(const Mesh& obs_mesh,
                               const QuadratureRule2D& obs_quad,
                               const std::vector<double>& strengths);

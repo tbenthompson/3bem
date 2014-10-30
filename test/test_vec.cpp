@@ -60,6 +60,7 @@ TEST(VecPrint) {
     std::cout << a << std::endl;
 }
 
+
 int main() {
     return UnitTest::RunAllTests();
 }

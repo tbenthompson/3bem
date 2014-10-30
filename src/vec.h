@@ -110,8 +110,22 @@ T sum(const Vec3<T>& a) {
 }
 
 template <typename T>
+Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
+    return {
+        x[1] * y[2] - x[2] * y[1],
+        x[2] * y[0] - x[0] * y[2],
+        x[0] * y[1] - x[1] * y[0]
+    };
+}
+
+template <typename T>
+T dot(const Vec3<T>& x, const Vec3<T>& y) {
+    return x[0] * y[0] + x[1] * y[1] + x[2] * y[2];
+}
+
+template <typename T>
 void normalize(Vec3<T>& v) {
-    T inv_mag = 1.0 / std::sqrt(sum(v * v));
+    T inv_mag = 1.0 / std::sqrt(dot(v, v));
     v *= inv_mag;
 }
 
@@ -130,15 +144,6 @@ T hypot2(const Vec3<T>& v) {
 template <typename T>
 T hypot(const Vec3<T>& v) {
     return std::sqrt(hypot2(v));
-}
-
-template <typename T>
-Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
-    return {
-        x[1] * y[2] - x[2] * y[1],
-        x[2] * y[0] - x[0] * y[2],
-        x[0] * y[1] - x[1] * y[0]
-    };
 }
 
 template <typename T>
