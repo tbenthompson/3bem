@@ -1,4 +1,4 @@
-
+#include "kernels.h"
 #include "bem.h"
 #include "quadrature.h"
 #include "mesh.h"
@@ -7,18 +7,17 @@
 #include "petsc_interface.h"
 #include <iostream>
 
-double harmonic_u(std::array<double,3> x) {
+double harmonic_u(Vec3<double> x) {
     return 1.0 / hypot(x);
 }
 
-double harmonic_dudn(std::array<double,3> x,
-                     std::array<double,3> center) {
+double harmonic_dudn(Vec3<double> x, Vec3<double> center) {
     return -(sum(x * normalized(x - center))) / pow(hypot(x), 3);
 }
 
 int main() {
     //THIS IS HOT!
-    const std::array<double,3> center = {5, 0, 0};
+    const Vec3<double> center = {5, 0, 0};
     double r = 3.0;
     double obs_radius = 2.7;
     double far_threshold = 2.0;
@@ -34,8 +33,8 @@ int main() {
     sphere = clean_mesh(sphere);
     auto q_src = tri_gauss(src_quad_pts);
     auto q_obs = tri_gauss(obs_quad_pts);
-    KernelFnc K = BEMlaplace_single;
-    KernelFnc Kdn = BEMlaplace_double;
+    KernelFnc K = laplace_single;
+    KernelFnc Kdn = laplace_double;
     NearEval ne(near_field);
 
     int n_verts = sphere.vertices.size();
@@ -66,7 +65,7 @@ int main() {
             TIC
             auto y_temp = direct_interact(sphere, sphere, q_src, q_obs,
                                           K, x, near_field, far_threshold);
-            TOC("Direct interact on " + std::to_string(sphere.faces.size()) + " segments");
+            TOC("Direct interact on " + std::to_string(sphere.faces.size()) + " faces");
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
         });
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
@@ -74,7 +73,7 @@ int main() {
 
     double obs_len_scale = get_len_scale(sphere, 0, obs_quad_pts);
     for(int i = 0; i < 100; i++) {
-        std::array<double,3> obs_pt = random_pt_sphere(center, obs_radius);
+        auto obs_pt = random_pt_sphere(center, obs_radius);
 
         auto obs_normal = normalized(center - obs_pt);
 

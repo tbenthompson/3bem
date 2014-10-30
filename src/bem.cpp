@@ -18,8 +18,8 @@ NearEval::NearEval(int n_steps):
     }
 }
 
-inline std::array<double,3> ref_to_real(double x_hat, double y_hat, 
-                                 std::array<std::array<double,3>,3> locs) {
+inline Vec3<double> ref_to_real(double x_hat, double y_hat, 
+                                 std::array<Vec3<double>,3> locs) {
     return {
         linear_interp(x_hat, y_hat, {locs[0][0], locs[1][0], locs[2][0]}),
         linear_interp(x_hat, y_hat, {locs[0][1], locs[1][1], locs[2][1]}),
@@ -27,17 +27,17 @@ inline std::array<double,3> ref_to_real(double x_hat, double y_hat,
     };
 }
 
-//TODO: Pass in observation normal.
 double integral(const QuadratureRule2D& quad_rule,
                 const KernelFnc& kernel,
-                const std::array<std::array<double,3>,3>& src_locs,
-                const std::array<double,3>& src_vals,
-                const std::array<double,3>& obs_loc) {
+                const std::array<Vec3<double>,3>& src_locs,
+                const Vec3<double>& src_vals,
+                const Vec3<double>& obs_loc,
+                const Vec3<double>& obs_n) {
 
     //Compute normal and triangle area 
     //TODO: For linear elements, these could be done as a preprocessing step.
     //How to abstract this so that it work for both linear and high order basis?
-    const std::array<double,3> unscaled_normal = tri_unscaled_normal(src_locs);
+    const auto unscaled_normal = tri_unscaled_normal(src_locs);
     const double src_area = tri_area(unscaled_normal);
     const double jacobian = src_area * 2.0;
     const auto scaled_normal = unscaled_normal / jacobian;
@@ -51,9 +51,9 @@ double integral(const QuadratureRule2D& quad_rule,
 
         const auto d = src_pt - obs_loc;
 
-        const double r2 = sum(d * d);
+        const double r2 = dot(d, d);
 
-        const double kernel_val = kernel(r2, d, scaled_normal);
+        const double kernel_val = kernel(r2, d, scaled_normal, obs_n);
         const double q_wt = quad_rule.weights[src_q];
 
         result += q_wt * interp_value * kernel_val * jacobian;
@@ -93,17 +93,17 @@ double richardson_step(const std::vector<double>& values) {
 }
 
 //TODO: test this
-double appx_face_dist2(std::array<double,3> pt,
-                       const std::array<std::array<double,3>,3> vs) {
+double appx_face_dist2(Vec3<double> pt,
+                       const std::array<Vec3<double>,3> vs) {
     double d0 = dist2(pt, vs[0]);
     double d1 = dist2(pt, vs[1]);
     double d2 = dist2(pt, vs[2]);
     return std::min(d0, std::min(d1, d2));
 }
 
-std::array<double,3> near_field_point(double ref_dist,
-                                      const std::array<double,3>& obs_pt,
-                                      const std::array<double,3>& obs_normal,
+Vec3<double> near_field_point(double ref_dist,
+                                      const Vec3<double>& obs_pt,
+                                      const Vec3<double>& obs_normal,
                                       double len_scale, 
                                       double length_factor = 5.0) {
     // double nfdn = 5 * (src_len_scale / src_quad.x_hat.size()) * 
@@ -161,12 +161,13 @@ double eval_integral_equation(const Mesh& src_mesh,
                 auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
                                                   obs_normal, obs_len_scale);
                 near_steps[nf] += integral(near_eval.quad[nf], kernel,
-                                           src_locs, src_vals, nf_obs_pt);
+                                           src_locs, src_vals, nf_obs_pt,
+                                           obs_normal);
             }
         } else {
             //farfield
             double farfield_effect = integral(src_quad, kernel, src_locs,
-                                              src_vals, obs_pt);
+                                              src_vals, obs_pt, obs_normal);
             result += farfield_effect;
         }
     }

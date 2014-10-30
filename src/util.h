@@ -2,10 +2,10 @@
 #define __TEST_SHARED_H
 
 #include <vector>
-#include <array>
 #include <random>
 #include <iostream>
 #include <chrono>
+#include "vec.h"
 
 #define TIC\
     std::chrono::high_resolution_clock::time_point start =\
@@ -48,7 +48,7 @@ inline std::array<std::vector<double>,3> random_pts(int N) {
     return locs;
 }
 
-inline std::array<double,3> random_pt() {
+inline Vec3<double> random_pt() {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0, 1);
@@ -57,12 +57,12 @@ inline std::array<double,3> random_pt() {
     };
 }
 
-inline std::array<double,3> spherify_pt(std::array<double,3> pt, 
-                                        std::array<double,3> c, double r) {
+inline Vec3<double> spherify_pt(Vec3<double> pt, 
+                                        Vec3<double> c, double r) {
     double rf = pt[0];
     double tf = pt[1] * 2 * M_PI;
     double pf = pt[2] * M_PI;
-    std::array<double,3> ret = {
+    Vec3<double> ret = {
         c[0] + r * rf * std::cos(tf) * std::sin(pf),
         c[1] + r * rf * std::sin(tf) * std::sin(pf),
         c[2] + r * rf * std::cos(pf)
@@ -70,28 +70,9 @@ inline std::array<double,3> spherify_pt(std::array<double,3> pt,
     return ret;
 }
 
-inline std::array<double,3> random_pt_sphere(std::array<double,3> c, double r) {
+inline Vec3<double> random_pt_sphere(Vec3<double> c, double r) {
     auto pt = random_pt();
     return spherify_pt(pt, c, r);
-}
-
-//TODO: Move these to a separate kernels module
-inline double BEMone(double r2, std::array<double,3> delta,
-                         std::array<double,3> n) {
-    return 1.0;
-}
-
-inline double BEMlaplace_single(double r2,
-                             std::array<double,3> delta,
-                             std::array<double,3> nsrc) {
-    return 1.0 / (4.0 * M_PI * std::sqrt(r2));
-}
-
-inline double BEMlaplace_double(double r2,
-                             std::array<double,3> delta,
-                             std::array<double,3> nsrc) {
-    return -(nsrc[0] * delta[0] + nsrc[1] * delta[1] + nsrc[2] * delta[2]) / 
-           (4 * M_PI * pow(r2, 1.5));
 }
 
 inline double error_inf(const std::vector<double>& a, 
