@@ -184,12 +184,10 @@ void FMMInfo::M2P_cell_cell(int m_cell_idx, int l_cell_idx) {
 }
 
 void FMMInfo::treecode_process_cell(const OctreeCell& cell, int cell_idx, int pt_idx) {
-    const double dist_squared = dist2(obs_oct.elements[0][pt_idx],
+    const double dist_squared = dist2({{obs_oct.elements[0][pt_idx],
                                        obs_oct.elements[1][pt_idx],
-                                       obs_oct.elements[2][pt_idx],
-                                       cell.bounds.center[0],
-                                       cell.bounds.center[1],
-                                       cell.bounds.center[2]);
+                                       obs_oct.elements[2][pt_idx]}},
+                                       cell.bounds.center);
     const double radius_squared = hypot2(cell.bounds.half_width); 
     if (dist_squared > mac2 * radius_squared) {
         M2P_cell_pt(cell.bounds, cell_idx, pt_idx);    
@@ -327,8 +325,8 @@ void FMMInfo::L2P() {
 
 void FMMInfo::fmm_process_cell_pair(const OctreeCell& m_cell, int m_cell_idx,
                                     const OctreeCell& l_cell, int l_cell_idx) {
-    const double dist_squared = dist2<3>(l_cell.bounds.center, 
-                                         m_cell.bounds.center);
+    const double dist_squared = dist2(l_cell.bounds.center, m_cell.bounds.center);
+
     //Logic is:
     // If the cell is far enough away, as determined by comparing 
     // the ratio of distance to radius with the multipole acceptance criteria (MAC)

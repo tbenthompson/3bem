@@ -1,10 +1,9 @@
+#include <cassert>
 #include "bem.h"
 #include "numerics.h"
 #include "mesh.h"
-#include <iostream>
-#include <iomanip>
-#include <cassert>
 #include "vec.h"
+#include "quadrature.h"
 
 NearEval::NearEval(int n_steps):
     n_steps(n_steps),
@@ -96,9 +95,9 @@ double richardson_step(const std::vector<double>& values) {
 //TODO: test this
 double appx_face_dist2(std::array<double,3> pt,
                        const std::array<std::array<double,3>,3> vs) {
-    double d0 = dist2<3>(pt, vs[0]);
-    double d1 = dist2<3>(pt, vs[1]);
-    double d2 = dist2<3>(pt, vs[2]);
+    double d0 = dist2(pt, vs[0]);
+    double d1 = dist2(pt, vs[1]);
+    double d2 = dist2(pt, vs[2]);
     return std::min(d0, std::min(d1, d2));
 }
 

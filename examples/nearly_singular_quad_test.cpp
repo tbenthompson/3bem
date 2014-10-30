@@ -1,5 +1,6 @@
-#include "numerics.h"
+#include "quadrature.h"
 #include <iostream>
+#include <cmath>
 
 int main() {
     double b_start = 0.5;
@@ -21,11 +22,11 @@ int main() {
         total_pts += dili_n;
         auto dili_map = diligenti_mapping(dili_n, 0.0, 7);
         // double y_dili = integrate(dili_map, [&] (double x) {
-        //     return 1.0 / pow(x * x + b * b, 0.5);
+        //     return 1.0 / std::pow(x * x + b * b, 0.5);
         // });
         // double y_exact = -log(-1 + sqrt(1 + b * b)) + log(1 + sqrt(1 + b * b));
         double y_dili = integrate(dili_map, [&] (double x) {
-            return 1.0 / pow(x * x + b * b, 1.5);
+            return 1.0 / std::pow(x * x + b * b, 1.5);
         });
         double y_exact = 2 / ((b * b) * sqrt(1 + b * b));
         double error = std::fabs((y_dili - y_exact) / y_exact);

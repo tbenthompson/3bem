@@ -1,5 +1,6 @@
 #include "mesh.h"
-#include "numerics.h"
+#include "util.h"
+#include "vec.h"
 
 std::unordered_map<int, int> find_duplicate_map(const Mesh& mesh, double eps) {
     std::unordered_map<int, int> old_to_new;
@@ -189,7 +190,7 @@ Mesh sphere_mesh(std::array<double,3> center, double r, bool interior) {
 
     Mesh octahedron{vertices, faces, true, 
         [=](std::array<double,3> x) {
-            double dist = std::sqrt(dist2<3>(x, center));
+            double dist = std::sqrt(dist2(x, center));
             x[0] = (r / dist) * (x[0] - center[0]) + center[0];
             x[1] = (r / dist) * (x[1] - center[1]) + center[1];
             x[2] = (r / dist) * (x[2] - center[2]) + center[2];
