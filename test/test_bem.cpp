@@ -7,6 +7,7 @@ namespace ac = autocheck;
 #include "numerics.h"
 #include "quadrature.h"
 #include "mesh.h"
+#include "mesh_gen.h"
 #include "util.h"
 #include "shared.h"
 

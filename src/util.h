@@ -75,13 +75,6 @@ inline std::array<double,3> random_pt_sphere(std::array<double,3> c, double r) {
     return spherify_pt(pt, c, r);
 }
 
-class Mesh;
-
-//TODO: Move these out to a mesh_gen module
-Mesh square_mesh();
-Mesh refined_square_mesh(int levels);
-Mesh circle_mesh(std::array<double, 2> center, double r, int n_segments);
-
 //TODO: Move these to a separate kernels module
 inline double BEMone(double r2, std::array<double,3> delta,
                          std::array<double,3> n) {
@@ -99,6 +92,15 @@ inline double BEMlaplace_double(double r2,
                              std::array<double,3> nsrc) {
     return -(nsrc[0] * delta[0] + nsrc[1] * delta[1] + nsrc[2] * delta[2]) / 
            (4 * M_PI * pow(r2, 1.5));
+}
+
+inline double error_inf(const std::vector<double>& a, 
+                        const std::vector<double>& b) {
+    double error = 0.0;
+    for (unsigned int i = 0; i < a.size(); i++) {
+        error = std::max(std::fabs(a[i] - b[i]), error);
+    }
+    return error;
 }
 
 #endif

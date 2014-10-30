@@ -147,5 +147,11 @@ inline double dist2(const Vec3<T>& v0,
     return hypot2(v1 - v0);
 }
 
+template <typename T>
+Vec3<T> unit(const int k) {
+    Vec3<T> e_k = {0.0, 0.0, 0.0};
+    e_k[k] = 1.0;
+    return e_k;
+}
 
 #endif

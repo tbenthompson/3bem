@@ -1,11 +1,10 @@
 #include "mesh.h"
 #include "util.h"
-#include "vec.h"
 
 std::unordered_map<int, int> find_duplicate_map(const Mesh& mesh, double eps) {
     std::unordered_map<int, int> old_to_new;
     for (unsigned int i = 0; i < mesh.vertices.size(); i++) {
-        //TODO: FIX THE O(N^2) problem
+        //TODO: FIX THE O(N^2) problem -- blocking, refactor octree to use Vec3
         for (unsigned int j = i + 1; j < mesh.vertices.size(); j++) {
             if (!same_vertex(mesh.vertices[i], mesh.vertices[j], eps)) {
                 continue;
@@ -37,7 +36,7 @@ std::unordered_map<int, int> find_duplicate_map(const Mesh& mesh, double eps) {
     return old_to_new;
 }
 
-int count_unique_vertices(std::unordered_map<int,int>& old_to_new) {
+int count_unique_vertices(const std::unordered_map<int,int>& old_to_new) {
     int max_index = 0;
     for (auto it = old_to_new.begin(); it != old_to_new.end(); it++) {
         max_index = std::max(max_index, it->second);
@@ -45,10 +44,10 @@ int count_unique_vertices(std::unordered_map<int,int>& old_to_new) {
     return max_index + 1;
 }
 
-std::vector<std::array<double,3>> unique_vertices(
+std::vector<Vec3<double>> unique_vertices(
         const Mesh& mesh, std::unordered_map<int,int>& old_to_new) {
     int n_unique = count_unique_vertices(old_to_new);
-    std::vector<std::array<double,3>> vertices(n_unique);
+    std::vector<Vec3<double>> vertices(n_unique);
     for (unsigned int i = 0; i < mesh.vertices.size(); i++) {
         vertices[old_to_new[i]] = mesh.vertices[i]; 
     }
@@ -83,9 +82,9 @@ void refine_face(Mesh& new_mesh, std::array<int, 3> face) {
 
     // Calculate the midpoints of each edge of the triangle. These
     // are used to refine the triangle
-    auto midpt01 = midpt(v0, v1);
-    auto midpt12 = midpt(v1, v2);
-    auto midpt20 = midpt(v2, v0);
+    auto midpt01 = (v0 + v1) / 2.0;
+    auto midpt12 = (v1 + v2) / 2.0;
+    auto midpt20 = (v2 + v0) / 2.0;
     if (new_mesh.has_refine_mod) {
         midpt01 = new_mesh.refine_mod(midpt01);
         midpt12 = new_mesh.refine_mod(midpt12);
@@ -135,68 +134,4 @@ Mesh refine_mesh(const Mesh& m, std::vector<int> refine_these) {
 
 Mesh refine_mesh(const Mesh& m) {
     return refine_mesh(m, naturals(m.faces.size()));
-}
-
-Mesh cube_mesh() {
-    std::vector<std::array<double, 3>> vertices = {
-        {0.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,1.0,1.0},
-        {1.0,1.0,0.0}, {0.0,0.0,0.0}, {0.0,1.0,0.0},
-        {1.0,0.0,1.0}, {0.0,0.0,0.0}, {1.0,0.0,0.0},
-        {1.0,1.0,0.0}, {1.0,0.0,0.0}, {0.0,0.0,0.0},
-        {0.0,0.0,0.0}, {0.0,1.0,1.0}, {0.0,1.0,0.0},
-        {1.0,0.0,1.0}, {0.0,0.0,1.0}, {0.0,0.0,0.0},
-        {0.0,1.0,1.0}, {0.0,0.0,1.0}, {1.0,0.0,1.0},
-        {1.0,1.0,1.0}, {1.0,0.0,0.0}, {1.0,1.0,0.0},
-        {1.0,0.0,0.0}, {1.0,1.0,1.0}, {1.0,0.0,1.0},
-        {1.0,1.0,1.0}, {1.0,1.0,0.0}, {0.0,1.0,0.0},
-        {1.0,1.0,1.0}, {0.0,1.0,0.0}, {0.0,1.0,1.0},
-        {1.0,1.0,1.0}, {0.0,1.0,1.0}, {1.0,0.0,1.0}
-    };
-
-    std::vector<std::array<int, 3>> faces;
-    for (int i = 0; i < 12; i++) {
-        faces.push_back({3 * i, 3 * i + 1, 3 * i + 2});
-    }
-
-    Mesh cube{vertices, faces, false, nullptr};
-    cube = clean_mesh(cube);
-
-    return cube;
-}
-
-Mesh sphere_mesh(std::array<double,3> center, double r, bool interior) {
-    std::vector<std::array<double,3>> vertices =
-    {
-        {0.0, -r, 0.0}, {r, 0.0, 0.0}, {0.0, 0.0, r},
-        {-r, 0.0, 0.0}, {0.0, 0.0, -r}, {0.0, r, 0.0}
-    };
-
-    for (unsigned int i = 0; i < vertices.size(); i++) {
-        for (int d = 0; d < 3; d++) {
-            vertices[i][d] += center[d];
-        }
-    }
-
-    std::vector<std::array<int,3>> faces = 
-    {
-        {1, 0, 2}, {2, 0, 3}, {3, 0, 4}, {4, 0, 1},
-        {5, 1, 2}, {5, 2, 3}, {5, 3, 4}, {5, 4, 1}
-    };
-    if (!interior) {
-        for (unsigned int f = 0; f < faces.size(); f++) {
-            std::swap(faces[f][0], faces[f][1]);
-        }
-    }
-
-    Mesh octahedron{vertices, faces, true, 
-        [=](std::array<double,3> x) {
-            double dist = std::sqrt(dist2(x, center));
-            x[0] = (r / dist) * (x[0] - center[0]) + center[0];
-            x[1] = (r / dist) * (x[1] - center[1]) + center[1];
-            x[2] = (r / dist) * (x[2] - center[2]) + center[2];
-            return x;
-        }
-    };
-
-    return octahedron;
 }

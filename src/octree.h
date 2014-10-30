@@ -80,7 +80,6 @@ public:
 //TODO: I could filter out parts of the tree where a cell has only one child.
 //----- this relies on the tree usage not being dependent on the 
 //      division by 2 for each axis.
-//TODO: Test the individual pieces of the construction
 /* One quirk to the behavior of this octree implementation:
  * All points must be on the interior of the octree, they cannot be on
  * the boundaries. This allows the "to_octree_space" function to ignore the
