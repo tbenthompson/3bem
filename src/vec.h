@@ -124,9 +124,18 @@ T dot(const Vec3<T>& x, const Vec3<T>& y) {
 }
 
 template <typename T>
+T hypot2(const Vec3<T>& v) {
+    return dot(v, v);
+}
+
+template <typename T>
+T hypot(const Vec3<T>& v) {
+    return std::sqrt(hypot2(v));
+}
+
+template <typename T>
 void normalize(Vec3<T>& v) {
-    T inv_mag = 1.0 / std::sqrt(dot(v, v));
-    v *= inv_mag;
+    v /= hypot(v);
 }
 
 template <typename T>
@@ -134,16 +143,6 @@ Vec3<T> normalized(const Vec3<T>& v) {
     Vec3<T> res = v;
     normalize(res);
     return res;
-}
-
-template <typename T>
-T hypot2(const Vec3<T>& v) {
-    return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
-}
-
-template <typename T>
-T hypot(const Vec3<T>& v) {
-    return std::sqrt(hypot2(v));
 }
 
 template <typename T>
