@@ -51,7 +51,7 @@ double integral(const QuadratureRule2D& quad_rule,
 
         const auto d = src_pt - obs_loc;
 
-        const double r2 = dot(d, d);
+        const double r2 = hypot2(d);
 
         const double kernel_val = kernel(r2, d, scaled_normal, obs_n);
         const double q_wt = quad_rule.weights[src_q];
