@@ -102,8 +102,8 @@ double appx_face_dist2(std::array<double,3> pt,
 }
 
 std::array<double,3> near_field_point(double ref_dist,
-                                      std::array<double,3>& obs_pt,
-                                      std::array<double,3>& obs_normal,
+                                      const std::array<double,3>& obs_pt,
+                                      const std::array<double,3>& obs_normal,
                                       double len_scale, 
                                       double length_factor = 5.0) {
     // double nfdn = 5 * (src_len_scale / src_quad.x_hat.size()) * 
@@ -121,8 +121,8 @@ double eval_integral_equation(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,
                               const KernelFnc& kernel,
                               const NearEval& near_eval, 
-                              std::array<double,3> obs_pt,
-                              std::array<double,3> obs_normal,
+                              const Vec3<double>& obs_pt,
+                              const Vec3<double>& obs_normal,
                               double obs_len_scale,
                               std::vector<double>& src_strength,
                               const double far_threshold) {
@@ -130,12 +130,12 @@ double eval_integral_equation(const Mesh& src_mesh,
     std::vector<double> near_steps(near_eval.n_steps, 0.0);
     for (unsigned int i = 0; i < src_mesh.faces.size(); i++) {
         auto src_face = src_mesh.faces[i];
-        std::array<std::array<double,3>,3> src_locs = {
+        std::array<Vec3<double>,3> src_locs = {
             src_mesh.vertices[src_face[0]],
             src_mesh.vertices[src_face[1]],
             src_mesh.vertices[src_face[2]]
         };
-        std::array<double,3> src_vals = {
+        Vec3<double> src_vals = {
             src_strength[src_face[0]],
             src_strength[src_face[1]],
             src_strength[src_face[2]]
@@ -201,11 +201,11 @@ std::vector<double> direct_interact(Mesh& src_mesh,
             double q_wt = obs_quad.weights[obs_q];
             const auto obs_pt = ref_to_real(x_hat, y_hat, {obs_v0, obs_v1, obs_v2});
 
-            const std::array<double,3> unscaled_normal = 
+            const auto unscaled_normal = 
                 tri_unscaled_normal({obs_v0, obs_v1, obs_v2});
             const double obs_area = tri_area(unscaled_normal);
             double jacobian = obs_area * 2.0;
-            const std::array<double,3> obs_n = unscaled_normal / jacobian;
+            const auto obs_n = unscaled_normal / jacobian;
 
             //TODO: What to use?
             const double obs_len_scale = std::sqrt(obs_area);
@@ -216,9 +216,7 @@ std::vector<double> direct_interact(Mesh& src_mesh,
                                        src_strength, far_threshold);
             assert(!std::isnan(inner_integral));
             for(int v = 0; v < 3; v++) {
-                std::array<double,3> e_v = {0.0, 0.0, 0.0};
-                e_v[v] = 1.0;
-                double obs_basis_eval = linear_interp(x_hat, y_hat, e_v); 
+                double obs_basis_eval = linear_interp(x_hat, y_hat, unit<double>(v)); 
 #pragma omp critical
                 {
                     integrals[obs_face[v]] +=
@@ -260,9 +258,7 @@ std::vector<double> mass_term(const Mesh& obs_mesh,
             double jacobian = obs_area * 2.0;
 
             for(int v = 0; v < 3; v++) {
-                std::array<double,3> e_v = {0.0, 0.0, 0.0};
-                e_v[v] = 1.0;
-                double obs_basis_eval = linear_interp(x_hat, y_hat, e_v); 
+                double obs_basis_eval = linear_interp(x_hat, y_hat, unit<double>(v)); 
 #pragma omp critical
                 integrals[obs_face[v]] +=
                     jacobian * obs_basis_eval * strength_interp * q_wt;

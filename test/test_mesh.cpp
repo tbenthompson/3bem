@@ -2,6 +2,7 @@
 #include "util.h"
 #include "numerics.h"
 #include "mesh.h"
+#include "mesh_gen.h"
 
 Mesh test_mesh() {
     Mesh mesh;

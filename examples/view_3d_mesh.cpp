@@ -1,5 +1,6 @@
 #include "UnitTest++.h"
 #include "mesh.h"
+#include "mesh_gen.h"
 #include "numerics.h"
 #include <GL/glut.h>
 
