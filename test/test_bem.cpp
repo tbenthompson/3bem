@@ -5,6 +5,7 @@ namespace ac = autocheck;
 
 #include "bem.h"
 #include "numerics.h"
+#include "quadrature.h"
 #include "mesh.h"
 #include "util.h"
 #include "shared.h"
@@ -117,7 +118,7 @@ TEST(ConstantLaplaceBoundary) {
     // n_verts = 1;
     for (int i = 0; i < n_verts;i++) {
         ep.obs_pt = ep.sphere.vertices[i];
-        ep.obs_normal = negate(normalize(ep.obs_pt));
+        ep.obs_normal = -normalized(ep.obs_pt);
         double result = ep.go();
         CHECK_CLOSE(result, 1.0, 1e-2);
     }

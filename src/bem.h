@@ -4,6 +4,7 @@
 #include <functional>
 #include <array>
 #include <vector>
+#include "vec.h"
 
 class QuadratureRule2D;
 class Mesh;
@@ -21,14 +22,14 @@ public:
 };
 
 typedef std::function<double (double,
-                              std::array<double,3>,
-                              std::array<double,3>)> KernelFnc;
+                              Vec3<double>,
+                              Vec3<double>)> KernelFnc;
 
 double integral(const QuadratureRule2D& quad_rule,
                 const KernelFnc& kernel,
-                const std::array<std::array<double,3>,3>& src_locs,
-                const std::array<double,3>& src_vals,
-                const std::array<double,3>& obs_loc);
+                const std::array<Vec3<double>,3>& src_locs,
+                const Vec3<double>& src_vals,
+                const Vec3<double>& obs_loc);
 
 double eval_integral_equation(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,

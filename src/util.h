@@ -20,6 +20,8 @@
               << time_ms\
               << "ms.\n";
 
+std::vector<int> naturals(int min, int max);
+std::vector<int> naturals(int max);
 
 inline std::array<std::vector<double>,3> three_pts() {
     std::array<std::vector<double>,3> es;

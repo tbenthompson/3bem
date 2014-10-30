@@ -96,4 +96,11 @@ def link():
         run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags,
             group = 'test_link', after = ('test_src', 'lib_link'))
 
+def clean():
+    autoclean()
+
+def rebuild():
+    clean()
+    build()
+
 main(parallel_ok = True, jobs = 12)

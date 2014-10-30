@@ -2,6 +2,7 @@
 #define __ASDKJWEORIOQ_VEC_ARRAYS_H 
 #include <array>
 #include <cmath>
+#include <iostream>
 
 /* [Note: Justification of overloading std::array operations]
  * Having a 3-vector class is useful because it reduces instances where
@@ -92,6 +93,18 @@ Vec3<T> operator/(const Vec3<T>& a, const T s) {
 }
 
 template <typename T>
+std::ostream& operator<<(std::ostream& os, const Vec3<T>& a) {
+    os << "(" << a[0] << ", " << a[1] << ", " << a[2] << ")";
+    return os;
+}
+
+template <typename T>
+Vec3<T> operator-(const Vec3<T>& v) {
+    return {-v[0], -v[1], -v[2]};
+}
+
+
+template <typename T>
 T sum(const Vec3<T>& a) {
     return a[0] + a[1] + a[2];
 }
@@ -107,6 +120,31 @@ Vec3<T> normalized(const Vec3<T>& v) {
     Vec3<T> res = v;
     normalize(res);
     return res;
+}
+
+template <typename T>
+T hypot2(const Vec3<T>& v) {
+    return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+}
+
+template <typename T>
+T hypot(const Vec3<T>& v) {
+    return std::sqrt(hypot2(v));
+}
+
+template <typename T>
+Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
+    return {
+        x[1] * y[2] - x[2] * y[1],
+        x[2] * y[0] - x[0] * y[2],
+        x[0] * y[1] - x[1] * y[0]
+    };
+}
+
+template <typename T>
+inline double dist2(const Vec3<T>& v0, 
+                    const Vec3<T>& v1) {
+    return hypot2(v1 - v0);
 }
 
 
