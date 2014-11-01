@@ -44,16 +44,20 @@ public:
     /* The displacement kernel U* taken from the SGBEM book by 
      * Sutradhar, Paulino, Gray
      */
-    //TODO: System for specifying which kernel parameters a kernel wants.
     template <int k, int j>
     double displacement(double r2, 
                         const Vec3<double>& delta, 
                         const Vec3<double>& nsrc,
                         const Vec3<double>& nobs) const {
         double r = std::sqrt(r2);
-        return (disp_C1 / r) * (disp_C2 * kronecker[k][j] + delta[k] * delta[j] / r2);
+        return (disp_C1 / r) *
+               (disp_C2 * kronecker[k][j] + delta[k] * delta[j] / r2);
     }
 
+    /* Traction kernel derived by applying the traction operator
+     * to the displacement kernel w.r.t the source coords. The form here
+     * is from the SGBEM book.
+     */
     template <int k, int j>
     double traction(double r2, 
                     const Vec3<double>& delta, 
@@ -66,6 +70,10 @@ public:
         return -(trac_C1 / r2) * (term1 * drdn - term2);
     }
 
+    /* Adjoint traction kernel derived by applying the traction operator
+     * to the displacement kernel w.r.t. the observation coords. From the
+     * SGBEM book multiplied by the observation normal vector.
+     */
     template <int k, int j>
     double adjoint_traction(double r2, 
                     const Vec3<double>& delta, 
@@ -78,6 +86,11 @@ public:
         return (trac_C1 / r2) * (term1 * drdm + term2);
     }
 
+    /* Hypersingular kernel derived by applying the traction operator twice
+     * to the displacement kernel w.r.t. both the observation coords and
+     * the source coords. From the SGBEM book multiplied by the observation
+     * normal vector.
+     */
     //TODO: precompute some of the constants in here.
     template <int k, int j>
     double hypersingular(double r2, 
