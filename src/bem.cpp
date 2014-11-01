@@ -19,7 +19,7 @@ NearEval::NearEval(int n_steps):
 }
 
 inline Vec3<double> ref_to_real(double x_hat, double y_hat, 
-                                 std::array<Vec3<double>,3> locs) {
+                                const std::array<Vec3<double>,3>& locs) {
     return {
         linear_interp(x_hat, y_hat, {locs[0][0], locs[1][0], locs[2][0]}),
         linear_interp(x_hat, y_hat, {locs[0][1], locs[1][1], locs[2][1]}),
@@ -93,8 +93,8 @@ double richardson_step(const std::vector<double>& values) {
 }
 
 //TODO: test this
-double appx_face_dist2(Vec3<double> pt,
-                       const std::array<Vec3<double>,3> vs) {
+double appx_face_dist2(const Vec3<double>& pt,
+                       const std::array<Vec3<double>,3>& vs) {
     double d0 = dist2(pt, vs[0]);
     double d1 = dist2(pt, vs[1]);
     double d2 = dist2(pt, vs[2]);
@@ -102,10 +102,10 @@ double appx_face_dist2(Vec3<double> pt,
 }
 
 Vec3<double> near_field_point(double ref_dist,
-                                      const Vec3<double>& obs_pt,
-                                      const Vec3<double>& obs_normal,
-                                      double len_scale, 
-                                      double length_factor = 5.0) {
+                              const Vec3<double>& obs_pt,
+                              const Vec3<double>& obs_normal,
+                              double len_scale, 
+                              double length_factor = 5.0) {
     // double nfdn = 5 * (src_len_scale / src_quad.x_hat.size()) * 
     //               near_eval.dist[nf];
     double nfdn = length_factor * len_scale * ref_dist;
