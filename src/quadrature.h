@@ -18,7 +18,6 @@ struct QuadratureRule2D {
     std::vector<double> weights;
 };
 
-
 QuadratureRule2D tensor_product(QuadratureRule xq, QuadratureRule yq);
 QuadratureRule2D tensor_gauss(int n_pts);
 QuadratureRule2D tensor_double_exp(int n_pts, double h);
