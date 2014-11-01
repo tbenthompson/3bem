@@ -22,9 +22,9 @@ public:
 };
 
 typedef std::function<double (double,
-                              Vec3<double>,
-                              Vec3<double>,
-                              Vec3<double>)> KernelFnc;
+                              const Vec3<double>&,
+                              const Vec3<double>&,
+                              const Vec3<double>&)> KernelFnc;
 
 double integral(const QuadratureRule2D& quad_rule,
                 const KernelFnc& kernel,
