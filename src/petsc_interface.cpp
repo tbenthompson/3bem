@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iostream>
 
+/* Useful for debugging PETSc code.
+ */
 void print_vec(Vec& x) {
     int size;
     VecGetSize(x, &size);
@@ -12,14 +14,6 @@ void print_vec(Vec& x) {
         std::cout << vals[i] << std::endl;
     }
     VecRestoreArray(x, &vals);
-}
-
-int setup_vec(Vec& x, int n, MPI_Comm& comm) {
-    PetscErrorCode ierr;
-    ierr = VecCreate(comm, &x);CHKERRQ(ierr);
-    ierr = VecSetSizes(x, n, PETSC_DECIDE);CHKERRQ(ierr);
-    ierr = VecSetType(x, "mpi"); CHKERRQ(ierr);
-    return ierr;
 }
 
 template <class T>
