@@ -40,7 +40,7 @@ double eval_integral_equation(const Mesh& src_mesh,
                               const Vec3<double>& obs_pt,
                               const Vec3<double>& obs_normal,
                               double obs_len_scale,
-                              std::vector<double>& src_strength,
+                              const std::vector<double>& src_strength,
                               const double far_threshold = 3.0);
 
 double richardson_step(const std::vector<double>& values);

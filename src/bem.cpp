@@ -33,7 +33,6 @@ double integral(const QuadratureRule2D& quad_rule,
                 const Vec3<double>& src_vals,
                 const Vec3<double>& obs_loc,
                 const Vec3<double>& obs_n) {
-
     //Compute normal and triangle area 
     //TODO: For linear elements, these could be done as a preprocessing step.
     //How to abstract this so that it work for both linear and high order basis?
@@ -106,8 +105,6 @@ Vec3<double> near_field_point(double ref_dist,
                               const Vec3<double>& obs_normal,
                               double len_scale, 
                               double length_factor = 5.0) {
-    // double nfdn = 5 * (src_len_scale / src_quad.x_hat.size()) * 
-    //               near_eval.dist[nf];
     double nfdn = length_factor * len_scale * ref_dist;
 
     // The new observation point moved a little bit off the
@@ -124,22 +121,14 @@ double eval_integral_equation(const Mesh& src_mesh,
                               const Vec3<double>& obs_pt,
                               const Vec3<double>& obs_normal,
                               double obs_len_scale,
-                              std::vector<double>& src_strength,
+                              const std::vector<double>& src_strength,
                               const double far_threshold) {
     double result = 0.0;
     std::vector<double> near_steps(near_eval.n_steps, 0.0);
     for (unsigned int i = 0; i < src_mesh.faces.size(); i++) {
         auto src_face = src_mesh.faces[i];
-        std::array<Vec3<double>,3> src_locs = {
-            src_mesh.vertices[src_face[0]],
-            src_mesh.vertices[src_face[1]],
-            src_mesh.vertices[src_face[2]]
-        };
-        Vec3<double> src_vals = {
-            src_strength[src_face[0]],
-            src_strength[src_face[1]],
-            src_strength[src_face[2]]
-        };
+        std::array<Vec3<double>,3> src_locs = index3(src_mesh.vertices, src_face);
+        Vec3<double> src_vals = index3(src_strength, src_face);
 
         // Square of the threshold 
         // TODO: Make threshold a parameter
@@ -260,9 +249,5 @@ std::vector<double> mass_term(const Mesh& obs_mesh,
 
 double get_len_scale(Mesh& mesh, int which_face, int q) {
     auto face = mesh.faces[which_face];
-    return std::sqrt(tri_area({
-        mesh.vertices[face[0]],
-        mesh.vertices[face[1]],
-        mesh.vertices[face[2]]
-    })) / q;
+    return std::sqrt(tri_area(index3(mesh.vertices, which))) / q;
 }
