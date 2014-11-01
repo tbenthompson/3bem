@@ -4,10 +4,12 @@ import sympy as sp
 
 # I was unable to find a good source on the exact form of the
 # fundamental solutions for the elastic boundary integral equations
-# Some are slightly wrong, etc.
+# Some are slightly wrong, and most others simply give the stress forms
+# for the hypersingular equation.
 #
-# So, I symbolically derive an ugly form here and then test it against
-# the hand derived version.
+# Furthermore, getting the kernels is super annoying because then I don't
+# know where to look for bugs. So, I compare hand-derived version (few terms)
+# implemented in the c++ with a symbolically derived version computed here.
 
 x1, x2, y1, y2, z1, z2 = sp.symbols('x1, x2, y1, y2, z1, z2')
 sm, pr = sp.symbols('sm, pr')
@@ -26,6 +28,8 @@ def disp_creator(k, j):
            (C2 * (1 if k == j else 0) + delta[k] * delta[j] / r2)
     return disp
 
+# Symbolically finds the tractions corresponding to a displacement field.
+# t_i = c_ijkl ((u_k,l + u_l,k) / 2) * n_j
 def traction_operator(disp_vec, pos_vec, index, normal):
     disp_grad = [[sp.diff(disp_vec[l], pos_vec[m])
                     for m in [0,1,2]] for l in [0,1,2]]
@@ -43,6 +47,10 @@ def traction_operator(disp_vec, pos_vec, index, normal):
            stress[index][2] * normal[2]
     return trac
 
+# Displacement kernel is given.
+# Traction kernel is the traction operator w.r.t. the source coords.
+# Adjoint traction kernel is the traction operator w.r.t. the observation coords.
+# Hypersingular kernel is the double traction operator w.r.t. both coords.
 def derive_kernels(k, j):
     disp = disp_creator(k, j)
 
@@ -69,8 +77,9 @@ def derive_kernels(k, j):
 
     return disp, trac, adj_trac, hyp
 
+# Get some random points to test compare the hand-derived and symbolically
+# derived elastostatic kernels.
 def get_arg_sets():
-
     n_arg_sets = 100
 
     arg_sets = []
