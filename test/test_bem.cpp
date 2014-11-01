@@ -1,7 +1,6 @@
 #include "UnitTest++.h"
 #include "autocheck/autocheck.hpp"
 namespace ac = autocheck;
-#include <memory>
 
 #include "kernels.h"
 #include "bem.h"
@@ -13,11 +12,11 @@ namespace ac = autocheck;
 #include "shared.h"
 
 struct IntegrationProb {
-    IntegrationProb() {
-        src_locs = {{{0,0,0},{2,0,0},{0,1,0}}};
-        src_vals = {1.0, 1.0, 1.0};
-        obs_loc = {2.0, 2.0, 2.0};
-    }
+    IntegrationProb():
+        src_locs({{{0,0,0},{2,0,0},{0,1,0}}}),
+        src_vals({1.0, 1.0, 1.0}),
+        obs_loc({2.0, 2.0, 2.0})
+    { }
     std::array<Vec3<double>,3> src_locs;
     Vec3<double> src_vals;
     Vec3<double> obs_loc;

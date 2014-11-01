@@ -27,28 +27,28 @@ inline double ref_to_real(double x_hat, double a, double b) {
 }
 
 inline double linear_interp(double x_hat, double y_hat,
-                            const std::array<double,3> corner_vals) {
+                            const Vec3<double>& corner_vals) {
     return (1 - x_hat - y_hat) * corner_vals[0] + 
            x_hat * corner_vals[1] + 
            y_hat * corner_vals[2];
 }
 
 
-inline std::array<double,3> 
-tri_unscaled_normal(const std::array<std::array<double,3>,3> corners) {
+inline Vec3<double> 
+tri_unscaled_normal(const std::array<Vec3<double>,3>& corners) {
     return cross(corners[2] - corners[0], corners[2] - corners[1]);
 }
 
-inline std::array<double,3> 
-tri_normal(const std::array<std::array<double,3>,3> corners) {
+inline Vec3<double> 
+tri_normal(const std::array<Vec3<double>,3>& corners) {
     auto unscaled = tri_unscaled_normal(corners);
     return normalized(unscaled);
 }
 
-inline double tri_area(const std::array<double,3> unscaled_normal) {
+inline double tri_area(const Vec3<double>& unscaled_normal) {
     return 0.5 * hypot(unscaled_normal);
 }
-inline double tri_area(const std::array<std::array<double,3>,3> corners) {
+inline double tri_area(const std::array<Vec3<double>,3>& corners) {
     return tri_area(tri_unscaled_normal(corners));
 }
  

@@ -24,10 +24,9 @@ std::pair<double, double> legendre_and_n_minus_1(unsigned int n,
                                                  double x) {
     double p_cur = 1.;
     double p_last = 0.;
-    double p_temp;
     for (unsigned int j=0; j<n; ++j)
     {
-        p_temp = p_last;
+        double p_temp = p_last;
         p_last = p_cur;
         p_cur = ((2.*j+1.)*x*p_last-j*p_temp)/(j+1);
     }

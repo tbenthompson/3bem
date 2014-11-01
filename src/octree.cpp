@@ -1,11 +1,12 @@
 #include "octree.h"
 #include "numerics.h"
 #include "algs.h"
+#include "vec.h"
 #include <assert.h>
 
 // TODO: Should these box_from_* functions be Box constructors?
-Box box_from_min_max(const std::array<double, 3> min_corner,
-                     const std::array<double, 3> max_corner) {
+Box box_from_min_max(const Vec3<double> min_corner,
+                     const Vec3<double> max_corner) {
     Box ext;
     ext.min_corner = min_corner;
     ext.max_corner = max_corner;
@@ -17,8 +18,8 @@ Box box_from_min_max(const std::array<double, 3> min_corner,
     return ext;
 }
 
-Box box_from_center_half_width(const std::array<double,3> center,
-                               const std::array<double,3> half_width) {
+Box box_from_center_half_width(const Vec3<double>& center,
+                               const Vec3<double>& half_width) {
     Box ext;
     ext.center = center;
     ext.half_width = half_width;
@@ -33,8 +34,8 @@ Box box_from_center_half_width(const std::array<double,3> center,
 Box bounding_box(const std::array<std::vector<double>,3>& x, int begin, int end)
 {
     assert(begin < end);
-    std::array<double,3> min_corner = {x[0][begin], x[1][begin], x[2][begin]};
-    std::array<double,3> max_corner = {x[0][begin], x[1][begin], x[2][begin]};
+    Vec3<double> min_corner = {x[0][begin], x[1][begin], x[2][begin]};
+    Vec3<double> max_corner = {x[0][begin], x[1][begin], x[2][begin]};
     for (int i = begin + 1; i < end; ++i) {
         for (unsigned int d = 0; d < 3; ++d) {
             min_corner[d] = std::min(min_corner[d], x[d][i]);
@@ -91,7 +92,7 @@ Octree::Octree(std::array<std::vector<double>,3>& p_elements,
     cells.push_back(root);
 }
 
-uint64_t Octree::compute_morton(std::array<double,3> pt) {
+uint64_t Octree::compute_morton(Vec3<double> pt) {
     return compute_morton(pt[0], pt[1], pt[2]);
 }
 
@@ -145,8 +146,8 @@ int Octree::build_child(OctreeCell& cur_cell, int i, int j, int k) {
     Box box;
     if (end - begin == 1) {
         //TODO: Extract this get_box or get_single_pt_box function or both.
-        std::array<double,3> center;
-        std::array<double,3> half_width;
+        Vec3<double> center;
+        Vec3<double> half_width;
         for (int d = 0; d < 3; d++) {
             center[d] = (elements[d][begin] + cur_cell.bounds.center[d]) / 2.0;
             half_width[d] = std::fabs(elements[d][begin] - 
