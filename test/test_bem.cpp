@@ -1,7 +1,6 @@
 #include "UnitTest++.h"
 #include "autocheck/autocheck.hpp"
 namespace ac = autocheck;
-#include <memory>
 
 #include "kernels.h"
 #include "bem.h"

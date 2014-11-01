@@ -7,25 +7,107 @@
 #include "vec.h"
 
 inline double one(double r2, 
-                  Vec3<double> delta,
-                  Vec3<double> nsrc,
-                  Vec3<double> nobs) {
+                  const Vec3<double>& delta,
+                  const Vec3<double>& nsrc,
+                  const Vec3<double>& nobs) {
     return 1.0;
 }
 
 inline double laplace_single(double r2,
-                             Vec3<double> delta,
-                             Vec3<double> nsrc,
-                             Vec3<double> nobs) {
+                             const Vec3<double>& delta,
+                             const Vec3<double>& nsrc,
+                             const Vec3<double>& nobs) {
     return 1.0 / (4.0 * M_PI * std::sqrt(r2));
 }
 
 inline double laplace_double(double r2,
-                             Vec3<double> delta,
-                             Vec3<double> nsrc,
-                             Vec3<double> nobs) {
+                             const Vec3<double>& delta,
+                             const Vec3<double>& nsrc,
+                             const Vec3<double>& nobs) {
     return -(nsrc[0] * delta[0] + nsrc[1] * delta[1] + nsrc[2] * delta[2]) / 
            (4 * M_PI * pow(r2, 1.5));
 }
+
+const double kronecker[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+
+class ElasticKernels {
+public:
+    ElasticKernels(double shear_modulus, double poisson_ratio):
+        shear_modulus(shear_modulus),
+        poisson_ratio(poisson_ratio),
+        disp_C1(1.0 / (16 * M_PI * shear_modulus * (1 - poisson_ratio))),
+        disp_C2(3 - 4 * poisson_ratio),
+        trac_C1(1.0 / (8 * M_PI * (1 - poisson_ratio))),
+        trac_C2(1 - 2 * poisson_ratio)
+    {}
+
+    /* The displacement kernel U* taken from the SGBEM book by 
+     * Sutradhar, Paulino, Gray
+     */
+    //TODO: System for specifying which kernel parameters a kernel wants.
+    template <int k, int j>
+    double displacement(double r2, 
+                        const Vec3<double>& delta, 
+                        const Vec3<double>& nsrc,
+                        const Vec3<double>& nobs) const {
+        double r = std::sqrt(r2);
+        return (disp_C1 / r) * (disp_C2 * kronecker[k][j] + delta[k] * delta[j] / r2);
+    }
+
+    template <int k, int j>
+    double traction(double r2, 
+                    const Vec3<double>& delta, 
+                    const Vec3<double>& nsrc,
+                    const Vec3<double>& nobs) const {
+        double r = std::sqrt(r2);
+        const auto term1 = (trac_C2 * kronecker[k][j] + 3 * delta[k] * delta[j] / r2);
+        const auto drdn = dot(delta, nsrc) / r;
+        const auto term2 = trac_C2 * (nsrc[j] * delta[k] - nsrc[k] * delta[j]) / r;
+        return -(trac_C1 / r2) * (term1 * drdn - term2);
+    }
+
+    template <int k, int j>
+    double adjoint_traction(double r2, 
+                    const Vec3<double>& delta, 
+                    const Vec3<double>& nsrc,
+                    const Vec3<double>& nobs) const {
+        double r = std::sqrt(r2);
+        const auto term1 = (trac_C2 * kronecker[k][j] + 3 * delta[k] * delta[j] / r2);
+        const auto drdm = dot(delta, nobs) / r;
+        const auto term2 = trac_C2 * (nobs[j] * delta[k] - nobs[k] * delta[j]) / r;
+        return (trac_C1 / r2) * (term1 * drdm + term2);
+    }
+
+    //TODO: precompute some of the constants in here.
+    template <int k, int j>
+    double hypersingular(double r2, 
+                    const Vec3<double>& delta, 
+                    const Vec3<double>& nsrc,
+                    const Vec3<double>& nobs) const {
+        double r = std::sqrt(r2);
+        const Vec3<double> dr = delta / r;
+        const auto drdn = dot(dr, nsrc);
+        const auto drdm = dot(dr, nobs);
+        const auto line1 = 3 * drdn * (
+            trac_C2 * nobs[k] * dr[j] +
+            poisson_ratio * (nobs[j] * dr[k] + kronecker[k][j] * drdm) -
+            5 * dr[k] * dr[j] * drdm);
+        const auto line2 = trac_C2 * (
+            3 * nsrc[j] * dr[k] * drdm + kronecker[k][j] * dot(nsrc, nobs) 
+            + nsrc[k] * nobs[j]);
+        const auto line3 = 3 * poisson_ratio * (
+                nsrc[k] * dr[j] * drdm + dot(nsrc, nobs) * dr[k] * dr[j]);
+        const auto line4 = -(1 - 4 * poisson_ratio) * nsrc[j] * nobs[k];
+        const auto C = (shear_modulus / (4 * M_PI * (1 - poisson_ratio) * r2 * r));
+        return C * (line1 + line2 + line3 + line4);
+    }
+
+    const double shear_modulus;
+    const double poisson_ratio;
+    const double disp_C1;
+    const double disp_C2;
+    const double trac_C1;
+    const double trac_C2;
+};
 
 #endif
