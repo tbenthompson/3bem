@@ -3,6 +3,10 @@
 #include "mesh.h"
 
 Mesh cube_mesh();
-Mesh sphere_mesh(std::array<double,3> center, double radius, bool interior = true);
+Mesh sphere_mesh(const Vec3<double>& center, double radius, bool interior = true);
+Mesh rect_mesh(const Vec3<double>& lower_left,
+               const Vec3<double>& upper_left, 
+               const Vec3<double>& upper_right, 
+               const Vec3<double>& lower_right);
 
 #endif

@@ -41,7 +41,7 @@ cpp_flags.extend(release_flags)
 lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)
 
-link_flags = '-fopenmp -lOpenCL'.split()
+link_flags = '-fopenmp -lOpenCL -lhdf5'.split()
 link_flags.append('-Wl,-rpath=./lib/actor-framework/build/lib')
 link_flags.append('-L./lib/actor-framework/build/lib')
 link_flags.append('-lcaf_core')
