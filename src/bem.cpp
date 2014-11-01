@@ -249,5 +249,5 @@ std::vector<double> mass_term(const Mesh& obs_mesh,
 
 double get_len_scale(Mesh& mesh, int which_face, int q) {
     auto face = mesh.faces[which_face];
-    return std::sqrt(tri_area(index3(mesh.vertices, which))) / q;
+    return std::sqrt(tri_area(index3(mesh.vertices, face))) / q;
 }
