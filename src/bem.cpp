@@ -176,6 +176,18 @@ double eval_integral_equation(const Mesh& src_mesh,
     return result;
 }
 
+void outer_integral(std::vector<double>& integrals,
+                    const std::array<int,3>& obs_face, double x_hat, double y_hat,
+                    double jacobian, double eval, double q_wt) {
+    for(int v = 0; v < 3; v++) {
+        double obs_basis_eval = linear_interp(x_hat, y_hat, unit<double>(v)); 
+#pragma omp critical
+        {
+            integrals[obs_face[v]] += jacobian * obs_basis_eval * eval * q_wt;
+        }
+    }
+}
+
 std::vector<double> direct_interact(Mesh& src_mesh,
                                     Mesh& obs_mesh,
                                     QuadratureRule2D& src_quad,
@@ -184,26 +196,18 @@ std::vector<double> direct_interact(Mesh& src_mesh,
                                     std::vector<double>& src_strength,
                                     int n_steps,
                                     double far_threshold) {
-    int n_obs_faces = obs_mesh.faces.size();
-    int n_obs_verts = obs_mesh.vertices.size();
-    int nq_obs = obs_quad.x_hat.size();
-    std::vector<double> integrals(n_obs_verts, 0.0);
     NearEval near_eval(n_steps);
-
+    std::vector<double> integrals(obs_mesh.vertices.size(), 0.0);
 #pragma omp parallel for
-    for (int obs_idx = 0; obs_idx < n_obs_faces; obs_idx++) {
+    for (std::size_t obs_idx = 0; obs_idx < obs_mesh.faces.size(); obs_idx++) {
         auto obs_face = obs_mesh.faces[obs_idx];
-        auto obs_v0 = obs_mesh.vertices[obs_face[0]];
-        auto obs_v1 = obs_mesh.vertices[obs_face[1]];
-        auto obs_v2 = obs_mesh.vertices[obs_face[2]];
-        for (int obs_q = 0; obs_q < nq_obs; obs_q++) {
+        auto obs_verts = index3(obs_mesh.vertices, obs_face);
+        for (std::size_t obs_q = 0; obs_q < obs_quad.x_hat.size(); obs_q++) {
             double x_hat = obs_quad.x_hat[obs_q];
             double y_hat = obs_quad.y_hat[obs_q];
             double q_wt = obs_quad.weights[obs_q];
-            const auto obs_pt = ref_to_real(x_hat, y_hat, {obs_v0, obs_v1, obs_v2});
 
-            const auto unscaled_normal = 
-                tri_unscaled_normal({obs_v0, obs_v1, obs_v2});
+            const auto unscaled_normal = tri_unscaled_normal(obs_verts);
             const double obs_area = tri_area(unscaled_normal);
             double jacobian = obs_area * 2.0;
             const auto obs_n = unscaled_normal / jacobian;
@@ -211,59 +215,44 @@ std::vector<double> direct_interact(Mesh& src_mesh,
             //TODO: What to use?
             const double obs_len_scale = std::sqrt(obs_area);
 
+            // Observation point in real space
+            const auto obs_pt = ref_to_real(x_hat, y_hat, obs_verts);
+
             const double inner_integral =
                 eval_integral_equation(src_mesh, src_quad, kernel,
                                        near_eval, obs_pt, obs_n, obs_len_scale,
                                        src_strength, far_threshold);
             assert(!std::isnan(inner_integral));
-            for(int v = 0; v < 3; v++) {
-                double obs_basis_eval = linear_interp(x_hat, y_hat, unit<double>(v)); 
-#pragma omp critical
-                {
-                    integrals[obs_face[v]] +=
-                        jacobian * obs_basis_eval * inner_integral * q_wt;
-                }
-            }
+            outer_integral(integrals, obs_face, x_hat, y_hat, 
+                           jacobian, inner_integral, q_wt);
         }
     }
 
     return integrals;
 }
 
-//TODO: This is very similar to the direct_interact code. Can they be combined
-//to reduce replication in some way? Maybe using templates?
 std::vector<double> mass_term(const Mesh& obs_mesh,
                               const QuadratureRule2D& obs_quad,
                               const std::vector<double>& strengths) {
-    int n_obs_faces = obs_mesh.faces.size();
-    int n_obs_verts = obs_mesh.vertices.size();
-    int nq_obs = obs_quad.x_hat.size();
 
-    std::vector<double> integrals(n_obs_verts, 0.0);
-    for (int obs_idx = 0; obs_idx < n_obs_faces; obs_idx++) {
+    std::vector<double> integrals(obs_mesh.vertices.size(), 0.0);
+
+    for (std::size_t obs_idx = 0; obs_idx < obs_mesh.faces.size(); obs_idx++) {
         auto obs_face = obs_mesh.faces[obs_idx];
-        auto obs_v0 = obs_mesh.vertices[obs_face[0]];
-        auto obs_v1 = obs_mesh.vertices[obs_face[1]];
-        auto obs_v2 = obs_mesh.vertices[obs_face[2]];
-        for (int obs_q = 0; obs_q < nq_obs; obs_q++) {
+        auto obs_verts = index3(obs_mesh.vertices, obs_face);
+        for (std::size_t obs_q = 0; obs_q < obs_quad.x_hat.size(); obs_q++) {
             double x_hat = obs_quad.x_hat[obs_q];
             double y_hat = obs_quad.y_hat[obs_q];
             double q_wt = obs_quad.weights[obs_q];
-            const double strength_interp = linear_interp(x_hat, y_hat, {
-                                                strengths[obs_face[0]],
-                                                strengths[obs_face[1]],
-                                                strengths[obs_face[2]]
-                                                });
 
-            const double obs_area = tri_area({obs_v0, obs_v1, obs_v2});
+            const double strength_interp = linear_interp(x_hat, y_hat,
+                                                         index3(strengths, obs_face));
+
+            const double obs_area = tri_area(obs_verts);
             double jacobian = obs_area * 2.0;
 
-            for(int v = 0; v < 3; v++) {
-                double obs_basis_eval = linear_interp(x_hat, y_hat, unit<double>(v)); 
-#pragma omp critical
-                integrals[obs_face[v]] +=
-                    jacobian * obs_basis_eval * strength_interp * q_wt;
-            }
+            outer_integral(integrals, obs_face, x_hat, y_hat, 
+                           jacobian, strength_interp, q_wt);
         }
     }
     return integrals;

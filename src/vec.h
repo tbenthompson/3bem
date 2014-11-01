@@ -3,6 +3,18 @@
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <vector>
+
+/* Some methods for efficient indexing of std::vector by a std::array<int,n>
+ */
+template <typename T>
+std::array<T, 3> index3(const std::vector<T>& x, const std::array<int, 3>& indices) {
+    std::array<T, 3> out;
+    for (std::size_t i = 0; i < 3; i++) {
+        out[i] = x[indices[i]];
+    }
+    return out;
+}
 
 /* [Note: Justification of overloading std::array operations]
  * Having a 3-vector class is useful because it reduces instances where
