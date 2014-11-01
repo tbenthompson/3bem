@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     libglu1-mesa-dev\
     libgl1-mesa-glx\
     libgl1-mesa-dev\
+    libhdf5-mpi-dev\
     libnuma1\
     opencl-headers\
     petsc-dev\
@@ -62,8 +63,7 @@ RUN mkdir -p /etc/OpenCL/vendors
 RUN ln -s /opt/intel/opencl-1.2-4.5.0.8/lib64/libOpenCL.so /usr/lib
 RUN ln -s /opt/intel/opencl-1.2-4.5.0.8/etc/intel64.icd /etc/OpenCL/vendors/
 
-
-# C++ Actor-framework (building depends on cmake)
+# C++ Actor-framework
 WORKDIR /home/active/lib
 RUN git clone https://github.com/actor-framework/actor-framework.git
 WORKDIR actor-framework
@@ -86,3 +86,12 @@ ENV PETSC_DIR /etc/alternatives/petsc
 ENV PETSC_ARCH linux-gnu-c-opt
 RUN python build.py
 RUN ./all_tests
+
+# Some python packages that are useful 
+# (h5py -- depends on cython, mpi4py)
+RUN git clone https://github.com/h5py/h5py.git /h5py
+WORKDIR /h5py
+RUN pip install cython mpi4py
+RUN python configure.py --mpi
+RUN python setup.py build
+RUN python setup.py install

@@ -5,6 +5,7 @@
 #include <random>
 #include <iostream>
 #include <chrono>
+#include <string>
 #include "vec.h"
 
 #define TIC\
@@ -48,6 +49,13 @@ inline std::array<std::vector<double>,3> random_pts(int N) {
     return locs;
 }
 
+inline double random_val() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0, 1);
+    return dis(gen);
+}
+
 inline Vec3<double> random_pt() {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -84,4 +92,7 @@ inline double error_inf(const std::vector<double>& a,
     return error;
 }
 
+class Mesh;
+void hdf_out(const std::string& filename, const Mesh& mesh,
+             const std::vector<double>& data);
 #endif
