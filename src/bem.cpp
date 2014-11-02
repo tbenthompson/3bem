@@ -27,35 +27,69 @@ inline Vec3<double> ref_to_real(double x_hat, double y_hat,
     };
 }
 
+
+FaceInfo::FaceInfo(const std::array<Vec3<double>,3>& corners):
+        corners(corners)
+{
+    const auto unscaled_normal = tri_unscaled_normal(corners);
+    src_area = tri_area(unscaled_normal);
+    jacobian = src_area * 2.0;
+    normal = unscaled_normal / jacobian;
+}
+
+class PointInfo {
+public:
+    PointInfo(const QuadratureRule2D& quad_rule,
+              const KernelFnc& kernel,
+              const FaceInfo& face,
+              const Vec3<double>& obs_loc,
+              const Vec3<double>& obs_n,
+              int q_index) {
+        const double x_hat = quad_rule.x_hat[q_index];
+        const double y_hat = quad_rule.y_hat[q_index];
+
+        const auto src_pt = ref_to_real(x_hat, y_hat, face.corners);
+        const auto d = src_pt - obs_loc;
+        const double r2 = hypot2(d);
+        const double kernel_val = kernel(r2, d, face.normal, obs_n);
+
+        const double q_wt = quad_rule.weights[q_index];
+        weighted_kernel = kernel_val * q_wt * face.jacobian;
+
+        basis = linear_basis(x_hat, y_hat);
+    }
+    
+    Vec3<double> basis;
+    double weighted_kernel;
+};
+
+
+std::array<double,3> basis_integrals(const QuadratureRule2D& quad_rule,
+                                     const KernelFnc& kernel,
+                                     const FaceInfo& face,
+                                     const Vec3<double>& obs_loc,
+                                     const Vec3<double>& obs_n) {
+
+    Vec3<double> result = {0,0,0};
+    for (unsigned int src_q = 0; src_q < quad_rule.x_hat.size(); src_q++) {
+        PointInfo pt(quad_rule, kernel, face, obs_loc, obs_n, src_q);
+        result += pt.weighted_kernel * pt.basis;
+    }
+    return result;
+}
+
+
 double integral(const QuadratureRule2D& quad_rule,
                 const KernelFnc& kernel,
-                const std::array<Vec3<double>,3>& src_locs,
+                const FaceInfo& face,
                 const Vec3<double>& src_vals,
                 const Vec3<double>& obs_loc,
                 const Vec3<double>& obs_n) {
-    //Compute normal and triangle area 
-    //TODO: For linear elements, these could be done as a preprocessing step.
-    //How to abstract this so that it work for both linear and high order basis?
-    const auto unscaled_normal = tri_unscaled_normal(src_locs);
-    const double src_area = tri_area(unscaled_normal);
-    const double jacobian = src_area * 2.0;
-    const auto scaled_normal = unscaled_normal / jacobian;
 
     double result = 0.0;
     for (unsigned int src_q = 0; src_q < quad_rule.x_hat.size(); src_q++) {
-        const double x_hat = quad_rule.x_hat[src_q];
-        const double y_hat = quad_rule.y_hat[src_q];
-        const auto src_pt = ref_to_real(x_hat, y_hat, src_locs);
-        const double interp_value = linear_interp(x_hat, y_hat, src_vals);
-
-        const auto d = src_pt - obs_loc;
-
-        const double r2 = hypot2(d);
-
-        const double kernel_val = kernel(r2, d, scaled_normal, obs_n);
-        const double q_wt = quad_rule.weights[src_q];
-
-        result += q_wt * interp_value * kernel_val * jacobian;
+        PointInfo pt(quad_rule, kernel, face, obs_loc, obs_n, src_q);
+        result += pt.weighted_kernel * dot(pt.basis, src_vals);
     }
     return result;
 }
@@ -82,7 +116,7 @@ double richardson_step(const std::vector<double>& values) {
         //TODO: Consider steps of two in error_order as an optional feature
         //TODO: Consider allowing setting the maximum error and then 
         // adaptively building
-        //TODO: Integrate this into the main loop.
+        //TODO: Integrate this into the main loop?
         //TODO: Use the diligenti mapping quadrature for the nearly 
         //singular quadratures required.
         last_level = this_level;
@@ -128,21 +162,19 @@ double eval_integral_equation(const Mesh& src_mesh,
     for (unsigned int i = 0; i < src_mesh.faces.size(); i++) {
         auto src_face = src_mesh.faces[i];
         std::array<Vec3<double>,3> src_locs = index3(src_mesh.vertices, src_face);
+        FaceInfo face_info(src_locs);
         Vec3<double> src_vals = index3(src_strength, src_face);
 
         // Square of the threshold 
         // TODO: Make threshold a parameter
         const double threshold2 = far_threshold * far_threshold;
 
-        // Square of the approximate source "length scale"
-        const double src_area = tri_area(src_locs);
-
         // Square of the approximate distance from the source to observation.
         const double dist2 = appx_face_dist2(obs_pt, src_locs);
 
         //TODO: Better way of distinguishing nearfield and far-field.
         //a further hierarchy -- identical, adjacent, near, far
-        if (dist2 < threshold2 * src_area) {
+        if (dist2 < threshold2 * face_info.src_area) {
             //nearfield
             //cout
             
@@ -150,12 +182,12 @@ double eval_integral_equation(const Mesh& src_mesh,
                 auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
                                                   obs_normal, obs_len_scale);
                 near_steps[nf] += integral(near_eval.quad[nf], kernel,
-                                           src_locs, src_vals, nf_obs_pt,
+                                           face_info, src_vals, nf_obs_pt,
                                            obs_normal);
             }
         } else {
             //farfield
-            double farfield_effect = integral(src_quad, kernel, src_locs,
+            double farfield_effect = integral(src_quad, kernel, face_info,
                                               src_vals, obs_pt, obs_normal);
             result += farfield_effect;
         }
@@ -191,17 +223,17 @@ std::vector<double> direct_interact(Mesh& src_mesh,
     for (std::size_t obs_idx = 0; obs_idx < obs_mesh.faces.size(); obs_idx++) {
         auto obs_face = obs_mesh.faces[obs_idx];
         auto obs_verts = index3(obs_mesh.vertices, obs_face);
+
+        const auto unscaled_normal = tri_unscaled_normal(obs_verts);
+        const double obs_area = tri_area(unscaled_normal);
+        double jacobian = obs_area * 2.0;
+        const auto obs_n = unscaled_normal / jacobian;
         for (std::size_t obs_q = 0; obs_q < obs_quad.x_hat.size(); obs_q++) {
             double x_hat = obs_quad.x_hat[obs_q];
             double y_hat = obs_quad.y_hat[obs_q];
             double q_wt = obs_quad.weights[obs_q];
 
-            const auto unscaled_normal = tri_unscaled_normal(obs_verts);
-            const double obs_area = tri_area(unscaled_normal);
-            double jacobian = obs_area * 2.0;
-            const auto obs_n = unscaled_normal / jacobian;
-
-            //TODO: What to use?
+            //TODO: What to use? Need to divide by q?
             const double obs_len_scale = std::sqrt(obs_area);
 
             // Observation point in real space
@@ -211,7 +243,7 @@ std::vector<double> direct_interact(Mesh& src_mesh,
                 eval_integral_equation(src_mesh, src_quad, kernel,
                                        near_eval, obs_pt, obs_n, obs_len_scale,
                                        src_strength, far_threshold);
-            assert(!std::isnan(inner_integral));
+
             outer_integral(integrals, obs_face, x_hat, y_hat, 
                            jacobian, inner_integral, q_wt);
         }
@@ -229,16 +261,17 @@ std::vector<double> mass_term(const Mesh& obs_mesh,
     for (std::size_t obs_idx = 0; obs_idx < obs_mesh.faces.size(); obs_idx++) {
         auto obs_face = obs_mesh.faces[obs_idx];
         auto obs_verts = index3(obs_mesh.vertices, obs_face);
+        const double obs_area = tri_area(obs_verts);
+        double jacobian = obs_area * 2.0;
+
         for (std::size_t obs_q = 0; obs_q < obs_quad.x_hat.size(); obs_q++) {
             double x_hat = obs_quad.x_hat[obs_q];
             double y_hat = obs_quad.y_hat[obs_q];
             double q_wt = obs_quad.weights[obs_q];
 
-            const double strength_interp = linear_interp(x_hat, y_hat,
-                                                         index3(strengths, obs_face));
+            const double strength_interp = 
+                linear_interp(x_hat, y_hat, index3(strengths, obs_face));
 
-            const double obs_area = tri_area(obs_verts);
-            double jacobian = obs_area * 2.0;
 
             outer_integral(integrals, obs_face, x_hat, y_hat, 
                            jacobian, strength_interp, q_wt);

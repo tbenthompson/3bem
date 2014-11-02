@@ -15,38 +15,46 @@ struct IntegrationProb {
     IntegrationProb():
         src_locs({{{0,0,0},{2,0,0},{0,1,0}}}),
         src_vals({1.0, 1.0, 1.0}),
-        obs_loc({2.0, 2.0, 2.0})
+        obs_loc({2.0, 2.0, 2.0}),
+        q(tri_gauss(2)),
+        face(src_locs)
     { }
     std::array<Vec3<double>,3> src_locs;
     Vec3<double> src_vals;
     Vec3<double> obs_loc;
+    QuadratureRule2D q;
+    FaceInfo face;
 };
 
 TEST_FIXTURE(IntegrationProb, IntegralOne) {
-    auto q = tri_gauss(2);
     double abc = integrate(q, [](double x_hat, double y_hat){return 1.0;});
     CHECK_CLOSE(abc, 0.5, 1e-12);
     KernelFnc kernel = one;
-    double result = integral(q, kernel, src_locs, src_vals, obs_loc, {0,0,1});
+    double result = integral(q, kernel, face, src_vals, obs_loc, {0,0,1});
     CHECK_CLOSE(result, 1.0, 1e-5);
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceSingle) {
-    auto q = tri_gauss(2);
     KernelFnc kernel = laplace_single;
-    double result = integral(q, kernel, src_locs, src_vals, obs_loc, {1, 0, 0});
+    double result = integral(q, kernel, face, src_vals, obs_loc, {1, 0, 0});
     CHECK_CLOSE(result, 0.0269063, 1e-5);
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceDouble) {
-    auto q = tri_gauss(2);
     KernelFnc kernel = laplace_double;
-    double result = integral(q, kernel, src_locs, src_vals, obs_loc, {1,0,0});
+    double result = integral(q, kernel, face, src_vals, obs_loc, {1,0,0});
     CHECK_CLOSE(result, 0.00621003, 1e-5);
 }
 
-//TODO: Test a kernel that depends on the observation normal vector -- adjoint 
-//double layer
+TEST_FIXTURE(IntegrationProb, IntegralBasis) {
+    KernelFnc kernel = laplace_double;
+    src_vals = {1.0, 0.7, 0.3};
+    double result = integral(q, kernel, face, src_vals, obs_loc, {1,0,0});
+    Vec3<double> basis =
+        basis_integrals(q, kernel, face, obs_loc, {1,0.5,0.7});
+    double result2 = dot(basis, src_vals);
+    CHECK_CLOSE(result, result2, 1e-5);
+}
 
 TEST(Richardson) {
     double result = richardson_step({0.5, 0.3, 0.2, 0.15});
@@ -65,7 +73,7 @@ TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
     std::vector<double> vals;
     for (int i = 0; i < 4; i++) {
         obs_loc = {2.0, 2.0, 2.0 + offset};
-        vals.push_back(integral(q, kernel, src_locs, src_vals, obs_loc, {1, 0, 0}));
+        vals.push_back(integral(q, kernel, face, src_vals, obs_loc, {1, 0, 0}));
         offset /= 2;
     }
     double result = richardson_step(vals);
@@ -191,6 +199,8 @@ TEST(DirectInteractConstantLaplace) {
     CHECK_ARRAY_CLOSE(res0, res2, sphere.vertices.size(), 1e-2);
     CHECK_ARRAY_CLOSE(res1, res2, sphere.vertices.size(), 1e-2);
 }
+
+
 
 int main(int, char const *[])
 {

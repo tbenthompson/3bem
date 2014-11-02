@@ -26,13 +26,14 @@ inline double ref_to_real(double x_hat, double a, double b) {
     return a + (b - a) * ((x_hat + 1.0) / 2.0);
 }
 
-inline double linear_interp(double x_hat, double y_hat,
-                            const Vec3<double>& corner_vals) {
-    return (1 - x_hat - y_hat) * corner_vals[0] + 
-           x_hat * corner_vals[1] + 
-           y_hat * corner_vals[2];
+inline Vec3<double> linear_basis(double x_hat, double y_hat) {
+    return {1 - x_hat - y_hat, x_hat, y_hat};
 }
 
+inline double linear_interp(double x_hat, double y_hat,
+                            const Vec3<double>& corner_vals) {
+    return dot(linear_basis(x_hat, y_hat), corner_vals);
+}
 
 inline Vec3<double> 
 tri_unscaled_normal(const std::array<Vec3<double>,3>& corners) {
