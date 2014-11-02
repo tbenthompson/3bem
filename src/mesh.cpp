@@ -135,3 +135,15 @@ Mesh refine_mesh(const Mesh& m, std::vector<int> refine_these) {
 Mesh refine_mesh(const Mesh& m) {
     return refine_mesh(m, naturals(m.faces.size()));
 }
+
+Mesh refine_clean(const Mesh& m, unsigned int times) {
+    if (times == 0) {
+        return clean_mesh(m);
+    }
+    Mesh ret = refine_mesh(m);
+    for(unsigned int i = 1; i < times; i++) {
+        ret = refine_mesh(ret);
+    }
+    ret = clean_mesh(ret);
+    return ret;
+}

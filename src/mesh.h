@@ -53,4 +53,8 @@ Mesh refine_mesh(const Mesh& m, std::vector<int> refine_these);
 /* Refines all the triangles.
  */
 Mesh refine_mesh(const Mesh& m);
+
+/* Refine a mesh multiple times and then clean it.
+ */
+Mesh refine_clean(const Mesh& m, unsigned int times);
 #endif
