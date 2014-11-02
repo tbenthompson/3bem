@@ -26,9 +26,25 @@ typedef std::function<double (double,
                               const Vec3<double>&,
                               const Vec3<double>&)> KernelFnc;
 
+class FaceInfo {
+public:
+    FaceInfo(const std::array<Vec3<double>,3>& corners);
+    
+    double src_area;
+    double jacobian;
+    Vec3<double> normal;
+    const std::array<Vec3<double>,3> corners;
+};
+
+Vec3<double> basis_integrals(const QuadratureRule2D& quad_rule,
+                                     const KernelFnc& kernel,
+                                     const FaceInfo& face,
+                                     const Vec3<double>& obs_loc,
+                                     const Vec3<double>& obs_n);
+
 double integral(const QuadratureRule2D& quad_rule,
                 const KernelFnc& kernel,
-                const std::array<Vec3<double>,3>& src_locs,
+                const FaceInfo& face,
                 const Vec3<double>& src_vals,
                 const Vec3<double>& obs_loc,
                 const Vec3<double>& obs_n);
