@@ -33,8 +33,6 @@ void hdf_out(const std::string& filename, const Mesh& mesh,
     dims[1] = 1;
     hid_t values_dataspace_id = H5Screate_simple(2, dims, NULL); 
 
-
-
     /* Create the dataset. */
     hid_t faces_dataset_id = H5Dcreate2(file_id, "/faces", H5T_NATIVE_INT,
             faces_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);

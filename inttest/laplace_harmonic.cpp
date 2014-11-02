@@ -69,7 +69,7 @@ int main() {
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
         });
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
-    hdf_out("laplace.hdf5", sphere, {u, dudn}); 
+    hdf_out("laplace.hdf5", sphere, dudn_solved); 
 
     double obs_len_scale = get_len_scale(sphere, 0, obs_quad_pts);
     for(int i = 0; i < 100; i++) {
