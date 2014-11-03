@@ -37,9 +37,8 @@ FaceInfo::FaceInfo(const Mesh& mesh, int face_index):
     normal = unscaled_normal / jacobian;
 }
 
-class PointInfo {
-public:
-    PointInfo(const QuadratureRule2D& quad_rule,
+struct SrcPointInfo {
+    SrcPointInfo(const QuadratureRule2D& quad_rule,
               const KernelFnc& kernel,
               const FaceInfo& face,
               const Vec3<double>& obs_loc,
@@ -72,7 +71,7 @@ std::array<double,3> basis_integrals(const QuadratureRule2D& quad_rule,
 
     Vec3<double> result = {0,0,0};
     for (unsigned int src_q = 0; src_q < quad_rule.x_hat.size(); src_q++) {
-        PointInfo pt(quad_rule, kernel, face, obs_loc, obs_n, src_q);
+        SrcPointInfo pt(quad_rule, kernel, face, obs_loc, obs_n, src_q);
         result += pt.weighted_kernel * pt.basis;
     }
     return result;
@@ -88,7 +87,7 @@ double integral(const QuadratureRule2D& quad_rule,
 
     double result = 0.0;
     for (unsigned int src_q = 0; src_q < quad_rule.x_hat.size(); src_q++) {
-        PointInfo pt(quad_rule, kernel, face, obs_loc, obs_n, src_q);
+        SrcPointInfo pt(quad_rule, kernel, face, obs_loc, obs_n, src_q);
         result += pt.weighted_kernel * dot(pt.basis, src_vals);
     }
     return result;
@@ -127,13 +126,12 @@ std::vector<double> integral_equation_vector(const Mesh& src_mesh,
     std::vector<double> result(src_mesh.vertices.size(), 0.0);
     for (unsigned int i = 0; i < src_mesh.faces.size(); i++) {
         FaceInfo src_face(src_mesh, i);
-        const double threshold2 = pow(far_threshold,2);
         const double dist2 = appx_face_dist2(obs_pt, src_face.corners);
 
         //TODO: Better way of distinguishing nearfield and far-field.
         //a further hierarchy -- identical, adjacent, near, far
         std::array<double,3> integrals;
-        if (dist2 < threshold2 * src_face.area) {
+        if (dist2 < pow(far_threshold,2) * src_face.area) {
             std::vector<Vec3<double>> near_steps(near_eval.n_steps, {0,0,0});
             for (int nf = 0; nf < near_eval.n_steps; nf++) {
                 auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
@@ -172,14 +170,12 @@ double eval_integral_equation(const Mesh& src_mesh,
         FaceInfo src_face(src_mesh, i);
         Vec3<double> src_vals = index3(src_strength, src_face.face);
 
-        const double threshold2 = pow(far_threshold,2);
-
         // Square of the approximate distance from the source to observation.
         const double dist2 = appx_face_dist2(obs_pt, src_face.corners);
 
         //TODO: Better way of distinguishing nearfield and far-field.
         //a further hierarchy -- identical, adjacent, near, far
-        if (dist2 < threshold2 * src_face.area) {
+        if (dist2 < pow(far_threshold,2) * src_face.area) {
             //nearfield
             
             for (int nf = 0; nf < near_eval.n_steps; nf++) {
@@ -214,6 +210,29 @@ void outer_integral(std::vector<double>& integrals,
 }
 
 
+struct ObsPointInfo {
+    ObsPointInfo(const QuadratureRule2D& obs_quad,
+                 const FaceInfo& obs_face,
+                 int idx) {
+        // Grab the quadrature point.
+        x_hat = obs_quad.x_hat[idx];
+        y_hat = obs_quad.y_hat[idx];
+        q_wt = obs_quad.weights[idx];
+
+        //TODO: What to use? Need to divide by q?
+        len_scale = std::sqrt(obs_face.area);
+
+        // Observation point in real space
+        obs_pt = ref_to_real(x_hat, y_hat, obs_face.corners);
+    }
+
+    double x_hat;
+    double y_hat;
+    double q_wt;
+    double len_scale;
+    Vec3<double> obs_pt;
+};
+
 //TODO: Use a sparse matrix storage format here.
 std::vector<std::vector<double>> interact_matrix(Mesh& src_mesh,
                                     Mesh& obs_mesh,
@@ -231,30 +250,22 @@ std::vector<std::vector<double>> interact_matrix(Mesh& src_mesh,
     for (std::size_t obs_idx = 0; obs_idx < obs_mesh.faces.size(); obs_idx++) {
         FaceInfo obs_face(obs_mesh, obs_idx);
         for (std::size_t obs_q = 0; obs_q < obs_quad.x_hat.size(); obs_q++) {
-            double x_hat = obs_quad.x_hat[obs_q];
-            double y_hat = obs_quad.y_hat[obs_q];
-            double q_wt = obs_quad.weights[obs_q];
-
-            //TODO: What to use? Need to divide by q?
-            const double obs_len_scale = std::sqrt(obs_face.area);
-
-            // Observation point in real space
-            const auto obs_pt = ref_to_real(x_hat, y_hat, obs_face.corners);
+            ObsPointInfo pt(obs_quad, obs_face, obs_q);
 
             const auto row =
                 integral_equation_vector(src_mesh, src_quad, kernel, near_eval,
-                                         obs_pt, obs_face.normal, obs_len_scale,
+                                         pt.obs_pt, obs_face.normal, pt.len_scale,
                                          far_threshold);
 
 
             for(int v = 0; v < 3; v++) {
                 double obs_basis_eval =
-                        linear_interp(x_hat, y_hat, unit<double>(v)); 
+                        linear_interp(pt.x_hat, pt.y_hat, unit<double>(v)); 
                 int b = obs_face.face[v];
 #pragma omp critical
                 for (int i = 0; i < n_src_basis; i++) {
                     {
-                        matrix[b][i] += obs_basis_eval * row[i] * q_wt * obs_face.jacobian;
+                        matrix[b][i] += obs_basis_eval * row[i] * pt.q_wt * obs_face.jacobian;
                     }
                 }
             }
@@ -279,23 +290,15 @@ std::vector<double> direct_interact(Mesh& src_mesh,
     for (std::size_t obs_idx = 0; obs_idx < obs_mesh.faces.size(); obs_idx++) {
         FaceInfo obs_face(obs_mesh, obs_idx);
         for (std::size_t obs_q = 0; obs_q < obs_quad.x_hat.size(); obs_q++) {
-            double x_hat = obs_quad.x_hat[obs_q];
-            double y_hat = obs_quad.y_hat[obs_q];
-            double q_wt = obs_quad.weights[obs_q];
-
-            //TODO: What to use? Need to divide by q?
-            const double obs_len_scale = std::sqrt(obs_face.area);
-
-            // Observation point in real space
-            const auto obs_pt = ref_to_real(x_hat, y_hat, obs_face.corners);
+            ObsPointInfo pt(obs_quad, obs_face, obs_q);
 
             const double inner_integral =
                 eval_integral_equation(src_mesh, src_quad, kernel, near_eval,
-                                       obs_pt, obs_face.normal, obs_len_scale,
+                                       pt.obs_pt, obs_face.normal, pt.len_scale,
                                        src_strength, far_threshold);
 
-            outer_integral(integrals, obs_face.face, x_hat, y_hat, 
-                           obs_face.jacobian, inner_integral, q_wt);
+            outer_integral(integrals, obs_face.face, pt.x_hat, pt.y_hat, 
+                           obs_face.jacobian, inner_integral, pt.q_wt);
         }
     }
 
@@ -310,16 +313,13 @@ std::vector<double> mass_term(const Mesh& obs_mesh,
     for (std::size_t obs_idx = 0; obs_idx < obs_mesh.faces.size(); obs_idx++) {
         FaceInfo obs_face(obs_mesh, obs_idx);
         for (std::size_t obs_q = 0; obs_q < obs_quad.x_hat.size(); obs_q++) {
-            double x_hat = obs_quad.x_hat[obs_q];
-            double y_hat = obs_quad.y_hat[obs_q];
-            double q_wt = obs_quad.weights[obs_q];
+            ObsPointInfo pt(obs_quad, obs_face, obs_q);
 
             const double strength_interp = 
-                linear_interp(x_hat, y_hat, index3(strengths, obs_face.face));
+                linear_interp(pt.x_hat, pt.y_hat, index3(strengths, obs_face.face));
 
-
-            outer_integral(integrals, obs_face.face, x_hat, y_hat, 
-                           obs_face.jacobian, strength_interp, q_wt);
+            outer_integral(integrals, obs_face.face, pt.x_hat, pt.y_hat, 
+                           obs_face.jacobian, strength_interp, pt.q_wt);
         }
     }
     return integrals;
