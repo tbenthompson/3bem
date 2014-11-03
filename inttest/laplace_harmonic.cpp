@@ -23,7 +23,7 @@ int main() {
     double r = 3.0;
     double obs_radius = 2.7;
     double far_threshold = 2.0;
-    int refine_level = 3;
+    int refine_level = 4;
     int near_field = 5;
     int src_quad_pts = 2;
     int obs_quad_pts = 3;
