@@ -22,6 +22,7 @@ petsc_dir = os.environ['PETSC_DIR']
 petsc_arch = os.environ['PETSC_ARCH']
 includes = [
     './src',
+    './lib/',
     './lib/unittest-cpp/src',
     './lib/actor-framework/libcaf_core',
     './lib/actor-framework/libcaf_opencl',
