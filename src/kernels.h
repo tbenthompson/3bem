@@ -6,24 +6,27 @@
 
 #include "vec.h"
 
-inline double one(double r2, 
-                  const Vec3<double>& delta,
-                  const Vec3<double>& nsrc,
-                  const Vec3<double>& nobs) {
+template <typename T, typename F = double>
+inline T one(T r2, 
+                  const Vec3<T>& delta,
+                  const Vec3<F>& nsrc,
+                  const Vec3<F>& nobs) {
     return 1.0;
 }
 
-inline double laplace_single(double r2,
-                             const Vec3<double>& delta,
-                             const Vec3<double>& nsrc,
-                             const Vec3<double>& nobs) {
-    return 1.0 / (4.0 * M_PI * std::sqrt(r2));
+template <typename T, typename F = double>
+inline T laplace_single(T r2,
+                             const Vec3<T>& delta,
+                             const Vec3<F>& nsrc,
+                             const Vec3<F>& nobs) {
+    return 1.0 / (4.0 * M_PI * sqrt(r2));
 }
 
-inline double laplace_double(double r2,
-                             const Vec3<double>& delta,
-                             const Vec3<double>& nsrc,
-                             const Vec3<double>& nobs) {
+template <typename T, typename F = double>
+inline T laplace_double(T r2,
+                             const Vec3<T>& delta,
+                             const Vec3<F>& nsrc,
+                             const Vec3<F>& nobs) {
     return -(nsrc[0] * delta[0] + nsrc[1] * delta[1] + nsrc[2] * delta[2]) / 
            (4 * M_PI * pow(r2, 1.5));
 }

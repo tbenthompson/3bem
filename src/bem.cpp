@@ -4,6 +4,7 @@
 #include "mesh.h"
 #include "vec.h"
 #include "quadrature.h"
+#include "taylor.h"
 
 NearEval::NearEval(int n_steps):
     n_steps(n_steps),
@@ -39,7 +40,7 @@ FaceInfo::FaceInfo(const Mesh& mesh, int face_index):
 
 struct SrcPointInfo {
     SrcPointInfo(const QuadratureRule2D& quad_rule,
-              const KernelFnc& kernel,
+              const Kernel& kernel,
               const FaceInfo& face,
               const Vec3<double>& obs_loc,
               const Vec3<double>& obs_n,
@@ -64,7 +65,7 @@ struct SrcPointInfo {
 
 
 std::array<double,3> basis_integrals(const QuadratureRule2D& quad_rule,
-                                     const KernelFnc& kernel,
+                                     const Kernel& kernel,
                                      const FaceInfo& face,
                                      const Vec3<double>& obs_loc,
                                      const Vec3<double>& obs_n) {
@@ -79,7 +80,7 @@ std::array<double,3> basis_integrals(const QuadratureRule2D& quad_rule,
 
 
 double integral(const QuadratureRule2D& quad_rule,
-                const KernelFnc& kernel,
+                const Kernel& kernel,
                 const FaceInfo& face,
                 const Vec3<double>& src_vals,
                 const Vec3<double>& obs_loc,
@@ -117,7 +118,8 @@ Vec3<double> near_field_point(double ref_dist,
 
 std::vector<double> integral_equation_vector(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,
-                              const KernelFnc& kernel,
+                              const Kernel& kernel,
+                              const TaylorKernel& t_kernel,
                               const NearEval& near_eval, 
                               const Vec3<double>& obs_pt,
                               const Vec3<double>& obs_normal,
@@ -157,7 +159,8 @@ std::vector<double> integral_equation_vector(const Mesh& src_mesh,
  */
 double eval_integral_equation(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,
-                              const KernelFnc& kernel,
+                              const Kernel& kernel,
+                              const TaylorKernel& t_kernel,
                               const NearEval& near_eval, 
                               const Vec3<double>& obs_pt,
                               const Vec3<double>& obs_normal,
@@ -178,13 +181,18 @@ double eval_integral_equation(const Mesh& src_mesh,
         if (dist2 < pow(far_threshold,2) * src_face.area) {
             //nearfield
             
-            for (int nf = 0; nf < near_eval.n_steps; nf++) {
-                auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
-                                                  obs_normal, obs_len_scale);
-                near_steps[nf] += integral(near_eval.quad[nf], kernel,
-                                           src_face, src_vals, nf_obs_pt,
-                                           obs_normal);
-            }
+            // for (int nf = 0; nf < near_eval.n_steps; nf++) {
+            //     auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
+            //                                       obs_normal, obs_len_scale);
+            //     near_steps[nf] += integral(near_eval.quad[nf], kernel,
+            //                                src_face, src_vals, nf_obs_pt,
+            //                                obs_normal);
+            // }
+            auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
+                                              obs_normal, obs_len_scale);
+            near_steps[nf] += integral(near_eval.quad[nf], kernel,
+                                       src_face, src_vals, nf_obs_pt,
+                                       obs_normal);
         } else {
             //farfield
             double farfield_effect = integral(src_quad, kernel, src_face,
@@ -234,11 +242,12 @@ struct ObsPointInfo {
 };
 
 //TODO: Use a sparse matrix storage format here.
-std::vector<std::vector<double>> interact_matrix(Mesh& src_mesh,
-                                    Mesh& obs_mesh,
-                                    QuadratureRule2D& src_quad,
-                                    QuadratureRule2D& obs_quad,
-                                    const KernelFnc& kernel,
+std::vector<std::vector<double>> interact_matrix(const Mesh& src_mesh,
+                                    const Mesh& obs_mesh,
+                                    const QuadratureRule2D& src_quad,
+                                    const QuadratureRule2D& obs_quad,
+                                    const Kernel& kernel,
+                                    const TaylorKernel& t_kernel,
                                     int n_steps,
                                     double far_threshold) {
     NearEval near_eval(n_steps);
@@ -253,7 +262,7 @@ std::vector<std::vector<double>> interact_matrix(Mesh& src_mesh,
             ObsPointInfo pt(obs_quad, obs_face, obs_q);
 
             const auto row =
-                integral_equation_vector(src_mesh, src_quad, kernel, near_eval,
+                integral_equation_vector(src_mesh, src_quad, kernel, t_kernel, near_eval,
                                          pt.obs_pt, obs_face.normal, pt.len_scale,
                                          far_threshold);
 
@@ -276,12 +285,13 @@ std::vector<std::vector<double>> interact_matrix(Mesh& src_mesh,
 
 
 
-std::vector<double> direct_interact(Mesh& src_mesh,
-                                    Mesh& obs_mesh,
-                                    QuadratureRule2D& src_quad,
-                                    QuadratureRule2D& obs_quad,
-                                    const KernelFnc& kernel,
-                                    std::vector<double>& src_strength,
+std::vector<double> direct_interact(const Mesh& src_mesh,
+                                    const Mesh& obs_mesh,
+                                    const QuadratureRule2D& src_quad,
+                                    const QuadratureRule2D& obs_quad,
+                                    const Kernel& kernel,
+                                    const TaylorKernel& t_kernel,
+                                    const std::vector<double>& src_strength,
                                     int n_steps,
                                     double far_threshold) {
     NearEval near_eval(n_steps);
@@ -293,7 +303,7 @@ std::vector<double> direct_interact(Mesh& src_mesh,
             ObsPointInfo pt(obs_quad, obs_face, obs_q);
 
             const double inner_integral =
-                eval_integral_equation(src_mesh, src_quad, kernel, near_eval,
+                eval_integral_equation(src_mesh, src_quad, kernel, t_kernel, near_eval,
                                        pt.obs_pt, obs_face.normal, pt.len_scale,
                                        src_strength, far_threshold);
 
