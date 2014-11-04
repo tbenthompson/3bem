@@ -17,12 +17,14 @@ struct IntegrationProb {
         src_locs({{{0,0,0},{2,0,0},{0,1,0}}}),
         src_vals({1.0, 1.0, 1.0}),
         obs_loc({2.0, 2.0, 2.0}),
+        obs_n({1.0, 0.0, 0.0}),
         q(tri_gauss(2)),
         face(Mesh{src_locs, {{0,1,2}}}, 0)
     { }
     std::vector<Vec3<double>> src_locs;
     Vec3<double> src_vals;
     Vec3<double> obs_loc;
+    Vec3<double> obs_n;
     QuadratureRule2D q;
     FaceInfo face;
 };
@@ -31,30 +33,41 @@ TEST_FIXTURE(IntegrationProb, IntegralOne) {
     double abc = integrate(q, [](double x_hat, double y_hat){return 1.0;});
     CHECK_CLOSE(abc, 0.5, 1e-12);
     auto kernel = one<double>;
-    double result = integral(q, kernel, face, src_vals, obs_loc, {0,0,1});
+    double result = integral<double>(q, kernel, face, src_vals, obs_loc, obs_n);
     CHECK_CLOSE(result, 1.0, 1e-5);
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceSingle) {
     auto kernel = laplace_single<double>;
-    double result = integral(q, kernel, face, src_vals, obs_loc, {1, 0, 0});
+    double result = integral<double>(q, kernel, face, src_vals, obs_loc, obs_n);
     CHECK_CLOSE(result, 0.0269063, 1e-5);
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceDouble) {
     auto kernel = laplace_double<double>;
-    double result = integral(q, kernel, face, src_vals, obs_loc, {1,0,0});
+    double result = integral<double>(q, kernel, face, src_vals, obs_loc, obs_n);
     CHECK_CLOSE(result, 0.00621003, 1e-5);
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralBasis) {
     auto kernel = laplace_double<double>;
     src_vals = {1.0, 0.7, 0.3};
-    double result = integral(q, kernel, face, src_vals, obs_loc, {1,0,0});
+    double result = integral<double>(q, kernel, face, src_vals, obs_loc, obs_n);
     Vec3<double> basis =
-        basis_integrals(q, kernel, face, obs_loc, {1,0.5,0.7});
+        basis_integrals<double>(q, kernel, face, obs_loc, obs_n);
     double result2 = dot(basis, src_vals);
     CHECK_CLOSE(result, result2, 1e-5);
+}
+
+TEST_FIXTURE(IntegrationProb, TaylorIntegral) {
+    auto kernel = laplace_double<double>;
+    double result = integral<double>(q, kernel, face, src_vals, obs_loc, obs_n);
+
+    auto Tk = laplace_double<Td<taylor_degree>>;
+    auto x = Td<taylor_degree>::var(1.0);
+    std::array<Td<taylor_degree>,3> t_obs_loc =
+        {x * obs_loc[0], x * obs_loc[1], x * obs_loc[2]};
+    auto result2 = integral<Td<taylor_degree>>(q, Tk, face, src_vals, t_obs_loc, obs_n);
 }
 
 TEST(Richardson) {
@@ -76,7 +89,7 @@ TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
     std::vector<double> vals;
     for (int i = 0; i < 4; i++) {
         obs_loc = {2.0, 2.0, 2.0 + offset};
-        vals.push_back(integral(q, kernel, face, src_vals, obs_loc, {1, 0, 0}));
+        vals.push_back(integral<double>(q, kernel, face, src_vals, obs_loc, {1, 0, 0}));
         offset /= 2;
     }
     double result = richardson_step(vals);

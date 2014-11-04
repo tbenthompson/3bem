@@ -5,20 +5,21 @@
 #include <array>
 #include <vector>
 #include "vec.h"
+#include "numerics.h"
+#include "quadrature.h"
 
-
-class QuadratureRule2D;
 class Mesh;
 template <typename T, int M>
 class Taylor;
 
 const int taylor_degree = 5;
 
-template <typename F, typename T>
-using GenericKernel = std::function<T (T, const Vec3<T>&, const Vec3<F>&, const Vec3<F>&)>;
+template <typename T>
+using GenericKernel = std::function<T
+    (const T&, const Vec3<T>&, const Vec3<double>&, const Vec3<double>&)>;
 
-typedef GenericKernel<double,double> Kernel;
-typedef GenericKernel<double, Taylor<double,taylor_degree>> TaylorKernel;
+typedef GenericKernel<double> Kernel;
+typedef GenericKernel<Taylor<double,taylor_degree>> TaylorKernel;
 
 /* Temporary data store for the evaluation of nearfield integrals. */
 class NearEval {
@@ -42,6 +43,35 @@ public:
     double jacobian;
     Vec3<double> normal;
     const std::array<Vec3<double>,3> corners;
+};
+
+template <typename T>
+struct SrcPointInfo {
+    SrcPointInfo(const QuadratureRule2D& quad_rule,
+              const GenericKernel<T>& kernel,
+              const FaceInfo& face,
+              const Vec3<T>& obs_loc,
+              const Vec3<double>& obs_n,
+              int q_index) {
+        const double x_hat = quad_rule.x_hat[q_index];
+        const double y_hat = quad_rule.y_hat[q_index];
+        const double q_wt = quad_rule.weights[q_index];
+        basis = linear_basis(x_hat, y_hat);
+
+        const auto src_pt = ref_to_real(x_hat, y_hat, face.corners);
+        const Vec3<T> d = {
+            src_pt[0] - obs_loc[0], 
+            src_pt[1] - obs_loc[1],
+            src_pt[2] - obs_loc[2]
+        };
+        const auto r2 = hypot2(d);
+        const auto kernel_val = kernel(r2, d, face.normal, obs_n);
+
+        weighted_kernel = kernel_val * q_wt * face.jacobian;
+    }
+    
+    Vec3<double> basis;
+    T weighted_kernel;
 };
 
 /* Perform the richardson extrapolation for the nearfield quadrature. 
@@ -76,18 +106,36 @@ T richardson_step(const std::vector<T>& values) {
     return this_level[0];
 }
 
-Vec3<double> basis_integrals(const QuadratureRule2D& quad_rule,
-                                     const Kernel& kernel,
-                                     const FaceInfo& face,
-                                     const Vec3<double>& obs_loc,
-                                     const Vec3<double>& obs_n);
+template <typename T>
+Vec3<T> basis_integrals(const QuadratureRule2D& quad_rule,
+                        const GenericKernel<T>& kernel,
+                        const FaceInfo& face,
+                        const Vec3<T>& obs_loc,
+                        const Vec3<double>& obs_n) {
 
-double integral(const QuadratureRule2D& quad_rule,
-                const Kernel& kernel,
-                const FaceInfo& face,
-                const Vec3<double>& src_vals,
-                const Vec3<double>& obs_loc,
-                const Vec3<double>& obs_n);
+    Vec3<T> result = {0,0,0};
+    for (unsigned int src_q = 0; src_q < quad_rule.x_hat.size(); src_q++) {
+        SrcPointInfo<T> pt(quad_rule, kernel, face, obs_loc, obs_n, src_q);
+        result += pt.weighted_kernel * pt.basis;
+    }
+    return result;
+}
+
+template <typename T>
+T integral(const QuadratureRule2D& quad_rule,
+           const GenericKernel<T>& kernel,
+           const FaceInfo& face,
+           const Vec3<double>& src_vals,
+           const Vec3<T>& obs_loc,
+           const Vec3<double>& obs_n) {
+
+    T result = 0.0;
+    for (unsigned int src_q = 0; src_q < quad_rule.x_hat.size(); src_q++) {
+        SrcPointInfo<T> pt(quad_rule, kernel, face, obs_loc, obs_n, src_q);
+        result += pt.weighted_kernel * dot(pt.basis, src_vals);
+    }
+    return result;
+}
 
 std::vector<double> integral_equation_vector(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,

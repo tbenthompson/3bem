@@ -28,6 +28,10 @@ struct Taylor {
     typedef Taylor<T,M> MyType;
     typedef std::array<T,M+1> Array;
 
+    Taylor(): c{}, n_coeffs(1) {
+        c[0] = 0.0;
+    }
+
     Taylor(const T& x): c{}, n_coeffs(1) {
         c[0] = x;
     }

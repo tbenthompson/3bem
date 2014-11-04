@@ -7,26 +7,26 @@
 #include "vec.h"
 
 template <typename T, typename F = double>
-inline T one(T r2, 
-                  const Vec3<T>& delta,
-                  const Vec3<F>& nsrc,
-                  const Vec3<F>& nobs) {
+inline T one(const T& r2, 
+             const Vec3<T>& delta,
+             const Vec3<F>& nsrc,
+             const Vec3<F>& nobs) {
     return 1.0;
 }
 
 template <typename T, typename F = double>
-inline T laplace_single(T r2,
-                             const Vec3<T>& delta,
-                             const Vec3<F>& nsrc,
-                             const Vec3<F>& nobs) {
+inline T laplace_single(const T& r2,
+                        const Vec3<T>& delta,
+                        const Vec3<F>& nsrc,
+                        const Vec3<F>& nobs) {
     return 1.0 / (4.0 * M_PI * sqrt(r2));
 }
 
 template <typename T, typename F = double>
-inline T laplace_double(T r2,
-                             const Vec3<T>& delta,
-                             const Vec3<F>& nsrc,
-                             const Vec3<F>& nobs) {
+inline T laplace_double(const T& r2,
+                        const Vec3<T>& delta,
+                        const Vec3<F>& nsrc,
+                        const Vec3<F>& nobs) {
     return -(nsrc[0] * delta[0] + nsrc[1] * delta[1] + nsrc[2] * delta[2]) / 
            (4 * M_PI * pow(r2, 1.5));
 }
