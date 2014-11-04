@@ -158,7 +158,7 @@ Vec3<T> normalized(const Vec3<T>& v) {
 }
 
 template <typename T>
-inline double dist2(const Vec3<T>& v0, 
+inline T dist2(const Vec3<T>& v0, 
                     const Vec3<T>& v1) {
     return hypot2(v1 - v0);
 }

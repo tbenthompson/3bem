@@ -8,25 +8,40 @@
 // "Directions for computing truncated multivariate taylor series" by
 // Neidinger
 //
-// "Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation" by Andreas Griewank and Andrea Walther. 2008. SIAM.
+// "Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation"
+// by Andreas Griewank and Andrea Walther. 2008. SIAM.
 //
 //TODO: Some of the functions can be optimized (look at the two references 
 //above)
+//TODO: pow fails if c[0] = 0
+//TODO: 
+//-- sine and cosine
+//-- how to get the other operations from sine and cosine and other implemented operations?
+//---- use trig definitions (see the papers above)
+//TODO: Use this for the bem evaluation!
 
 template <typename T, int M>
 struct Taylor {
     static_assert(M >= 1, "Taylor<T,M> should be used with M > 1. \
                  Otherwise it is pointless!");
 
-    typedef Taylor<T,M> type;
-    typedef std::array<T,M+1> array_t;
+    typedef Taylor<T,M> MyType;
+    typedef std::array<T,M+1> Array;
 
     Taylor(const T& x): c{}, n_coeffs(1) {
         c[0] = x;
     }
 
-    array_t c;
+    Array c;
     int n_coeffs;
+
+    T eval(const T& x) {
+        T res = 0.0;
+        for (int i = n_coeffs - 1; i >= 0; i--) {
+            res = c[i] + x * res;
+        }
+        return res;
+    }
 
     void sqrt() {
         n_coeffs = M + 1;     
@@ -41,7 +56,7 @@ struct Taylor {
 
     void log() {
         n_coeffs = M + 1;     
-        array_t temp_c = c;
+        Array temp_c = c;
         c[0] = std::log(c[0]);
         for (int i = 1; i < n_coeffs; i++) {
             c[i] = i * temp_c[i];
@@ -54,7 +69,7 @@ struct Taylor {
 
     void exp() {
         n_coeffs = M + 1;
-        array_t temp_c = c;
+        Array temp_c = c;
         c[0] = std::exp(c[0]);
         for (int i = 1; i < n_coeffs; i++) {
             c[i] = 0;
@@ -67,7 +82,7 @@ struct Taylor {
 
     void pow(const T& r) {
         n_coeffs = M + 1;
-        array_t temp_c = c;
+        Array temp_c = c;
         c[0] = std::pow(c[0], r);
         for (int i = 1; i < n_coeffs; i++) {
             double term1 = 0;
@@ -83,12 +98,8 @@ struct Taylor {
         }
     }
 
-    //TODO: 
-    //-- evaluation
-    //-- sine and cosine
-    //-- how to get the other operations from sine and cosine and other implemented operations?
 
-    void operator/=(const type& b) {
+    void operator/=(const MyType& b) {
         n_coeffs = M + 1;
         for (int i = 0; i < n_coeffs; i++) {
             for (int j = 0; j <= i - 1; j++) {
@@ -98,9 +109,9 @@ struct Taylor {
         }
     }
 
-    void operator*=(const type& b) {
+    void operator*=(const MyType& b) {
         n_coeffs = std::min(n_coeffs + b.n_coeffs - 1, M + 1);
-        array_t temp_c = c;
+        Array temp_c = c;
         for (int i = 0; i < n_coeffs; i++) {
             c[i] = 0.0;
             for (int j = 0; j <= i; j++) {
@@ -109,50 +120,50 @@ struct Taylor {
         }
     }
 
-    void operator+=(const type& b) {
+    void operator+=(const MyType& b) {
         n_coeffs = std::max(n_coeffs, b.n_coeffs);
         for (int i = 0; i < b.n_coeffs; i++) {
             c[i] += b.c[i];
         }
     }
 
-    void operator-=(const type& b) {
+    void operator-=(const MyType& b) {
         (*this) += -b;
     }
 
-    type operator-() const {
-        type res = *this;
+    MyType operator-() const {
+        MyType res = *this;
         for (int i = 0; i < n_coeffs; i++) {
             res.c[i] = -res.c[i];
         }
         return res;
     }
 
-    type operator/(const type& b) const {
-        type res = *this;
+    MyType operator/(const MyType& b) const {
+        MyType res = *this;
         res /= b;
         return res;
     }
 
-    type operator*(const type& b) const {
-        type res = *this;
+    MyType operator*(const MyType& b) const {
+        MyType res = *this;
         res *= b;
         return res;
     }
     
-    type operator+(const type& b) const {
-        type res = *this;
+    MyType operator+(const MyType& b) const {
+        MyType res = *this;
         res += b;
         return res;
     }
 
-    type operator-(const type& b) const {
-        type res = *this;
+    MyType operator-(const MyType& b) const {
+        MyType res = *this;
         res += -b;
         return res;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const type& t) {
+    friend std::ostream& operator<<(std::ostream& os, const MyType& t) {
         os << "(";
         for (std::size_t i = 0; i < t.n_coeffs - 1; i++) {
             os << t.c[i] << ", ";
@@ -162,12 +173,12 @@ struct Taylor {
         return os;
     }
 
-    static type constant(const T& x) {
-        return type(x);
+    static MyType constant(const T& x) {
+        return MyType(x);
     }
 
-    static type var(const T& x) {
-        auto t = type(x);
+    static MyType var(const T& x) {
+        auto t = MyType(x);
         t.c[1] = 1.0;
         t.n_coeffs = 2;
         return t;
@@ -223,9 +234,9 @@ Taylor<T,M> pow(const Taylor<T,M>& t, const U& r) {
 }
 
 template <int M>
-using T_d = Taylor<double,M>;
+using Td = Taylor<double,M>;
 
 template <int M>
-using T_f = Taylor<float,M>;
+using Tf = Taylor<float,M>;
 
 #endif

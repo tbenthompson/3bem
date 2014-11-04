@@ -5,6 +5,7 @@
 #include "mesh_gen.h"
 #include "util.h"
 #include "petsc_interface.h"
+#include "taylor.h"
 #include <iostream>
 
 double harmonic_u(Vec3<double> x) {
@@ -32,8 +33,10 @@ int main() {
 
     auto q_src = tri_gauss(src_quad_pts);
     auto q_obs = tri_gauss(obs_quad_pts);
-    KernelFnc K = laplace_single;
-    KernelFnc Kdn = laplace_double;
+    auto K = laplace_single<double>;
+    auto Kdn = laplace_double<double>;
+    auto TK = laplace_single<Td<5>>;
+    auto TKdn = laplace_double<Td<5>>;
     NearEval ne(near_field);
 
     int n_verts = sphere.vertices.size();
@@ -48,7 +51,7 @@ int main() {
     }
 
     auto rhs = direct_interact(sphere, sphere, q_src, q_obs, 
-                               Kdn, u, near_field, far_threshold);
+                               Kdn, TKdn, u, near_field, far_threshold);
 
     auto rhs_mass = mass_term(sphere, q_src, u);
 
@@ -59,7 +62,7 @@ int main() {
 
     TIC
     auto matrix = interact_matrix(sphere, sphere, q_src, q_obs,
-                                  K, near_field, far_threshold);
+                                  K, TK, near_field, far_threshold);
     TOC("Matrix construct on " + std::to_string(sphere.faces.size()) + " faces");
     int count = 0;
     auto dudn_solved = solve_system(rhs, 1e-5,
@@ -84,9 +87,9 @@ int main() {
 
         auto obs_normal = normalized(center - obs_pt);
 
-        double u_effect = eval_integral_equation(sphere, q_src, Kdn, ne, obs_pt,
+        double u_effect = eval_integral_equation(sphere, q_src, Kdn, TKdn, ne, obs_pt,
                                                obs_normal, obs_len_scale, u);
-        double dudn_effect = eval_integral_equation(sphere, q_src, K, ne, obs_pt,
+        double dudn_effect = eval_integral_equation(sphere, q_src, K, TK, ne, obs_pt,
                                          obs_normal, obs_len_scale, dudn);
         double result = u_effect + dudn_effect;
         double exact = 1.0 / hypot(obs_pt);

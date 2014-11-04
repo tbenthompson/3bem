@@ -6,8 +6,19 @@
 #include <vector>
 #include "vec.h"
 
+
 class QuadratureRule2D;
 class Mesh;
+template <typename T, int M>
+class Taylor;
+
+const int taylor_degree = 5;
+
+template <typename F, typename T>
+using GenericKernel = std::function<T (T, const Vec3<T>&, const Vec3<F>&, const Vec3<F>&)>;
+
+typedef GenericKernel<double,double> Kernel;
+typedef GenericKernel<double, Taylor<double,taylor_degree>> TaylorKernel;
 
 /* Temporary data store for the evaluation of nearfield integrals. */
 class NearEval {
@@ -21,10 +32,6 @@ public:
     std::vector<double> dist;
 };
 
-typedef std::function<double (double,
-                              const Vec3<double>&,
-                              const Vec3<double>&,
-                              const Vec3<double>&)> KernelFnc;
 
 class FaceInfo {
 public:
@@ -70,13 +77,13 @@ T richardson_step(const std::vector<T>& values) {
 }
 
 Vec3<double> basis_integrals(const QuadratureRule2D& quad_rule,
-                                     const KernelFnc& kernel,
+                                     const Kernel& kernel,
                                      const FaceInfo& face,
                                      const Vec3<double>& obs_loc,
                                      const Vec3<double>& obs_n);
 
 double integral(const QuadratureRule2D& quad_rule,
-                const KernelFnc& kernel,
+                const Kernel& kernel,
                 const FaceInfo& face,
                 const Vec3<double>& src_vals,
                 const Vec3<double>& obs_loc,
@@ -84,7 +91,8 @@ double integral(const QuadratureRule2D& quad_rule,
 
 std::vector<double> integral_equation_vector(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,
-                              const KernelFnc& kernel,
+                              const Kernel& kernel,
+                              const TaylorKernel& t_kernel,
                               const NearEval& near_eval, 
                               const Vec3<double>& obs_pt,
                               const Vec3<double>& obs_normal,
@@ -93,7 +101,8 @@ std::vector<double> integral_equation_vector(const Mesh& src_mesh,
 
 double eval_integral_equation(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,
-                              const KernelFnc& kernel,
+                              const Kernel& kernel,
+                              const TaylorKernel& t_kernel,
                               const NearEval& near_eval, 
                               const Vec3<double>& obs_pt,
                               const Vec3<double>& obs_normal,
@@ -101,20 +110,22 @@ double eval_integral_equation(const Mesh& src_mesh,
                               const std::vector<double>& src_strength,
                               const double far_threshold = 3.0);
 
-std::vector<std::vector<double>> interact_matrix(Mesh& src_mesh,
-                                    Mesh& obs_mesh,
-                                    QuadratureRule2D& src_quad,
-                                    QuadratureRule2D& obs_quad,
-                                    const KernelFnc& kernel,
+std::vector<std::vector<double>> interact_matrix(const Mesh& src_mesh,
+                                    const Mesh& obs_mesh,
+                                    const QuadratureRule2D& src_quad,
+                                    const QuadratureRule2D& obs_quad,
+                                    const Kernel& kernel,
+                                    const TaylorKernel& t_kernel,
                                     int n_steps,
                                     double far_threshold = 3.0);
 
-std::vector<double> direct_interact(Mesh& src_mesh,
-                                    Mesh& obs_mesh,
-                                    QuadratureRule2D& src_quad,
-                                    QuadratureRule2D& obs_quad,
-                                    const KernelFnc& kernel,
-                                    std::vector<double>& src_strength,
+std::vector<double> direct_interact(const Mesh& src_mesh,
+                                    const Mesh& obs_mesh,
+                                    const QuadratureRule2D& src_quad,
+                                    const QuadratureRule2D& obs_quad,
+                                    const Kernel& kernel,
+                                    const TaylorKernel& t_kernel,
+                                    const std::vector<double>& src_strength,
                                     int n_steps, 
                                     const double far_threshold = 3.0);
 
