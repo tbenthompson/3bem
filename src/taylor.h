@@ -4,6 +4,15 @@
 #include <array>
 #include <cmath>
     
+// Citations:
+// "Directions for computing truncated multivariate taylor series" by
+// Neidinger
+//
+// "Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation" by Andreas Griewank and Andrea Walther. 2008. SIAM.
+//
+//TODO: Some of the functions can be optimized (look at the two references 
+//above)
+
 template <typename T, int M>
 struct Taylor {
     static_assert(M >= 1, "Taylor<T,M> should be used with M > 1. \
@@ -73,6 +82,11 @@ struct Taylor {
             c[i] = (term1 + term2) / (i * temp_c[0]);
         }
     }
+
+    //TODO: 
+    //-- evaluation
+    //-- sine and cosine
+    //-- how to get the other operations from sine and cosine and other implemented operations?
 
     void operator/=(const type& b) {
         n_coeffs = M + 1;
