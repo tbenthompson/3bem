@@ -8,7 +8,6 @@ NearEval::NearEval(int n_steps):
     dist(n_steps)
 {
     for (int nf = 0; nf < n_steps; nf++) {
-        //TODO: need a much better distribution of points in the nearfield.
         //TODO: use the diligenti and aimi distribution per the 
         //nearly_singular_quad_test example
         quad.push_back(tri_gauss((int)pow(2, nf + 2)));
@@ -18,13 +17,12 @@ NearEval::NearEval(int n_steps):
 
 FaceInfo::FaceInfo(const Mesh& mesh, int face_index):
     face(mesh.faces[face_index]),
-    corners(index3(mesh.vertices, face))
-{
-    const auto unscaled_normal = tri_unscaled_normal(corners);
-    area = tri_area(unscaled_normal);
-    jacobian = area * 2.0;
-    normal = unscaled_normal / jacobian;
-}
+    corners(index3(mesh.vertices, face)),
+    unscaled_normal(tri_unscaled_normal(corners)),
+    area(tri_area(unscaled_normal)),
+    jacobian(area * 2.0),
+    normal(unscaled_normal / jacobian)
+{}
 
 
 //TODO: test this

@@ -35,8 +35,8 @@ int main() {
     auto q_obs = tri_gauss(obs_quad_pts);
     auto K = laplace_single<double>;
     auto Kdn = laplace_double<double>;
-    auto TK = laplace_single<Td<5>>;
-    auto TKdn = laplace_double<Td<5>>;
+    auto TK = laplace_single<Td<taylor_degree>>;
+    auto TKdn = laplace_double<Td<taylor_degree>>;
     NearEval ne(near_field);
 
     int n_verts = sphere.vertices.size();

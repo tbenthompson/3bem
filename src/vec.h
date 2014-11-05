@@ -110,6 +110,19 @@ std::ostream& operator<<(std::ostream& os, const Vec3<T>& a) {
     return os;
 }
 
+template <typename T, int M>
+std::ostream& operator<<(std::ostream& os, const Vec3<double>& a) {
+    os << "(";
+    if (M > 0) {
+        for (std::size_t i = 0; i < M - 1; i++) {
+            os << a[i] << ", ";
+        }
+        os << a[M - 1];
+    }
+    os << ")";
+    return os;
+}
+
 template <typename T>
 Vec3<T> operator-(const Vec3<T>& v) {
     return {-v[0], -v[1], -v[2]};

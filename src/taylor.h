@@ -19,6 +19,13 @@
 //-- how to get the other operations from sine and cosine and other implemented operations?
 //---- use trig definitions (see the papers above)
 //TODO: Use this for the bem evaluation!
+//TODO: Remove the state!
+//TODO: Rather slow for realistic problems
+//TODO: Furthermore, the differentiation makes the integrals progressively more
+//difficult to compute
+//-- solutions: combine taylor series with interpolation --> hermite interpolation
+//--            use a series acceleration method
+//--            euler-maclaurin formula
 
 template <typename T, int M>
 struct Taylor {

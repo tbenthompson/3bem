@@ -12,7 +12,7 @@ class Mesh;
 template <typename T, int M>
 class Taylor;
 
-const int taylor_degree = 5;
+const int taylor_degree = 20;
 
 template <typename T>
 using GenericKernel = std::function<T
@@ -29,6 +29,7 @@ public:
     static constexpr double initial_dist = 1.0;
 
     const int n_steps;
+    //TODO: const (remove state!)
     std::vector<QuadratureRule2D> quad;
     std::vector<double> dist;
 };
@@ -39,10 +40,11 @@ public:
     FaceInfo(const Mesh& mesh, int face_index);
     
     const std::array<int,3>& face;
-    double area;
-    double jacobian;
-    Vec3<double> normal;
     const std::array<Vec3<double>,3> corners;
+    const Vec3<double> unscaled_normal;
+    const double area;
+    const double jacobian;
+    const Vec3<double> normal;
 };
 
 template <typename T>
@@ -76,6 +78,8 @@ struct SrcPointInfo {
 
 /* Perform the richardson extrapolation for the nearfield quadrature. 
  */
+//TODO: Use the diligenti mapping quadrature for the nearly 
+//singular quadratures required.
 template <typename T>
 T richardson_step(const std::vector<T>& values) {
     assert(values.size() > 1);
@@ -94,12 +98,6 @@ T richardson_step(const std::vector<T>& values) {
             this_level[i] = moreacc;
         }
         error_order++;
-        //TODO: Consider steps of two in error_order as an optional feature
-        //TODO: Consider allowing setting the maximum error and then 
-        // adaptively building
-        //TODO: Integrate this into the main loop?
-        //TODO: Use the diligenti mapping quadrature for the nearly 
-        //singular quadratures required.
         last_level = this_level;
     }
     // std::cout << this_level[0] << std::endl;
