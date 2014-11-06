@@ -11,7 +11,7 @@ Octree simple_pts_tree(int n, int cell_max) {
 }
 
 TEST(SetupFMM) {
-    int n = 500;
+    int n = 200;
     auto oct = simple_pts_tree(n, 10);
     auto strength = random_list(n);
     FMMInfo fmm_info(one_kernel, oct, strength, oct, 2, 9.0);
@@ -55,7 +55,7 @@ TEST(TreecodeOneKernel) {
 }
 
 TEST(TreecodeLaplace) {
-    int n = 2000;
+    int n = 200;
     auto oct = simple_pts_tree(n, 2);
     std::vector<double> strength(n, 1.0);
     FMMInfo fmm_info(laplace_single, oct, strength, oct, 2, 20.0);
@@ -67,7 +67,7 @@ TEST(TreecodeLaplace) {
         error[i] = std::fabs((fmm_info.obs_effect[i] - exact[i]) / exact[i]);
     }
     std::vector<double> zeros(n, 0.0);
-    CHECK_ARRAY_CLOSE(error, zeros, n, 1e-3);
+    CHECK_ARRAY_CLOSE(error, zeros, n, 1e-2);
 }
 
 TEST(M2L_Kernel) {
@@ -120,7 +120,7 @@ TEST(FMMOneBothP2PM2L) {
 }
 
 void test_fmm_laplace(double mac2, double error_max, bool non_one_strength) {
-    int n = 2000;
+    int n = 500;
     auto oct = simple_pts_tree(n, 10);
     std::vector<double> strength(n, 1.0);
     if (non_one_strength) {

@@ -1,21 +1,41 @@
 #include <cassert>
 #include "bem.h"
 #include "mesh.h"
-#include "taylor.h"
 
-NearEval::NearEval(int n_steps):
-    n_steps(n_steps),
-    dist(n_steps)
-{
+std::vector<double> near_dist(int n_steps) {
+    static constexpr double initial_dist = 1.0;
+    std::vector<double> dist(n_steps);
     for (int nf = 0; nf < n_steps; nf++) {
-        //TODO: use the diligenti and aimi distribution per the 
-        //nearly_singular_quad_test example
-        quad.push_back(tri_gauss((int)pow(2, nf + 2)));
         dist[nf] = initial_dist / (pow(2, nf + 1));
     }
+    return dist;
 }
 
+std::vector<std::vector<QuadratureRule2D>> build_self_quad(
+        const QuadratureRule2D& obs_q, int n_steps) {
+    std::vector<std::vector<QuadratureRule2D>> quads(n_steps);
+    int obs_q_pts = obs_q.x_hat.size();
+    for (int nf = 0; nf < n_steps; nf++) {
+        quads[nf].push_back(tri_gauss((int)pow(2, nf + 2)));
+        // for (int i = 0; i < obs_q_pts; i++) {
+        //     quad.push_back(tri_diligenti((int)pow(2, nf + 2)));
+        // }
+    }
+    return quads;
+}
+
+NearEval::NearEval(int near_order, int adjacent_order, int n_steps, 
+                   const QuadratureRule2D& obs_q):
+    n_steps(n_steps),
+    dist(near_dist(n_steps)),
+    self_quad(build_self_quad(obs_q, n_steps)),
+    //TODO: Need better way to choose h from n for double_exp.
+    adjacent_quad(tri_double_exp(adjacent_order, 0.6 / std::log(adjacent_order))),
+    near_quad(tri_gauss(near_order))
+{}
+
 FaceInfo::FaceInfo(const Mesh& mesh, int face_index):
+    face_index(face_index),
     face(mesh.faces[face_index]),
     corners(index3(mesh.vertices, face)),
     unscaled_normal(tri_unscaled_normal(corners)),
@@ -48,9 +68,9 @@ Vec3<double> near_field_point(double ref_dist,
 
 std::vector<double> integral_equation_vector(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,
-                              const Kernel& kernel,
-                              const TaylorKernel& t_kernel,
+                              const KernelD& kernel,
                               const NearEval& near_eval, 
+                              unsigned int obs_face_index,
                               const Vec3<double>& obs_pt,
                               const Vec3<double>& obs_normal,
                               double obs_len_scale,
@@ -65,13 +85,35 @@ std::vector<double> integral_equation_vector(const Mesh& src_mesh,
         std::array<double,3> integrals;
         if (dist2 < pow(far_threshold,2) * src_face.area) {
             std::vector<Vec3<double>> near_steps(near_eval.n_steps, {0,0,0});
-            for (int nf = 0; nf < near_eval.n_steps; nf++) {
-                auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
-                                                  obs_normal, obs_len_scale);
-                near_steps[nf] += basis_integrals(near_eval.quad[nf], kernel,
+
+            if (obs_face_index == i || dist2 < src_face.area) {
+                // same element
+                // TODO: Get rid of the code duplication here.
+                for (int nf = 0; nf < near_eval.n_steps; nf++) {
+                    auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
+                                                      obs_normal, obs_len_scale);
+                    near_steps[nf] += basis_integrals(near_eval.self_quad[nf][0], kernel,
                                                src_face, nf_obs_pt,
                                                obs_normal);
+                }
+            } else {
+                // nearfield
+                for (int nf = 0; nf < near_eval.n_steps; nf++) {
+                    auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
+                                                      obs_normal, obs_len_scale);
+                    near_steps[nf] += basis_integrals(near_eval.adjacent_quad, kernel,
+                                               src_face, nf_obs_pt,
+                                               obs_normal);
+                }
             }
+
+            // for (int nf = 0; nf < near_eval.n_steps; nf++) {
+            //     auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
+            //                                       obs_normal, obs_len_scale);
+            //     near_steps[nf] += basis_integrals(near_eval.self_quad[nf][0], kernel,
+            //                                    src_face, nf_obs_pt,
+            //                                    obs_normal);
+            // }
             integrals = richardson_step(near_steps);
         } else {
             //farfield
@@ -85,22 +127,29 @@ std::vector<double> integral_equation_vector(const Mesh& src_mesh,
     return result;
 }
 
-auto near_gauss = tri_gauss(32);
 /* Evaluate the integral equation for a specific observation point.
+ * if obs_face_index == -1, then no faces overlap with the observation
+ * mesh. 
+ * TODO: Pass new "ObservationPoint" object into this function that includes:
+ * obs_face_idx
+ * obs_quad_pt_idx
+ * obs_len_scale
+ * obs_pt
+ * obs_normal
  */
 double eval_integral_equation(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,
-                              const Kernel& kernel,
-                              const TaylorKernel& t_kernel,
+                              const KernelD& kernel,
                               const NearEval& near_eval, 
+                              unsigned int obs_face_index,
                               const Vec3<double>& obs_pt,
                               const Vec3<double>& obs_normal,
                               double obs_len_scale,
                               const std::vector<double>& src_strength,
                               const double far_threshold) {
     double result = 0.0;
-    // std::vector<double> near_steps(near_eval.n_steps, 0.0);
-    Td<taylor_degree> near_field;
+    std::vector<double> near_steps(near_eval.n_steps, 0.0);
+
     for (unsigned int i = 0; i < src_mesh.faces.size(); i++) {
         FaceInfo src_face(src_mesh, i);
         Vec3<double> src_vals = index3(src_strength, src_face.face);
@@ -111,29 +160,28 @@ double eval_integral_equation(const Mesh& src_mesh,
         //TODO: Better way of distinguishing nearfield and far-field.
         //a further hierarchy -- identical, adjacent, near, far
         if (dist2 < pow(far_threshold,2) * src_face.area) {
-            //nearfield
-            // 
-            // for (int nf = 0; nf < near_eval.n_steps; nf++) {
-            //     auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
-            //                                       obs_normal, obs_len_scale);
-            //     near_steps[nf] += integral(near_eval.quad[nf], kernel,
-            //                                src_face, src_vals, nf_obs_pt,
-            //                                obs_normal);
-            // }
 
-            double nfdn = 5 * obs_len_scale;
-            auto t = Td<taylor_degree>::var(1.0) * nfdn;
-            // The new observation point moved a little bit off the
-            // source surface.
-            Vec3<Td<taylor_degree>> nf_obs_pt = {
-                t * obs_normal[0] + obs_pt[0],
-                t * obs_normal[1] + obs_pt[1],
-                t * obs_normal[2] + obs_pt[2]
-            };
-            auto this_effect = integral(near_gauss, t_kernel,
-                                   src_face, src_vals, nf_obs_pt,
-                                   obs_normal);
-            near_field += this_effect;
+            if (obs_face_index == i || dist2 < src_face.area) {
+                // same element
+                // TODO: Get rid of the code duplication here.
+                for (int nf = 0; nf < near_eval.n_steps; nf++) {
+                    auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
+                                                      obs_normal, obs_len_scale);
+                    near_steps[nf] += integral(near_eval.self_quad[nf][0], kernel,
+                                               src_face, src_vals, nf_obs_pt,
+                                               obs_normal);
+                }
+            } else {
+                // nearfield
+                for (int nf = 0; nf < near_eval.n_steps; nf++) {
+                    auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
+                                                      obs_normal, obs_len_scale);
+                    near_steps[nf] += integral(near_eval.adjacent_quad, kernel,
+                                               src_face, src_vals, nf_obs_pt,
+                                               obs_normal);
+                }
+            }
+
         } else {
             //farfield
             double farfield_effect = integral(src_quad, kernel, src_face,
@@ -141,8 +189,7 @@ double eval_integral_equation(const Mesh& src_mesh,
             result += farfield_effect;
         }
     }
-    // double nearfield_effect = richardson_step(near_steps);
-    double nearfield_effect = near_field.eval(-1.0);
+    double nearfield_effect = richardson_step(near_steps);
     result += nearfield_effect;
     return result;
 }
@@ -188,11 +235,9 @@ std::vector<std::vector<double>> interact_matrix(const Mesh& src_mesh,
                                     const Mesh& obs_mesh,
                                     const QuadratureRule2D& src_quad,
                                     const QuadratureRule2D& obs_quad,
-                                    const Kernel& kernel,
-                                    const TaylorKernel& t_kernel,
-                                    int n_steps,
+                                    const KernelD& kernel,
+                                    const NearEval& near_eval,
                                     double far_threshold) {
-    NearEval near_eval(n_steps);
     int n_obs_basis = obs_mesh.vertices.size();
     int n_src_basis = src_mesh.vertices.size();
     std::vector<std::vector<double>> matrix(n_obs_basis,
@@ -202,11 +247,12 @@ std::vector<std::vector<double>> interact_matrix(const Mesh& src_mesh,
         FaceInfo obs_face(obs_mesh, obs_idx);
         for (std::size_t obs_q = 0; obs_q < obs_quad.x_hat.size(); obs_q++) {
             ObsPointInfo pt(obs_quad, obs_face, obs_q);
+            int passed_face_idx = (&src_mesh == &obs_mesh) ? obs_idx : 0;
 
             const auto row =
-                integral_equation_vector(src_mesh, src_quad, kernel, t_kernel, near_eval,
-                                         pt.obs_pt, obs_face.normal, pt.len_scale,
-                                         far_threshold);
+                integral_equation_vector(src_mesh, src_quad, kernel, near_eval,
+                                         passed_face_idx, pt.obs_pt, obs_face.normal,
+                                         pt.len_scale, far_threshold);
 
 
             for(int v = 0; v < 3; v++) {
@@ -231,23 +277,22 @@ std::vector<double> direct_interact(const Mesh& src_mesh,
                                     const Mesh& obs_mesh,
                                     const QuadratureRule2D& src_quad,
                                     const QuadratureRule2D& obs_quad,
-                                    const Kernel& kernel,
-                                    const TaylorKernel& t_kernel,
+                                    const KernelD& kernel,
                                     const std::vector<double>& src_strength,
-                                    int n_steps,
+                                    const NearEval& near_eval,
                                     double far_threshold) {
-    NearEval near_eval(n_steps);
     std::vector<double> integrals(obs_mesh.vertices.size(), 0.0);
 #pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < obs_mesh.faces.size(); obs_idx++) {
         FaceInfo obs_face(obs_mesh, obs_idx);
         for (std::size_t obs_q = 0; obs_q < obs_quad.x_hat.size(); obs_q++) {
             ObsPointInfo pt(obs_quad, obs_face, obs_q);
+            int passed_face_idx = (&src_mesh == &obs_mesh) ? obs_idx : 0;
 
             const double inner_integral =
-                eval_integral_equation(src_mesh, src_quad, kernel, t_kernel, near_eval,
-                                       pt.obs_pt, obs_face.normal, pt.len_scale,
-                                       src_strength, far_threshold);
+                eval_integral_equation(src_mesh, src_quad, kernel, near_eval,
+                                       passed_face_idx, pt.obs_pt, obs_face.normal, 
+                                       pt.len_scale, src_strength, far_threshold);
 
             outer_integral(integrals, obs_face.face, pt.x_hat, pt.y_hat, 
                            obs_face.jacobian, inner_integral, pt.q_wt);

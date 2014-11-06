@@ -9,29 +9,24 @@
 #include "quadrature.h"
 
 class Mesh;
-template <typename T, int M>
-class Taylor;
 
-const int taylor_degree = 6;
-
-template <typename T>
-using GenericKernel = std::function<T
-    (const T&, const Vec3<T>&, const Vec3<double>&, const Vec3<double>&)>;
-
-typedef GenericKernel<double> Kernel;
-typedef GenericKernel<Taylor<double,taylor_degree>> TaylorKernel;
+template <typename F>
+using GenericKernel = std::function<F
+    (const F&, const Vec3<F>&, const Vec3<F>&, const Vec3<F>&)>;
+typedef GenericKernel<double> KernelD;
+typedef GenericKernel<float> KernelF;
 
 /* Temporary data store for the evaluation of nearfield integrals. */
 class NearEval {
 public:
-    NearEval(int n_steps);
-
-    static constexpr double initial_dist = 1.0;
+    NearEval(int near_order, int adjacent_order, int n_steps,
+             const QuadratureRule2D& obs_q);
 
     const int n_steps;
-    //TODO: const (remove state!)
-    std::vector<QuadratureRule2D> quad;
-    std::vector<double> dist;
+    const std::vector<double> dist;
+    const std::vector<std::vector<QuadratureRule2D>> self_quad;
+    const QuadratureRule2D adjacent_quad;
+    const QuadratureRule2D near_quad;
 };
 
 
@@ -39,6 +34,7 @@ class FaceInfo {
 public:
     FaceInfo(const Mesh& mesh, int face_index);
     
+    const int face_index;
     const std::array<int,3>& face;
     const std::array<Vec3<double>,3> corners;
     const Vec3<double> unscaled_normal;
@@ -119,6 +115,8 @@ Vec3<T> basis_integrals(const QuadratureRule2D& quad_rule,
     return result;
 }
 
+//TODO: Should receive 3 inputs:
+//"Problem", "QuadMethod", "ObservationPoint"
 template <typename T>
 T integral(const QuadratureRule2D& quad_rule,
            const GenericKernel<T>& kernel,
@@ -135,44 +133,54 @@ T integral(const QuadratureRule2D& quad_rule,
     return result;
 }
 
+//TODO: Should receive 3 inputs:
+//"Problem", "QuadMethod", "ObservationPoint"
 std::vector<double> integral_equation_vector(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,
-                              const Kernel& kernel,
-                              const TaylorKernel& t_kernel,
+                              const KernelD& kernel,
                               const NearEval& near_eval, 
+                              unsigned int obs_face_index,
                               const Vec3<double>& obs_pt,
                               const Vec3<double>& obs_normal,
                               double obs_len_scale,
                               const double far_threshold = 3.0);
 
+//TODO: Should receive 3 inputs:
+//"Problem", "QuadMethod", "ObservationPoint"
 double eval_integral_equation(const Mesh& src_mesh,
                               const QuadratureRule2D& src_quad,
-                              const Kernel& kernel,
-                              const TaylorKernel& t_kernel,
+                              const KernelD& kernel,
                               const NearEval& near_eval, 
+                              unsigned int obs_face_index,
                               const Vec3<double>& obs_pt,
                               const Vec3<double>& obs_normal,
                               double obs_len_scale,
                               const std::vector<double>& src_strength,
                               const double far_threshold = 3.0);
 
+//TODO: Should receive 2 inputs:
+//"Problem" which contains the meshes, the kernels and the src vectors
+//"QuadMethod" which contains the quadrature rules for near and far and
+//other parameters like the far_threshold.
 std::vector<std::vector<double>> interact_matrix(const Mesh& src_mesh,
                                     const Mesh& obs_mesh,
                                     const QuadratureRule2D& src_quad,
                                     const QuadratureRule2D& obs_quad,
-                                    const Kernel& kernel,
-                                    const TaylorKernel& t_kernel,
-                                    int n_steps,
+                                    const KernelD& kernel,
+                                    const NearEval& near_eval,
                                     double far_threshold = 3.0);
 
+//TODO: Should receive 2 inputs:
+//"Problem" which contains the meshes, the kernels and the src vectors
+//"QuadMethod" which contains the quadrature rules for near and far and
+//other parameters like the far_threshold.
 std::vector<double> direct_interact(const Mesh& src_mesh,
                                     const Mesh& obs_mesh,
                                     const QuadratureRule2D& src_quad,
                                     const QuadratureRule2D& obs_quad,
-                                    const Kernel& kernel,
-                                    const TaylorKernel& t_kernel,
+                                    const KernelD& kernel,
                                     const std::vector<double>& src_strength,
-                                    int n_steps, 
+                                    const NearEval& near_eval,
                                     const double far_threshold = 3.0);
 
 std::vector<double> mass_term(const Mesh& obs_mesh,

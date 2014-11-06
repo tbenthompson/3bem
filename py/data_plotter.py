@@ -1,9 +1,9 @@
 import h5py
 import numpy as np
 import sys
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 # from mpl_toolkits.mplot3d import Axes3D
-# from matplotlib.tri import Triangulation
+from matplotlib.tri import Triangulation
 import mayavi.mlab as mlab
 
 def main(filename, values_dim):
@@ -12,9 +12,11 @@ def main(filename, values_dim):
     vertices = f['vertices']
     data = f['values'][:,values_dim]
 
-    mlab.triangular_mesh(vertices[:, 0], vertices[:, 1], vertices[:, 2],
-                       faces[:,:], scalars = data)
-    mlab.show()
+    plt.tricontourf(vertices[:,0], vertices[:,1], data)
+    plt.show()
+    # mlab.triangular_mesh(vertices[:, 0], vertices[:, 1], vertices[:, 2],
+    #                    faces[:,:], scalars = data)
+    # mlab.show()
 
 if __name__ == "__main__":
     advice = "Usage is: python py/data_plotter.py filename column" +\

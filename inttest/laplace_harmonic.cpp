@@ -5,7 +5,6 @@
 #include "mesh_gen.h"
 #include "util.h"
 #include "petsc_interface.h"
-#include "taylor.h"
 #include <iostream>
 
 double harmonic_u(Vec3<double> x) {
@@ -24,10 +23,12 @@ int main() {
     double r = 3.0;
     double obs_radius = 2.7;
     double far_threshold = 2.0;
-    int refine_level = 4;
-    int near_field = 5;
+    int refine_level = 3;
+    int near_quad_pts = 5;
+    int adjacent_quad_pts = 5;
+    int near_steps = 5;
     int src_quad_pts = 2;
-    int obs_quad_pts = 3;
+    int obs_quad_pts = 2;
 
     auto sphere = refine_clean(sphere_mesh(center, r), refine_level);
 
@@ -35,9 +36,7 @@ int main() {
     auto q_obs = tri_gauss(obs_quad_pts);
     auto K = laplace_single<double>;
     auto Kdn = laplace_double<double>;
-    auto TK = laplace_single<Td<taylor_degree>>;
-    auto TKdn = laplace_double<Td<taylor_degree>>;
-    NearEval ne(near_field);
+    NearEval ne(near_quad_pts, adjacent_quad_pts, near_steps, q_obs);
 
     int n_verts = sphere.vertices.size();
     std::vector<double> u(n_verts);
@@ -50,8 +49,10 @@ int main() {
         dudn[i] = harmonic_dudn(sphere.vertices[i], center);
     }
 
+    TIC
     auto rhs = direct_interact(sphere, sphere, q_src, q_obs, 
-                               Kdn, TKdn, u, near_field, far_threshold);
+                               Kdn, u, ne, far_threshold);
+    TOC("RHS Eval")
 
     auto rhs_mass = mass_term(sphere, q_src, u);
 
@@ -60,9 +61,9 @@ int main() {
         rhs[i] = -rhs[i] + rhs_mass[i];
     }
 
-    TIC
+    TIC2
     auto matrix = interact_matrix(sphere, sphere, q_src, q_obs,
-                                  K, TK, near_field, far_threshold);
+                                  K, ne, far_threshold);
     TOC("Matrix construct on " + std::to_string(sphere.faces.size()) + " faces");
     int count = 0;
     auto dudn_solved = solve_system(rhs, 1e-5,
@@ -87,9 +88,9 @@ int main() {
 
         auto obs_normal = normalized(center - obs_pt);
 
-        double u_effect = eval_integral_equation(sphere, q_src, Kdn, TKdn, ne, obs_pt,
+        double u_effect = eval_integral_equation(sphere, q_src, Kdn, ne, -1, obs_pt,
                                                obs_normal, obs_len_scale, u);
-        double dudn_effect = eval_integral_equation(sphere, q_src, K, TK, ne, obs_pt,
+        double dudn_effect = eval_integral_equation(sphere, q_src, K, ne, -1, obs_pt,
                                          obs_normal, obs_len_scale, dudn);
         double result = u_effect + dudn_effect;
         double exact = 1.0 / hypot(obs_pt);

@@ -10,7 +10,6 @@ namespace ac = autocheck;
 #include "mesh_gen.h"
 #include "util.h"
 #include "shared.h"
-#include "taylor.h"
 
 struct IntegrationProb {
     IntegrationProb():
@@ -59,44 +58,6 @@ TEST_FIXTURE(IntegrationProb, IntegralBasis) {
     CHECK_CLOSE(result, result2, 1e-5);
 }
 
-TEST_FIXTURE(IntegrationProb, TaylorIntegral) {
-    auto Tk = laplace_double<Td<taylor_degree>>;
-
-    // The goal point
-    obs_loc = {0.5, 0.2, 0.0};
-
-    //Define an expansion point for the taylor expansion
-    auto x = Td<taylor_degree>::var(-1.0);
-    double s1 = -0.1;
-    std::array<Td<taylor_degree>,3> t_exp_pt = {
-        obs_loc[0], obs_loc[1], s1 * x + obs_loc[2]
-    };
-
-    // Taylor expand
-    int high_order = 50;
-    auto acc1 = integral<Td<taylor_degree>>(tri_gauss(high_order), Tk, face,
-                                               src_vals, t_exp_pt, obs_n);
-    for (int i = 20; i < 21; i+=2) {
-        auto taylor_exp = integral<Td<taylor_degree>>(tri_gauss(i), Tk, face,
-                                            src_vals, t_exp_pt, obs_n);
-        double exp1 = taylor_exp.eval(1);
-        std::cout << "Far point with Gauss order: " << i << " " 
-                  << taylor_exp - acc1 << " " << exp1 << std::endl;
-
-        std::array<double,taylor_degree+1> a = taylor_exp.c;
-        std::array<double,taylor_degree+1> s;
-        s[0] = a[0];
-        s[1] = s[0] + a[1];
-        std::cout << s[0] << std::endl;
-        std::cout << s[1] << std::endl;
-        for (int i = 2; i < taylor_degree + 1; i++) {
-            s[i] = s[i - 1] + a[i];
-            std::cout << s[i] << std::endl;
-        }
-        std::cout << taylor_exp << std::endl;
-    }
-}
-
 TEST(Richardson) {
     std::vector<double> input = {0.5, 0.3, 0.2, 0.15};
     double result = richardson_step(input);
@@ -124,13 +85,12 @@ TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
 }
 
 struct EvalProb {
-    EvalProb(int refine_level, int near_eval, int gauss_order, Kernel k,
-             TaylorKernel Tk, Vec3<double> center = Vec3<double>{0,0,0},
+    EvalProb(int refine_level, int near_eval, int gauss_order, const KernelD& k,
+             Vec3<double> center = Vec3<double>{0,0,0},
              double r = 3.0):
         q(tri_gauss(gauss_order)),
         kernel(k),
-        taylor_kernel(Tk),
-        ne(near_eval)
+        ne(7, 7, near_eval, q)
     {
         sphere = sphere_mesh(center, r);
         for (int i = 0; i < refine_level; i++) {
@@ -143,12 +103,12 @@ struct EvalProb {
     }
 
     double go() {
-        return eval_integral_equation(sphere, q, kernel, taylor_kernel, ne, obs_pt,
+        return eval_integral_equation(sphere, q, kernel, ne, -1, obs_pt,
                                       obs_normal, obs_len_scale, src_strength);
     }
     double go_row() {
-        auto row = integral_equation_vector(sphere, q, kernel, taylor_kernel, ne, obs_pt,
-                                      obs_normal, obs_len_scale);
+        auto row = integral_equation_vector(sphere, q, kernel,  ne, -1,
+                                    obs_pt, obs_normal, obs_len_scale);
         double row_sum = 0.0;
         for(std::size_t i = 0; i < row.size(); i++) {
             row_sum += row[i] * src_strength[i];
@@ -158,8 +118,7 @@ struct EvalProb {
 
     Mesh sphere;
     QuadratureRule2D q;
-    Kernel kernel;
-    TaylorKernel taylor_kernel;
+    KernelD kernel;
     NearEval ne;
     Vec3<double> obs_pt;
     Vec3<double> obs_normal;
@@ -168,7 +127,7 @@ struct EvalProb {
 }; 
 
 TEST(EvalIntegralEquationSphereSurfaceArea) {
-    EvalProb ep(5, 3, 2, one<double>, one<Td<taylor_degree>>);
+    EvalProb ep(5, 3, 2, one<double>);
     double result = ep.go();
     double result2 = ep.go_row();
     double exact_surf_area = 4*M_PI*9;
@@ -177,8 +136,7 @@ TEST(EvalIntegralEquationSphereSurfaceArea) {
 }
 
 TEST(ConstantLaplace) {
-    EvalProb ep(5, 3, 2, laplace_double<double>,
-                laplace_double<Td<taylor_degree>>);
+    EvalProb ep(5, 3, 2, laplace_double<double>);
     double result = ep.go();
     double result2 = ep.go_row();
     CHECK_CLOSE(result, 1.0, 1e-3);
@@ -186,8 +144,7 @@ TEST(ConstantLaplace) {
 }
 
 TEST(ConstantLaplaceBoundary) {
-    EvalProb ep(2, 3, 3, laplace_double<double>,
-                laplace_double<Td<taylor_degree>>);
+    EvalProb ep(1, 3, 3, laplace_double<double>);
     int n_verts = ep.sphere.vertices.size();
     // n_verts = 1;
     for (int i = 0; i < n_verts;i++) {
@@ -201,8 +158,7 @@ TEST(ConstantLaplaceBoundary) {
 }
 
 TEST(MatrixRowVsEval) {
-    EvalProb ep(5, 3, 2, laplace_double<double>,
-                laplace_double<Td<taylor_degree>>);
+    EvalProb ep(5, 3, 2, laplace_double<double>);
     double result = ep.go();
     double result2 = ep.go_row();
     CHECK_CLOSE(result, 1.0, 1e-3);
@@ -210,8 +166,7 @@ TEST(MatrixRowVsEval) {
 }
 
 TEST(Whoa_baNANnas) {
-    EvalProb ep(2, 3, 4, laplace_double<double>,
-                laplace_double<Td<taylor_degree>>, {5,0,0}, 3.0);
+    EvalProb ep(2, 3, 4, laplace_double<double>, {5,0,0}, 3.0);
     ep.obs_pt = {6.5309310892394858, 1.8371173070873836, -1.5309310892394863};
     ep.obs_normal = {-0.5773502691896254, -0.57735026918962595, 0.57735026918962595};
     ep.obs_len_scale = 0.0094194506485734651;
@@ -250,10 +205,11 @@ TEST(DirectInteractOne) {
     auto q = tri_gauss(2);
     int n_verts = sphere.vertices.size();
     std::vector<double> str(n_verts, 1.0);
+    NearEval ne(6, 6, 2, q);
     auto res = direct_interact(sphere, sphere, q, q,
-                               one<double>, one<Td<taylor_degree>>, str, 2);
+                               one<double>, str, ne);
     auto matrix = interact_matrix(sphere, sphere, q, q,
-                                  one<double>, one<Td<taylor_degree>>, 2);
+                                  one<double>, ne);
     std::vector<double> res2(n_verts, 0.0);
     for (int i = 0; i < n_verts; i++) {
         for (int j = 0; j < n_verts; j++) {
@@ -278,21 +234,20 @@ TEST(DirectInteractOne) {
 //TODO: Fixture for this and the next one.
 TEST(DirectInteractConstantLaplace) {
     Mesh sphere = clean_mesh(sphere_mesh({0,0,0}, 1.0));
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 2; i++) {
         sphere = refine_mesh(sphere);
     }
     sphere = clean_mesh(sphere);
     auto q = tri_gauss(2);
     std::vector<double> str(sphere.vertices.size(), 1.0);
+    NearEval ne(6, 6, 2, q);
     auto res0 = direct_interact(sphere, sphere, q, q,
-                                laplace_double<double>, 
-                                laplace_double<Td<taylor_degree>>, str, 2);
+                                laplace_double<double>, str, ne);
     auto res1 = direct_interact(sphere, sphere, q, q,
-                                laplace_single<double>,
-                                laplace_double<Td<taylor_degree>>, str, 2);
+                                laplace_single<double>, str, ne);
     auto res2 = mass_term(sphere, q, str);
-    CHECK_ARRAY_CLOSE(res0, res2, sphere.vertices.size(), 1e-2);
-    CHECK_ARRAY_CLOSE(res1, res2, sphere.vertices.size(), 1e-2);
+    CHECK_ARRAY_CLOSE(res0, res2, sphere.vertices.size(), 3e-2);
+    CHECK_ARRAY_CLOSE(res1, res2, sphere.vertices.size(), 3e-2);
 }
 
 int main(int, char const *[])

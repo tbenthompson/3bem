@@ -80,7 +80,7 @@ def derive_kernels(k, j):
 # Get some random points to test compare the hand-derived and symbolically
 # derived elastostatic kernels.
 def get_arg_sets():
-    n_arg_sets = 100
+    n_arg_sets = 25
 
     arg_sets = []
     for i in range(n_arg_sets):
