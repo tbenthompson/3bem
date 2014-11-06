@@ -85,6 +85,7 @@ std::vector<double> integral_equation_vector(const Mesh& src_mesh,
     return result;
 }
 
+auto near_gauss = tri_gauss(32);
 /* Evaluate the integral equation for a specific observation point.
  */
 double eval_integral_equation(const Mesh& src_mesh,
@@ -98,7 +99,8 @@ double eval_integral_equation(const Mesh& src_mesh,
                               const std::vector<double>& src_strength,
                               const double far_threshold) {
     double result = 0.0;
-    std::vector<double> near_steps(near_eval.n_steps, 0.0);
+    // std::vector<double> near_steps(near_eval.n_steps, 0.0);
+    Td<taylor_degree> near_field;
     for (unsigned int i = 0; i < src_mesh.faces.size(); i++) {
         FaceInfo src_face(src_mesh, i);
         Vec3<double> src_vals = index3(src_strength, src_face.face);
@@ -110,19 +112,28 @@ double eval_integral_equation(const Mesh& src_mesh,
         //a further hierarchy -- identical, adjacent, near, far
         if (dist2 < pow(far_threshold,2) * src_face.area) {
             //nearfield
-            
-            for (int nf = 0; nf < near_eval.n_steps; nf++) {
-                auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
-                                                  obs_normal, obs_len_scale);
-                near_steps[nf] += integral(near_eval.quad[nf], kernel,
-                                           src_face, src_vals, nf_obs_pt,
-                                           obs_normal);
-            }
-            // auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
-            //                                   obs_normal, obs_len_scale);
-            // near_steps[nf] += integral(near_eval.quad[nf], kernel,
-            //                            src_face, src_vals, nf_obs_pt,
-            //                            obs_normal);
+            // 
+            // for (int nf = 0; nf < near_eval.n_steps; nf++) {
+            //     auto nf_obs_pt = near_field_point(near_eval.dist[nf], obs_pt,
+            //                                       obs_normal, obs_len_scale);
+            //     near_steps[nf] += integral(near_eval.quad[nf], kernel,
+            //                                src_face, src_vals, nf_obs_pt,
+            //                                obs_normal);
+            // }
+
+            double nfdn = 5 * obs_len_scale;
+            auto t = Td<taylor_degree>::var(1.0) * nfdn;
+            // The new observation point moved a little bit off the
+            // source surface.
+            Vec3<Td<taylor_degree>> nf_obs_pt = {
+                t * obs_normal[0] + obs_pt[0],
+                t * obs_normal[1] + obs_pt[1],
+                t * obs_normal[2] + obs_pt[2]
+            };
+            auto this_effect = integral(near_gauss, t_kernel,
+                                   src_face, src_vals, nf_obs_pt,
+                                   obs_normal);
+            near_field += this_effect;
         } else {
             //farfield
             double farfield_effect = integral(src_quad, kernel, src_face,
@@ -130,7 +141,8 @@ double eval_integral_equation(const Mesh& src_mesh,
             result += farfield_effect;
         }
     }
-    double nearfield_effect = richardson_step(near_steps);
+    // double nearfield_effect = richardson_step(near_steps);
+    double nearfield_effect = near_field.eval(-1.0);
     result += nearfield_effect;
     return result;
 }

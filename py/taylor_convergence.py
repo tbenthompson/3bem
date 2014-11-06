@@ -51,6 +51,6 @@ def make_it_alternating():
     # print np.sum(an)
 
 if __name__ == "__main__":
-    plot_oscillations()
-    # more_plots()
+    # plot_oscillations()
+    more_plots()
     # make_it_alternating()
