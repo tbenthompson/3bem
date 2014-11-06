@@ -73,10 +73,10 @@ TEST_FIXTURE(IntegrationProb, TaylorIntegral) {
     };
 
     // Taylor expand
-    int high_order = 900;
+    int high_order = 50;
     auto acc1 = integral<Td<taylor_degree>>(tri_gauss(high_order), Tk, face,
                                                src_vals, t_exp_pt, obs_n);
-    for (int i = 100; i < 101; i+=2) {
+    for (int i = 20; i < 21; i+=2) {
         auto taylor_exp = integral<Td<taylor_degree>>(tri_gauss(i), Tk, face,
                                             src_vals, t_exp_pt, obs_n);
         double exp1 = taylor_exp.eval(1);

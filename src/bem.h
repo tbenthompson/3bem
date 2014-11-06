@@ -12,7 +12,7 @@ class Mesh;
 template <typename T, int M>
 class Taylor;
 
-const int taylor_degree = 20;
+const int taylor_degree = 6;
 
 template <typename T>
 using GenericKernel = std::function<T
