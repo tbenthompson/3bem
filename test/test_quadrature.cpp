@@ -55,7 +55,7 @@ TEST(GaussExactness) {
             double result = integrate(q, [=](double x) {return (g + 1) * pow(x, g);});
             double exact = 2.0 * ((g + 1) % 2);
             return std::fabs(exact - result) < 1e-13;
-        }, 100, arb);
+        }, 30, arb);
 }
 
 TEST(DiligentiMapping) {
@@ -167,7 +167,7 @@ TEST(LinearInterpOnes) {
             double result = linear_interp(x_hat, y_hat, {1,1,1});
             double exact = 1.0;
             return std::fabs(result - exact) < 1e-12;
-        }, 100, arb);
+        }, 30, arb);
 }
 
 int main(int, char const *[])

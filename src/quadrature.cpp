@@ -3,7 +3,7 @@
 #include <cmath>
 
 /* Compute the Double exponential (also called Tanh-Sinh) 
- * quadrature rule with n points.
+ * quadrature rule with 2n + 1 points.
  */
 QuadratureRule double_exp(int n, double h) {
     QuadratureRule retval;

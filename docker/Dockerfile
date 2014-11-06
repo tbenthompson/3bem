@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y \
     python-dev\ 
     python-distribute\
     python-pip\
+    python-h5py\
     subversion\
     wget
 
