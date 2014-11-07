@@ -73,12 +73,12 @@ TEST(RichardsonZeros) {
 }
 
 TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
-    auto q = tri_gauss(3);
+    q = tri_gauss(3);
     kernel = laplace_single;
     double offset = 0.5;
     std::vector<double> vals;
     obs_n = {1,0,0};
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 5; i++) {
         obs_loc = {2.0, 2.0, 2.0 + offset};
         go();
         vals.push_back(result);
