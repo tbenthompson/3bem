@@ -201,7 +201,7 @@ std::vector<double> get_singular_steps(int n_steps) {
     static constexpr double initial_dist = 1.0;
     std::vector<double> dist(n_steps);
     for (int nf = 0; nf < n_steps; nf++) {
-        dist[nf] = initial_dist / (std::pow(2, nf + 1));
+        dist[nf] = initial_dist / (std::pow(2, nf));
     }
     return dist;
 }
@@ -209,15 +209,15 @@ std::vector<double> get_singular_steps(int n_steps) {
 std::vector<int> get_singular_order(int n_steps) {
     std::vector<int> singular_orders(n_steps);
     for (int i = 0; i < n_steps; i++) {
-        singular_orders[i] = (int)std::pow(2, i + 2);
+        singular_orders[i] = (int)std::pow(2, i + 1);
     }
     return singular_orders;
 }
 
-std::vector<QuadRule2d> get_singular_quads(int n_steps) {
+std::vector<QuadRule2d> get_singular_quads(const std::vector<int>& orders) {
     std::vector<QuadRule2d> quads;
-    for (int nf = 0; nf < n_steps; nf++) {
-        quads.push_back(tri_gauss((int)pow(2, nf + 2)));
+    for (unsigned int nf = 0; nf < orders.size(); nf++) {
+        quads.push_back(tri_gauss(orders[nf]));
     }
     return quads;
 }
@@ -235,7 +235,7 @@ QuadStrategy::QuadStrategy(int obs_order, int src_far_order, int src_near_order,
     n_singular_steps(n_singular_steps),
     singular_steps(get_singular_steps(n_singular_steps)),
     singular_orders(get_singular_order(n_singular_steps)),
-    singular_quads(get_singular_quads(n_singular_steps))
+    singular_quads(get_singular_quads(singular_orders))
 {}
     
 std::vector<const QuadRule2d*> QuadStrategy::get_near_quad(bool singular) const {

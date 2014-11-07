@@ -17,7 +17,7 @@ ObsPt ObsPt::from_face(const QuadRule2d& obs_quad,
     return {
         //TODO: need to divide by q or something like that
         std::sqrt(obs_face.area),
-        ref_to_real(obs_quad[idx].x_hat[0], obs_quad[idx].x_hat[1], obs_face.corners),
+        ref_to_real(obs_quad[idx].x_hat, obs_face.corners),
         obs_face.normal 
     };
 }
@@ -29,9 +29,9 @@ SrcPointInfo::SrcPointInfo(const QuadRule2d& quad_rule,
               const Vec3<double>& obs_n,
               int q_index) {
     auto qpt = quad_rule[q_index];
-    basis = linear_basis(qpt.x_hat[0], qpt.x_hat[1]);
+    basis = linear_basis(qpt.x_hat);
 
-    const auto src_pt = ref_to_real(qpt.x_hat[0], qpt.x_hat[1], face.corners);
+    const auto src_pt = ref_to_real(qpt.x_hat, face.corners);
     const auto d = src_pt - obs_loc;
     const auto r2 = hypot2(d);
     const auto kernel_val = kernel(r2, d, face.normal, obs_n);
@@ -64,8 +64,6 @@ double integral(const QuadRule2d& quad_rule,
     return dot(basis, src_vals);
 }
 
-
-//TODO: test this
 double appx_face_dist2(const Vec3<double>& pt,
                        const std::array<Vec3<double>,3>& vs) {
     double d0 = dist2(pt, vs[0]);
@@ -74,29 +72,24 @@ double appx_face_dist2(const Vec3<double>& pt,
     return std::min(d0, std::min(d1, d2));
 }
 
-
 /* Perform the richardson extrapolation for the nearfield quadrature. 
  */
-//TODO: Use the diligenti mapping quadrature for the nearly 
-//singular quadratures required.
 template <typename T>
 T richardson_step(const std::vector<T>& values) {
     assert(values.size() > 1);
     int n_steps = values.size();
     std::vector<T> last_level = values;
     std::vector<T> this_level;
-    int error_order = 1;
     for (int m = 1; m < n_steps; m++) {
         this_level.resize(n_steps - m);
         for (int i = 0; i < n_steps - m; i++) {
-            const double mult = pow(2, error_order);
+            const double mult = pow(2, m);
             const double factor = 1.0 / (mult - 1.0);
             T low = last_level[i];
             T high = last_level[i + 1];
             T moreacc = factor * (mult * high - low);
             this_level[i] = moreacc;
         }
-        error_order++;
         last_level = this_level;
     }
     // std::cout << this_level[0] << std::endl;
@@ -117,14 +110,15 @@ std::vector<double> integral_equation_vector(const Problem& p,
         std::array<double,3> integrals;
         if (dist2 < pow(qs.far_threshold,2) * src_face.area) {
             std::vector<Vec3<double>> near_steps(qs.n_singular_steps, {0,0,0});
-            auto near_quad = qs.get_near_quad(dist2 < src_face.area);
+            auto near_quad = qs.get_near_quad(dist2 < 0.5 * src_face.area);
             for (int nf = 0; nf < qs.n_singular_steps; nf++) {
 
                 double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
                 auto nf_obs_pt = obs.loc + nfdn * obs.normal;
 
                 near_steps[nf] += basis_integrals(*near_quad[nf], p.K,
-                                           src_face, nf_obs_pt, obs.normal);
+                                                  src_face, nf_obs_pt,
+                                                  obs.normal);
             }
             integrals = richardson_step(near_steps);
         } else {
@@ -151,18 +145,6 @@ double eval_integral_equation(const Problem& p, const QuadStrategy& qs,
     return result;
 }
 
-void outer_integral(std::vector<double>& integrals,
-                    const std::array<int,3>& obs_face, double x_hat, double y_hat,
-                    double jacobian, double eval, double q_wt) {
-    for(int v = 0; v < 3; v++) {
-        double obs_basis_eval = linear_interp(x_hat, y_hat, unit<double>(v)); 
-#pragma omp critical
-        {
-            integrals[obs_face[v]] += jacobian * obs_basis_eval * eval * q_wt;
-        }
-    }
-}
-
 //TODO: Use a sparse matrix storage format here.
 std::vector<std::vector<double>> interact_matrix(const Problem& p,
                                                  const QuadStrategy& qs) {
@@ -178,10 +160,8 @@ std::vector<std::vector<double>> interact_matrix(const Problem& p,
 
             const auto row = integral_equation_vector(p, qs, pt);
 
-
             for(int v = 0; v < 3; v++) {
-                double obs_basis_eval = linear_interp(qs.obs_quad[obs_q].x_hat[0],
-                                                      qs.obs_quad[obs_q].x_hat[1],
+                double obs_basis_eval = linear_interp(qs.obs_quad[obs_q].x_hat,
                                                       unit<double>(v)); 
                 int b = obs_face.face[v];
 #pragma omp critical
@@ -194,27 +174,20 @@ std::vector<std::vector<double>> interact_matrix(const Problem& p,
     return matrix;
 }
 
-
+std::vector<double> bem_mat_mult(const Mat& A, const std::vector<double>& x) {
+    std::vector<double> res(A.size(), 0.0);
+    for (unsigned int i = 0; i < A.size(); i++) {
+        for (unsigned int j = 0; j < A[i].size(); j++) {
+            res[i] += A[i][j] * x[j]; 
+        }
+    }
+    return res;
+}
 
 std::vector<double> direct_interact(const Problem& p,
                                     const QuadStrategy& qs) {
 
-    std::vector<double> integrals(p.obs_mesh.vertices.size(), 0.0);
-#pragma omp parallel for
-    for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.faces.size(); obs_idx++) {
-        FaceInfo obs_face(p.obs_mesh, obs_idx);
-        for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
-            auto pt = ObsPt::from_face(qs.obs_quad, obs_face, obs_q);
-
-            const double inner_integral = eval_integral_equation(p, qs, pt);
-
-            outer_integral(integrals, obs_face.face, qs.obs_quad[obs_q].x_hat[0],
-                           qs.obs_quad[obs_q].x_hat[1], obs_face.jacobian,
-                           inner_integral, qs.obs_quad[obs_q].w);
-        }
-    }
-
-    return integrals;
+    return bem_mat_mult(interact_matrix(p, qs), p.src_strength);
 }
 
 std::vector<double> mass_term(const Problem& p,
@@ -223,11 +196,15 @@ std::vector<double> mass_term(const Problem& p,
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.faces.size(); obs_idx++) {
         FaceInfo obs_face(p.obs_mesh, obs_idx);
         for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
-            const double strength_interp = 
-                linear_interp(qs.obs_quad[obs_q].x_hat[0], qs.obs_quad[obs_q].x_hat[1], index3(p.src_strength, obs_face.face));
+            auto qpt = qs.obs_quad[obs_q];
+            auto face_vals = index3(p.src_strength, obs_face.face);
+            double interp_val = linear_interp(qpt.x_hat, face_vals);
 
-            outer_integral(integrals, obs_face.face, qs.obs_quad[obs_q].x_hat[0], qs.obs_quad[obs_q].x_hat[1], 
-                           obs_face.jacobian, strength_interp, qs.obs_quad[obs_q].w);
+            for(int v = 0; v < 3; v++) {
+                double obs_basis_eval = linear_interp(qpt.x_hat, unit<double>(v)); 
+                integrals[obs_face.face[v]] += obs_face.jacobian * obs_basis_eval * 
+                                          interp_val * qpt.w;
+            }
         }
     }
     return integrals;
