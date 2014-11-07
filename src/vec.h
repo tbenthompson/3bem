@@ -60,12 +60,12 @@ void operator/=(Vec3<T>& a, const Vec3<T>& b) {
 }
 
 template <typename T>
-void operator*=(Vec3<T>& a, const T s) {
+void operator*=(Vec3<T>& a, const T& s) {
     a[0] *= s; a[1] *= s; a[2] *= s;
 }
 
 template <typename T>
-void operator/=(Vec3<T>& a, const T s) {
+void operator/=(Vec3<T>& a, const T& s) {
     a[0] /= s; a[1] /= s; a[2] /= s;
 }
 
@@ -90,17 +90,17 @@ Vec3<T> operator/(const Vec3<T>& a, const Vec3<T>& b) {
 }
 
 template <typename T>
-Vec3<T> operator*(const Vec3<T>& a, const T s) {
+Vec3<T> operator*(const Vec3<T>& a, const T& s) {
     Vec3<T> res = a; res *= s; return res;
 }
 
 template <typename T>
-Vec3<T> operator*(const T s, const Vec3<T>& a) {
+Vec3<T> operator*(const T& s, const Vec3<T>& a) {
     Vec3<T> res = a; res *= s; return res;
 }
 
 template <typename T>
-Vec3<T> operator/(const Vec3<T>& a, const T s) {
+Vec3<T> operator/(const Vec3<T>& a, const T& s) {
     Vec3<T> res = a; res /= s; return res;
 }
 
@@ -181,6 +181,11 @@ Vec3<T> unit(const int k) {
     Vec3<T> e_k = {0.0, 0.0, 0.0};
     e_k[k] = 1.0;
     return e_k;
+}
+
+template <typename T>
+Vec3<T> fabs(const Vec3<T>& v) {
+    return {std::fabs(v[0]), std::fabs(v[1]), std::fabs(v[2])};
 }
 
 #endif

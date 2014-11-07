@@ -10,27 +10,29 @@ int main() {
     //-- doing ~9x as much work because the problem is not vectored
     //-- constraints are becoming a problem -- need to loosen constraints
     //   across the fault
+
+    double surf_width = 4;
+    int refine_surf = 2;
+    double far_threshold = 3.0;
+    int near_quad_pts = 3;
+    int near_steps = 5;
+    int src_quad_pts = 2;
+    int obs_quad_pts = 2;
+
     Mesh fault = rect_mesh(
         {-1, 0, -3.0}, {-1, 0, -1.0},
         {1, 0, -1.0}, {1, 0, -3.0}
     );
     fault = refine_clean(fault, 2);
 
-    double width = 4;
     Mesh surface = rect_mesh(
-        {-width, -width, 0}, {-width, width, 0},
-        {width, width, 0}, {width, -width, 0}
+        {-surf_width, -surf_width, 0}, {-surf_width, surf_width, 0},
+        {surf_width, surf_width, 0}, {surf_width, -surf_width, 0}
     );
-    surface = refine_clean(surface, 4);
-    std::cout << surface.faces.size() << std::endl;
+    surface = refine_clean(surface, refine_surf);
 
-    double far_threshold = 3.0;
-    int near_quad_pts = 6;
-    int near_steps = 6;
-    int src_quad_pts = 2;
-    int obs_quad_pts = 3;
     QuadStrategy qs(obs_quad_pts, src_quad_pts, near_quad_pts,
-                    near_steps, far_threshold);
+                    near_steps, far_threshold, 1e-3);
 
     ElasticKernels ek(30e9, 0.25);
     
@@ -86,6 +88,7 @@ int main() {
         for (int j = 0; j < 3; j++) {
             Problem p = {surface, surface, h[k][j], {}};
             mats[k][j] = interact_matrix(p, qs);
+            std::cout << "HIHIHIH" << std::endl;
         }
     }
 

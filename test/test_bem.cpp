@@ -52,7 +52,7 @@ TEST_FIXTURE(IntegrationProb, IntegralOne) {
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceSingle) {
     kernel = laplace_single;
-    exact = 0.0269063; go(); check();
+    exact = -0.0269063; go(); check();
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceDouble) {
@@ -85,7 +85,7 @@ TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
         offset /= 2;
     }
     double result = richardson_step(vals);
-    CHECK_CLOSE(result, 0.0269063, 1e-6);
+    CHECK_CLOSE(result, -0.0269063, 1e-6);
 }
 
 //TODO: This should be refactored a bit!
@@ -240,6 +240,9 @@ TEST(DirectInteractConstantLaplace) {
     Problem p_single = {sphere, sphere, laplace_single, str};
     auto res0 = direct_interact(p_double, qs);
     auto res1 = direct_interact(p_single, qs);
+    for (unsigned int i = 0; i < res1.size(); i++) {
+        res1[i] = -res1[i];
+    }
 
     Problem p_mass = {sphere, sphere, one, str};
     auto res2 = mass_term(p_mass, qs);
