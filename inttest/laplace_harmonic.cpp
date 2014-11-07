@@ -25,18 +25,14 @@ int main() {
     double far_threshold = 2.0;
     int refine_level = 3;
     int near_quad_pts = 5;
-    int adjacent_quad_pts = 5;
     int near_steps = 5;
     int src_quad_pts = 2;
     int obs_quad_pts = 2;
 
-    auto sphere = refine_clean(sphere_mesh(center, r), refine_level);
+    QuadStrategy qs(obs_quad_pts, src_quad_pts, near_quad_pts,
+                    near_steps, far_threshold);
 
-    auto q_src = tri_gauss(src_quad_pts);
-    auto q_obs = tri_gauss(obs_quad_pts);
-    auto K = laplace_single<double>;
-    auto Kdn = laplace_double<double>;
-    NearEval ne(near_quad_pts, adjacent_quad_pts, near_steps, q_obs);
+    auto sphere = refine_clean(sphere_mesh(center, r), refine_level);
 
     int n_verts = sphere.vertices.size();
     std::vector<double> u(n_verts);
@@ -50,11 +46,12 @@ int main() {
     }
 
     TIC
-    auto rhs = direct_interact(sphere, sphere, q_src, q_obs, 
-                               Kdn, u, ne, far_threshold);
+    Problem p_double = {sphere, sphere, laplace_double, u};
+    auto rhs = direct_interact(p_double, qs);
     TOC("RHS Eval")
 
-    auto rhs_mass = mass_term(sphere, q_src, u);
+    Problem p_mass = {sphere, sphere, one, u};
+    auto rhs_mass = mass_term(p_mass, qs);
 
     for (unsigned int i = 0; i < rhs.size(); i++){
         //TODO: I think the signs here are wrong. Where is there a sign flip?
@@ -62,8 +59,8 @@ int main() {
     }
 
     TIC2
-    auto matrix = interact_matrix(sphere, sphere, q_src, q_obs,
-                                  K, ne, far_threshold);
+    Problem p_single = {sphere, sphere, laplace_single, {}};
+    auto matrix = interact_matrix(p_single, qs);
     TOC("Matrix construct on " + std::to_string(sphere.faces.size()) + " faces");
     int count = 0;
     auto dudn_solved = solve_system(rhs, 1e-5,
@@ -81,17 +78,18 @@ int main() {
         });
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
     hdf_out("laplace.hdf5", sphere, dudn_solved); 
+    return 0;
 
     double obs_len_scale = get_len_scale(sphere, 0, obs_quad_pts);
     for(int i = 0; i < 100; i++) {
         auto obs_pt = random_pt_sphere(center, obs_radius);
 
         auto obs_normal = normalized(center - obs_pt);
-
-        double u_effect = eval_integral_equation(sphere, q_src, Kdn, ne, -1, obs_pt,
-                                               obs_normal, obs_len_scale, u);
-        double dudn_effect = eval_integral_equation(sphere, q_src, K, ne, -1, obs_pt,
-                                         obs_normal, obs_len_scale, dudn);
+        ObsPt obs = {obs_len_scale, obs_pt, obs_normal};
+       
+        double u_effect = eval_integral_equation(p_double, qs, obs);
+        Problem p_s = {sphere, sphere, laplace_single, dudn};
+        double dudn_effect = eval_integral_equation(p_s, qs, obs);
         double result = u_effect + dudn_effect;
         double exact = 1.0 / hypot(obs_pt);
         double error = std::fabs(exact - result);

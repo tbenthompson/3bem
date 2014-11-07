@@ -5,14 +5,14 @@
 /* Compute the Double exponential (also called Tanh-Sinh) 
  * quadrature rule with 2n + 1 points.
  */
-QuadratureRule double_exp(int n, double h) {
-    QuadratureRule retval;
+QuadRule1d double_exp(int n, double h) {
+    QuadRule1d retval;
     for (int i = -n; i <= n; i++) {
         const double sinhterm = 0.5 * M_PI * std::sinh(i * h);
         const double coshsinh = std::cosh(sinhterm);
         const double x = std::tanh(sinhterm);
         const double w = h * 0.5 * M_PI * std::cosh(i * h) / (coshsinh * coshsinh);
-        retval.push_back(std::make_pair(x, w));
+        retval.push_back({{x},w});
     }
     return retval;
 }
@@ -39,8 +39,8 @@ std::pair<double, double> legendre_and_n_minus_1(unsigned int n,
  * Then, the analytic approximation is refined using Newton's method.
  * This should work for rules up to about n = 1000.
  */
-QuadratureRule gauss(unsigned int n) {
-    QuadratureRule retval(n);
+QuadRule1d gauss(unsigned int n) {
+    QuadRule1d retval(n);
     const double tolerance = 1e-14;
     //Because gaussian quadrature rules are symmetric, I only 
     const unsigned int m = (n+1)/2;
@@ -66,8 +66,8 @@ QuadratureRule gauss(unsigned int n) {
         }
 
         double w = 2 * (n + 1) * (n + 1) / (n * n * (1 - x * x) * dp * dp);
-        retval[i] = std::make_pair(-x, w);
-        retval[n - i - 1] = std::make_pair(x, w);
+        retval[i] = {{-x},w};
+        retval[n - i - 1] = {{x},w};
     }
 
     return retval;
@@ -83,7 +83,7 @@ QuadratureRule gauss(unsigned int n) {
  * Aimi, a., and M. Diligenti. “Numerical Integration in 3D Galerkin BEM Solution of HBIEs.” Computational Mechanics 28, no. 3–4 (April 01, 2002): 233–49. doi:10.1007/s00466-001-0284-9.
  * To derive the version used below:
  */
-QuadratureRule diligenti_mapping(unsigned int n, double x0, int q) {
+QuadRule1d diligenti_mapping(unsigned int n, double x0, int q) {
     double x0_mapped = from_11_to_01(x0);
     double inv_q = 1.0 / q;
     double qth_root_x0 = pow(x0_mapped, inv_q);
@@ -92,11 +92,12 @@ QuadratureRule diligenti_mapping(unsigned int n, double x0, int q) {
     double delta = (1 - x0_mapped) / pow((1 - zs), q);
 
     auto underlying = gauss(n);
-    QuadratureRule retval(n);
+    QuadRule1d retval(n);
     for (unsigned int i = 0; i < n; i++) {
-        double z_hat = from_11_to_01(underlying[i].first) - zs;
-        retval[i].first = from_01_to_11(x0_mapped + delta * pow(z_hat, q));
-        retval[i].second = underlying[i].second * q * delta * pow(z_hat, q - 1);
+        double z_hat = from_11_to_01(underlying[i].x_hat[0]) - zs;
+        double x = from_01_to_11(x0_mapped + delta * pow(z_hat, q));
+        double w = underlying[i].w * q * delta * pow(z_hat, q - 1);
+        retval[i] = {{x},w};
     }
     return retval;
 }
@@ -104,10 +105,10 @@ QuadratureRule diligenti_mapping(unsigned int n, double x0, int q) {
 /* A helper function for testing the quadrature rules. Accepts a function
  * and integrates it according to the specified quadrature rule.
  */
-double integrate(QuadratureRule& qr, std::function<double (double)> fnc) {
+double integrate(QuadRule1d& qr, std::function<double (double)> fnc) {
     double integral_val = 0;
     for (auto xw: qr) {
-        integral_val += xw.second * fnc(xw.first);
+        integral_val += xw.w * fnc(xw.x_hat[0]);
     }
     return integral_val;
 }
@@ -115,10 +116,10 @@ double integrate(QuadratureRule& qr, std::function<double (double)> fnc) {
 /* Another helper function, but for 2D integration. 
  * TODO: Make 1D and 2D quadrature more similar.
  */
-double integrate(QuadratureRule2D& qr, std::function<double (double,double)> fnc) {
+double integrate(QuadRule2d& qr, std::function<double (double,double)> fnc) {
     double integral_val = 0;
-    for (unsigned int i = 0; i < qr.x_hat.size(); i++) {
-        integral_val += qr.weights[i] * fnc(qr.x_hat[i], qr.y_hat[i]);
+    for (unsigned int i = 0; i < qr.size(); i++) {
+        integral_val += qr[i].w * fnc(qr[i].x_hat[0], qr[i].x_hat[1]);
     }
     return integral_val;
 }
@@ -127,16 +128,17 @@ double integrate(QuadratureRule2D& qr, std::function<double (double,double)> fnc
 /* Produce a 2D tensor product quadrature rule from the product of two
  * one quadrature rule. 
  */
-QuadratureRule2D tensor_product(QuadratureRule xq, QuadratureRule yq) {
+QuadRule2d tensor_product(QuadRule1d xq, QuadRule1d yq) {
     unsigned int xn = xq.size();
     unsigned int yn = yq.size();
-    QuadratureRule2D retval(xn * yn);
+    QuadRule2d retval(xn * yn);
     for(unsigned int i = 0; i < xn; i++) {
         for(unsigned int j = 0; j < yn; j++) {
             int idx_2d = i * yn + j;
-            retval.x_hat[idx_2d] = xq[i].first;
-            retval.y_hat[idx_2d] = yq[j].first;
-            retval.weights[idx_2d] = xq[i].second * yq[j].second;
+            retval[idx_2d] = {
+                {xq[i].x_hat[0], yq[j].x_hat[0]},
+                xq[i].w * yq[j].w
+            };
         }
     }
     return retval;
@@ -144,18 +146,20 @@ QuadratureRule2D tensor_product(QuadratureRule xq, QuadratureRule yq) {
 
 /* Converts the square [-1,1]x[-1,1] to the triangle (0,0)-(1,0)-(0,1)
  */
-QuadratureRule2D square_to_tri(QuadratureRule2D square_quad) {
+QuadRule2d square_to_tri(QuadRule2d square_quad) {
     // assert(square_quad.x_hat.size() == square_quad.y_hat.size())
     // assert(square_quad.y_hat.size() == square_quad.weights.size())
 
-    unsigned int nq = square_quad.x_hat.size();
-    QuadratureRule2D retval(nq);
+    unsigned int nq = square_quad.size();
+    QuadRule2d retval(nq);
     for (unsigned int i = 0; i < nq; i++) {
-        double x_01 = from_11_to_01(square_quad.x_hat[i]);
-        double y_01 = from_11_to_01(square_quad.y_hat[i]);
-        retval.x_hat[i] = x_01 * (1 - y_01);
-        retval.y_hat[i] = y_01;
-        retval.weights[i] = (square_quad.weights[i] / 4.0) * (1 - y_01);
+        double x_01 = from_11_to_01(square_quad[i].x_hat[0]);
+        double y_01 = from_11_to_01(square_quad[i].x_hat[1]);
+        double w = square_quad[i].w;
+        retval[i] = {
+            {x_01 * (1 - y_01), y_01},
+            (w / 4.0) * (1 - y_01)
+        };
     }
     return retval;
 }
@@ -163,7 +167,7 @@ QuadratureRule2D square_to_tri(QuadratureRule2D square_quad) {
 /* Produces a 2D tensor product gaussian quadrature rule. The number of gauss
  * points in each dimension is the same.
  */
-QuadratureRule2D tensor_gauss(int n_pts) {
+QuadRule2d tensor_gauss(int n_pts) {
     auto g1d = gauss(n_pts);
     return tensor_product(g1d, g1d);
 }
@@ -171,12 +175,12 @@ QuadratureRule2D tensor_gauss(int n_pts) {
 /* Produces a 2D tensor product gaussian quadrature rule mapped into the unit
  * triangle (0,0)-(1,0)-(0,1).
  */
-QuadratureRule2D tri_gauss(int n_pts) {
+QuadRule2d tri_gauss(int n_pts) {
     return square_to_tri(tensor_gauss(n_pts));
 }
 
 /* Produces a 2D tensor product double exponential rule. */
-QuadratureRule2D tensor_double_exp(int n_pts, double h) {
+QuadRule2d tensor_double_exp(int n_pts, double h) {
     auto de1d = double_exp(n_pts, h);
     return tensor_product(de1d, de1d);
 }
@@ -184,6 +188,64 @@ QuadratureRule2D tensor_double_exp(int n_pts, double h) {
 /* Produces a 2D tensor product double exponetial rule mapped into the unit
  * triangle (0,0)-(1,0)-(0,1).
  */
-QuadratureRule2D tri_double_exp(int n_pts, double h) {
+QuadRule2d tri_double_exp(int n_pts, double h) {
     return square_to_tri(tensor_double_exp(n_pts, h));
+}
+
+QuadRule2d tri_double_exp(int n_pts) {
+    double h = 0.6 / std::log(n_pts);
+    return tri_double_exp(n_pts, h);
+}
+
+std::vector<double> get_singular_steps(int n_steps) {
+    static constexpr double initial_dist = 1.0;
+    std::vector<double> dist(n_steps);
+    for (int nf = 0; nf < n_steps; nf++) {
+        dist[nf] = initial_dist / (std::pow(2, nf + 1));
+    }
+    return dist;
+}
+
+std::vector<int> get_singular_order(int n_steps) {
+    std::vector<int> singular_orders(n_steps);
+    for (int i = 0; i < n_steps; i++) {
+        singular_orders[i] = (int)std::pow(2, i + 2);
+    }
+    return singular_orders;
+}
+
+std::vector<QuadRule2d> get_singular_quads(int n_steps) {
+    std::vector<QuadRule2d> quads;
+    for (int nf = 0; nf < n_steps; nf++) {
+        quads.push_back(tri_gauss((int)pow(2, nf + 2)));
+    }
+    return quads;
+}
+
+QuadStrategy::QuadStrategy(int obs_order):
+    QuadStrategy(obs_order, obs_order, obs_order * 2, 4, 3.0)
+{}
+
+QuadStrategy::QuadStrategy(int obs_order, int src_far_order, int src_near_order,
+                          int n_singular_steps, double far_threshold):
+    obs_quad(tri_gauss(obs_order)),
+    src_far_quad(tri_gauss(src_far_order)),
+    src_near_quad(tri_double_exp(src_near_order)),
+    far_threshold(far_threshold),
+    n_singular_steps(n_singular_steps),
+    singular_steps(get_singular_steps(n_singular_steps)),
+    singular_orders(get_singular_order(n_singular_steps)),
+    singular_quads(get_singular_quads(n_singular_steps))
+{}
+    
+std::vector<const QuadRule2d*> QuadStrategy::get_near_quad(bool singular) const {
+    if (singular) {
+        std::vector<const QuadRule2d*> res(n_singular_steps);
+        for (int i = 0; i < n_singular_steps; i++) {
+            res[i] = &singular_quads[i];
+        }
+        return res;
+    } else {
+        return std::vector<const QuadRule2d*>(n_singular_steps, &src_near_quad);
+    }
 }

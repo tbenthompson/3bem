@@ -27,8 +27,8 @@ TEST(GaussQuadrature) {
     //Check that the weights are in the right range and sum properly
     double wt_sum = 0.0;
     for (auto xw: qr) {
-        CHECK(std::fabs(xw.first) <= 1);
-        wt_sum += xw.second;
+        CHECK(std::fabs(xw.x_hat[0]) <= 1);
+        wt_sum += xw.w;
         // std::cout << "x: " << xw.first << "   w: " << xw.second << std::endl;
     }
     CHECK_CLOSE(wt_sum, 2.0, 1e-12);
@@ -74,11 +74,9 @@ TEST(DiligentiMapping) {
     CHECK_CLOSE(result, -0.000611395, 1e-6);
 }
 
-TEST(QuadratureRule2DConstructor) {
-    QuadratureRule2D q(10);
-    CHECK_EQUAL(q.x_hat.size(), 10);
-    CHECK_EQUAL(q.y_hat.size(), 10);
-    CHECK_EQUAL(q.weights.size(), 10);
+TEST(QuadRule2dConstructor) {
+    QuadRule2d q(10);
+    CHECK_EQUAL(q.size(), 10);
 }
 
 TEST(TensorProduct) {
@@ -87,9 +85,11 @@ TEST(TensorProduct) {
     double x_hat[4] = {-0.57735, -0.57735, 0.57735, 0.57735};
     double y_hat[4] = {-0.57735, 0.57735, -0.57735, 0.57735};
     double weights[4] = {1,1,1,1};
-    CHECK_ARRAY_CLOSE(g2d.x_hat, x_hat, 4, 1e-4);
-    CHECK_ARRAY_CLOSE(g2d.y_hat, y_hat, 4, 1e-4);
-    CHECK_ARRAY_CLOSE(g2d.weights, weights, 4, 1e-4);
+    for (unsigned int i = 0; i < g2d.size(); i++) {
+        CHECK_CLOSE(g2d[i].x_hat[0], x_hat[i], 1e-4);
+        CHECK_CLOSE(g2d[i].x_hat[1], y_hat[i], 1e-4);
+        CHECK_CLOSE(g2d[i].w, weights[i], 1e-4);
+    }
 }
 
 TEST(TensorProductIntegrate) {
@@ -123,7 +123,7 @@ TEST(IntegrateTriPoly) {
     CHECK_CLOSE(result, 17. / 4200, 1e-15);
 }
 
-void test_tri_integrate(QuadratureRule2D q2d_tri) {
+void test_tri_integrate(QuadRule2d q2d_tri) {
     double result = integrate(q2d_tri, [](double x,double y) {
         return std::exp(x / (y - 1.1));
     });

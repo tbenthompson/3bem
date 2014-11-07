@@ -120,7 +120,7 @@ TEST(FMMOneBothP2PM2L) {
 }
 
 void test_fmm_laplace(double mac2, double error_max, bool non_one_strength) {
-    int n = 500;
+    int n = 2000;
     auto oct = simple_pts_tree(n, 10);
     std::vector<double> strength(n, 1.0);
     if (non_one_strength) {
@@ -149,7 +149,7 @@ TEST(FMMLaplace) {
 }
 
 TEST(FMMLaplaceNonOneStrength) {
-    test_fmm_laplace(5.0, 1e-2, true);
+    test_fmm_laplace(5.0, 3e-2, true);
 }
 
 int main(int, char const *[])
