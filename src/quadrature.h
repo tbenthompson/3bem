@@ -35,9 +35,7 @@ QuadRule2d square_to_tri(QuadRule2d square_quad);
 struct QuadStrategy {
     QuadStrategy(int obs_order);
     QuadStrategy(int obs_order, int src_far_order, int src_near_order,
-                 int n_singular_steps, double far_threshold);
-
-    std::vector<const QuadRule2d*> get_near_quad(bool singular) const;
+                 int n_singular_steps, double far_threshold, double singular_tol);
 
     const QuadRule2d obs_quad;
 
@@ -47,7 +45,6 @@ struct QuadStrategy {
     const double far_threshold;
     const int n_singular_steps;
     const std::vector<double> singular_steps;
-    const std::vector<int> singular_orders;
-    const std::vector<QuadRule2d> singular_quads;
+    const double singular_tol;
 };
 #endif

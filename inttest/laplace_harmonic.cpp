@@ -25,12 +25,13 @@ int main() {
     double far_threshold = 2.0;
     int refine_level = 3;
     int near_quad_pts = 3;
-    int near_steps = 6;
+    int near_steps = 7;
     int src_quad_pts = 2;
+    //TODO: Something is seriously wrong when I use obs_quad_pts = 3
     int obs_quad_pts = 2;
 
     QuadStrategy qs(obs_quad_pts, src_quad_pts, near_quad_pts,
-                    near_steps, far_threshold);
+                    near_steps, far_threshold, 1e-3);
 
     auto sphere = refine_clean(sphere_mesh(center, r), refine_level);
 
@@ -54,8 +55,7 @@ int main() {
     auto rhs_mass = mass_term(p_mass, qs);
 
     for (unsigned int i = 0; i < rhs.size(); i++){
-        //TODO: I think the signs here are wrong. Where is there a sign flip?
-        rhs[i] = -rhs[i] + rhs_mass[i];
+        rhs[i] = rhs[i] - rhs_mass[i];
     }
 
     TIC2
@@ -83,10 +83,10 @@ int main() {
         auto obs_normal = normalized(center - obs_pt);
         ObsPt obs = {obs_len_scale, obs_pt, obs_normal};
        
-        double u_effect = eval_integral_equation(p_double, qs, obs);
+        double double_layer = eval_integral_equation(p_double, qs, obs);
         Problem p_s = {sphere, sphere, laplace_single, dudn};
-        double dudn_effect = eval_integral_equation(p_s, qs, obs);
-        double result = u_effect + dudn_effect;
+        double single_layer = eval_integral_equation(p_s, qs, obs);
+        double result = double_layer - single_layer;
         double exact = 1.0 / hypot(obs_pt);
         double error = std::fabs(exact - result);
         if (error > 5e-2) {

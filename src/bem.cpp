@@ -1,6 +1,7 @@
 #include <cassert>
 #include "bem.h"
 #include "mesh.h"
+#include "adaptive_quad.h"
 
 FaceInfo::FaceInfo(const Mesh& mesh, int face_index):
     face_index(face_index),
@@ -79,16 +80,34 @@ std::vector<double> integral_equation_vector(const Problem& p,
 
         std::array<double,3> integrals;
         if (dist2 < pow(qs.far_threshold,2) * src_face.area) {
+            //TODO: Refactor to a "nearfield" function
             std::vector<Vec3<double>> near_steps(qs.n_singular_steps, {0,0,0});
-            auto near_quad = qs.get_near_quad(dist2 < 0.5 * src_face.area);
             for (int nf = 0; nf < qs.n_singular_steps; nf++) {
                 double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
                 auto nf_obs_pt = obs.loc + nfdn * obs.normal;
-                
-                near_steps[nf] += integrate<Vec3<double>,2>(*near_quad[nf], 
-                    [&](std::array<double,2> x_hat) {
-                        return eval_quad_pt(x_hat, p.K, src_face, nf_obs_pt, obs.normal);
-                    });
+                 
+                if (dist2 > 0.5 * src_face.area) {
+                    auto eval = integrate<Vec3<double>,2>(qs.src_near_quad, 
+                        [&](std::array<double,2> x_hat) {
+                            return eval_quad_pt(x_hat, p.K, src_face, 
+                                                nf_obs_pt, obs.normal);
+                        });
+                    near_steps[nf] += eval;
+                } else {
+                    Vec3<double> ns = adaptive_integrate<Vec3<double>>(
+                        [&] (double x_hat) {
+                            if (x_hat == 1.0) {
+                                return Vec3<double>{0.0,0.0,0.0};
+                            }
+                            return adaptive_integrate<Vec3<double>>([&] (double y_hat) {
+                                    Vec3<double> val  = eval_quad_pt({x_hat, y_hat}, p.K, src_face,
+                                                        nf_obs_pt, obs.normal);
+                                    std::cout << val << std::endl;
+                                    return val;
+                                }, 0.0, 1 - x_hat, qs.singular_tol);
+                        }, 0.0, 1.0, qs.singular_tol);
+                    near_steps[nf] += ns;
+                }
             }
             integrals = richardson_step(near_steps);
         } else {
@@ -124,7 +143,7 @@ std::vector<std::vector<double>> interact_matrix(const Problem& p,
     int n_src_basis = p.src_mesh.vertices.size();
     std::vector<std::vector<double>> matrix(n_obs_basis,
             std::vector<double>(n_src_basis, 0.0));
-#pragma omp parallel for
+// #pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.faces.size(); obs_idx++) {
         FaceInfo obs_face(p.obs_mesh, obs_idx);
         for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {

@@ -7,6 +7,7 @@ namespace ac = autocheck;
 #include "util.h"
 #include "numerics.h"
 #include "quadrature.h"
+#include "adaptive_quad.h"
 
 TEST(TanhSinh) {
     auto qr = double_exp(8, 0.3); 
@@ -154,35 +155,38 @@ TEST(TriangleIntegrate) {
     test_tri_integrate(q2d_tri);
 }
 
-int NNN = 100000;
 TEST(TriangleIntegrateDoubleExp) {
     auto q2d_tri = tri_double_exp(7, 0.3);
-    TIC
-    double result;
-    for (int i = 0; i < NNN; i++) {
-        result = integrate<double,2>(q2d_tri, [](std::array<double,2> x) {
-            return std::exp(x[0] / (x[1] - 1.1));
-        });
-    }
-    // test_tri_integrate(q2d_tri);
-    TOC("Integrate")
-        std::cout << result << std::endl;
+    test_tri_integrate(q2d_tri);
 }
 
-#include "adaptive/AdaptiveIntegrator.hpp"
-double func(const double x) {
-    return std::exp(x / (x - 1.1));
+TEST(AdaptiveQuad) {
+    double result = adaptive_integrate<double>([] (double x) {
+            return std::exp(x);
+        }, 0, 2, 1e-3);
+    CHECK_CLOSE(result, std::exp(2) - 1, 1e-6);
 }
-TEST(Adaptive) {
-    AdaptiveIntegrator<double (const double)> test;
-    TIC
-    double result;
-    for (int i = 0; i < NNN; i++) {
-        result = test.integrate(func, -1., 1., 1.e-2);
-    }
-    TOC("IntegrateAda");
-    std::cout << result << std::endl;
-    std::cout << daf << std::endl;
+
+TEST(AdaptiveQuadCloseToSingular) {
+    double a = 0.5;
+    double result = adaptive_integrate<double>([a] (double x) {
+            return 1.0 / std::sqrt(x*x + a);
+        }, -0.5, 0.5, 1e-3);
+    double exact = -std::log(-1 + std::sqrt(1 + 4 * a)) +
+                    std::log(1 + std::sqrt(1 + 4 * a));
+    CHECK_CLOSE(result, exact, 1e-6);
+}
+
+TEST(AdaptiveQuadVec) {
+    Vec3<double> result = adaptive_integrate<Vec3<double>>([] (double x) {
+            return Vec3<double>{
+                std::exp(x), std::exp(2*x), std::exp(3*x)
+            };
+        }, 0, 2, 1e-6);
+    Vec3<double> exact = {
+        std::exp(2) - 1, (std::exp(4) - 1) / 2.0, (std::exp(6) - 1) / 3.0
+    };
+    CHECK_ARRAY_CLOSE(result, exact, 3, 1e-4);
 }
 
 int main(int, char const *[])

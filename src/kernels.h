@@ -17,14 +17,14 @@ inline double laplace_single(const double& r2,
                         const Vec3<double>& delta,
                         const Vec3<double>& nsrc,
                         const Vec3<double>& nobs) {
-    return 1.0 / (4.0 * M_PI * std::sqrt(r2));
+    return -1.0 / (4.0 * M_PI * std::sqrt(r2));
 }
 
 inline double laplace_double(const double& r2,
                         const Vec3<double>& delta,
                         const Vec3<double>& nsrc,
                         const Vec3<double>& nobs) {
-    return -dot(nsrc, delta) / (4 * M_PI * std::pow(r2, 1.5));
+    return -dot(nsrc, delta) / (4 * M_PI * r2 * std::sqrt(r2));
 }
 
 const double kronecker[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
