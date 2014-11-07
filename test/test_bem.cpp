@@ -24,36 +24,36 @@ struct IntegrationProb {
     Vec3<double> src_vals;
     Vec3<double> obs_loc;
     Vec3<double> obs_n;
-    QuadratureRule2D q;
+    QuadRule2d q;
     FaceInfo face;
 };
 
 TEST_FIXTURE(IntegrationProb, IntegralOne) {
     double abc = integrate(q, [](double x_hat, double y_hat){return 1.0;});
     CHECK_CLOSE(abc, 0.5, 1e-12);
-    auto kernel = one<double>;
-    double result = integral<double>(q, kernel, face, src_vals, obs_loc, obs_n);
+    auto kernel = one;
+    double result = integral(q, kernel, face, src_vals, obs_loc, obs_n);
     CHECK_CLOSE(result, 1.0, 1e-5);
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceSingle) {
-    auto kernel = laplace_single<double>;
-    double result = integral<double>(q, kernel, face, src_vals, obs_loc, obs_n);
+    auto kernel = laplace_single;
+    double result = integral(q, kernel, face, src_vals, obs_loc, obs_n);
     CHECK_CLOSE(result, 0.0269063, 1e-5);
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceDouble) {
-    auto kernel = laplace_double<double>;
-    double result = integral<double>(q, kernel, face, src_vals, obs_loc, obs_n);
+    auto kernel = laplace_double;
+    double result = integral(q, kernel, face, src_vals, obs_loc, obs_n);
     CHECK_CLOSE(result, 0.00621003, 1e-5);
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralBasis) {
-    auto kernel = laplace_double<double>;
+    auto kernel = laplace_double;
     src_vals = {1.0, 0.7, 0.3};
-    double result = integral<double>(q, kernel, face, src_vals, obs_loc, obs_n);
+    double result = integral(q, kernel, face, src_vals, obs_loc, obs_n);
     Vec3<double> basis =
-        basis_integrals<double>(q, kernel, face, obs_loc, obs_n);
+        basis_integrals(q, kernel, face, obs_loc, obs_n);
     double result2 = dot(basis, src_vals);
     CHECK_CLOSE(result, result2, 1e-5);
 }
@@ -72,43 +72,41 @@ TEST(RichardsonZeros) {
 
 TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
     auto q = tri_gauss(3);
-    auto kernel = laplace_single<double>;
+    auto kernel = laplace_single;
     double offset = 0.5;
     std::vector<double> vals;
     for (int i = 0; i < 4; i++) {
         obs_loc = {2.0, 2.0, 2.0 + offset};
-        vals.push_back(integral<double>(q, kernel, face, src_vals, obs_loc, {1, 0, 0}));
+        vals.push_back(integral(q, kernel, face, src_vals, obs_loc, {1, 0, 0}));
         offset /= 2;
     }
     double result = richardson_step(vals);
     CHECK_CLOSE(result, 0.0269063, 1e-6);
 }
 
+//TODO: This should be refactored a bit!
 struct EvalProb {
-    EvalProb(int refine_level, int near_eval, int gauss_order, const KernelD& k,
+    EvalProb(int refine_level, int near_eval, int gauss_order, const Kernel& k,
              Vec3<double> center = Vec3<double>{0,0,0},
              double r = 3.0):
-        q(tri_gauss(gauss_order)),
+        sphere(refine_clean(sphere_mesh(center,r), refine_level)),
+        qs(gauss_order),
         kernel(k),
-        ne(7, 7, near_eval, q)
-    {
-        sphere = sphere_mesh(center, r);
-        for (int i = 0; i < refine_level; i++) {
-            sphere = refine_mesh(sphere);
-        }
-        obs_pt = random_pt();
-        obs_len_scale = get_len_scale(sphere, 0, gauss_order);
-        obs_normal = random_pt();
-        src_strength = std::vector<double>(sphere.vertices.size(), 1.0);
-    }
+        obs_pt(random_pt()),
+        obs_n(random_pt()),
+        obs_length_scale(get_len_scale(sphere, 0, gauss_order)),
+        src_strength(std::vector<double>(sphere.vertices.size(), 1.0))
+    {}
 
     double go() {
-        return eval_integral_equation(sphere, q, kernel, ne, -1, obs_pt,
-                                      obs_normal, obs_len_scale, src_strength);
+        Problem p = {sphere, sphere, kernel, src_strength};
+
+        return eval_integral_equation(p, qs, {obs_length_scale, obs_pt, obs_n});
     }
     double go_row() {
-        auto row = integral_equation_vector(sphere, q, kernel,  ne, -1,
-                                    obs_pt, obs_normal, obs_len_scale);
+        Problem p = {sphere, sphere, kernel, src_strength};
+
+        auto row = integral_equation_vector(p, qs, {obs_length_scale, obs_pt, obs_n});
         double row_sum = 0.0;
         for(std::size_t i = 0; i < row.size(); i++) {
             row_sum += row[i] * src_strength[i];
@@ -117,17 +115,16 @@ struct EvalProb {
     }
 
     Mesh sphere;
-    QuadratureRule2D q;
-    KernelD kernel;
-    NearEval ne;
+    QuadStrategy qs;
+    Kernel kernel;
     Vec3<double> obs_pt;
-    Vec3<double> obs_normal;
-    double obs_len_scale;
+    Vec3<double> obs_n;
+    double obs_length_scale;
     std::vector<double> src_strength;
 }; 
 
 TEST(EvalIntegralEquationSphereSurfaceArea) {
-    EvalProb ep(5, 3, 2, one<double>);
+    EvalProb ep(5, 3, 2, one);
     double result = ep.go();
     double result2 = ep.go_row();
     double exact_surf_area = 4*M_PI*9;
@@ -136,7 +133,7 @@ TEST(EvalIntegralEquationSphereSurfaceArea) {
 }
 
 TEST(ConstantLaplace) {
-    EvalProb ep(5, 3, 2, laplace_double<double>);
+    EvalProb ep(5, 3, 2, laplace_double);
     double result = ep.go();
     double result2 = ep.go_row();
     CHECK_CLOSE(result, 1.0, 1e-3);
@@ -144,12 +141,12 @@ TEST(ConstantLaplace) {
 }
 
 TEST(ConstantLaplaceBoundary) {
-    EvalProb ep(1, 3, 3, laplace_double<double>);
+    EvalProb ep(1, 3, 3, laplace_double);
     int n_verts = ep.sphere.vertices.size();
     // n_verts = 1;
     for (int i = 0; i < n_verts;i++) {
         ep.obs_pt = ep.sphere.vertices[i];
-        ep.obs_normal = -normalized(ep.obs_pt);
+        ep.obs_n = -normalized(ep.obs_pt);
         double result = ep.go();
         double result2 = ep.go();
         CHECK_CLOSE(result, 1.0, 1e-2);
@@ -158,7 +155,7 @@ TEST(ConstantLaplaceBoundary) {
 }
 
 TEST(MatrixRowVsEval) {
-    EvalProb ep(5, 3, 2, laplace_double<double>);
+    EvalProb ep(5, 3, 2, laplace_double);
     double result = ep.go();
     double result2 = ep.go_row();
     CHECK_CLOSE(result, 1.0, 1e-3);
@@ -166,10 +163,10 @@ TEST(MatrixRowVsEval) {
 }
 
 TEST(Whoa_baNANnas) {
-    EvalProb ep(2, 3, 4, laplace_double<double>, {5,0,0}, 3.0);
+    EvalProb ep(2, 3, 4, laplace_double, {5,0,0}, 3.0);
     ep.obs_pt = {6.5309310892394858, 1.8371173070873836, -1.5309310892394863};
-    ep.obs_normal = {-0.5773502691896254, -0.57735026918962595, 0.57735026918962595};
-    ep.obs_len_scale = 0.0094194506485734651;
+    ep.obs_n = {-0.5773502691896254, -0.57735026918962595, 0.57735026918962595};
+    ep.obs_length_scale = 0.0094194506485734651;
     
     double result = ep.go();
     CHECK_CLOSE(result, 0.561132, 1e-3);
@@ -179,7 +176,9 @@ TEST(MassTerm) {
     Mesh sphere = clean_mesh(sphere_mesh({0,0,0}, 1.0));
     std::vector<double> str(sphere.vertices.size(), 1.0);
     str[0] = 0.0;
-    auto res = mass_term(sphere, tri_gauss(2), str);
+    Problem p = {sphere, sphere, one, str};
+    QuadStrategy qs(2);
+    auto res = mass_term(p, qs);
     CHECK_EQUAL(res.size(), sphere.vertices.size());
     double true_area = 0.0;
     for (auto f: sphere.faces) {
@@ -197,19 +196,15 @@ TEST(MassTerm) {
 }
 
 TEST(DirectInteractOne) {
-    Mesh sphere = clean_mesh(sphere_mesh({0,0,0}, 1.0));
-    for (int i = 0; i < 3; i++) {
-        sphere = refine_mesh(sphere);
-    }
-    sphere = clean_mesh(sphere);
-    auto q = tri_gauss(2);
+    Mesh sphere = refine_clean(sphere_mesh({0,0,0}, 1.0), 3);
     int n_verts = sphere.vertices.size();
     std::vector<double> str(n_verts, 1.0);
-    NearEval ne(6, 6, 2, q);
-    auto res = direct_interact(sphere, sphere, q, q,
-                               one<double>, str, ne);
-    auto matrix = interact_matrix(sphere, sphere, q, q,
-                                  one<double>, ne);
+
+    QuadStrategy qs(2);
+    Problem p = {sphere, sphere, one, str};
+    auto res = direct_interact(p, qs);
+    auto matrix = interact_matrix(p, qs);
+
     std::vector<double> res2(n_verts, 0.0);
     for (int i = 0; i < n_verts; i++) {
         for (int j = 0; j < n_verts; j++) {
@@ -233,19 +228,17 @@ TEST(DirectInteractOne) {
 
 //TODO: Fixture for this and the next one.
 TEST(DirectInteractConstantLaplace) {
-    Mesh sphere = clean_mesh(sphere_mesh({0,0,0}, 1.0));
-    for (int i = 0; i < 2; i++) {
-        sphere = refine_mesh(sphere);
-    }
-    sphere = clean_mesh(sphere);
-    auto q = tri_gauss(2);
+    Mesh sphere = refine_clean(sphere_mesh({0,0,0}, 1.0), 2);
     std::vector<double> str(sphere.vertices.size(), 1.0);
-    NearEval ne(6, 6, 2, q);
-    auto res0 = direct_interact(sphere, sphere, q, q,
-                                laplace_double<double>, str, ne);
-    auto res1 = direct_interact(sphere, sphere, q, q,
-                                laplace_single<double>, str, ne);
-    auto res2 = mass_term(sphere, q, str);
+
+    QuadStrategy qs(2);
+    Problem p_double = {sphere, sphere, laplace_double, str};
+    Problem p_single = {sphere, sphere, laplace_single, str};
+    auto res0 = direct_interact(p_double, qs);
+    auto res1 = direct_interact(p_single, qs);
+
+    Problem p_mass = {sphere, sphere, one, str};
+    auto res2 = mass_term(p_mass, qs);
     CHECK_ARRAY_CLOSE(res0, res2, sphere.vertices.size(), 3e-2);
     CHECK_ARRAY_CLOSE(res1, res2, sphere.vertices.size(), 3e-2);
 }

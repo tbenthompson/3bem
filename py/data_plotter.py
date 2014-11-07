@@ -11,8 +11,10 @@ def main(filename, values_dim):
     faces = f['faces']
     vertices = f['vertices']
     data = f['values'][:,values_dim]
+    print len(data)
+    print vertices.shape
 
-    plt.tricontourf(vertices[:,0], vertices[:,1], data)
+    plt.tripcolor(vertices[:,0], vertices[:,1], data, shading = 'gouraud')
     plt.show()
     # mlab.triangular_mesh(vertices[:, 0], vertices[:, 1], vertices[:, 2],
     #                    faces[:,:], scalars = data)

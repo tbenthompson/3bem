@@ -37,7 +37,9 @@ cpp_flags.extend(['-I' + loc for loc in includes])
 debug_flags = '-g -Og -DDEBUG=1'.split()
 release_flags = '-DNDEBUG=1 -O3 -funroll-loops'.split()
 profile_flags = release_flags + ['-g']
-cpp_flags.extend(release_flags)
+cpp_flags.extend(debug_flags)
+# cpp_flags.extend(release_flags)
+# cpp_flags.extend(profile_flags)
 
 lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)

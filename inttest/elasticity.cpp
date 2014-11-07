@@ -6,13 +6,13 @@
 #include "util.h"
 
 int main() {
-    //TODO: Super broken! Problems:
+    //TODO: Problems:
     //-- doing ~9x as much work because the problem is not vectored
     //-- constraints are becoming a problem -- need to loosen constraints
     //   across the fault
     Mesh fault = rect_mesh(
-        {-1, 0, -3}, {-1, 0, -1},
-        {1, 0, -1}, {1, 0, -3}
+        {-1, 0, -3.0}, {-1, 0, -1.0},
+        {1, 0, -1.0}, {1, 0, -3.0}
     );
     fault = refine_clean(fault, 2);
 
@@ -26,11 +26,11 @@ int main() {
 
     double far_threshold = 3.0;
     int near_quad_pts = 6;
-    int adjacent_quad_pts = 6;
-    int near_steps = 5;
-    auto q_src = tri_gauss(2);
-    auto q_obs = tri_gauss(3);
-    NearEval ne(near_quad_pts, adjacent_quad_pts, near_steps, q_obs);
+    int near_steps = 6;
+    int src_quad_pts = 2;
+    int obs_quad_pts = 3;
+    QuadStrategy qs(obs_quad_pts, src_quad_pts, near_quad_pts,
+                    near_steps, far_threshold);
 
     ElasticKernels ek(30e9, 0.25);
     
@@ -51,7 +51,7 @@ int main() {
 
     using namespace std::placeholders;
 
-    std::array<std::array<KernelD,3>,3> h = {{ {
+    std::array<std::array<Kernel,3>,3> h = {{ {
             std::bind(&ElasticKernels::hypersingular<0,0>, ek, _1, _2, _3, _4),
             std::bind(&ElasticKernels::hypersingular<0,1>, ek, _1, _2, _3, _4),
             std::bind(&ElasticKernels::hypersingular<0,2>, ek, _1, _2, _3, _4)
@@ -68,8 +68,8 @@ int main() {
 
     for (int k = 0; k < 3; k++) {
         for (int j = 0; j < 3; j++) {
-            auto res = direct_interact(fault, surface, q_src, q_obs,
-                                       h[k][j], du[j], ne, far_threshold);
+            Problem p = {fault, surface, h[k][j], du[j]};
+            auto res = direct_interact(p, qs);
             for (unsigned int i = 0; i < res.size(); i++) {
                 rhs[k][i] += res[i];
             }
@@ -79,6 +79,14 @@ int main() {
     std::vector<double> full_rhs(3 * surface.vertices.size());
     for (int d = 0; d < 3; d++) {
         std::copy(rhs[d].begin(), rhs[d].end(), full_rhs.begin() + d * n_surface_verts);
+    }
+
+    std::array<std::array<std::vector<std::vector<double>>,3>,3> mats;
+    for (int k = 0; k < 3; k++) {
+        for (int j = 0; j < 3; j++) {
+            Problem p = {surface, surface, h[k][j], {}};
+            mats[k][j] = interact_matrix(p, qs);
+        }
     }
 
     int count = 0;
@@ -97,11 +105,11 @@ int main() {
             std::vector<double> y_temp(y.size(), 0.0);
             for (int k = 0; k < 3; k++) {
                 for (int j = 0; j < 3; j++) {
-                    auto res = direct_interact(surface, surface, q_src, q_obs,
-                                               h[k][j], x_temp[j], ne, 
-                                               far_threshold);
-                    for (unsigned int i = 0; i < res.size(); i++) {
-                        y_temp[k * n_surface_verts + i] -= res[i];
+                    for (unsigned int mi = 0; mi < mats[k][j].size(); mi++) {
+                        for (unsigned int ni = 0; ni < mats[k][j].size(); ni++) {
+                            y_temp[k * n_surface_verts + mi] -= 
+                                mats[k][j][mi][ni] * x_temp[j][ni];
+                        }
                     }
                 }
             }
