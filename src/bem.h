@@ -42,34 +42,14 @@ struct ObsPt {
     const Vec3<double> normal;
 };
 
-struct SrcPointInfo {
-    SrcPointInfo(const QuadRule2d& quad_rule,
-              const Kernel& kernel,
-              const FaceInfo& face,
-              const Vec3<double>& obs_loc,
-              const Vec3<double>& obs_n,
-              int q_index);
-    
-    //TODO: This seems slightly vacuous...
-    Vec3<double> basis;
-    double weighted_kernel;
-};
+Vec3<double> eval_quad_pt(const std::array<double,2>& x_hat,
+                          const Kernel& kernel,
+                          const FaceInfo& face,
+                          const Vec3<double>& obs_loc,
+                          const Vec3<double>& obs_n);
 
 template <typename T>
 T richardson_step(const std::vector<T>& values);
-
-Vec3<double> basis_integrals(const QuadRule2d& quad_rule,
-                        const Kernel& kernel,
-                        const FaceInfo& face,
-                        const Vec3<double>& obs_loc,
-                        const Vec3<double>& obs_n);
-
-double integral(const QuadRule2d& quad_rule,
-           const Kernel& kernel,
-           const FaceInfo& face,
-           const Vec3<double>& src_vals,
-           const Vec3<double>& obs_loc,
-           const Vec3<double>& obs_n);
 
 std::vector<double> integral_equation_vector(const Problem& p,
                                              const QuadStrategy& qs,

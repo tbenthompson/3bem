@@ -20,6 +20,21 @@ struct IntegrationProb {
         q(tri_gauss(2)),
         face(Mesh{src_locs, {{0,1,2}}}, 0)
     { }
+    
+    void go() {
+        auto basis = integrate<Vec3<double>,2>(q, [&] (std::array<double,2> x_hat) {
+                return eval_quad_pt(x_hat, kernel, face, obs_loc, obs_n);
+            });
+        result = dot(basis, src_vals);
+    }
+
+    void check() {
+        CHECK_CLOSE(result, exact, 1e-5);
+    }
+
+    Kernel kernel;
+    double result;
+    double exact;
     std::vector<Vec3<double>> src_locs;
     Vec3<double> src_vals;
     Vec3<double> obs_loc;
@@ -29,33 +44,20 @@ struct IntegrationProb {
 };
 
 TEST_FIXTURE(IntegrationProb, IntegralOne) {
-    double abc = integrate(q, [](double x_hat, double y_hat){return 1.0;});
+    double abc = integrate<double,2>(q, [](std::array<double,2> x_hat){return 1.0;});
     CHECK_CLOSE(abc, 0.5, 1e-12);
-    auto kernel = one;
-    double result = integral(q, kernel, face, src_vals, obs_loc, obs_n);
-    CHECK_CLOSE(result, 1.0, 1e-5);
+    kernel = one;
+    exact = 1.0; go(); check();
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceSingle) {
-    auto kernel = laplace_single;
-    double result = integral(q, kernel, face, src_vals, obs_loc, obs_n);
-    CHECK_CLOSE(result, 0.0269063, 1e-5);
+    kernel = laplace_single;
+    exact = 0.0269063; go(); check();
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceDouble) {
-    auto kernel = laplace_double;
-    double result = integral(q, kernel, face, src_vals, obs_loc, obs_n);
-    CHECK_CLOSE(result, 0.00621003, 1e-5);
-}
-
-TEST_FIXTURE(IntegrationProb, IntegralBasis) {
-    auto kernel = laplace_double;
-    src_vals = {1.0, 0.7, 0.3};
-    double result = integral(q, kernel, face, src_vals, obs_loc, obs_n);
-    Vec3<double> basis =
-        basis_integrals(q, kernel, face, obs_loc, obs_n);
-    double result2 = dot(basis, src_vals);
-    CHECK_CLOSE(result, result2, 1e-5);
+    kernel = laplace_double;
+    exact = 0.00621003; go(); check();
 }
 
 TEST(Richardson) {
@@ -72,12 +74,14 @@ TEST(RichardsonZeros) {
 
 TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
     auto q = tri_gauss(3);
-    auto kernel = laplace_single;
+    kernel = laplace_single;
     double offset = 0.5;
     std::vector<double> vals;
-    for (int i = 0; i < 4; i++) {
+    obs_n = {1,0,0};
+    for (int i = 0; i < 7; i++) {
         obs_loc = {2.0, 2.0, 2.0 + offset};
-        vals.push_back(integral(q, kernel, face, src_vals, obs_loc, {1, 0, 0}));
+        go();
+        vals.push_back(result);
         offset /= 2;
     }
     double result = richardson_step(vals);

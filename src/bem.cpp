@@ -22,46 +22,16 @@ ObsPt ObsPt::from_face(const QuadRule2d& obs_quad,
     };
 }
 
-SrcPointInfo::SrcPointInfo(const QuadRule2d& quad_rule,
-              const Kernel& kernel,
-              const FaceInfo& face,
-              const Vec3<double>& obs_loc,
-              const Vec3<double>& obs_n,
-              int q_index) {
-    auto qpt = quad_rule[q_index];
-    basis = linear_basis(qpt.x_hat);
-
-    const auto src_pt = ref_to_real(qpt.x_hat, face.corners);
+Vec3<double> eval_quad_pt(const std::array<double,2>& x_hat,
+                          const Kernel& kernel,
+                          const FaceInfo& face,
+                          const Vec3<double>& obs_loc,
+                          const Vec3<double>& obs_n) {
+    const auto src_pt = ref_to_real(x_hat, face.corners);
     const auto d = src_pt - obs_loc;
     const auto r2 = hypot2(d);
     const auto kernel_val = kernel(r2, d, face.normal, obs_n);
-
-    weighted_kernel = kernel_val * qpt.w * face.jacobian;
-}
-
-
-Vec3<double> basis_integrals(const QuadRule2d& quad_rule,
-                        const Kernel& kernel,
-                        const FaceInfo& face,
-                        const Vec3<double>& obs_loc,
-                        const Vec3<double>& obs_n) {
-
-    Vec3<double> result = {0,0,0};
-    for (unsigned int src_q = 0; src_q < quad_rule.size(); src_q++) {
-        SrcPointInfo pt(quad_rule, kernel, face, obs_loc, obs_n, src_q);
-        result += pt.weighted_kernel * pt.basis;
-    }
-    return result;
-}
-
-double integral(const QuadRule2d& quad_rule,
-           const Kernel& kernel,
-           const FaceInfo& face,
-           const Vec3<double>& src_vals,
-           const Vec3<double>& obs_loc,
-           const Vec3<double>& obs_n) {
-    auto basis = basis_integrals(quad_rule, kernel, face, obs_loc, obs_n);
-    return dot(basis, src_vals);
+    return (kernel_val * face.jacobian) * linear_basis(x_hat);
 }
 
 double appx_face_dist2(const Vec3<double>& pt,
@@ -112,19 +82,21 @@ std::vector<double> integral_equation_vector(const Problem& p,
             std::vector<Vec3<double>> near_steps(qs.n_singular_steps, {0,0,0});
             auto near_quad = qs.get_near_quad(dist2 < 0.5 * src_face.area);
             for (int nf = 0; nf < qs.n_singular_steps; nf++) {
-
                 double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
                 auto nf_obs_pt = obs.loc + nfdn * obs.normal;
-
-                near_steps[nf] += basis_integrals(*near_quad[nf], p.K,
-                                                  src_face, nf_obs_pt,
-                                                  obs.normal);
+                
+                near_steps[nf] += integrate<Vec3<double>,2>(*near_quad[nf], 
+                    [&](std::array<double,2> x_hat) {
+                        return eval_quad_pt(x_hat, p.K, src_face, nf_obs_pt, obs.normal);
+                    });
             }
             integrals = richardson_step(near_steps);
         } else {
             //farfield
-            integrals = basis_integrals(qs.src_far_quad, p.K, src_face,
-                                              obs.loc, obs.normal);
+            integrals = integrate<Vec3<double>,2>(qs.src_far_quad,
+                [&](std::array<double,2> x_hat) {
+                    return eval_quad_pt(x_hat, p.K, src_face, obs.loc, obs.normal);
+                });
         }
         for (int b = 0; b < 3; b++) {
             result[src_face.face[b]] += integrals[b];
