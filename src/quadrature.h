@@ -10,15 +10,19 @@ struct QuadPt {
     double w;
 };
 
-/* One dimensional quadrature methods */
+template <typename T, int dim>
+T integrate(const std::vector<QuadPt<dim>>& qr, 
+            std::function<T(std::array<double,dim>)> fnc);
+
 typedef std::vector<QuadPt<1>> QuadRule1d;
+typedef std::vector<QuadPt<2>> QuadRule2d;
+
+/* One dimensional quadrature methods */
 QuadRule1d double_exp(int n, double h);
 QuadRule1d gauss(unsigned int n);
 QuadRule1d diligenti_mapping(unsigned int n, double x0, int q);
-double integrate(QuadRule1d& qr, std::function<double (double)> fnc);
 
 /* Two dimensional quadrature methods */
-typedef std::vector<QuadPt<2>> QuadRule2d;
 QuadRule2d tensor_product(QuadRule1d xq, QuadRule1d yq);
 QuadRule2d tensor_gauss(int n_pts);
 QuadRule2d tensor_double_exp(int n_pts, double h);
@@ -26,7 +30,6 @@ QuadRule2d tri_gauss(int n_pts);
 QuadRule2d tri_double_exp(int n_pts, double h);
 QuadRule2d tri_double_exp(int n_pts);
 QuadRule2d square_to_tri(QuadRule2d square_quad);
-double integrate(QuadRule2d& qr, std::function<double (double,double)> fnc);
 
 
 struct QuadStrategy {

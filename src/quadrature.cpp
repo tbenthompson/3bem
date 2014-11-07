@@ -2,6 +2,31 @@
 #include "numerics.h"
 #include <cmath>
 
+/* A helper function for integrating a given function using a quadrature rule.
+ * Via templating, can be used with 1D, 2D, double, Vec3<double> quadrature.
+ */
+template <typename T, int dim>
+T integrate(const std::vector<QuadPt<dim>>& qr, 
+            std::function<T(std::array<double,dim>)> fnc) {
+    T integral_val = qr[0].w * fnc(qr[0].x_hat);;
+    for (unsigned int i = 1; i < qr.size(); i++) {
+        integral_val += qr[i].w * fnc(qr[i].x_hat);
+    }
+    return integral_val;
+}
+
+//Explicitly instantiate the only reasonable options for the templated
+//integrate function.
+template double integrate(const QuadRule1d&, 
+        std::function<double(std::array<double,1>)>);
+template double integrate(const QuadRule2d&,
+        std::function<double(std::array<double,2>)>);
+template Vec3<double> integrate(const QuadRule1d&, 
+        std::function<Vec3<double>(std::array<double,1>)>);
+template Vec3<double> integrate(const QuadRule2d&,
+        std::function<Vec3<double>(std::array<double,2>)>);
+
+
 /* Compute the Double exponential (also called Tanh-Sinh) 
  * quadrature rule with 2n + 1 points.
  */
@@ -100,28 +125,6 @@ QuadRule1d diligenti_mapping(unsigned int n, double x0, int q) {
         retval[i] = {{x},w};
     }
     return retval;
-}
-
-/* A helper function for testing the quadrature rules. Accepts a function
- * and integrates it according to the specified quadrature rule.
- */
-double integrate(QuadRule1d& qr, std::function<double (double)> fnc) {
-    double integral_val = 0;
-    for (auto xw: qr) {
-        integral_val += xw.w * fnc(xw.x_hat[0]);
-    }
-    return integral_val;
-}
-
-/* Another helper function, but for 2D integration. 
- * TODO: Make 1D and 2D quadrature more similar.
- */
-double integrate(QuadRule2d& qr, std::function<double (double,double)> fnc) {
-    double integral_val = 0;
-    for (unsigned int i = 0; i < qr.size(); i++) {
-        integral_val += qr[i].w * fnc(qr[i].x_hat[0], qr[i].x_hat[1]);
-    }
-    return integral_val;
 }
 
 

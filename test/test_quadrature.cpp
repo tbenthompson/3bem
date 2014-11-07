@@ -10,13 +10,19 @@ namespace ac = autocheck;
 
 TEST(TanhSinh) {
     auto qr = double_exp(8, 0.3); 
-    double result = integrate(qr, [](double x) {return std::pow(x, 10) * std::log(x + 1);});
+    double result = integrate<double,1>(qr, [](std::array<double,1> x) {
+            return std::pow(x[0], 10) * std::log(x[0] + 1);
+        });
     CHECK_CLOSE(-0.215466, result, 1e-4);
 
-    result = integrate(qr, [](double x) {return std::pow(x, 4) * std::log(x + 1);});
+    result = integrate<double,1>(qr, [](std::array<double,1> x) {
+            return std::pow(x[0], 4) * std::log(x[0] + 1);
+        });
     CHECK_CLOSE(-0.336074, result, 1e-5);
 
-    result = integrate(qr, [](double x) {return std::log(x + 1);});
+    result = integrate<double,1>(qr, [](std::array<double,1> x) {
+            return std::log(x[0] + 1);
+        });
     CHECK_CLOSE(-0.613706, result, 1e-6);
 }
 
@@ -33,12 +39,16 @@ TEST(GaussQuadrature) {
     }
     CHECK_CLOSE(wt_sum, 2.0, 1e-12);
 
-    double result = integrate(qr, [](double x) {return 3 * x * x;});
+    double result = integrate<double,1>(qr, [](std::array<double,1> x) {
+            return 3 * x[0] * x[0];
+        });
     CHECK_CLOSE(2.0, result, 1e-12);
 
     auto qr_high_order = gauss(50);
     CHECK(qr_high_order.size() == 50);
-    result = integrate(qr_high_order, [](double x) {return 101 * std::pow(x, 100);});
+    result = integrate<double,1>(qr_high_order, [](std::array<double,1> x) {
+            return 101 * std::pow(x[0], 100);
+        });
     CHECK_CLOSE(2.0, result, 1e-11);
 
     auto qr_odd = gauss(5);
@@ -52,7 +62,9 @@ TEST(GaussExactness) {
         [](unsigned int n) {
             int g = 2 * n - 1;
             auto q = gauss(n);
-            double result = integrate(q, [=](double x) {return (g + 1) * pow(x, g);});
+            double result = integrate<double,1>(q, [=](std::array<double,1> x) {
+                    return (g + 1) * pow(x[0], g);
+                });
             double exact = 2.0 * ((g + 1) % 2);
             return std::fabs(exact - result) < 1e-13;
         }, 30, arb);
@@ -60,17 +72,20 @@ TEST(GaussExactness) {
 
 TEST(DiligentiMapping) {
     auto quad = diligenti_mapping(18, -0.3, 7);
-    double result = integrate(quad, 
-        [](double x) { return log(std::fabs(x + 0.3));});
+    double result = integrate<double,1>(quad, [](std::array<double,1> x) {
+            return log(std::fabs(x[0] + 0.3));
+        });
     CHECK_CLOSE(result, -1.908598917, 1e-6);
 
     quad = diligenti_mapping(18, 0.0, 7);
-    result = integrate(quad, 
-        [](double x) { return log(sqrt(pow(x, 4) + pow(x, 3) + pow(x,2)));});
+    result = integrate<double,1>(quad, [](std::array<double,1> x) {
+            return log(sqrt(pow(x[0], 4) + pow(x[0], 3) + pow(x[0],2)));
+        });
     CHECK_CLOSE(result, -1.81569, 1e-5);
 
-    result = integrate(quad, 
-        [](double x) { return pow(x, 4) * log(sqrt(pow(x, 4) + pow(x, 3) + pow(x,2)));});
+    result = integrate<double,1>(quad, [](std::array<double,1> x) { 
+            return pow(x[0], 4) * log(sqrt(pow(x[0], 4) + pow(x[0], 3) + pow(x[0],2)));
+        });
     CHECK_CLOSE(result, -0.000611395, 1e-6);
 }
 
@@ -94,16 +109,16 @@ TEST(TensorProduct) {
 
 TEST(TensorProductIntegrate) {
     auto g2d = tensor_gauss(2);
-    double result = integrate(g2d, [](double x,double y) {
-        return pow(x - 0.5,3) + pow(y, 2);
+    double result = integrate<double,2>(g2d, [](std::array<double,2> x) {
+        return pow(x[0] - 0.5,3) + pow(x[1], 2);
     });
     CHECK_CLOSE(result, -(7.0/6), 1e-6);
 }
 
 TEST(TensorProductIntegrate2) {
     auto g2d = tensor_gauss(35);
-    double result = integrate(g2d, [](double x,double y) {
-        return std::exp(x / (y + 1.1));
+    double result = integrate<double,2>(g2d, [](std::array<double,2> x) {
+        return std::exp(x[0] / (x[1] + 1.1));
     });
     CHECK_CLOSE(result, 38.6995, 1e-4);
 }
@@ -111,26 +126,26 @@ TEST(TensorProductIntegrate2) {
 TEST(IntegrateAreaOfUnitTriangle) {
     auto q2d = tensor_gauss(2);
     auto q2d_tri = square_to_tri(q2d);
-    double result = integrate(q2d_tri, [](double x, double y) {return 1.0;});
+    double result = integrate<double,2>(q2d_tri, [](std::array<double,2> x) {return 1.0;});
     CHECK_CLOSE(result, 0.5, 1e-10);
 }
 
 TEST(IntegrateTriPoly) {
     auto g2d = tri_gauss(13);
-    double result = integrate(g2d, [](double x,double y) {
-        return pow(x,23) + pow(y, 19);
+    double result = integrate<double,2>(g2d, [](std::array<double,2> x) {
+        return pow(x[0],23) + pow(x[1], 19);
     });
     CHECK_CLOSE(result, 17. / 4200, 1e-15);
 }
 
 void test_tri_integrate(QuadRule2d q2d_tri) {
-    double result = integrate(q2d_tri, [](double x,double y) {
-        return std::exp(x / (y - 1.1));
+    double result = integrate<double,2>(q2d_tri, [](std::array<double,2> x) {
+        return std::exp(x[0] / (x[1] - 1.1));
     });
     CHECK_CLOSE(result, 0.337429, 1e-6);
-    result = integrate(q2d_tri, [](double x,double y) {
-        return std::exp(x / (y + 1.1));
-    });
+    result = integrate<double,2>(q2d_tri, [](std::array<double,2> x) {
+            return std::exp(x[0] / (x[1] + 1.1));
+        });
     CHECK_CLOSE(result, 0.656602, 1e-6);
 }
 
