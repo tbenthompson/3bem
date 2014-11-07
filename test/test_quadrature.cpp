@@ -144,32 +144,6 @@ TEST(TriangleIntegrateDoubleExp) {
     test_tri_integrate(q2d_tri);
 }
 
-TEST(AreaTri) {
-    double result = tri_area({{{0,0,0},{1,0,0},{0,1,0}}});
-    CHECK_CLOSE(result, 0.5, 1e-12);
-    result = tri_area({{{1,1,1},{3,1,1},{3,3,1}}});
-    CHECK_CLOSE(result, 2.0, 1e-12);
-}
-
-TEST(LinearInterp) {
-    CHECK_CLOSE(linear_interp(0,0,{1,0,0}), 1.0, 1e-12);
-    CHECK_CLOSE(linear_interp(1,0,{0,1,0}), 1.0, 1e-12);
-    CHECK_CLOSE(linear_interp(0,1,{0,0,1}), 1.0, 1e-12);
-    CHECK_CLOSE(linear_interp(0.5,0.5,{0,0,1}), 0.5, 1e-12);
-    CHECK_CLOSE(linear_interp(0.0,0.5,{0,0,1}), 0.5, 1e-12);
-}
-
-TEST(LinearInterpOnes) {
-    auto gen1 = ac::fix(1, ac::generator<double>());
-    auto arb = ac::make_arbitrary(gen1, gen1);
-    ac::check<double, double>(
-        [](double x_hat, double y_hat) {
-            double result = linear_interp(x_hat, y_hat, {1,1,1});
-            double exact = 1.0;
-            return std::fabs(result - exact) < 1e-12;
-        }, 30, arb);
-}
-
 int main(int, char const *[])
 {
     int retval = UnitTest::RunAllTests();

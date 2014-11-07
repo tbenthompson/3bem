@@ -24,8 +24,8 @@ int main() {
     double obs_radius = 2.7;
     double far_threshold = 2.0;
     int refine_level = 3;
-    int near_quad_pts = 5;
-    int near_steps = 5;
+    int near_quad_pts = 3;
+    int near_steps = 6;
     int src_quad_pts = 2;
     int obs_quad_pts = 2;
 
@@ -68,12 +68,8 @@ int main() {
             std::cout << "iteration " << count << std::endl;
             count++;
             TIC
-            for (int i = 0; i < n_verts; i++) {
-                y[i] = 0.0;
-                for (int j = 0; j < n_verts; j++) {
-                    y[i] += matrix[i][j] * x[j];
-                }
-            }
+            auto y_temp = bem_mat_mult(matrix, x); 
+            std::copy(y_temp.begin(), y_temp.end(), y.begin());
             TOC("Matrix multiply on " + std::to_string(sphere.faces.size()) + " faces");
         });
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
