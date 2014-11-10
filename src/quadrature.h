@@ -31,14 +31,12 @@ QuadRule2d tri_double_exp(int n_pts, double h);
 QuadRule2d tri_double_exp(int n_pts);
 QuadRule2d square_to_tri(QuadRule2d square_quad);
 
-
 struct QuadStrategy {
     QuadStrategy(int obs_order);
     QuadStrategy(int obs_order, int src_far_order, int src_near_order,
                  int n_singular_steps, double far_threshold, double singular_tol);
 
     const QuadRule2d obs_quad;
-
     const QuadRule2d src_far_quad;
     const QuadRule2d src_near_quad;
     

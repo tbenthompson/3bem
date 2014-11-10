@@ -11,8 +11,8 @@ int main() {
     //-- constraints are becoming a problem -- need to loosen constraints
     //   across the fault
 
-    double surf_width = 4;
-    int refine_surf = 2;
+    double surf_width = 6;
+    int refine_surf = 6;
     double far_threshold = 3.0;
     int near_quad_pts = 3;
     int near_steps = 5;
@@ -30,6 +30,7 @@ int main() {
         {surf_width, surf_width, 0}, {surf_width, -surf_width, 0}
     );
     surface = refine_clean(surface, refine_surf);
+    std::cout << surface.faces.size() << std::endl;
 
     QuadStrategy qs(obs_quad_pts, src_quad_pts, near_quad_pts,
                     near_steps, far_threshold, 1e-3);
@@ -84,13 +85,14 @@ int main() {
     }
 
     std::array<std::array<std::vector<std::vector<double>>,3>,3> mats;
+    TIC
     for (int k = 0; k < 3; k++) {
         for (int j = 0; j < 3; j++) {
             Problem p = {surface, surface, h[k][j], {}};
             mats[k][j] = interact_matrix(p, qs);
-            std::cout << "HIHIHIH" << std::endl;
         }
     }
+    TOC("Building matrices")
 
     int count = 0;
     auto surface_disp = solve_system(full_rhs, 1e-5,
@@ -110,8 +112,8 @@ int main() {
                 for (int j = 0; j < 3; j++) {
                     for (unsigned int mi = 0; mi < mats[k][j].size(); mi++) {
                         for (unsigned int ni = 0; ni < mats[k][j].size(); ni++) {
-                            y_temp[k * n_surface_verts + mi] -= 
-                                mats[k][j][mi][ni] * x_temp[j][ni];
+                            y_temp[k * n_surface_verts + mi] += 
+                                -mats[k][j][mi][ni] * x_temp[j][ni];
                         }
                     }
                 }
