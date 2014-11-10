@@ -43,24 +43,6 @@ inline Vec3<double> ref_to_real(const std::array<double,2>& x_hat,
         linear_interp(x_hat, {locs[0][2], locs[1][2], locs[2][2]})
     };
 }
-
-inline Vec3<double> 
-tri_unscaled_normal(const std::array<Vec3<double>,3>& corners) {
-    return cross(corners[2] - corners[0], corners[2] - corners[1]);
-}
-
-inline Vec3<double> 
-tri_normal(const std::array<Vec3<double>,3>& corners) {
-    auto unscaled = tri_unscaled_normal(corners);
-    return normalized(unscaled);
-}
-
-inline double tri_area(const Vec3<double>& unscaled_normal) {
-    return 0.5 * hypot(unscaled_normal);
-}
-inline double tri_area(const std::array<Vec3<double>,3>& corners) {
-    return tri_area(tri_unscaled_normal(corners));
-}
  
 
 std::vector<double> cheb_polys(double x_hat, int n_max);

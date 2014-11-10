@@ -1,6 +1,7 @@
 #include "quadrature.h"
 #include "numerics.h"
 #include <cmath>
+#include <cassert>
 
 /* A helper function for integrating a given function using a quadrature rule.
  * Via templating, can be used with 1D, 2D, double, Vec3<double> quadrature.
@@ -65,6 +66,7 @@ std::pair<double, double> legendre_and_n_minus_1(unsigned int n,
  * This should work for rules up to about n = 1000.
  */
 QuadRule1d gauss(unsigned int n) {
+    assert(n > 0);
     QuadRule1d retval(n);
     const double tolerance = 1e-14;
     //Because gaussian quadrature rules are symmetric, I only 

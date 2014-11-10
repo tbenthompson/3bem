@@ -75,8 +75,11 @@ T adaptlobstp(const std::function<T(double)>& f, const double a, const double b,
     double mr = m + bh;
     double mrr = m + ah;
 
-    T fmll, fml, fm, fmr, fmrr;
-    fmll = f(mll); fml = f(ml); fm = f(m); fmr = f(mr); fmrr = f(mrr);
+    T fmll = f(mll);
+    T fml = f(ml);
+    T fm = f(m);
+    T fmr = f(mr);
+    T fmrr = f(mrr);
 
     T i1, i2;
     i2 = (h / 6.) * (fa + fb + 5.0 * (fml + fmr));    
@@ -103,28 +106,61 @@ T adaptlobstp(const std::function<T(double)>& f, const double a, const double b,
     }
 }
 
+double get_error_is(double p_tol, double erri1, double erri2, double is, 
+                    double a, double b) {
+    constexpr double eps = std::numeric_limits<double>::epsilon();
+    double R = 1.0;
+    if (erri2 != 0.0) {
+        R = erri1 / erri2;
+    }
+
+    double tol = p_tol;
+    if (R > 0.0 and R < 1.0) {
+        tol = p_tol / R;
+    }
+    double retval = std::fabs(is) * tol / eps;
+    if (retval == 0.0) {
+        retval = b - a;
+    }
+    return retval;
+}
+
+Vec3<double> get_error_is(double p_tol, Vec3<double> erri1, Vec3<double> erri2,
+                          Vec3<double> is, double a, double b) {
+    return {
+        get_error_is(p_tol, erri1[0], erri2[0], is[0], a, b),
+        get_error_is(p_tol, erri1[1], erri2[1], is[1], a, b),
+        get_error_is(p_tol, erri1[2], erri2[2], is[2], a, b)
+    };
+}
+
 //TODO: Refactor the shit out of this! Super ugly.
 template <typename T>
 T adaptive_integrate(std::function<T(double)> f, double a, double b, double p_tol)
 {
-    // std::cout << "START" << std::endl;
-
-    double eps = std::numeric_limits<double>::epsilon();
-    // double tol = (p_tol < eps) ?  eps : p_tol;
-
     double m = (a + b) / 2.; 
     double h = (b - a) / 2.;
 
     T y[13] = {
-        f(a),f(m-x1*h),f(m-alpha*h),f(m-x2*h),f(m-beta*h),
-        f(m-x3*h),f(m), f(m+x3*h),f(m+beta*h),f(m+x2*h),
-        f(m+alpha*h),f(m+x1*h),f(b)
+        f(a),
+        f(m - x1 * h),
+        f(m - alpha * h),
+        f(m - x2 * h),
+        f(m - beta * h),
+        f(m - x3 * h),
+        f(m),
+        f(m + x3 * h),
+        f(m + beta * h),
+        f(m + x2 * h),
+        f(m + alpha * h),
+        f(m + x1 * h),
+        f(b)
     };
     
     T fa = y[0];
     T fb = y[12];
     
-    T i2 = (h / 6.0) * (y[0] + y[12] + 5.0 *(y[4] + y[8]));
+    T i2 = (h / 6.0) * (y[0] + y[12] + 5.0 * (y[4] + y[8]));
     T i1 = (h / 1470.0) * (
             77.0 * (y[0] + y[12]) +
             432.0 * (y[2] + y[10]) +
@@ -141,16 +177,10 @@ T adaptive_integrate(std::function<T(double)> f, double a, double b, double p_to
    
     T erri1 = fabs(i1 - is);
     T erri2 = fabs(i2 - is);
-    double R = (all(erri2 != 0.0)) ? max(erri1 / erri2) : 1.0;
-    std::cout << R << std::endl;
     
-    double tol = (R > 0. and R < 1.) ? p_tol / R : p_tol; 
-    is = fabs(is) * tol / eps;
-    if (any(is == 0.0)) {
-        is = ones<T>() * (b - a);
-    }
+    T err_is = get_error_is(p_tol, erri1, erri2, is, a, b);
 
-    return adaptlobstp(f, a, b, fa, fb, is);
+    return adaptlobstp(f, a, b, fa, fb, err_is);
 }
 
 #endif

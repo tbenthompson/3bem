@@ -61,6 +61,9 @@ TEST(GaussExactness) {
     auto arb = ac::make_arbitrary(genint);
     ac::check<unsigned int>(
         [](unsigned int n) {
+            if (n == 0) {
+                return true;
+            }
             int g = 2 * n - 1;
             auto q = gauss(n);
             double result = integrate<double,1>(q, [&](std::array<double,1> x) {

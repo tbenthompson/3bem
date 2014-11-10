@@ -70,6 +70,39 @@ T richardson_step(const std::vector<T>& values) {
 template double richardson_step(const std::vector<double>&);
 template Vec3<double> richardson_step(const std::vector<Vec3<double>>&);
 
+Vec3<double> near_field(const Problem& p, const QuadStrategy& qs,
+                        const ObsPt& obs, const FaceInfo& src_face,
+                        const double dist2) {
+    std::vector<Vec3<double>> near_steps(qs.n_singular_steps, {0,0,0});
+    for (int nf = 0; nf < qs.n_singular_steps; nf++) {
+        double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
+        auto nf_obs_pt = obs.loc + nfdn * obs.normal;
+         
+        if (dist2 > 0.5 * src_face.area) {
+            auto eval = integrate<Vec3<double>,2>(qs.src_near_quad, 
+                [&](std::array<double,2> x_hat) {
+                    return eval_quad_pt(x_hat, p.K, src_face, 
+                                        nf_obs_pt, obs.normal);
+                });
+            near_steps[nf] += eval;
+        } else {
+            Vec3<double> ns = adaptive_integrate<Vec3<double>>(
+                [&] (double x_hat) {
+                    if (x_hat == 1.0) {
+                        return Vec3<double>{0.0,0.0,0.0};
+                    }
+                    return adaptive_integrate<Vec3<double>>([&] (double y_hat) {
+                            Vec3<double> val  = eval_quad_pt({x_hat, y_hat}, p.K, src_face,
+                                                nf_obs_pt, obs.normal);
+                            return val;
+                        }, 0.0, 1 - x_hat, qs.singular_tol);
+                }, 0.0, 1.0, qs.singular_tol);
+            near_steps[nf] += ns;
+        }
+    }
+    return richardson_step(near_steps);
+}
+
 std::vector<double> integral_equation_vector(const Problem& p,
                                              const QuadStrategy& qs,
                                              const ObsPt& obs) {
@@ -78,38 +111,9 @@ std::vector<double> integral_equation_vector(const Problem& p,
         FaceInfo src_face(p.src_mesh, i);
         const double dist2 = appx_face_dist2(obs.loc, src_face.corners);
 
-        std::array<double,3> integrals;
+        Vec3<double> integrals;
         if (dist2 < pow(qs.far_threshold,2) * src_face.area) {
-            //TODO: Refactor to a "nearfield" function
-            std::vector<Vec3<double>> near_steps(qs.n_singular_steps, {0,0,0});
-            for (int nf = 0; nf < qs.n_singular_steps; nf++) {
-                double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
-                auto nf_obs_pt = obs.loc + nfdn * obs.normal;
-                 
-                if (dist2 > 0.5 * src_face.area) {
-                    auto eval = integrate<Vec3<double>,2>(qs.src_near_quad, 
-                        [&](std::array<double,2> x_hat) {
-                            return eval_quad_pt(x_hat, p.K, src_face, 
-                                                nf_obs_pt, obs.normal);
-                        });
-                    near_steps[nf] += eval;
-                } else {
-                    Vec3<double> ns = adaptive_integrate<Vec3<double>>(
-                        [&] (double x_hat) {
-                            if (x_hat == 1.0) {
-                                return Vec3<double>{0.0,0.0,0.0};
-                            }
-                            return adaptive_integrate<Vec3<double>>([&] (double y_hat) {
-                                    Vec3<double> val  = eval_quad_pt({x_hat, y_hat}, p.K, src_face,
-                                                        nf_obs_pt, obs.normal);
-                                    std::cout << val << std::endl;
-                                    return val;
-                                }, 0.0, 1 - x_hat, qs.singular_tol);
-                        }, 0.0, 1.0, qs.singular_tol);
-                    near_steps[nf] += ns;
-                }
-            }
-            integrals = richardson_step(near_steps);
+            integrals = near_field(p, qs, obs, src_face, dist2);
         } else {
             //farfield
             integrals = integrate<Vec3<double>,2>(qs.src_far_quad,
