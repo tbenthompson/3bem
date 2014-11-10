@@ -166,16 +166,6 @@ TEST(MatrixRowVsEval) {
     CHECK_CLOSE(result2, 1.0, 1e-3);
 }
 
-TEST(Whoa_baNANnas) {
-    EvalProb ep(2, 3, 4, laplace_double, {5,0,0}, 3.0);
-    ep.obs_pt = {6.5309310892394858, 1.8371173070873836, -1.5309310892394863};
-    ep.obs_n = {-0.5773502691896254, -0.57735026918962595, 0.57735026918962595};
-    ep.obs_length_scale = 0.0094194506485734651;
-    
-    double result = ep.go();
-    CHECK_CLOSE(result, 0.561132, 1e-3);
-}
-
 TEST(MassTerm) {
     Mesh sphere = clean_mesh(sphere_mesh({0,0,0}, 1.0));
     std::vector<double> str(sphere.vertices.size(), 1.0);
