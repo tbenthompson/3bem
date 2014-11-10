@@ -6,6 +6,25 @@
 
 #include "vec.h"
 
+#define wrap_K(KNAME, K, J) \
+    [&] (const double& r2, const Vec3<double>& delta,\
+         const Vec3<double> nsrc, const Vec3<double>& nobs) {\
+        return this->KNAME<K,J>(r2, delta, nsrc, nobs);\
+    }
+
+#define KERNELMAT(KNAME, ARRNAME) \
+    const std::array<std::array<Kernel,3>,3> ARRNAME = {{ {{\
+            wrap_K(KNAME, 0, 0), wrap_K(KNAME, 0, 1), wrap_K(KNAME, 0, 2) \
+        }}, {{\
+            wrap_K(KNAME, 1, 0), wrap_K(KNAME, 1, 1), wrap_K(KNAME, 1, 2)\
+        }}, {{\
+            wrap_K(KNAME, 2, 0), wrap_K(KNAME, 2, 1), wrap_K(KNAME, 2, 2)\
+        }}\
+    }}\
+
+typedef std::function<double(const double&, const Vec3<double>&,
+                             const Vec3<double>&, const Vec3<double>&)> Kernel;
+
 inline double one(const double& r2, 
              const Vec3<double>& delta,
              const Vec3<double>& nsrc,
@@ -92,10 +111,10 @@ public:
      */
     //TODO: precompute some of the constants in here.
     template <int k, int j>
-    double hypersingular(double r2, 
+    double hypersingular(const double& r2, 
                     const Vec3<double>& delta, 
                     const Vec3<double>& nsrc,
-                    const Vec3<double>& nobs) const {
+                    const Vec3<double>& nobs) {
         double r = std::sqrt(r2);
         const Vec3<double> dr = delta / r;
         const auto drdn = dot(dr, nsrc);
@@ -113,6 +132,11 @@ public:
         const auto C = (shear_modulus / (4 * M_PI * (1 - poisson_ratio) * r2 * r));
         return C * (line1 + line2 + line3 + line4);
     }
+    
+    KERNELMAT(hypersingular, hypersingular_mat);
+    KERNELMAT(displacement, displacement_mat);
+    KERNELMAT(traction, traction_mat);
+    KERNELMAT(adjoint_traction, adjoint_traction_mat);
 
     const double shear_modulus;
     const double poisson_ratio;

@@ -11,13 +11,14 @@ int main() {
     //-- constraints are becoming a problem -- need to loosen constraints
     //   across the fault
 
-    double surf_width = 6;
-    int refine_surf = 6;
+    double surf_width = 12;
+    int refine_surf = 5;
     double far_threshold = 3.0;
     int near_quad_pts = 3;
     int near_steps = 5;
     int src_quad_pts = 2;
     int obs_quad_pts = 2;
+    double singular_tolerance = 1e-2;
 
     Mesh fault = rect_mesh(
         {-1, 0, -3.0}, {-1, 0, -1.0},
@@ -33,7 +34,7 @@ int main() {
     std::cout << surface.faces.size() << std::endl;
 
     QuadStrategy qs(obs_quad_pts, src_quad_pts, near_quad_pts,
-                    near_steps, far_threshold, 1e-3);
+                    near_steps, far_threshold, singular_tolerance);
 
     ElasticKernels ek(30e9, 0.25);
     
@@ -54,24 +55,9 @@ int main() {
 
     using namespace std::placeholders;
 
-    std::array<std::array<Kernel,3>,3> h = {{ {
-            std::bind(&ElasticKernels::hypersingular<0,0>, ek, _1, _2, _3, _4),
-            std::bind(&ElasticKernels::hypersingular<0,1>, ek, _1, _2, _3, _4),
-            std::bind(&ElasticKernels::hypersingular<0,2>, ek, _1, _2, _3, _4)
-        }, {
-            std::bind(&ElasticKernels::hypersingular<1,0>, ek, _1, _2, _3, _4),
-            std::bind(&ElasticKernels::hypersingular<1,1>, ek, _1, _2, _3, _4),
-            std::bind(&ElasticKernels::hypersingular<1,2>, ek, _1, _2, _3, _4)
-        }, {
-            std::bind(&ElasticKernels::hypersingular<2,0>, ek, _1, _2, _3, _4),
-            std::bind(&ElasticKernels::hypersingular<2,1>, ek, _1, _2, _3, _4),
-            std::bind(&ElasticKernels::hypersingular<2,2>, ek, _1, _2, _3, _4)
-        }
-    }};
-
     for (int k = 0; k < 3; k++) {
         for (int j = 0; j < 3; j++) {
-            Problem p = {fault, surface, h[k][j], du[j]};
+            Problem p = {fault, surface, ek.hypersingular_mat[k][j], du[j]};
             auto res = direct_interact(p, qs);
             for (unsigned int i = 0; i < res.size(); i++) {
                 rhs[k][i] += res[i];
@@ -88,7 +74,7 @@ int main() {
     TIC
     for (int k = 0; k < 3; k++) {
         for (int j = 0; j < 3; j++) {
-            Problem p = {surface, surface, h[k][j], {}};
+            Problem p = {surface, surface, ek.hypersingular_mat[k][j], {}};
             mats[k][j] = interact_matrix(p, qs);
         }
     }
