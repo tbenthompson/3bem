@@ -29,9 +29,13 @@ def main(filename, values_dim):
         disp[i,:] = u
     print disp[0,:]
     plt.figure()
-    plt.tripcolor(vertices[:,0], vertices[:,1], data, shading = 'gouraud')
+    plt.tricontourf(vertices[:,0], vertices[:,1], data, shading = 'gouraud')
+    plt.tricontour(vertices[:,0], vertices[:,1], data,
+                   colors = ['k'], linestyles = 'solid', shading = 'gouraud')
     plt.figure()
-    plt.tripcolor(vertices[:,0], vertices[:,1], disp[:,1], shading = 'gouraud')
+    plt.tricontourf(vertices[:,0], vertices[:,1], disp[:,0], shading = 'gouraud')
+    plt.tricontour(vertices[:,0], vertices[:,1], disp[:,0],
+                   colors = ['k'], linestyles = 'solid', shading = 'gouraud')
     plt.show()
 
 

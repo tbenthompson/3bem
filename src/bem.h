@@ -7,11 +7,10 @@
 #include "vec.h"
 #include "numerics.h"
 #include "quadrature.h"
+#include "kernels.h"
 
 class Mesh;
 
-typedef std::function<double(const double&, const Vec3<double>&,
-                             const Vec3<double>&, const Vec3<double>&)> Kernel;
 
 struct Problem {
     const Mesh& src_mesh;
