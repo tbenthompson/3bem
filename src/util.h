@@ -92,7 +92,9 @@ inline double error_inf(const std::vector<double>& a,
     return error;
 }
 
-class Mesh;
+template <int dim>
+class NewMesh;
+typedef NewMesh<3> Mesh;
 void hdf_out(const std::string& filename, const Mesh& mesh,
              const std::vector<double>& data);
 #endif

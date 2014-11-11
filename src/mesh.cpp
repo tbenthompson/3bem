@@ -147,3 +147,7 @@ Mesh refine_clean(const Mesh& m, unsigned int times) {
     ret = clean_mesh(ret);
     return ret;
 }
+
+// Explicitly instantiate the possible mesh templates.
+template class NewMesh<2>;
+template class NewMesh<3>;

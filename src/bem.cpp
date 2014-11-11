@@ -30,7 +30,7 @@ Vec3<double> eval_quad_pt(const std::array<double,2>& x_hat,
                           const Vec3<double>& obs_n) {
     const auto src_pt = ref_to_real(x_hat, face.corners);
     const auto d = src_pt - obs_loc;
-    const auto r2 = hypot2(d);
+    const auto r2 = dot(d, d);
     const auto kernel_val = kernel(r2, d, face.normal, obs_n);
     return (kernel_val * face.jacobian) * linear_basis(x_hat);
 }
@@ -70,6 +70,11 @@ T richardson_step(const std::vector<T>& values) {
 template double richardson_step(const std::vector<double>&);
 template Vec3<double> richardson_step(const std::vector<Vec3<double>>&);
 
+static unsigned int interacts = 0;
+static unsigned far_field_pairs = 0;
+static unsigned near_field_pairs = 0;
+static unsigned adjacent_pairs = 0;
+
 Vec3<double> near_field(const Problem& p, const QuadStrategy& qs,
                         const ObsPt& obs, const FaceInfo& src_face,
                         const double dist2) {
@@ -79,12 +84,13 @@ Vec3<double> near_field(const Problem& p, const QuadStrategy& qs,
         auto nf_obs_pt = obs.loc + nfdn * obs.normal;
          
         if (dist2 > 0.5 * src_face.area) {
-            auto eval = integrate<Vec3<double>,2>(qs.src_near_quad, 
-                [&](std::array<double,2> x_hat) {
-                    return eval_quad_pt(x_hat, p.K, src_face, 
-                                        nf_obs_pt, obs.normal);
-                });
-            near_steps[nf] += eval;
+            for (unsigned int i = 0; i < qs.src_near_quad.size(); i++) {
+                near_steps[nf] += qs.src_near_quad[i].w *
+                    eval_quad_pt(qs.src_near_quad[i].x_hat, p.K, src_face,
+                                 nf_obs_pt, obs.normal);
+            }
+            interacts += qs.src_near_quad.size();
+            near_field_pairs++;
         } else {
             Vec3<double> ns = adaptive_integrate<Vec3<double>>(
                 [&] (double x_hat) {
@@ -94,10 +100,12 @@ Vec3<double> near_field(const Problem& p, const QuadStrategy& qs,
                     return adaptive_integrate<Vec3<double>>([&] (double y_hat) {
                             Vec3<double> val  = eval_quad_pt({x_hat, y_hat}, p.K, src_face,
                                                 nf_obs_pt, obs.normal);
+                            interacts++;
                             return val;
                         }, 0.0, 1 - x_hat, qs.singular_tol);
                 }, 0.0, 1.0, qs.singular_tol);
             near_steps[nf] += ns;
+            adjacent_pairs++;
         }
     }
     return richardson_step(near_steps);
@@ -112,14 +120,18 @@ std::vector<double> integral_equation_vector(const Problem& p,
         const double dist2 = appx_face_dist2(obs.loc, src_face.corners);
 
         Vec3<double> integrals;
-        if (dist2 < pow(qs.far_threshold,2) * src_face.area) {
+        if (dist2 < pow(qs.far_threshold, 2) * src_face.area) {
             integrals = near_field(p, qs, obs, src_face, dist2);
         } else {
-            //farfield
-            integrals = integrate<Vec3<double>,2>(qs.src_far_quad,
-                [&](std::array<double,2> x_hat) {
-                    return eval_quad_pt(x_hat, p.K, src_face, obs.loc, obs.normal);
-                });
+            // farfield
+            integrals = {0.0, 0.0, 0.0};
+            for (unsigned int i = 0; i < qs.src_far_quad.size(); i++) {
+                integrals += qs.src_far_quad[i].w *
+                    eval_quad_pt(qs.src_far_quad[i].x_hat, p.K, src_face,
+                                 obs.loc, obs.normal);
+            }
+            interacts += qs.src_far_quad.size();
+            far_field_pairs++;
         }
         for (int b = 0; b < 3; b++) {
             result[src_face.face[b]] += integrals[b];
@@ -166,6 +178,7 @@ std::vector<std::vector<double>> interact_matrix(const Problem& p,
             }
         }
     }
+    std::cout << interacts << " " << far_field_pairs << " " << near_field_pairs << " " << adjacent_pairs << std::endl;
     return matrix;
 }
 

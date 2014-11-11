@@ -35,7 +35,7 @@ cpp_flags = '-Wall -std=c++11 -fopenmp -mavx'.split()
 cpp_flags.extend(['-I' + loc for loc in includes])
 
 debug_flags = '-g -Og -DDEBUG=1'.split()
-release_flags = '-DNDEBUG=1 -O3 -funroll-loops'.split()
+release_flags = '-DNDEBUG=1 -Ofast -ffast-math -funroll-loops'.split()
 profile_flags = release_flags + ['-g']
 # cpp_flags.extend(debug_flags)
 # cpp_flags.extend(release_flags)

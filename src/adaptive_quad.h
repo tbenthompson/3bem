@@ -136,7 +136,7 @@ Vec3<double> get_error_is(double p_tol, Vec3<double> erri1, Vec3<double> erri2,
 
 //TODO: Refactor the shit out of this! Super ugly.
 template <typename T>
-T adaptive_integrate(std::function<T(double)> f, double a, double b, double p_tol)
+T adaptive_integrate(const std::function<T(double)>& f, double a, double b, double p_tol)
 {
     double m = (a + b) / 2.; 
     double h = (b - a) / 2.;

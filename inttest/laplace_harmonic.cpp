@@ -25,13 +25,14 @@ int main() {
     double far_threshold = 2.0;
     int refine_level = 3;
     int near_quad_pts = 3;
-    int near_steps = 7;
+    int near_steps = 6;
     int src_quad_pts = 2;
     //TODO: Something is seriously wrong when I use obs_quad_pts = 3
     int obs_quad_pts = 2;
+    double tol = 1e-3;
 
     QuadStrategy qs(obs_quad_pts, src_quad_pts, near_quad_pts,
-                    near_steps, far_threshold, 1e-3);
+                    near_steps, far_threshold, tol);
 
     auto sphere = refine_clean(sphere_mesh(center, r), refine_level);
 
@@ -74,7 +75,6 @@ int main() {
         });
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
     hdf_out("laplace.hdf5", sphere, dudn_solved); 
-    return 0;
 
     double obs_len_scale = get_len_scale(sphere, 0, obs_quad_pts);
     for(int i = 0; i < 100; i++) {

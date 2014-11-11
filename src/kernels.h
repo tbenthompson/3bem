@@ -32,6 +32,7 @@ inline double one(const double& r2,
     return 1.0;
 }
 
+
 inline double laplace_single(const double& r2,
                         const Vec3<double>& delta,
                         const Vec3<double>& nsrc,

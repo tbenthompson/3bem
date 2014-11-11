@@ -29,13 +29,25 @@ def main(filename, values_dim):
         disp[i,:] = u
     print disp[0,:]
     plt.figure()
-    plt.tricontourf(vertices[:,0], vertices[:,1], data, shading = 'gouraud')
-    plt.tricontour(vertices[:,0], vertices[:,1], data,
-                   colors = ['k'], linestyles = 'solid', shading = 'gouraud')
+    trip1 = plt.tripcolor(vertices[:,0], vertices[:,1], data, shading = 'gouraud', vmin = -0.04, vmax = 0.04)
+    # plt.tricontourf(vertices[:,0], vertices[:,1], data, shading = 'gouraud')
+    # plt.tricontour(vertices[:,0], vertices[:,1], data,
+    #                colors = ['k'], linestyles = 'solid', shading = 'gouraud')
+    plt.colorbar()
     plt.figure()
-    plt.tricontourf(vertices[:,0], vertices[:,1], disp[:,0], shading = 'gouraud')
-    plt.tricontour(vertices[:,0], vertices[:,1], disp[:,0],
-                   colors = ['k'], linestyles = 'solid', shading = 'gouraud')
+    trip2 = plt.tripcolor(vertices[:,0], vertices[:,1], disp[:,0], shading = 'gouraud', vmin = -0.04, vmax = 0.04)
+    # plt.tricontourf(vertices[:,0], vertices[:,1], disp[:,0], shading = 'gouraud')
+    # plt.tricontour(vertices[:,0], vertices[:,1], disp[:,0],
+    #                colors = ['k'], linestyles = 'solid', shading = 'gouraud')
+    plt.colorbar()
+
+    diff = disp[:,0] - data#np.log(np.abs((disp[:,0] - data) / 1)) / np.log(10)
+    plt.figure()
+    trip3 = plt.tripcolor(vertices[:,0], vertices[:,1], diff, shading = 'gouraud', vmin = -0.04, vmax = 0.04)
+    plt.colorbar()
+    plt.figure()
+    trip3 = plt.tripcolor(vertices[:,0], vertices[:,1], diff, shading = 'gouraud')
+    plt.colorbar()
     plt.show()
 
 
