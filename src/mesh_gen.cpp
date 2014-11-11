@@ -64,7 +64,6 @@ Mesh3D sphere_mesh(const Vec3<double>& center, double r, bool interior) {
     return octahedron;
 }
 
-
 Mesh3D rect_mesh(const Vec3<double>& lower_left,
                const Vec3<double>& upper_left, 
                const Vec3<double>& upper_right, 
@@ -79,6 +78,45 @@ Mesh3D rect_mesh(const Vec3<double>& lower_left,
 
     Mesh3D rect{vertices, faces, false, nullptr};
     return rect;
+}
+
+NewMesh<3> cube_mesh_new() {
+    std::vector<std::array<double, 3>> vertices = {
+        {0.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,1.0,1.0},
+        {1.0,1.0,0.0}, {0.0,0.0,0.0}, {0.0,1.0,0.0},
+        {1.0,0.0,1.0}, {0.0,0.0,0.0}, {1.0,0.0,0.0},
+        {1.0,1.0,0.0}, {1.0,0.0,0.0}, {0.0,0.0,0.0},
+        {0.0,0.0,0.0}, {0.0,1.0,1.0}, {0.0,1.0,0.0},
+        {1.0,0.0,1.0}, {0.0,0.0,1.0}, {0.0,0.0,0.0},
+        {0.0,1.0,1.0}, {0.0,0.0,1.0}, {1.0,0.0,1.0},
+        {1.0,1.0,1.0}, {1.0,0.0,0.0}, {1.0,1.0,0.0},
+        {1.0,0.0,0.0}, {1.0,1.0,1.0}, {1.0,0.0,1.0},
+        {1.0,1.0,1.0}, {1.0,1.0,0.0}, {0.0,1.0,0.0},
+        {1.0,1.0,1.0}, {0.0,1.0,0.0}, {0.0,1.0,1.0},
+        {1.0,1.0,1.0}, {0.0,1.0,1.0}, {1.0,0.0,1.0}
+    };
+
+    std::vector<std::array<int, 3>> faces;
+    for (int i = 0; i < 12; i++) {
+        faces.push_back({3 * i, 3 * i + 1, 3 * i + 2});
+    }
+
+    return NewMesh<3>::from_vertices_faces(vertices, faces, false, nullptr);
+}
+
+NewMesh<3> rect_mesh_new(const Vec3<double>& lower_left,
+               const Vec3<double>& upper_left, 
+               const Vec3<double>& upper_right, 
+               const Vec3<double>& lower_right) {
+    std::vector<Vec3<double>> vertices = {
+        lower_left, upper_left, upper_right, lower_right
+    };
+
+    std::vector<std::array<int,3>> faces = {
+        {0, 3, 2}, {0, 2, 1}
+    };
+
+    return NewMesh<3>::from_vertices_faces(vertices, faces, false, nullptr);
 }
 
 NewMesh<3> sphere_mesh_new(const Vec3<double>& center, double r, bool interior) {
