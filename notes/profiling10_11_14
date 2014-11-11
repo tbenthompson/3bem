@@ -1,0 +1,48 @@
+Worked through trying to understand performance characteristics of the 3D bem code.
+The biggest block seems to be memory. I think the messy mesh storage format is 
+the main bottleneck.
+Currently, each interaction evaluation requires ~800 cycles.
+Just by counting, this *should* take ~100 cycles.
+I suspect that a big chunk of this difference can be attributed to the memory bottleneck.
+Another big chunk lies in the overhead of the two layer adaptive quadrature. Writing
+a 2D adaptive quadrature routine or using diligenti would help with this a lot.
+There should be something around another 4x speedup from using vector instructions,
+x2 from using 32-bit instead of 64-bit,
+x10 from using GPU
+
+What about just reducing the work done?
+For a 2048 element laplace case:
+66e6 quad pts, 16e6 pairs -- far
+42e6 quad pts, 861e3 pairs -- near
+173e6 quad pts, 294624 pairs -- adjacent
+total = 281e6 quad pts
+the nearfield part will be essentially impossible to reduce without
+very big modifications to the algorithm
+the far field part can be reduced via FMM
+the adjacent part can be reduced via better adaptive quadrature, but i doubt it can
+be reduced much, and definitely can't be reduced further than the per pair cost of the
+nearfield
+so, an absolute minimum on total quad points is ~80e6 for a modest 3.5x speedup. 
+Probably not worth fussing over!
+
+Other things:
+inserting the kernel directly instead of using the std::function implementation
+reduces the cost of quad point evaluation by ~20% for laplace. I suspect this
+will be less for more complex kernels like elasticity.
+
+Plans:
+don't work on this for now. The best ways of improving performance are relatively 
+high cost.
+Two categories: code redesign/efficiency, algorithm redesign/efficiency.
+CODE:
+-- for elasticity, operating on the entire kernel matrix (3x3) at once will speed things up a lot
+-- redesign the mesh data structure to improve cache locality.
+-- write a 2D adaptive quadrature code
+-- the biggest thing: python code to autogenerate opencl or optimized c++ 
+---- figure out the 
+
+ALGORITHMIC:
+-- some almost-singular transformation method would be beneficial in reducing the cost of the singular integrals 
+-- i think high order (3-10th order) will be very beneficial given the nature of this scheme. the number of quad pts per dof will decrease i think
+-- adaptivity will reduce the need for high element counts
+-- FMM for nearfield

@@ -36,90 +36,107 @@ std::array<T, 3> index3(const std::vector<T>& x, const std::array<int, 3>& indic
  */
 
 // Cool! C++11 templated typedef
+template <typename T, unsigned long dim>
+using Vec = std::array<T,dim>;
 template <typename T>
-using Vec3 = std::array<T,3>;
+using Vec3 = Vec<T,3>;
+template <typename T>
+using Vec2 = Vec<T,2>;
 
 template <typename T>
 void operator+=(Vec3<T>& a, const Vec3<T>& b) {
     a[0] += b[0]; a[1] += b[1]; a[2] += b[2];
+}
+template <typename T>
+void operator+=(Vec2<T>& a, const Vec2<T>& b) {
+    a[0] += b[0]; a[1] += b[1];
 }
 
 template <typename T>
 void operator-=(Vec3<T>& a, const Vec3<T>& b) {
     a[0] -= b[0]; a[1] -= b[1]; a[2] -= b[2];
 }
+template <typename T>
+void operator-=(Vec2<T>& a, const Vec2<T>& b) {
+    a[0] -= b[0]; a[1] -= b[1];
+}
 
 template <typename T>
 void operator*=(Vec3<T>& a, const Vec3<T>& b) {
     a[0] *= b[0]; a[1] *= b[1]; a[2] *= b[2];
+}
+template <typename T>
+void operator*=(Vec2<T>& a, const Vec2<T>& b) {
+    a[0] *= b[0]; a[1] *= b[1];
 }
 
 template <typename T>
 void operator/=(Vec3<T>& a, const Vec3<T>& b) {
     a[0] /= b[0]; a[1] /= b[1]; a[2] /= b[2];
 }
+template <typename T>
+void operator/=(Vec2<T>& a, const Vec2<T>& b) {
+    a[0] /= b[0]; a[1] /= b[1]; 
+}
 
 template <typename T>
 void operator*=(Vec3<T>& a, const T& s) {
     a[0] *= s; a[1] *= s; a[2] *= s;
 }
-
 template <typename T>
-void operator/=(Vec3<T>& a, const T& s) {
+void operator*=(Vec2<T>& a, const T& s) {
+    a[0] *= s; a[1] *= s;
+}
+
+template <typename T, unsigned long dim>
+void operator/=(Vec<T,dim>& a, const T& s) {
     double inv_s = 1 / s;
     a *= inv_s;
 }
 
-template <typename T>
-Vec3<T> operator+(const Vec3<T>& a, const Vec3<T>& b) {
-    return {a[0] + b[0], a[1] + b[1], a[2] + b[2]};
+template <typename T, unsigned long dim>
+Vec<T,dim> operator+(const Vec<T,dim>& a, const Vec<T,dim>& b) {
+    Vec<T,dim> res = a; res += b; return res;
 }
 
-template <typename T>
-Vec3<T> operator-(const Vec3<T>& a, const Vec3<T>& b) {
-    return {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
+template <typename T, unsigned long dim>
+Vec<T,dim> operator-(const Vec<T,dim>& a, const Vec<T,dim>& b) {
+    Vec<T,dim> res = a; res -= b; return res;
 }
 
-template <typename T>
-Vec3<T> operator*(const Vec3<T>& a, const Vec3<T>& b) {
-    return {a[0] * b[0], a[1] * b[1], a[2] * b[2]};
+template <typename T, unsigned long dim>
+Vec<T,dim> operator*(const Vec<T,dim>& a, const Vec<T,dim>& b) {
+    Vec<T,dim> res = a; res *= b; return res;
 }
 
-template <typename T>
-Vec3<T> operator/(const Vec3<T>& a, const Vec3<T>& b) {
-    return {a[0] / b[0], a[1] / b[1], a[2] / b[2]};
+template <typename T, unsigned long dim>
+Vec<T,dim> operator/(const Vec<T,dim>& a, const Vec<T,dim>& b) {
+    Vec<T,dim> res = a; res /= b; return res;
 }
 
-template <typename T>
-Vec3<T> operator*(const Vec3<T>& a, const T& s) {
-    return {a[0] * s, a[1] * s, a[2] * s};
+template <typename T, unsigned long dim>
+Vec<T,dim> operator*(const Vec<T,dim>& a, const T& s) {
+    Vec<T,dim> res = a; res *= s; return res;
 }
 
-template <typename T>
-Vec3<T> operator*(const T& s, const Vec3<T>& a) {
-    return {a[0] * s, a[1] * s, a[2] * s};
+template <typename T, unsigned long dim>
+Vec<T,dim> operator*(const T& s, const Vec<T,dim>& a) {
+    Vec<T,dim> res = a; res *= s; return res;
 }
 
-template <typename T>
-Vec3<T> operator/(const Vec3<T>& a, const T& s) {
-    double inv_s = 1.0 / s;
-    return {a[0] * inv_s, a[1] * inv_s, a[2] * inv_s};
+template <typename T, unsigned long dim>
+Vec<T,dim> operator/(const Vec<T,dim>& a, const T& s) {
+    Vec<T,dim> res = a; res /= s; return res;
 }
 
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const Vec3<T>& a) {
-    os << "(" << a[0] << ", " << a[1] << ", " << a[2] << ")";
-    return os;
-}
-
-template <typename T, int M>
-std::ostream& operator<<(std::ostream& os, const Vec3<double>& a) {
+template <typename T, unsigned long dim>
+std::ostream& operator<<(std::ostream& os, const Vec<T,dim>& a) {
     os << "(";
-    if (M > 0) {
-        for (std::size_t i = 0; i < M - 1; i++) {
+    if (dim > 0) {
+        for (std::size_t i = 0; i < dim - 1; i++) {
             os << a[i] << ", ";
         }
-        os << a[M - 1];
+        os << a[dim - 1];
     }
     os << ")";
     return os;
@@ -137,6 +154,11 @@ T sum(const Vec3<T>& a) {
 }
 
 template <typename T>
+T sum(const Vec2<T>& a) {
+    return a[0] + a[1];
+}
+
+template <typename T>
 Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
     return {
         x[1] * y[2] - x[2] * y[1],
@@ -145,18 +167,18 @@ Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
     };
 }
 
-template <typename T>
-T dot(const Vec3<T>& x, const Vec3<T>& y) {
+template <typename T, unsigned long dim>
+T dot(const Vec<T,dim>& x, const Vec<T,dim>& y) {
     return sum(x*y);
 }
 
-template <typename T>
-T hypot2(const Vec3<T>& v) {
+template <typename T, unsigned long dim>
+T hypot2(const Vec<T,dim>& v) {
     return dot(v, v);
 }
 
-template <typename T>
-T hypot(const Vec3<T>& v) {
+template <typename T, unsigned long dim>
+T hypot(const Vec<T,dim>& v) {
     return std::sqrt(hypot2(v));
 }
 
@@ -172,10 +194,14 @@ Vec3<T> normalized(const Vec3<T>& v) {
     return res;
 }
 
-template <typename T>
-inline T dist2(const Vec3<T>& v0, 
-                    const Vec3<T>& v1) {
+template <typename T, unsigned long dim>
+inline T dist2(const Vec<T,dim>& v0, const Vec<T,dim>& v1) {
     return hypot2(v1 - v0);
+}
+
+template <typename T, unsigned long dim>
+inline T dist(const Vec<T,dim>& v0, const Vec<T,dim>& v1) {
+    return hypot(v1 - v0);
 }
 
 template <typename T>
