@@ -4,20 +4,17 @@
 #include "numerics.h"
 #include <GL/glut.h>
 
-void draw_mesh(Mesh3D& msh) {
+void draw_mesh(NewMesh<3> msh) {
     glBegin(GL_TRIANGLES);
-    for (unsigned int i = 0; i < msh.faces.size(); i++) {
-        for (int v = 0; v < 3; v++) {
-            int vert = msh.faces[i][v];
-            glVertex3f(msh.vertices[vert][0],
-                       msh.vertices[vert][1],
-                       msh.vertices[vert][2]);
+    for(auto f: msh.facets) {
+        for (auto v: f.vertices) {
+            glVertex3f(v[0], v[1], v[2]);
         }
     }
     glEnd();
 }
 
-Mesh3D sphere;
+const NewMesh<3> sphere = sphere_mesh_new({0.0, 1.0, 1.0}, 1.0).refine_repeatedly(3);
 double rotate_y = 0; 
 double rotate_x = 0;
 void specialKeys( int key, int x, int y ) 
@@ -63,15 +60,6 @@ void display()
 
 #include "util.h"
 int main(int argc, char **argv) {
-    sphere = sphere_mesh({0.0, 1.0, 1.0}, 1.0);
-    std::cout << "Raw mesh has " << sphere.vertices.size() << " vertices." << std::endl;
-    sphere = refine_mesh(sphere, naturals(sphere.faces.size()));
-    sphere = refine_mesh(sphere, naturals(sphere.faces.size()));
-    sphere = refine_mesh(sphere, naturals(sphere.faces.size()));
-    std::cout << "Refined mesh has " << sphere.vertices.size() << " vertices." << std::endl;
-    sphere = clean_mesh(sphere);
-    std::cout << "Cleaned mesh has " << sphere.vertices.size() << " vertices." << std::endl;
-
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
     glutInitWindowSize(640, 480);
