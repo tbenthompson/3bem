@@ -4,7 +4,7 @@
 #include "numerics.h"
 #include <GL/glut.h>
 
-void draw_mesh(Mesh& msh) {
+void draw_mesh(Mesh3D& msh) {
     glBegin(GL_TRIANGLES);
     for (unsigned int i = 0; i < msh.faces.size(); i++) {
         for (int v = 0; v < 3; v++) {
@@ -17,7 +17,7 @@ void draw_mesh(Mesh& msh) {
     glEnd();
 }
 
-Mesh sphere;
+Mesh3D sphere;
 double rotate_y = 0; 
 double rotate_x = 0;
 void specialKeys( int key, int x, int y ) 

@@ -1,7 +1,7 @@
 #include "mesh.h"
 #include "util.h"
 
-std::unordered_map<int, int> find_duplicate_map(const Mesh& mesh, double eps) {
+std::unordered_map<int, int> find_duplicate_map(const Mesh3D& mesh, double eps) {
     std::unordered_map<int, int> old_to_new;
     for (unsigned int i = 0; i < mesh.vertices.size(); i++) {
         //TODO: FIX THE O(N^2) problem -- blocking, refactor octree to use Vec3
@@ -45,7 +45,7 @@ int count_unique_vertices(const std::unordered_map<int,int>& old_to_new) {
 }
 
 std::vector<Vec3<double>> unique_vertices(
-        const Mesh& mesh, std::unordered_map<int,int>& old_to_new) {
+        const Mesh3D& mesh, std::unordered_map<int,int>& old_to_new) {
     int n_unique = count_unique_vertices(old_to_new);
     std::vector<Vec3<double>> vertices(n_unique);
     for (unsigned int i = 0; i < mesh.vertices.size(); i++) {
@@ -54,7 +54,7 @@ std::vector<Vec3<double>> unique_vertices(
     return vertices;
 }
             
-Mesh clean_mesh(const Mesh& mesh, double vertex_smear) {
+Mesh3D clean_mesh(const Mesh3D& mesh, double vertex_smear) {
     //Find duplicate vertices
     auto old_to_new = find_duplicate_map(mesh, vertex_smear);
     auto new_vertices = unique_vertices(mesh, old_to_new);
@@ -70,11 +70,11 @@ Mesh clean_mesh(const Mesh& mesh, double vertex_smear) {
         new_faces.push_back(face);
     }
 
-    Mesh retval{new_vertices, new_faces, mesh.has_refine_mod, mesh.refine_mod};
+    Mesh3D retval{new_vertices, new_faces, mesh.has_refine_mod, mesh.refine_mod};
     return retval;
 }
 
-void refine_face(Mesh& new_mesh, std::array<int, 3> face) {
+void refine_face(Mesh3D& new_mesh, std::array<int, 3> face) {
     // Find the new vertex and faces.
     const auto v0 = new_mesh.vertices[face[0]];
     const auto v1 = new_mesh.vertices[face[1]];
@@ -109,8 +109,8 @@ void refine_face(Mesh& new_mesh, std::array<int, 3> face) {
     new_mesh.faces.push_back({midpt01_idx, midpt12_idx, midpt20_idx});
 }
 
-Mesh refine_mesh(const Mesh& m, std::vector<int> refine_these) {
-    Mesh new_mesh {m.vertices, {}, m.has_refine_mod, m.refine_mod};
+Mesh3D refine_mesh(const Mesh3D& m, std::vector<int> refine_these) {
+    Mesh3D new_mesh {m.vertices, {}, m.has_refine_mod, m.refine_mod};
     new_mesh.vertices = m.vertices;
 
     // Sort the refined edges so that we only have to check the
@@ -132,15 +132,15 @@ Mesh refine_mesh(const Mesh& m, std::vector<int> refine_these) {
     return new_mesh;
 }
 
-Mesh refine_mesh(const Mesh& m) {
+Mesh3D refine_mesh(const Mesh3D& m) {
     return refine_mesh(m, naturals(m.faces.size()));
 }
 
-Mesh refine_clean(const Mesh& m, unsigned int times) {
+Mesh3D refine_clean(const Mesh3D& m, unsigned int times) {
     if (times == 0) {
         return clean_mesh(m);
     }
-    Mesh ret = refine_mesh(m);
+    Mesh3D ret = refine_mesh(m);
     for(unsigned int i = 1; i < times; i++) {
         ret = refine_mesh(ret);
     }
@@ -149,5 +149,111 @@ Mesh refine_clean(const Mesh& m, unsigned int times) {
 }
 
 // Explicitly instantiate the possible mesh templates.
+template class Mesh<2>;
+template class Mesh<3>;
+
+std::array<Facet<2>,2> refine_facet(const Facet<2>& f) {
+    auto midpt = (f.vertices[0] + f.vertices[1]) / 2.0;
+    return {
+        Facet<2>{{f.vertices[0], midpt}},
+        Facet<2>{{midpt, f.vertices[1]}}
+    };
+}
+
+std::array<Facet<3>,4> refine_facet(const Facet<3>& f) {
+    auto midpt01 = (f.vertices[0] + f.vertices[1]) / 2.0;
+    auto midpt12 = (f.vertices[1] + f.vertices[2]) / 2.0;
+    auto midpt20 = (f.vertices[2] + f.vertices[0]) / 2.0;
+
+    //Maintain the orientation. Since vertex 1 is "next" after vertex 0 
+    //in the original triangle, midpt01 should be "next" after vertex 0
+    //in the refined triangle. Following this principle for all the triangles
+    //gives this set of new faces
+    return {
+        Facet<3>{{f.vertices[0], midpt01, midpt20}},
+        Facet<3>{{f.vertices[1], midpt12, midpt01}},
+        Facet<3>{{f.vertices[2], midpt20, midpt12}},
+        Facet<3>{{midpt01, midpt12, midpt20}}
+    };
+}
+
+template <int dim>
+Facet<dim> refine_modify(const Facet<dim>& f, const NewMesh<dim>& m) {
+    if (!m.has_refine_mod) {
+        return f;
+    }
+    Vec<Vec<double,dim>,dim> vertices;
+    for (int d = 0; d < dim; d++) {
+        vertices[d] = m.refine_mod(f.vertices[d]);
+    }
+    return Facet<dim>{vertices};
+}
+
+template 
+Facet<2> refine_modify(const Facet<2>& f, const NewMesh<2>& m);
+template
+Facet<3> refine_modify(const Facet<3>& f, const NewMesh<3>& m);
+
+template <int dim>
+NewMesh<dim> 
+NewMesh<dim>::refine(const std::vector<int>& refine_these) const {
+    std::vector<Facet<dim>> out_facets;
+
+    // Sort the refined edges so that we only have to check the
+    // next one at any point in the loop.
+    std::vector<int> sorted_refines = refine_these;
+    std::sort(sorted_refines.begin(), sorted_refines.end());
+
+    // The next index of sorted_refines.
+    int current = 0;
+
+    for (unsigned int i = 0; i < facets.size(); i++) {
+        if (i == refine_these[current]) {
+            auto refined = refine_facet(facets[i]);
+            for (auto r: refined) {
+                auto mod_r = refine_modify(r, *this);
+                out_facets.push_back(mod_r);
+            }
+            current++;
+        } else {
+            out_facets.push_back(facets[i]);
+        }
+    }
+    return NewMesh<dim>{out_facets, has_refine_mod, refine_mod};
+}
+
+template <int dim>
+NewMesh<dim> 
+NewMesh<dim>::refine() const {
+    return refine(naturals(facets.size()));
+}
+
+template <int dim>
+NewMesh<dim> 
+NewMesh<dim>::refine_repeatedly(unsigned int times) const {
+    if (times == 0) {
+        return *this;
+    }
+    return refine_repeatedly(times - 1).refine();
+}
+
+template <int dim>
+NewMesh<dim>
+NewMesh<dim>::from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
+                         const std::vector<std::array<int,dim>>& facets,
+                         bool has_refine_mod,
+                         const typename NewMesh<dim>::RefineFnc& refine_mod) {
+    std::vector<Facet<dim>> new_facets;
+    for (auto in_facet: facets) { 
+        Vec<Vec<double,dim>,dim> out_verts;
+        for (int d = 0; d < dim; d++) {
+            out_verts[d] = vertices[in_facet[d]];
+        }
+        auto out_facet = Facet<dim>{out_verts};
+        new_facets.push_back(out_facet);
+    }
+    return NewMesh<dim>{new_facets, has_refine_mod, refine_mod};
+}
+
 template class NewMesh<2>;
 template class NewMesh<3>;

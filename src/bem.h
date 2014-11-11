@@ -10,19 +10,19 @@
 #include "kernels.h"
 
 template <int dim>
-class NewMesh;
-typedef NewMesh<3> Mesh;
+class Mesh;
+typedef Mesh<3> Mesh3D;
 
 struct Problem {
-    const Mesh& src_mesh;
-    const Mesh& obs_mesh;
+    const Mesh3D& src_mesh;
+    const Mesh3D& obs_mesh;
     const Kernel& K;
     const std::vector<double>& src_strength;
 };
 
 class FaceInfo {
 public:
-    FaceInfo(const Mesh& mesh, int face_index);
+    FaceInfo(const Mesh3D& mesh, int face_index);
     
     const int face_index;
     const std::array<int,3>& face;
@@ -65,5 +65,5 @@ std::vector<double> direct_interact(const Problem& p, const QuadStrategy& qs);
 std::vector<double> mass_term(const Problem& p, const QuadStrategy& qs);
 
 
-double get_len_scale(Mesh& mesh, int which_face, int q);
+double get_len_scale(Mesh3D& mesh, int which_face, int q);
 #endif

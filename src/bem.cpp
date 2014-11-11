@@ -3,7 +3,7 @@
 #include "mesh.h"
 #include "adaptive_quad.h"
 
-FaceInfo::FaceInfo(const Mesh& mesh, int face_index):
+FaceInfo::FaceInfo(const Mesh3D& mesh, int face_index):
     face_index(face_index),
     face(mesh.faces[face_index]),
     corners(index3(mesh.vertices, face)),
@@ -218,7 +218,7 @@ std::vector<double> mass_term(const Problem& p,
     return integrals;
 }
 
-double get_len_scale(Mesh& mesh, int which_face, int q) {
+double get_len_scale(Mesh3D& mesh, int which_face, int q) {
     auto face = mesh.faces[which_face];
     return std::sqrt(tri_area(index3(mesh.vertices, face))) / q;
 }

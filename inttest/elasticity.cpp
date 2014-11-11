@@ -20,13 +20,13 @@ int main() {
     int obs_quad_pts = 2;
     double singular_tolerance = 1e-2;
 
-    Mesh fault = rect_mesh(
+    auto fault = rect_mesh(
         {-1, 0, -3.0}, {-1, 0, -1.0},
         {1, 0, -1.0}, {1, 0, -3.0}
     );
     fault = refine_clean(fault, 2);
 
-    Mesh surface = rect_mesh(
+    auto surface = rect_mesh(
         {-surf_width, -surf_width, 0}, {-surf_width, surf_width, 0},
         {surf_width, surf_width, 0}, {surf_width, -surf_width, 0}
     );

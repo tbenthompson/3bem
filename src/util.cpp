@@ -14,7 +14,7 @@ std::vector<int> naturals(int max) {
     return naturals(0, max);
 }
 
-void hdf_out(const std::string& filename, const Mesh& mesh,
+void hdf_out(const std::string& filename, const Mesh3D& mesh,
              const std::vector<double>& data) {
 
     /* Create a new file using default properties. */

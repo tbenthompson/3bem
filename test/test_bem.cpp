@@ -18,7 +18,7 @@ struct IntegrationProb {
         obs_loc({2.0, 2.0, 2.0}),
         obs_n({1.0, 0.0, 0.0}),
         q(tri_gauss(2)),
-        face(Mesh{src_locs, {{0,1,2}}}, 0)
+        face(Mesh3D{src_locs, {{0,1,2}}}, 0)
     { }
     
     void go() {
@@ -118,7 +118,7 @@ struct EvalProb {
         return row_sum;
     }
 
-    Mesh sphere;
+    Mesh3D sphere;
     QuadStrategy qs;
     Kernel kernel;
     Vec3<double> obs_pt;
@@ -167,7 +167,7 @@ TEST(MatrixRowVsEval) {
 }
 
 TEST(MassTerm) {
-    Mesh sphere = clean_mesh(sphere_mesh({0,0,0}, 1.0));
+    auto sphere = clean_mesh(sphere_mesh({0,0,0}, 1.0));
     std::vector<double> str(sphere.vertices.size(), 1.0);
     str[0] = 0.0;
     Problem p = {sphere, sphere, one, str};
@@ -190,7 +190,7 @@ TEST(MassTerm) {
 }
 
 TEST(DirectInteractOne) {
-    Mesh sphere = refine_clean(sphere_mesh({0,0,0}, 1.0), 3);
+    auto sphere = refine_clean(sphere_mesh({0,0,0}, 1.0), 3);
     int n_verts = sphere.vertices.size();
     std::vector<double> str(n_verts, 1.0);
 
@@ -222,7 +222,7 @@ TEST(DirectInteractOne) {
 
 //TODO: Fixture for this and the next one.
 TEST(DirectInteractConstantLaplace) {
-    Mesh sphere = refine_clean(sphere_mesh({0,0,0}, 1.0), 2);
+    auto sphere = refine_clean(sphere_mesh({0,0,0}, 1.0), 2);
     std::vector<double> str(sphere.vertices.size(), 1.0);
 
     QuadStrategy qs(2, 2, 3, 3, 3.0, 1e-2);

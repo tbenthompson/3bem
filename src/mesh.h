@@ -9,15 +9,16 @@
 #include "vec.h"
 
 template <int dim>
-class NewMesh {
+class Mesh {
 public:
-    std::vector<Vec3<double>> vertices;
-    std::vector<std::array<int,3>> faces;
+    std::vector<Vec<double,dim>> vertices;
+    std::vector<std::array<int,dim>> faces;
     bool has_refine_mod;
-    std::function<Vec3<double>(Vec3<double>)> refine_mod;
+    std::function<Vec<double,dim>(Vec<double,dim>)> refine_mod;
 };
 
-typedef NewMesh<3> Mesh;
+typedef Mesh<3> Mesh3D;
+typedef Mesh<2> Mesh2D;
 
 inline bool same_vertex(const Vec3<double>& a,
                         const Vec3<double>& b,
@@ -27,14 +28,14 @@ inline bool same_vertex(const Vec3<double>& a,
            std::fabs(a[2] - b[2]) < eps;
 }
 
-std::unordered_map<int, int> find_duplicate_map(const Mesh& mesh, double eps);
+std::unordered_map<int, int> find_duplicate_map(const Mesh3D& mesh, double eps);
 
 int count_unique_vertices(const std::unordered_map<int,int>& old_to_new);
 
 std::vector<Vec3<double>> unique_vertices(
-        const Mesh& mesh, std::unordered_map<int,int>& old_to_new);
+        const Mesh3D& mesh, std::unordered_map<int,int>& old_to_new);
 
-Mesh clean_mesh(const Mesh& mesh, double vertex_smear = 1e-6);
+Mesh3D clean_mesh(const Mesh3D& mesh, double vertex_smear = 1e-6);
 
 
 /* Produces 4 new triangles from an initial triangle by adding a
@@ -46,18 +47,42 @@ Mesh clean_mesh(const Mesh& mesh, double vertex_smear = 1e-6);
  *      (My first ever ASCII art, a masterpiece that will
  *      stand the test of time!)
  */
-void refine_face(Mesh& new_mesh, std::array<int, 3> face);
+void refine_face(Mesh3D& new_mesh, std::array<int, 3> face);
 
 /* Refine each triangle specified by the refine_these list into 4 
  * subtriangles.
  */
-Mesh refine_mesh(const Mesh& m, std::vector<int> refine_these);
+Mesh3D refine_mesh(const Mesh3D& m, std::vector<int> refine_these);
 
 /* Refines all the triangles.
  */
-Mesh refine_mesh(const Mesh& m);
+Mesh3D refine_mesh(const Mesh3D& m);
 
 /* Refine a mesh multiple times and then clean it.
  */
-Mesh refine_clean(const Mesh& m, unsigned int times);
+Mesh3D refine_clean(const Mesh3D& m, unsigned int times);
+
+template <int dim>
+struct Facet {
+    const Vec<Vec<double,dim>,dim> vertices;
+};
+
+template <int dim>
+struct NewMesh {
+    typedef std::function<Vec<double,dim>(Vec<double,dim>)> RefineFnc;
+    const std::vector<Facet<dim>> facets;
+    const bool has_refine_mod;
+    const RefineFnc refine_mod;
+
+    NewMesh<dim> refine(const std::vector<int>& refine_these) const;
+    NewMesh<dim> refine() const;
+    NewMesh<dim> refine_repeatedly(unsigned int times) const;
+
+    static NewMesh<dim> from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
+                         const std::vector<std::array<int,dim>>& facets,
+                         bool has_refine_mod = false,
+                         const typename NewMesh<dim>::RefineFnc& refine_mod = nullptr);
+};
+
+
 #endif
