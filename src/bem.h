@@ -9,8 +9,9 @@
 #include "quadrature.h"
 #include "kernels.h"
 
-class Mesh;
-
+template <int dim>
+class NewMesh;
+typedef NewMesh<3> Mesh;
 
 struct Problem {
     const Mesh& src_mesh;

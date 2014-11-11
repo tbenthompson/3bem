@@ -94,7 +94,7 @@ struct EvalProb {
              Vec3<double> center = Vec3<double>{0,0,0},
              double r = 3.0):
         sphere(refine_clean(sphere_mesh(center,r), refine_level)),
-        qs(gauss_order),
+        qs(gauss_order, gauss_order, gauss_order, near_eval, 2.0, 1e-2),
         kernel(k),
         obs_pt(random_pt()),
         obs_n(random_pt()),
@@ -159,7 +159,7 @@ TEST(ConstantLaplaceBoundary) {
 }
 
 TEST(MatrixRowVsEval) {
-    EvalProb ep(5, 3, 2, laplace_double);
+    EvalProb ep(4, 3, 2, laplace_double);
     double result = ep.go();
     double result2 = ep.go_row();
     CHECK_CLOSE(result, 1.0, 1e-3);
@@ -194,7 +194,7 @@ TEST(DirectInteractOne) {
     int n_verts = sphere.vertices.size();
     std::vector<double> str(n_verts, 1.0);
 
-    QuadStrategy qs(2);
+    QuadStrategy qs(2, 2, 3, 3, 3.0, 1e-2);
     Problem p = {sphere, sphere, one, str};
     auto res = direct_interact(p, qs);
     auto matrix = interact_matrix(p, qs);
@@ -225,7 +225,7 @@ TEST(DirectInteractConstantLaplace) {
     Mesh sphere = refine_clean(sphere_mesh({0,0,0}, 1.0), 2);
     std::vector<double> str(sphere.vertices.size(), 1.0);
 
-    QuadStrategy qs(2);
+    QuadStrategy qs(2, 2, 3, 3, 3.0, 1e-2);
     Problem p_double = {sphere, sphere, laplace_double, str};
     Problem p_single = {sphere, sphere, laplace_single, str};
     auto res0 = direct_interact(p_double, qs);

@@ -37,10 +37,11 @@ inline double linear_interp(const std::array<double,2>& x_hat,
 
 inline Vec3<double> ref_to_real(const std::array<double,2>& x_hat,
                                 const std::array<Vec3<double>,3>& locs) {
+    auto basis = linear_basis(x_hat);
     return {
-        linear_interp(x_hat, {locs[0][0], locs[1][0], locs[2][0]}),
-        linear_interp(x_hat, {locs[0][1], locs[1][1], locs[2][1]}),
-        linear_interp(x_hat, {locs[0][2], locs[1][2], locs[2][2]})
+        dot(basis, {locs[0][0], locs[1][0], locs[2][0]}),
+        dot(basis, {locs[0][1], locs[1][1], locs[2][1]}),
+        dot(basis, {locs[0][2], locs[1][2], locs[2][2]})
     };
 }
  

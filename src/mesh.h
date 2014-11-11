@@ -8,13 +8,16 @@
 #include <GL/gl.h>
 #include "vec.h"
 
-class Mesh {
+template <int dim>
+class NewMesh {
 public:
     std::vector<Vec3<double>> vertices;
     std::vector<std::array<int,3>> faces;
     bool has_refine_mod;
     std::function<Vec3<double>(Vec3<double>)> refine_mod;
 };
+
+typedef NewMesh<3> Mesh;
 
 inline bool same_vertex(const Vec3<double>& a,
                         const Vec3<double>& b,

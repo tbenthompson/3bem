@@ -66,42 +66,44 @@ void operator*=(Vec3<T>& a, const T& s) {
 
 template <typename T>
 void operator/=(Vec3<T>& a, const T& s) {
-    a[0] /= s; a[1] /= s; a[2] /= s;
+    double inv_s = 1 / s;
+    a *= inv_s;
 }
 
 template <typename T>
 Vec3<T> operator+(const Vec3<T>& a, const Vec3<T>& b) {
-    Vec3<T> res = a; res += b; return res;
+    return {a[0] + b[0], a[1] + b[1], a[2] + b[2]};
 }
 
 template <typename T>
 Vec3<T> operator-(const Vec3<T>& a, const Vec3<T>& b) {
-    Vec3<T> res = a; res -= b; return res;
+    return {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
 }
 
 template <typename T>
 Vec3<T> operator*(const Vec3<T>& a, const Vec3<T>& b) {
-    Vec3<T> res = a; res *= b; return res;
+    return {a[0] * b[0], a[1] * b[1], a[2] * b[2]};
 }
 
 template <typename T>
 Vec3<T> operator/(const Vec3<T>& a, const Vec3<T>& b) {
-    Vec3<T> res = a; res /= b; return res;
+    return {a[0] / b[0], a[1] / b[1], a[2] / b[2]};
 }
 
 template <typename T>
 Vec3<T> operator*(const Vec3<T>& a, const T& s) {
-    Vec3<T> res = a; res *= s; return res;
+    return {a[0] * s, a[1] * s, a[2] * s};
 }
 
 template <typename T>
 Vec3<T> operator*(const T& s, const Vec3<T>& a) {
-    Vec3<T> res = a; res *= s; return res;
+    return {a[0] * s, a[1] * s, a[2] * s};
 }
 
 template <typename T>
 Vec3<T> operator/(const Vec3<T>& a, const T& s) {
-    Vec3<T> res = a; res /= s; return res;
+    double inv_s = 1.0 / s;
+    return {a[0] * inv_s, a[1] * inv_s, a[2] * inv_s};
 }
 
 template <typename T>
@@ -145,7 +147,7 @@ Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
 
 template <typename T>
 T dot(const Vec3<T>& x, const Vec3<T>& y) {
-    return x[0] * y[0] + x[1] * y[1] + x[2] * y[2];
+    return sum(x*y);
 }
 
 template <typename T>
@@ -202,6 +204,7 @@ tri_normal(const std::array<Vec3<double>,3>& corners) {
 inline double tri_area(const Vec3<double>& unscaled_normal) {
     return 0.5 * hypot(unscaled_normal);
 }
+
 inline double tri_area(const std::array<Vec3<double>,3>& corners) {
     return tri_area(tri_unscaled_normal(corners));
 }
