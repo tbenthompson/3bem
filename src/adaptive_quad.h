@@ -54,11 +54,11 @@ inline Vec3<double> ones<Vec3<double>>() {return {1.0, 1.0, 1.0};}
 inline double max(double x) {return x;}
 inline double max(Vec3<double> x) {return std::max(x[0], std::max(x[1], x[2]));}
 
-const double alpha = std::sqrt(2./3.);
-const double beta = 1./std::sqrt(5.);
-const double x1 = .94288241569547971905635175843185720232;
-const double x2 = .64185334234578130578123554132903188354;
-const double x3 = .23638319966214988028222377349205292599;
+const double lobatto_alpha = std::sqrt(2./3.);
+const double lobatto_beta = 1./std::sqrt(5.);
+const double lobatto_x1 = .94288241569547971905635175843185720232;
+const double lobatto_x2 = .64185334234578130578123554132903188354;
+const double lobatto_x3 = .23638319966214988028222377349205292599;
 
 template <typename T>
 T adaptlobstp(const std::function<T(double)>& f, const double a, const double b, 
@@ -68,8 +68,8 @@ T adaptlobstp(const std::function<T(double)>& f, const double a, const double b,
     double m = (a + b) / 2.; 
     double h = (b - a) / 2.;
 
-    double ah = alpha * h;
-    double bh = beta * h;
+    double ah = lobatto_alpha * h;
+    double bh = lobatto_beta * h;
     double mll = m - ah;
     double ml = m - bh;
     double mr = m + bh;
@@ -81,22 +81,19 @@ T adaptlobstp(const std::function<T(double)>& f, const double a, const double b,
     T fmr = f(mr);
     T fmrr = f(mrr);
 
-    T i1, i2;
-    i2 = (h / 6.) * (fa + fb + 5.0 * (fml + fmr));    
-    i1 = (h / 1470.) * (
+    T i2 = (h / 6.) * (fa + fb + 5.0 * (fml + fmr));    
+    T i1 = (h / 1470.) * (
             77.0 * (fa + fb) + 
             432.0 * (fmll + fmrr) +
             625.0 * (fml + fmr) +
             672.0 * fm);
 
-    if (all(is + (i1 - i2) == is)){
+    if (all(is + (i1 - i2) == is)) {
         return i1;
     } else if (mll <= a or b <= mrr) {
         std::cout << "YIKES!" << std::endl;
         return i1;
-    }
-    else
-    {
+    } else {
         return adaptlobstp(f, a, mll, fa, fmll, is)
              + adaptlobstp(f, mll, ml, fmll, fml, is)
              + adaptlobstp(f, ml, m, fml, fm, is)
@@ -118,10 +115,12 @@ double get_error_is(double p_tol, double erri1, double erri2, double is,
     if (R > 0.0 and R < 1.0) {
         tol = p_tol / R;
     }
+
     double retval = std::fabs(is) * tol / eps;
     if (retval == 0.0) {
         retval = b - a;
     }
+
     return retval;
 }
 
@@ -141,32 +140,32 @@ T adaptive_integrate(const std::function<T(double)>& f, double a, double b, doub
     double m = (a + b) / 2.; 
     double h = (b - a) / 2.;
 
-    T y[13] = {
+    const T y[13] = {
         f(a),
-        f(m - x1 * h),
-        f(m - alpha * h),
-        f(m - x2 * h),
-        f(m - beta * h),
-        f(m - x3 * h),
+        f(m - lobatto_x1 * h),
+        f(m - lobatto_alpha * h),
+        f(m - lobatto_x2 * h),
+        f(m - lobatto_beta * h),
+        f(m - lobatto_x3 * h),
         f(m),
-        f(m + x3 * h),
-        f(m + beta * h),
-        f(m + x2 * h),
-        f(m + alpha * h),
-        f(m + x1 * h),
+        f(m + lobatto_x3 * h),
+        f(m + lobatto_beta * h),
+        f(m + lobatto_x2 * h),
+        f(m + lobatto_alpha * h),
+        f(m + lobatto_x1 * h),
         f(b)
     };
     
-    T fa = y[0];
-    T fb = y[12];
+    const T fa = y[0];
+    const T fb = y[12];
     
-    T i2 = (h / 6.0) * (y[0] + y[12] + 5.0 * (y[4] + y[8]));
-    T i1 = (h / 1470.0) * (
+    const T i2 = (h / 6.0) * (y[0] + y[12] + 5.0 * (y[4] + y[8]));
+    const T i1 = (h / 1470.0) * (
             77.0 * (y[0] + y[12]) +
             432.0 * (y[2] + y[10]) +
             625.0 * (y[4] + y[8]) +
             672.0 * y[6]);
-    T is = h * (
+    const T is = h * (
         0.0158271919734802 * (y[0] + y[12]) + 
         0.0942738402188500 * (y[1] + y[11]) + 
         0.155071987336585  * (y[2] + y[10]) +
@@ -175,10 +174,10 @@ T adaptive_integrate(const std::function<T(double)>& f, double a, double b, doub
         0.224926465333340  * (y[5] + y[7]) + 
         0.242611071901408  * y[6]);    
    
-    T erri1 = fabs(i1 - is);
-    T erri2 = fabs(i2 - is);
+    const T erri1 = fabs(i1 - is);
+    const T erri2 = fabs(i2 - is);
     
-    T err_is = get_error_is(p_tol, erri1, erri2, is, a, b);
+    const T err_is = get_error_is(p_tol, erri1, erri2, is, a, b);
 
     return adaptlobstp(f, a, b, fa, fb, err_is);
 }
