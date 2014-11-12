@@ -18,7 +18,7 @@ struct IntegrationProb {
         obs_loc({2.0, 2.0, 2.0}),
         obs_n({1.0, 0.0, 0.0}),
         q(tri_gauss(2)),
-        face(Mesh3D{src_locs, {{0,1,2}}}, 0)
+        face(Facet<3>{src_locs[0], src_locs[1], src_locs[2]})
     { }
     
     void go() {
@@ -93,13 +93,13 @@ struct EvalProb {
     EvalProb(int refine_level, int near_eval, int gauss_order, const Kernel& k,
              Vec3<double> center = Vec3<double>{0,0,0},
              double r = 3.0):
-        sphere(refine_clean(sphere_mesh(center,r), refine_level)),
+        sphere(sphere_mesh(center,r).refine_repeatedly(refine_level)),
         qs(gauss_order, gauss_order, gauss_order, near_eval, 2.0, 1e-2),
         kernel(k),
         obs_pt(random_pt()),
         obs_n(random_pt()),
         obs_length_scale(get_len_scale(sphere, 0, gauss_order)),
-        src_strength(std::vector<double>(sphere.vertices.size(), 1.0))
+        src_strength(std::vector<double>(3 * sphere.facets.size(), 1.0))
     {}
 
     double go() {
@@ -146,15 +146,15 @@ TEST(ConstantLaplace) {
 
 TEST(ConstantLaplaceBoundary) {
     EvalProb ep(1, 3, 3, laplace_double);
-    int n_verts = ep.sphere.vertices.size();
-    // n_verts = 1;
-    for (int i = 0; i < n_verts;i++) {
-        ep.obs_pt = ep.sphere.vertices[i];
-        ep.obs_n = -normalized(ep.obs_pt);
-        double result = ep.go();
-        double result2 = ep.go();
-        CHECK_CLOSE(result, 1.0, 1e-2);
-        CHECK_CLOSE(result2, 1.0, 1e-2);
+    for (auto f: ep.sphere.facets) {
+        for (auto v: f.vertices) {
+            ep.obs_pt = v;
+            ep.obs_n = -normalized(ep.obs_pt);
+            double result = ep.go();
+            double result2 = ep.go();
+            CHECK_CLOSE(result, 1.0, 1e-2);
+            CHECK_CLOSE(result2, 1.0, 1e-2);
+        }
     }
 }
 
@@ -167,20 +167,22 @@ TEST(MatrixRowVsEval) {
 }
 
 TEST(MassTerm) {
-    auto sphere = clean_mesh(sphere_mesh({0,0,0}, 1.0));
-    std::vector<double> str(sphere.vertices.size(), 1.0);
-    str[0] = 0.0;
+    auto sphere = sphere_mesh({0,0,0}, 1.0);
+    std::vector<double> str(3 * sphere.facets.size(), 1.0);
+    for (std::size_t i = 0; i < sphere.facets.size(); i++) {
+        for (int d = 0; d < 3; d++) {
+            if (sphere.facets[i].vertices[d][0] > 0.5) {
+                str[3 * i + d] = 0.0;
+            }
+        }
+    }
     Problem p = {sphere, sphere, one, str};
     QuadStrategy qs(2);
     auto res = mass_term(p, qs);
-    CHECK_EQUAL(res.size(), sphere.vertices.size());
+    CHECK_EQUAL(res.size(), 3 * sphere.facets.size());
     double true_area = 0.0;
-    for (auto f: sphere.faces) {
-        true_area += tri_area({
-                sphere.vertices[f[0]],
-                sphere.vertices[f[1]],
-                sphere.vertices[f[2]]
-            });
+    for (auto f: sphere.facets) {
+        true_area += tri_area(f.vertices);
     }
     double mass_area = 0.0;
     for (auto r: res) {
@@ -190,18 +192,18 @@ TEST(MassTerm) {
 }
 
 TEST(DirectInteractOne) {
-    auto sphere = refine_clean(sphere_mesh({0,0,0}, 1.0), 3);
-    int n_verts = sphere.vertices.size();
-    std::vector<double> str(n_verts, 1.0);
+    auto sphere = sphere_mesh({0,0,0}, 1.0).refine_repeatedly(3);
+    int n_dofs = 3 * sphere.facets.size();
+    std::vector<double> str(n_dofs, 1.0);
 
     QuadStrategy qs(2, 2, 3, 3, 3.0, 1e-2);
     Problem p = {sphere, sphere, one, str};
     auto res = direct_interact(p, qs);
     auto matrix = interact_matrix(p, qs);
 
-    std::vector<double> res2(n_verts, 0.0);
-    for (int i = 0; i < n_verts; i++) {
-        for (int j = 0; j < n_verts; j++) {
+    std::vector<double> res2(n_dofs, 0.0);
+    for (int i = 0; i < n_dofs; i++) {
+        for (int j = 0; j < n_dofs; j++) {
             res2[i] += matrix[i][j] * str[j]; 
         }
     }
@@ -222,8 +224,9 @@ TEST(DirectInteractOne) {
 
 //TODO: Fixture for this and the next one.
 TEST(DirectInteractConstantLaplace) {
-    auto sphere = refine_clean(sphere_mesh({0,0,0}, 1.0), 2);
-    std::vector<double> str(sphere.vertices.size(), 1.0);
+    auto sphere = sphere_mesh({0,0,0}, 1.0).refine_repeatedly(2);
+    int n_dofs = sphere.facets.size();
+    std::vector<double> str(n_dofs, 1.0);
 
     QuadStrategy qs(2, 2, 3, 3, 3.0, 1e-2);
     Problem p_double = {sphere, sphere, laplace_double, str};
@@ -236,8 +239,8 @@ TEST(DirectInteractConstantLaplace) {
 
     Problem p_mass = {sphere, sphere, one, str};
     auto res2 = mass_term(p_mass, qs);
-    CHECK_ARRAY_CLOSE(res0, res2, sphere.vertices.size(), 3e-2);
-    CHECK_ARRAY_CLOSE(res1, res2, sphere.vertices.size(), 3e-2);
+    CHECK_ARRAY_CLOSE(res0, res2, n_dofs, 3e-2);
+    CHECK_ARRAY_CLOSE(res1, res2, n_dofs, 3e-2);
 }
 
 int main(int, char const *[])

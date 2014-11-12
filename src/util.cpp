@@ -14,7 +14,8 @@ std::vector<int> naturals(int max) {
     return naturals(0, max);
 }
 
-void hdf_out(const std::string& filename, const Mesh3D& mesh,
+//TODO: Allow multiple output vectors.
+void hdf_out(const std::string& filename, const Mesh<3>& mesh,
              const std::vector<double>& data) {
 
     /* Create a new file using default properties. */
@@ -22,41 +23,31 @@ void hdf_out(const std::string& filename, const Mesh3D& mesh,
 
     /* Create the data space for the vertices dataset. */
     hsize_t dims[2];
-    dims[0] = mesh.faces.size();
-    dims[1] = 3;
-    hid_t faces_dataspace_id = H5Screate_simple(2, dims, NULL);
-
-    dims[0] = mesh.vertices.size(); 
-    dims[1] = 3; 
-    hid_t verts_dataspace_id = H5Screate_simple(2, dims, NULL);
+    dims[0] = mesh.facets.size();
+    dims[1] = 9;
+    hid_t facets_dataspace_id = H5Screate_simple(2, dims, NULL);
 
     dims[1] = 1;
     hid_t values_dataspace_id = H5Screate_simple(2, dims, NULL); 
 
     /* Create the dataset. */
-    hid_t faces_dataset_id = H5Dcreate2(file_id, "/faces", H5T_NATIVE_INT,
-            faces_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    hid_t verts_dataset_id = H5Dcreate2(file_id, "/vertices", H5T_NATIVE_DOUBLE,
-            verts_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t facets_dataset_id = H5Dcreate2(file_id, "/facets", H5T_NATIVE_DOUBLE,
+            facets_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     hid_t values_dataset_id = H5Dcreate2(file_id, "/values", H5T_NATIVE_DOUBLE,
             values_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     // Write the data.
-    H5Dwrite(faces_dataset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             mesh.faces.data());
-    H5Dwrite(verts_dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             mesh.vertices.data());
+    H5Dwrite(facets_dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+             mesh.facets.data());
     H5Dwrite(values_dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
              data.data());
 
     /* End access to the dataset and release resources used by it. */
-    H5Dclose(faces_dataset_id);
-    H5Dclose(verts_dataset_id);
+    H5Dclose(facets_dataset_id);
     H5Dclose(values_dataset_id);
 
     /* Terminate access to the data space. */ 
-    H5Sclose(faces_dataspace_id);
-    H5Sclose(verts_dataspace_id);
+    H5Sclose(facets_dataspace_id);
     H5Sclose(values_dataspace_id);
 
     /* Close the file. */

@@ -4,7 +4,7 @@
 #include "mesh.h"
 #include "mesh_gen.h"
 
-double perimeter(NewMesh<2> m) {
+double perimeter(Mesh<2> m) {
     double p = 0;
     for (auto f: m.facets) {
         p += dist(f.vertices[0], f.vertices[1]);
@@ -21,7 +21,7 @@ TEST(Mesh2D) {
     CHECK_CLOSE(length, 2 * M_PI, 1e-1);
 }
 
-double surface_area(NewMesh<3> m) {
+double surface_area(Mesh<3> m) {
     double sa = 0;
     for (auto f: m.facets) {
         sa += tri_area(f.vertices);
@@ -30,7 +30,7 @@ double surface_area(NewMesh<3> m) {
 }
 
 TEST(Mesh3D) {
-    auto m = sphere_mesh_new({0,0,0}, 1.0); 
+    auto m = sphere_mesh({0,0,0}, 1.0); 
     auto m2 = m.refine_repeatedly(4);
     double sa = surface_area(m2);
     CHECK_CLOSE(sa, 4 * M_PI, 1e-1);

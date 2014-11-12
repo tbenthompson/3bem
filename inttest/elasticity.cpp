@@ -23,34 +23,32 @@ int main() {
     auto fault = rect_mesh(
         {-1, 0, -3.0}, {-1, 0, -1.0},
         {1, 0, -1.0}, {1, 0, -3.0}
-    );
-    fault = refine_clean(fault, 2);
+    ).refine_repeatedly(2);
 
     auto surface = rect_mesh(
         {-surf_width, -surf_width, 0}, {-surf_width, surf_width, 0},
         {surf_width, surf_width, 0}, {surf_width, -surf_width, 0}
-    );
-    surface = refine_clean(surface, refine_surf);
-    std::cout << surface.faces.size() << std::endl;
+    ).refine_repeatedly(refine_surf);
+    std::cout << surface.facets.size() << std::endl;
 
     QuadStrategy qs(obs_quad_pts, src_quad_pts, near_quad_pts,
                     near_steps, far_threshold, singular_tolerance);
 
     ElasticKernels ek(30e9, 0.25);
     
-    std::size_t n_fault_verts = fault.vertices.size();
-    std::size_t n_surface_verts = surface.vertices.size();
+    std::size_t n_fault_dofs = 3 * fault.facets.size();
+    std::size_t n_surface_dofs = 3 * surface.facets.size();
     //TODO: Clearly need a better way of handling vector problems!
     std::array<std::vector<double>,3> du = {
-        std::vector<double>(n_fault_verts, 1.0),   
-        std::vector<double>(n_fault_verts, 0.0),   
-        std::vector<double>(n_fault_verts, 0.0)
+        std::vector<double>(n_fault_dofs, 1.0),   
+        std::vector<double>(n_fault_dofs, 0.0),   
+        std::vector<double>(n_fault_dofs, 0.0)
     };
 
     std::array<std::vector<double>,3> rhs = {
-        std::vector<double>(n_surface_verts, 0.0),   
-        std::vector<double>(n_surface_verts, 0.0),   
-        std::vector<double>(n_surface_verts, 0.0)
+        std::vector<double>(n_surface_dofs, 0.0),   
+        std::vector<double>(n_surface_dofs, 0.0),   
+        std::vector<double>(n_surface_dofs, 0.0)
     };
 
     using namespace std::placeholders;
@@ -65,9 +63,11 @@ int main() {
         }
     }
 
-    std::vector<double> full_rhs(3 * surface.vertices.size());
+    //TODO: need to impose constraints!
+
+    std::vector<double> full_rhs(3 * surface.facets.size());
     for (int d = 0; d < 3; d++) {
-        std::copy(rhs[d].begin(), rhs[d].end(), full_rhs.begin() + d * n_surface_verts);
+        std::copy(rhs[d].begin(), rhs[d].end(), full_rhs.begin() + d * n_surface_dofs);
     }
 
     std::array<std::array<std::vector<std::vector<double>>,3>,3> mats;
@@ -87,9 +87,9 @@ int main() {
             count++;
             std::array<std::vector<double>,3> x_temp;
             for (int i = 0; i < 3; i++) {
-                x_temp[i] = std::vector<double>(n_surface_verts);
-                std::copy(x.begin() + i * n_surface_verts,
-                          x.begin() + (i + 1) * n_surface_verts,
+                x_temp[i] = std::vector<double>(n_surface_dofs);
+                std::copy(x.begin() + i * n_surface_dofs,
+                          x.begin() + (i + 1) * n_surface_dofs,
                           x_temp[i].begin());
             }
 
@@ -98,7 +98,7 @@ int main() {
                 for (int j = 0; j < 3; j++) {
                     for (unsigned int mi = 0; mi < mats[k][j].size(); mi++) {
                         for (unsigned int ni = 0; ni < mats[k][j].size(); ni++) {
-                            y_temp[k * n_surface_verts + mi] += 
+                            y_temp[k * n_surface_dofs + mi] += 
                                 -mats[k][j][mi][ni] * x_temp[j][ni];
                         }
                     }
@@ -109,9 +109,9 @@ int main() {
 
     std::array<std::vector<double>,3> soln;
     for (int i = 0; i < 3; i++) {
-        soln[i] = std::vector<double>(n_surface_verts);
-        std::copy(surface_disp.begin() + i * n_surface_verts,
-                  surface_disp.begin() + (i + 1) * n_surface_verts,
+        soln[i] = std::vector<double>(n_surface_dofs);
+        std::copy(surface_disp.begin() + i * n_surface_dofs,
+                  surface_disp.begin() + (i + 1) * n_surface_dofs,
                   soln[i].begin());
     }
     hdf_out("strike_slip0.hdf5", surface, soln[0]); 
