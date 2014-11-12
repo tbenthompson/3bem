@@ -62,9 +62,10 @@ double eval_integral_equation(const Problem& p, const QuadStrategy& qs,
                               const ObsPt& obs);
 
 //TODO: Use a sparse matrix storage format here.
-typedef std::vector<std::vector<double>> Mat;
-Mat interact_matrix(const Problem& p, const QuadStrategy& qs);
-std::vector<double> bem_mat_mult(const Mat& A, const std::vector<double>& x);
+std::vector<double> interact_matrix(const Problem& p, const QuadStrategy& qs);
+std::vector<double> bem_mat_mult(const std::vector<double>& A, 
+                                 int n_obs_dofs,
+                                 const std::vector<double>& x);
 std::vector<double> direct_interact(const Problem& p, const QuadStrategy& qs);
 std::vector<double> mass_term(const Problem& p, const QuadStrategy& qs);
 

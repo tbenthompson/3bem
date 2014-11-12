@@ -73,7 +73,7 @@ int main() {
             // TIC
             // std::cout << "iteration " << count << std::endl;
             count++;
-            auto y_temp = bem_mat_mult(matrix, x); 
+            auto y_temp = bem_mat_mult(matrix, n_dofs, x); 
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
             // TOC("Matrix multiply on " + std::to_string(sphere.facets.size()) + " faces");
         });
@@ -93,7 +93,7 @@ int main() {
         double result = double_layer - single_layer;
         double exact = 1.0 / hypot(obs_pt);
         double error = std::fabs(exact - result);
-        if (error > 5e-2) {
+        if (error > 1e-2) {
             std::cout << "Failed with point: " << obs_pt << std::endl;
             std::cout << result << " " << exact << std::endl;
         }

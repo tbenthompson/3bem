@@ -248,12 +248,14 @@ double eval_integral_equation(const Problem& p, const QuadStrategy& qs,
 }
 
 //TODO: Use a sparse matrix storage format here.
-std::vector<std::vector<double>> interact_matrix(const Problem& p,
-                                                 const QuadStrategy& qs) {
+std::vector<double> interact_matrix(const Problem& p,
+                                    const QuadStrategy& qs) {
     int n_obs_dofs = 3 * p.obs_mesh.facets.size();
     int n_src_dofs = 3 * p.src_mesh.facets.size();
-    std::vector<std::vector<double>> matrix(n_obs_dofs,
-            std::vector<double>(n_src_dofs, 0.0));
+    std::cout << "HI" << std::endl;
+    std::cout << n_obs_dofs << " " << n_src_dofs << std::endl;
+    std::vector<double> matrix(n_obs_dofs * n_src_dofs, 0.0);
+    std::cout << "HI2" << std::endl;
 #pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         FaceInfo obs_face(p.obs_mesh.facets[obs_idx]);
@@ -267,7 +269,7 @@ std::vector<std::vector<double>> interact_matrix(const Problem& p,
                                                       unit<double>(v)); 
                 int b = 3 * obs_idx + v;
                 for (int i = 0; i < n_src_dofs; i++) {
-                    matrix[b][i] += obs_basis_eval * row[i] * 
+                    matrix[b * n_obs_dofs + i] += obs_basis_eval * row[i] * 
                                     qs.obs_quad[obs_q].w * obs_face.jacobian;
                 }
             }
@@ -277,12 +279,14 @@ std::vector<std::vector<double>> interact_matrix(const Problem& p,
     return matrix;
 }
 
-std::vector<double> bem_mat_mult(const Mat& A, const std::vector<double>& x) {
-    std::vector<double> res(A.size(), 0.0);
+std::vector<double> bem_mat_mult(const std::vector<double>& A, 
+                                 int n_obs_dofs,
+                                 const std::vector<double>& x) {
+    std::vector<double> res(n_obs_dofs, 0.0);
 #pragma omp parallel for
-    for (std::size_t i = 0; i < A.size(); i++) {
-        for (std::size_t j = 0; j < A[i].size(); j++) {
-            res[i] += A[i][j] * x[j]; 
+    for (int i = 0; i < n_obs_dofs; i++) {
+        for (std::size_t j = 0; j < x.size(); j++) {
+            res[i] += A[i * n_obs_dofs + j] * x[j]; 
         }
     }
     return res;
@@ -290,7 +294,8 @@ std::vector<double> bem_mat_mult(const Mat& A, const std::vector<double>& x) {
 
 std::vector<double> direct_interact(const Problem& p,
                                     const QuadStrategy& qs) {
-    return bem_mat_mult(interact_matrix(p, qs), p.src_strength);
+    return bem_mat_mult(interact_matrix(p, qs), 
+                        p.obs_mesh.facets.size() * 3, p.src_strength);
 }
 
 std::vector<double> mass_term(const Problem& p,

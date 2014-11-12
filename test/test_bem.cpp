@@ -204,7 +204,7 @@ TEST(DirectInteractOne) {
     std::vector<double> res2(n_dofs, 0.0);
     for (int i = 0; i < n_dofs; i++) {
         for (int j = 0; j < n_dofs; j++) {
-            res2[i] += matrix[i][j] * str[j]; 
+            res2[i] += matrix[i * n_dofs + j] * str[j]; 
         }
     }
     double total = 0.0;
