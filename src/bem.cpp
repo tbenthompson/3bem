@@ -72,7 +72,108 @@ template Vec3<double> richardson_step(const std::vector<Vec3<double>>&);
 static unsigned long interacts = 0;
 static unsigned long far_field_pairs = 0;
 static unsigned long near_field_pairs = 0;
-static unsigned long adjacent_pairs = 0;
+static unsigned long adjacent_pairs = 0;  
+
+template <typename T>
+T adaptlobstp2(const double a, const double b, 
+              const T& fa, const T& fb, const T& is, double outer_x, const Kernel& kernel,
+                          const FaceInfo& face,
+                          const Vec3<double>& obs_loc,
+                          const Vec3<double>& obs_n)
+{
+    // std::cout << a << " " << b << std::endl;
+    double m = (a + b) / 2.; 
+    double h = (b - a) / 2.;
+
+    double ah = lobatto_alpha * h;
+    double bh = lobatto_beta * h;
+    double mll = m - ah;
+    double ml = m - bh;
+    double mr = m + bh;
+    double mrr = m + ah;
+
+    T fmll = eval_quad_pt(Vec2<double>{outer_x, mll}, kernel, face, obs_loc, obs_n);
+    T fml = eval_quad_pt(Vec2<double>{outer_x, ml}, kernel, face, obs_loc, obs_n);
+    T fm = eval_quad_pt(Vec2<double>{outer_x, m}, kernel, face, obs_loc, obs_n);
+    T fmr = eval_quad_pt(Vec2<double>{outer_x, mr}, kernel, face, obs_loc, obs_n);
+    T fmrr = eval_quad_pt(Vec2<double>{outer_x, mrr}, kernel, face, obs_loc, obs_n);
+    interacts += 5;
+
+    T i2 = (h / 6.) * (fa + fb + 5.0 * (fml + fmr));    
+    T i1 = (h / 1470.) * (
+            77.0 * (fa + fb) + 
+            432.0 * (fmll + fmrr) +
+            625.0 * (fml + fmr) +
+            672.0 * fm);
+
+    if (all(is + (i1 - i2) == is)) {
+        return i1;
+    } else if (mll <= a or b <= mrr) {
+        std::cout << "YIKES!" << std::endl;
+        return i1;
+    } else {
+        return adaptlobstp2(a, mll, fa, fmll, is, outer_x, kernel, face, obs_loc, obs_n)
+             + adaptlobstp2(mll, ml, fmll, fml, is, outer_x, kernel, face, obs_loc, obs_n)
+             + adaptlobstp2(ml, m, fml, fm, is, outer_x, kernel, face, obs_loc, obs_n)
+             + adaptlobstp2(m, mr, fm, fmr, is, outer_x, kernel, face, obs_loc, obs_n)
+             + adaptlobstp2(mr, mrr, fmr, fmrr, is, outer_x, kernel, face, obs_loc, obs_n)
+             + adaptlobstp2(mrr, b, fmrr, fb, is, outer_x, kernel, face, obs_loc, obs_n);
+    }
+}
+
+//TODO: Refactor the shit out of this! Super ugly.
+template <typename T>
+T adaptive_integrate2(double a, double b, 
+                      double p_tol, double outer_x, const Kernel& kernel,
+                          const FaceInfo& face,
+                          const Vec3<double>& obs_loc,
+                          const Vec3<double>& obs_n)
+{
+    double m = (a + b) / 2.; 
+    double h = (b - a) / 2.;
+
+    const T y[13] = {
+        eval_quad_pt(Vec2<double>{outer_x, a}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, m - lobatto_x1 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, m - lobatto_alpha * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, m - lobatto_x2 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, m - lobatto_beta * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, m - lobatto_x3 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, m}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, m + lobatto_x3 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, m + lobatto_beta * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, m + lobatto_x2 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, m + lobatto_alpha * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, m + lobatto_x1 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt(Vec2<double>{outer_x, b}, kernel, face, obs_loc, obs_n)
+    };
+    
+    const T fa = y[0];
+    const T fb = y[12];
+    
+    const T i2 = (h / 6.0) * (y[0] + y[12] + 5.0 * (y[4] + y[8]));
+    const T i1 = (h / 1470.0) * (
+            77.0 * (y[0] + y[12]) +
+            432.0 * (y[2] + y[10]) +
+            625.0 * (y[4] + y[8]) +
+            672.0 * y[6]);
+    const T is = h * (
+        0.0158271919734802 * (y[0] + y[12]) + 
+        0.0942738402188500 * (y[1] + y[11]) + 
+        0.155071987336585  * (y[2] + y[10]) +
+        0.188821573960182  * (y[3] + y[9]) + 
+        0.199773405226859  * (y[4] + y[8]) +
+        0.224926465333340  * (y[5] + y[7]) + 
+        0.242611071901408  * y[6]);    
+   
+    const T erri1 = fabs(i1 - is);
+    const T erri2 = fabs(i2 - is);
+    
+    const T err_is = get_error_is(p_tol, erri1, erri2, is, a, b);
+    interacts += 13;
+
+    return adaptlobstp2(a, b, fa, fb, err_is, outer_x, kernel, face, obs_loc, obs_n);
+}
 
 Vec3<double> near_field(const Problem& p, const QuadStrategy& qs,
                         const ObsPt& obs, const FaceInfo& src_face,
@@ -96,12 +197,7 @@ Vec3<double> near_field(const Problem& p, const QuadStrategy& qs,
                     if (x_hat == 1.0) {
                         return Vec3<double>{0.0,0.0,0.0};
                     }
-                    return adaptive_integrate<Vec3<double>>([&] (double y_hat) {
-                            Vec3<double> val  = eval_quad_pt({x_hat, y_hat}, p.K, src_face,
-                                                nf_obs_pt, obs.normal);
-                            interacts++;
-                            return val;
-                        }, 0.0, 1 - x_hat, qs.singular_tol);
+                    return adaptive_integrate2<Vec3<double>>(0.0, 1 - x_hat, qs.singular_tol, x_hat, p.K, src_face, nf_obs_pt, obs.normal);
                 }, 0.0, 1.0, qs.singular_tol);
             near_steps[nf] += ns;
             adjacent_pairs++;

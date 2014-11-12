@@ -37,6 +37,8 @@ Two categories: code redesign/efficiency, algorithm redesign/efficiency.
 CODE:
 -- for elasticity, operating on the entire kernel matrix (3x3) at once will speed things up a lot
 -- redesign the mesh data structure to improve cache locality.
+-- remove the intense use of lambda functions in adaptive_integrate
+---- REMOVING ALL STD::FUNCTION SPEEDS THINGS UP A TON!
 -- write a 2D adaptive quadrature code
 -- the biggest thing: python code to autogenerate opencl or optimized c++ 
 ---- figure out the 

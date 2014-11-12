@@ -23,9 +23,9 @@ int main() {
     double r = 3.0;
     double obs_radius = 2.7;
     double far_threshold = 2.0;
-    int refine_level = 3;
+    int refine_level = 4;
     int near_quad_pts = 3;
-    int near_steps = 9;
+    int near_steps = 6;
     int src_quad_pts = 3;
     //TODO: Something is seriously wrong when I use obs_quad_pts = 3
     int obs_quad_pts = 2;
@@ -70,21 +70,18 @@ int main() {
     int count = 0;
     auto dudn_solved = solve_system(rhs, 1e-5,
         [&] (std::vector<double>& x, std::vector<double>& y) {
-            TIC
-            std::cout << "iteration " << count << std::endl;
+            // TIC
+            // std::cout << "iteration " << count << std::endl;
             count++;
             auto y_temp = bem_mat_mult(matrix, x); 
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
-            TOC("Matrix multiply on " + std::to_string(sphere.facets.size()) + " faces");
+            // TOC("Matrix multiply on " + std::to_string(sphere.facets.size()) + " faces");
         });
-    for (int i = 0; i < dudn.size(); i++) {
-        std::cout << dudn[i] << " " << dudn_solved[i] << std::endl;
-    }
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
     hdf_out("laplace.hdf5", sphere, dudn_solved); 
 
     double obs_len_scale = get_len_scale(sphere, 0, obs_quad_pts);
-    for(int i = 0; i < 10; i++) {
+    for(int i = 0; i < 100; i++) {
         auto obs_pt = random_pt_sphere(center, obs_radius);
 
         auto obs_normal = normalized(center - obs_pt);
