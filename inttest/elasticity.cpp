@@ -12,7 +12,7 @@ int main() {
     //   across the fault
 
     double surf_width = 12;
-    int refine_surf = 6;
+    int refine_surf = 4;
     double far_threshold = 3.0;
     int near_quad_pts = 3;
     int near_steps = 5;
@@ -65,12 +65,12 @@ int main() {
 
     //TODO: need to impose constraints!
 
-    std::vector<double> full_rhs(3 * surface.facets.size());
+    std::vector<double> full_rhs(n_surface_dofs);
     for (int d = 0; d < 3; d++) {
         std::copy(rhs[d].begin(), rhs[d].end(), full_rhs.begin() + d * n_surface_dofs);
     }
 
-    std::array<std::array<std::vector<std::vector<double>>,3>,3> mats;
+    std::array<std::array<std::vector<double>,3>,3> mats;
     TIC
     for (int k = 0; k < 3; k++) {
         for (int j = 0; j < 3; j++) {
@@ -96,10 +96,10 @@ int main() {
             std::vector<double> y_temp(y.size(), 0.0);
             for (int k = 0; k < 3; k++) {
                 for (int j = 0; j < 3; j++) {
-                    for (unsigned int mi = 0; mi < mats[k][j].size(); mi++) {
-                        for (unsigned int ni = 0; ni < mats[k][j].size(); ni++) {
+                    for (unsigned int mi = 0; mi < n_surface_dofs; mi++) {
+                        for (unsigned int ni = 0; ni < n_surface_dofs; ni++) {
                             y_temp[k * n_surface_dofs + mi] += 
-                                -mats[k][j][mi][ni] * x_temp[j][ni];
+                                -mats[k][j][mi * n_surface_dofs + ni] * x_temp[j][ni];
                         }
                     }
                 }
