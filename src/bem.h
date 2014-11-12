@@ -6,27 +6,31 @@
 #include <vector>
 #include "vec.h"
 #include "numerics.h"
-#include "quadrature.h"
 #include "kernels.h"
 
+class QuadStrategy;
+
+template <int dim>
+struct QuadPt;
+typedef std::vector<QuadPt<2>> QuadRule2d;
+
+template <int dim>
+class Facet;
 template <int dim>
 class Mesh;
-typedef Mesh<3> Mesh3D;
 
 struct Problem {
-    const Mesh3D& src_mesh;
-    const Mesh3D& obs_mesh;
+    const Mesh<3>& src_mesh;
+    const Mesh<3>& obs_mesh;
     const Kernel& K;
     const std::vector<double>& src_strength;
 };
 
 class FaceInfo {
 public:
-    FaceInfo(const Mesh3D& mesh, int face_index);
+    FaceInfo(const Facet<3>& facet);
     
-    const int face_index;
-    const std::array<int,3>& face;
-    const std::array<Vec3<double>,3> corners;
+    const Facet<3>& face;
     const Vec3<double> unscaled_normal;
     const double area;
     const double jacobian;
@@ -65,5 +69,5 @@ std::vector<double> direct_interact(const Problem& p, const QuadStrategy& qs);
 std::vector<double> mass_term(const Problem& p, const QuadStrategy& qs);
 
 
-double get_len_scale(Mesh3D& mesh, int which_face, int q);
+double get_len_scale(Mesh<3>& mesh, int which_face, int q);
 #endif

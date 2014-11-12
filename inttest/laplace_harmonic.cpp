@@ -25,26 +25,30 @@ int main() {
     double far_threshold = 2.0;
     int refine_level = 3;
     int near_quad_pts = 3;
-    int near_steps = 6;
-    int src_quad_pts = 2;
+    int near_steps = 9;
+    int src_quad_pts = 3;
     //TODO: Something is seriously wrong when I use obs_quad_pts = 3
     int obs_quad_pts = 2;
-    double tol = 1e-3;
+    double tol = 1e-4;
 
     QuadStrategy qs(obs_quad_pts, src_quad_pts, near_quad_pts,
                     near_steps, far_threshold, tol);
 
-    auto sphere = refine_clean(sphere_mesh(center, r), refine_level);
+    auto sphere = sphere_mesh(center, r).refine_repeatedly(refine_level);
 
-    int n_verts = sphere.vertices.size();
-    std::vector<double> u(n_verts);
-    for (int i = 0; i < n_verts; i++) {
-        u[i] = harmonic_u(sphere.vertices[i]);
+    int n_dofs = 3 * sphere.facets.size();
+    std::vector<double> u(n_dofs);
+    for (unsigned int i = 0; i < sphere.facets.size(); i++) {
+        for (int d = 0; d < 3; d++) {
+            u[3 * i + d] = harmonic_u(sphere.facets[i].vertices[d]);
+        }
     }
 
-    std::vector<double> dudn(n_verts);
-    for (int i = 0; i < n_verts; i++) {
-        dudn[i] = harmonic_dudn(sphere.vertices[i], center);
+    std::vector<double> dudn(n_dofs);
+    for (unsigned int i = 0; i < sphere.facets.size(); i++) {
+        for (int d = 0; d < 3; d++) {
+            dudn[3 * i + d] = harmonic_dudn(sphere.facets[i].vertices[d], center);
+        }
     }
 
     TIC
@@ -62,22 +66,25 @@ int main() {
     TIC2
     Problem p_single = {sphere, sphere, laplace_single, {}};
     auto matrix = interact_matrix(p_single, qs);
-    TOC("Matrix construct on " + std::to_string(sphere.faces.size()) + " faces");
+    TOC("Matrix construct on " + std::to_string(sphere.facets.size()) + " facets");
     int count = 0;
     auto dudn_solved = solve_system(rhs, 1e-5,
         [&] (std::vector<double>& x, std::vector<double>& y) {
+            TIC
             std::cout << "iteration " << count << std::endl;
             count++;
-            TIC
             auto y_temp = bem_mat_mult(matrix, x); 
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
-            TOC("Matrix multiply on " + std::to_string(sphere.faces.size()) + " faces");
+            TOC("Matrix multiply on " + std::to_string(sphere.facets.size()) + " faces");
         });
+    for (int i = 0; i < dudn.size(); i++) {
+        std::cout << dudn[i] << " " << dudn_solved[i] << std::endl;
+    }
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
     hdf_out("laplace.hdf5", sphere, dudn_solved); 
 
     double obs_len_scale = get_len_scale(sphere, 0, obs_quad_pts);
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < 10; i++) {
         auto obs_pt = random_pt_sphere(center, obs_radius);
 
         auto obs_normal = normalized(center - obs_pt);
@@ -91,6 +98,7 @@ int main() {
         double error = std::fabs(exact - result);
         if (error > 5e-2) {
             std::cout << "Failed with point: " << obs_pt << std::endl;
+            std::cout << result << " " << exact << std::endl;
         }
     }
 }
