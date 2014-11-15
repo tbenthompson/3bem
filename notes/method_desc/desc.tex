@@ -1,0 +1,127 @@
+%        File: desc.tex
+%     Created: Thu Nov 13 01:00 PM 2014 E
+% Last Change: Thu Nov 13 01:00 PM 2014 E
+%     Handy hints for vim-latex-suite: http://vim-latex.sourceforge.net/documentation/latex-suite/auc-tex-mappings.html
+%     Character list for math: http://www.artofproblemsolving.com/Wiki/index.php/LaTeX:Symbols
+%
+\documentclass[a4paper]{article}
+
+\usepackage[pdftex,pagebackref,letterpaper=true,colorlinks=true,pdfpagemode=none
+,urlcolor=blue,linkcolor=blue,citecolor=blue,pdfstartview=FitH]{hyperref}
+
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{natbib}
+
+\setlength{\oddsidemargin}{0pt}
+\setlength{\evensidemargin}{0pt}
+\setlength{\textwidth}{6.0in}
+\setlength{\topmargin}{0in}
+\setlength{\textheight}{8.5in}
+
+\setlength{\parindent}{0in}
+\setlength{\parskip}{5px}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\pO}{\partial \Omega}
+
+\begin{document}
+
+\section*{Summary}
+\citet{Cruse1969} presents the standard form of elastic boundary integral equations in the first 4 pages. I discretize this boundary integral equation using the ``Galerkin'' boundary element method as presented in \citep{Sutradhar2008} and evaluate the integrals using a numerical limit to the boundary procedure based on Richardson Extrapolation. I approximate far-field interactions using the black-box fast multipole method \citep{Fong2009}.
+
+\section*{Boundary integral equation}
+The primary elastic boundary integral equation is known as the Somigliana identity:
+\begin{equation}
+\vec{u}(x) + \int_{\pO} T^*(x, y)\vec{u}(y) dS = \int_{\pO} U^*(x,y)\vec{t}(y) dS \quad \forall x \in \Omega
+\label{somigliana}
+\end{equation}
+where $u$ is the displacement, $t$ is the traction, $U^*$ is the Green's function/fundamental solution for linear elasticity, known as the Somigliana tensor, $T^* = \frac{\partial U^*}{\partial n(y)}$, and $n(y)$ is the normal vector for the surface $\pO$ at $y$. The Somigliana tensor, $U^*(x,y)$ can be interpreted as the displacement caused at the point $x$ by a traction at the point $y$, while $T^*(x,y)$ is the displacement caused at $x$ by a displacement at $y$. The Somigliana identity can be derived through integration by parts of the standard differential equations of static isotropic linear elasticity. In a 3D homogeneous material, the Somigliana tensor is:
+\begin{align}
+    &U^*_{kj}(\vec(x),\vec(y)) = \frac{1}{16\pi\mu(1-\nu)r}\left((3 - 4\nu)\delta_{kj} + r_{,k}r_{,j}\right)\\
+    &r = \|x - y\|\quad \quad r_{,i} = \frac{\partial r}{\partial x_i} 
+\end{align}
+(TODO: Is it $x_i$ or is it $y_i$?)
+
+For faulting or cracking problems, separate the surface into two parts $F_L$ and $F_R$, with opposite outward normal vectors. In this case, the integrals of both $T^*$ and $U^*$ over the surface are always 0. In other words, the Somigliana identity is degenerate (useless!) at a displacement discontinuity. Taking a surface normal derivative with respect to the $x$ coordinate and multiplying the elastic moduli gives a non-degenerate integral equation, known as the hypersingular elastic integral equation:
+\begin{equation}
+    \vec{t}(x) + \int_{\pO} W^*(x, y)\vec{u}(y) dS = \int_{\pO} \widetilde{T}^*(x,y)\vec{t}(y) dS \quad \forall x \in \Omega
+    \label{hypersingular}
+\end{equation}
+where $W^* = \frac{\partial T^*}{\partial n(x)}$ and $\widetilde{T}^* = \frac{\partial U^*}{\partial n(x)}$. The kernels, $T^*$ and $\widetilde{T}^*$ are different only in that the derivatives of $U^*$ are taken in the direction of $n(x)$ and $n(y)$ respectively.
+
+Both the integral equations presented, \ref{somigliana} and \ref{hypersingular} are valid for points in the interior of the volume, $\Omega$ surrounded by the surface, $\pO$. So, currently, the integral equations give a method for determining the interior displacements and tractions given the surface displacements and tractions. However, if I only have partial boundary data (a boundary value problem!), I need a way to relate the known boundary data to the unknown boundary data. The trouble is the $T^*, \widetilde{T}^*, W^*$ integrals are divergent for $x \in \pO$. But, in the limit of being infinitesimally close to the boundary, but still in the interior, the integral equations are still well-defined. Hence, to solve a boundary value problem the Somigliana identity and hypersingular integral equation are used in their limit to the boundary:
+\begin{align}
+    &\vec{u}(x) + \lim_{\tilde{x} \to x}\int_{\pO} T^*(\tilde{x}, y)\vec{u}(y) dS = \lim_{\tilde{x} \to x}\int_{\pO} U^*(\tilde{x},y)\vec{t}(y) dS \quad \forall x \in \pO\\
+    &\vec{t}(x) + \lim_{\tilde{x} \to x}\int_{\pO} W^*(\tilde{x}, y)\vec{u}(y) dS = \lim_{\tilde{x} \to x}\int_{\pO} \widetilde{T}^*(\tilde{x},y)\vec{t}(y) dS \quad \forall x \in \pO\\
+    \label{solution}
+\end{align}
+
+\section*{Boundary element method}
+The continuous boundary value problem solution, \ref{solution}, could be used by hand to compute the solution to simple problems. But to solve problems with complex geometries or boundary conditions, I need a method to turn the continuous problem into a discrete problem that will be solved via linear algebra. To discretize the problem, I first represent the surface, $\pO$, via a triangular mesh $\pO \approx \cup T_i$. The easiest way to define the mesh is via a mapping from the reference triangle (0,0)-(1,0)-(0,1) to each real triangle. Call the reference space position $(\hat{x}, \hat{y})$, with the reference triangle given by $0 \leq \hat{x} \leq 1, 0 \leq \hat{y} \leq 1 - \hat{x}$. The real space triangle is then a linear function of the reference triangle: $(x(\hat{x}, \hat{y}),  y(\hat{x}, \hat{y}), z(\hat{x}, \hat{y}))$. To define these mapping functions, I interpolate using a set of linear Lagrange basis functions with nodes at the corners of the reference triangle:
+\begin{align}
+    &N_0 = (0,0) \quad \quad \phi_0(\hat{x},\hat{y}) = 1 - \hat{x} - \hat{y}  \\
+    &N_1 = (1,0) \quad \quad \phi_1(\hat{x},\hat{y}) = \hat{x}  \\
+    &N_2 = (0,1) \quad \quad \phi_2(\hat{x},\hat{y}) = \hat{y}
+\end{align}
+Note that $\phi_i(N_j) = \delta_{ij}$. This is the defining characteristic of Lagrange interpolation. Now, $x(\hat{x}, \hat{y}) = \sum_{i = 0}^2 X_i \phi_i(\hat{x}, \hat{y})$; $y$ and $z$ are similar.
+
+Next, I use the same interpolation process to represent the solutions $u$ and $t$ as piece-wise polynomial functions over the entire surface mesh. The coefficients of these polynomials $u_i$ and $t_i$ will be the unknowns in the final linear system. Rewriting Somigliana's identity in terms of this interpolation:
+\begin{align}
+    &\displaystyle\sum_ju_j\phi_j(x) + \lim_{\tilde{x} \to x}\int_{\pO} T^*(\tilde{x}, y)\sum_ju_j\phi_j(y) dS = \lim_{\tilde{x} \to x}\int_{\pO} U^*(\tilde{x},y)\sum_jt_j\phi_j(y) dS \quad \forall x \in \pO\\
+\end{align}
+
+Finally, this integral equation cannot be enforced everywhere. That would require an infinite number of ``constraints'', each being a row in the final linear system. Instead, I enforce the integral equation in a least squares weighted average sense where each basis function takes a turn as the weighting function. For the Somigliana identity, I get:
+\begin{multline}
+    \int_{\pO}\phi_i(x)\displaystyle\sum_ju_j\phi_j(x)dS_x + \int_{\pO}\phi_i(x)\lim_{\tilde{x} \to x}\int_{\pO} T^*(\tilde{x}, y)\sum_ju_j\phi_j(y) dS_ydS_x = \\ 
+    \int_{\pO}\phi_i(x)\lim_{\tilde{x} \to x}\int_{\pO} U^*(\tilde{x},y)\sum_jt_j\phi_j(y) dS_ydS_x \quad \forall i
+    \label{discrete}
+\end{multline}
+This use of the polynomial basis functions is called a ``Galerkin'' method and can be shown to represent a projection of the true solution to the ``closest'' piece-wise polynomial approximation.
+
+By rearranging \ref{discrete}, the linear system emerges from behind the curtain: 
+\begin{multline}
+    \displaystyle\sum_ju_j\int_{\pO}\phi_i(x)\phi_j(x)dS_x + \sum_ju_j\int_{\pO}\phi_i(x)\lim_{\tilde{x} \to x}\int_{\pO} T^*(\tilde{x}, y)\phi_j(y) dS_ydS_x = \\ 
+    \sum_jt_j\int_{\pO}\phi_i(x)\lim_{\tilde{x} \to x}\int_{\pO} U^*(\tilde{x},y)\phi_j(y) dS_ydS_x \quad \forall i
+\end{multline}
+This can be written:
+\begin{eqnarray}
+    \sum_j(M_{ij}u_j + G_{ij}u_j - H_{ij}t_j) = 0 \quad \forall i\\
+    M_{ij} = \int_{\pO}\phi_i(x)\phi_j(x)dS_x\\
+    G_{ij} = \int_{\pO}\phi_i(x)\lim_{\tilde{x} \to x}\int_{\pO} T^*(\tilde{x}, y)\phi_j(y) dS_ydS_x\\
+    H_{ij} = \int_{\pO}\phi_i(x)\lim_{\tilde{x} \to x}\int_{\pO} U^*(\tilde{x},y)\phi_j(y) dS_ydS_x
+\end{eqnarray}
+For $n$ basis functions, this is a linear system of $n$ equations and $2n$ unknowns. So, for every triangle on the surface, either displacement or traction must be known, while the other will be solved for.
+
+
+\section*{Evaluating Matrix Entries -- quadrature}
+Evaluating the entries in $M_{ij}$ is straightforward with a Gaussian quadrature rule equal in order to the polynomial basis. 
+
+The other entries require tender loving care because of the singularity present in the limit $\tilde{x} \to x$.
+The outer integrals are discretized using a low order Gaussian quadrature method. 
+
+The entries representing interactions between triangles that are sufficiently separated (TODO: be precise) are computed using a low order Gaussian quadrature formula. For nearfield entries the goal is to compute an integral, $I(x) = \lim_{\tilde{x}\to x}\int_{T_i}K(\tilde{x},y)\phi(y)dy$ for $x$ lying on or near $T_i$. The plan is to create a sequence of improving approximations to $I(x)$. Then, an extrapolation method called Richardson Extrapolation will be used to accelerate the convergence of this sequence, essentially taking a numerical limit. 
+
+This procedure works because the function $I(x)$ is analytic everywhere except at the triangle $T_i$. Using only the first term of a Taylor series expansion, $I(x) = I(x + h) + O(h)$. I create the sequence:
+\begin{equation}
+    I(z_i) = I(x + 2^{-i}n(x)L) = I(x) + O(2^{-i}L)
+\end{equation}
+where $L$ is some appropriate starting distance, and $n(x)$ is the normal vector for $T_i$. This sequence is a slowly convergent, first order approximation to $I(x)$. But, a really really awesome thing happens when combining multiple terms of this sequence: 
+\begin{align}
+I(x + hn) &= I(x) + Ch + O(h^2)\\
+I(x + hn/2) &= I(x) + Ch/2 + O(h^2)\\
+2I(x + hn/2) - I(x + hn) &= I(x) + O(h^2)
+\end{align}
+A new sequence has been created that converges quadratically. This process of adding multiplying and subtracting terms in a sequence with a polynomial error term is called Richardson Extrapolation (TODO: cite).  Because the error in a Taylor series approximation is polynomial, Richardson Extrapolation can be repeated to improve the error as much as desired, with an overall exponential convergence. The only constraint is the computational cost. The result is instead of singular integrals, there are now many almost-singular integrals that need to be computed -- an easier job! Those $I(x + h)$ where $x + h$ is sufficiently far from $T_i$ are simply computed using a higher order Gaussian quadrature than the far-field points. The adaptive Gauss-Lobatto quadrature method of \citet{Gander2000} is used when $x + h$ is still very close to $T_i$. 
+
+Aside: one way of imagining Richardson Extrapolation is that it is performing a curve fitting with respect to $h$ and then following this curve to $h = 0$. A similar method, called QBX, evaluates the limit by performing a series expansion at a point near the boundary \citep{Klockner2013}.
+
+\section*{Solving linear systems}
+For small problems, I store the entire boundary element matrix and solve the respective linear system using any standard tool.  For larger problems, storing a large dense matrix, $A \in \mathbb{R}^{mxn}$ requires space $O(mn)$. Realistically, this means that a 50000x50000 matrix of 32-bit floating point values requires 10 gigabytes of memory. A problem ten times that size requires 100 times the memory. As a result, a large scale boundary element solver must approximate the linear system it solves. Even if storing the matrix were not a problem, solving a general linear system requires time $O(n^3)$ using a direct method like LU decomposition. 
+To approximate the linear system, I first separate it into near-field and far-field components. TODO: Finish this section, describing the black-box FMM algorithm briefly. \citep{Fong2009}
+\bibliographystyle{abbrvnat}
+\bibliography{/home/tbent/projects/library}
+
+\end{document}
+
+
