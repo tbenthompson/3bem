@@ -10,6 +10,7 @@ int main() {
     //-- doing ~9x as much work because the problem is not vectored
     //-- constraints are becoming a problem -- need to loosen constraints
     //   across the fault
+    //   SEGFAULT?!
 
     double surf_width = 12;
     int refine_surf = 4;

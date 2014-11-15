@@ -84,36 +84,37 @@ build_dir = 'build'
 def setup_dir(dirname):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
+
 def build():
     for d in dirs:
         setup_dir(os.path.join(build_dir, d))
     compile()
-    link()
+    # link()
 
 def oname(filename):
     return os.path.join(build_dir, filename)
 
 def compile():
     for source in lib_srces:
-        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), lib_cpp_flags)
-    for source in examples:
-        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
-    for source in tests:
-        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
-    for source in inttests:
-        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
+        abc = run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), lib_cpp_flags)
+    # for source in examples:
+    #     run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
+    # for source in tests:
+    #     run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
+    # for source in inttests:
+    #     run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
 
-def link():
-    lib_objs = [oname(s + '.o') for s in lib_srces]
-    after()
-    run(compiler, '-o', oname('lib3bem.so'), lib_objs, lib_link_flags)
-    after()
-    for source in examples:
-        run(compiler, '-o', oname(source), oname(source + '.o'), example_link_flags)
-    for source in tests:
-        run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
-    for source in inttests:
-        run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
+# def link():
+#     lib_objs = [oname(s + '.o') for s in lib_srces]
+#     after()
+#     run(compiler, '-o', oname('lib3bem.so'), lib_objs, lib_link_flags)
+#     after()
+#     for source in examples:
+#         run(compiler, '-o', oname(source), oname(source + '.o'), example_link_flags)
+#     for source in tests:
+#         run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
+#     for source in inttests:
+#         run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
 
 def clean():
     autoclean()
