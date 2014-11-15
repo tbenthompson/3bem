@@ -29,8 +29,7 @@ src = np.random.rand(n, 4).astype(np.float32)
 obs = np.random.rand(n, 4).astype(np.float32)
 strength = np.random.rand(n).astype(np.float32)
 
-dev = 0
-ctx = cl.create_some_context()
+ctx = cl.create_some_context(-1)
 queue = cl.CommandQueue(ctx)
 
 mf = cl.mem_flags

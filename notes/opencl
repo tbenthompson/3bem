@@ -1,3 +1,19 @@
+
+INSTALLING:
+Best guide:
+http://streamcomputing.eu/blog/2011-06-24/install-opencl-on-debianubuntu-orderly/
+
+use the intel sdk, convert rpms to debs using alien 
+
+two main components:
+--icd loader
+--opencl library
+--icds
+
+does your hardware support opencl?
+http://streamcomputing.eu/blog/2011-12-29/opencl-hardware-support/
+
+USAGE:
 http://www.bealto.com/gpu-gemv_conclusion.html
 https://www.khronos.org/files/opencl-quick-reference-card.pdf
 http://http.developer.nvidia.com/GPUGems3/gpugems3_ch31.html
@@ -5,3 +21,9 @@ http://www.nvidia.com/content/cudazone/download/OpenCL/NVIDIA_OpenCL_Programming
 https://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/mathFunctions.html
 
 http://www.fixstars.com/en/opencl/book/OpenCLProgrammingBook/first-opencl-program/
+
+
+Cool series of posts:
+http://devblogs.nvidia.com/parallelforall/thinking-parallel-part-i-collision-detection-gpu/
+http://devblogs.nvidia.com/parallelforall/thinking-parallel-part-ii-tree-traversal-gpu/
+http://devblogs.nvidia.com/parallelforall/thinking-parallel-part-iii-tree-construction-gpu/
