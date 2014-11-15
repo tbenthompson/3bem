@@ -1,0 +1,21 @@
+** 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D,
+** 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D,
+** 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D,
+** 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D,
+** Rearrange to have the limit taking be outside the galerkin integration. Does this help with corners and deadends?
+** template on double vs float
+** Docker for my development process!
+http://tersesystems.com/2013/11/20/building-a-development-environment-with-docker/
+** bug occurs when obs quad order != 2
+** continue to work towards better bem
+-- fix the elasticity segfaults
+-- impose constraints
+-- vector direct_interact
+-- dof handling? 
+-- Try out some adaptivity for the surface mesh
+-- try the nearly singular tri rule = http://www98.griffith.edu.au/dspace/bitstream/handle/10072/54329/86520_1.pdf?sequence=1
+** 3-10th order basis functions for solution and geometry
+-- on triangles? how?
+-- need nodal 
+** Biggest time sink is the calculation of adjacent and identical element interactions
+-- adaptive
