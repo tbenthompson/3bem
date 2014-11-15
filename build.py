@@ -1,3 +1,15 @@
+"""
+This is the build script for 3bem. It uses the fabricate.py build tool.
+Think "make", but way better. It automatically determines dependencies
+between build steps so that if one file changes, only the minimal number of
+other files are recompiled or relinked.
+
+Also, it's nice to write a build script in python instead of some arcane
+domain specific language like "make".
+
+More info:
+http://code.google.com/p/fabricate/
+"""
 from fabricate import *
 
 import os

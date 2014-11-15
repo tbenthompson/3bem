@@ -1,0 +1,3 @@
+[submodule "3bem_docker"]
+	path = 3bem_docker
+	url = git@github.com:tbenthompson/3bem_docker.git
