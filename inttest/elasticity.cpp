@@ -13,7 +13,7 @@ int main() {
     //   SEGFAULT?!
 
     double surf_width = 12;
-    int refine_surf = 4;
+    int refine_surf = 3;
     double far_threshold = 3.0;
     int near_quad_pts = 3;
     int near_steps = 5;
@@ -66,7 +66,7 @@ int main() {
 
     //TODO: need to impose constraints!
 
-    std::vector<double> full_rhs(n_surface_dofs);
+    std::vector<double> full_rhs(3 * n_surface_dofs);
     for (int d = 0; d < 3; d++) {
         std::copy(rhs[d].begin(), rhs[d].end(), full_rhs.begin() + d * n_surface_dofs);
     }

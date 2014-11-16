@@ -4,7 +4,6 @@ import sys
 import matplotlib.pyplot as plt
 # from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.tri import Triangulation
-import mayavi.mlab as mlab
 from okada_wrapper import dc3dwrapper
 
 def main(filename, values_dim):
