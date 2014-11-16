@@ -252,10 +252,7 @@ std::vector<double> interact_matrix(const Problem& p,
                                     const QuadStrategy& qs) {
     int n_obs_dofs = 3 * p.obs_mesh.facets.size();
     int n_src_dofs = 3 * p.src_mesh.facets.size();
-    std::cout << "HI" << std::endl;
-    std::cout << n_obs_dofs << " " << n_src_dofs << std::endl;
     std::vector<double> matrix(n_obs_dofs * n_src_dofs, 0.0);
-    std::cout << "HI2" << std::endl;
 #pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         FaceInfo obs_face(p.obs_mesh.facets[obs_idx]);
@@ -275,7 +272,7 @@ std::vector<double> interact_matrix(const Problem& p,
             }
         }
     }
-    std::cout << interacts << " " << far_field_pairs << " " << near_field_pairs << " " << adjacent_pairs << std::endl;
+    // std::cout << interacts << " " << far_field_pairs << " " << near_field_pairs << " " << adjacent_pairs << std::endl;
     return matrix;
 }
 

@@ -1037,6 +1037,7 @@ class Builder(object):
             self.runner = SmartRunner(self)
 
         is_strace = isinstance(self.runner.actual_runner(), StraceRunner)
+        print parallel_ok
         self.parallel_ok = parallel_ok and is_strace and _pool is not None
         if self.parallel_ok:
             global _results
