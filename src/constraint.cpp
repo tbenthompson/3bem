@@ -1,107 +1,89 @@
-// #include "common.h"
-// #include "constraint.h"
-// #include <armadillo>
-// 
-// namespace codim1 {
-// 
-// Constraint continuity_constraint(int dof1, int dof2) {
-//     return {
-//         DOFWeight(dof1, 1.0),
-//         DOFWeight(dof2, -1.0)
-//     };
-// }
-// 
-// Constraint offset_constraint(int dof1, int dof2, double offset) {
-//     Constraint c = continuity_constraint(dof1, dof2);
-//     c.push_back(DOFWeight(RHS, offset));
-//     return c;
-// }
-// 
-// void add_constraint(ConstraintMatrix& cm, Constraint c) {
-//     int constrained = c[0].first;
-//     cm[constrained] = c;
-// }
-// 
-// void non_constrained_row(MatrixEntry entry,
-//                          mat& mat, vec& rhs,
-//                          ConstraintMatrix cm) {
-// 
-//     auto dof_and_constraint = cm.find(entry.col);
-//     if (dof_and_constraint == cm.end()) {
-//         mat(entry.row, entry.col) += entry.value;
-//         return;
-//     }
-// 
-//     Constraint constraint = dof_and_constraint->second;
-//     for(unsigned int i = 1; i < constraint.size(); i++) {
-//         MatrixEntry new_entry({entry.row,
-//                                constraint[i].first, 
-//                                -constraint[i].second * entry.value});
-//         add_mat_with_constraints(new_entry, mat, rhs, cm);
-//     }
-// }
-// 
-// void constrained_row(MatrixEntry entry,
-//                      mat& mat, vec& rhs,
-//                      ConstraintMatrix cm) {
-//     Constraint constraint = cm[entry.row];
-//     for(unsigned int i = 1; i < constraint.size(); i++) {
-//         MatrixEntry new_entry({constraint[i].first, 
-//                                entry.col,
-//                                -constraint[i].second * entry.value});
-//         add_mat_with_constraints(new_entry, mat, rhs, cm);
-//     }
-// }
-// 
-// void add_mat_with_constraints(MatrixEntry entry,
-//                               mat& mat, vec& rhs,
-//                               ConstraintMatrix cm) {
-//     // TODO: Implement for inhomogenous constraints.
-//     DBGMSG(std::cout, "Add to matrix with row dof: " << entry.row <<
-//                       " and col dof: " << entry.col << 
-//                       " and value: " << entry.value);
-// 
-//     // The only way that entry.row == RHS is if this function is called
-//     // after recursively applying 
-//     if (entry.row == RHS) {
-//         return;
-//     }
-// 
-//     if (entry.col == RHS) {
-//         add_rhs_with_constraints(DOFWeight({entry.row, entry.value}),
-//                                  rhs, cm);
-//         return;
-//     }
-// 
-//     auto constraint = cm.find(entry.row);
-//     if (constraint == cm.end()) {
-//         non_constrained_row(entry, mat, rhs, cm);
-//         return;
-//     }
-//     constrained_row(entry, mat, rhs, cm);
-//     return;
-// }
-// 
-// /* TODO: This could be consolidated with the add_mat... function */
-// void add_rhs_with_constraints(DOFWeight entry,
-//                               vec& rhs, 
-//                               ConstraintMatrix cm) {
-//     DBGMSG(std::cout, "Add to RHS with entry dof: " << entry.first <<
-//                       " and value: " << entry.second);
-// 
-//     auto dof_and_constraint = cm.find(entry.first);
-//     if (dof_and_constraint == cm.end()) {
-//         rhs(entry.first) += entry.second;
-//         return;
-//     }
-// 
-//     Constraint constraint = dof_and_constraint->second;
-//     for(unsigned int i = 1; i < constraint.size(); i++) {
-//         DOFWeight new_entry({constraint[i].first, 
-//                              -constraint[i].second * entry.second});
-//         add_rhs_with_constraints(new_entry, rhs, cm);
-//     }
-// }
-// 
-// 
-// } // end namespace codim1
+#include "constraint.h"
+#include <iostream>
+#include <algorithm>
+
+std::ostream& operator<<(std::ostream& os, const Constraint& c) {
+    os << "Constraint[[(RHS, " << c.rhs_value << "), ";
+    for (auto v: c.dof_constraints) {
+        os << "(" << v.first << ", " << v.second << "), ";
+    }
+    os << "]]";
+    return os;
+}
+
+ConstraintMatrix ConstraintMatrix::add_constraints(
+                                 const std::vector<Constraint>& constraints) {
+    MapT new_map;
+    for (auto it = c_map.begin(); it != c_map.end(); ++it) {
+        new_map[it->first] = it->second;
+    }
+
+    for (std::size_t i = 0; i < constraints.size(); ++i) {
+        auto in_constraint = constraints[i];
+        auto last = std::max_element(in_constraint.dof_constraints.begin(), 
+                                     in_constraint.dof_constraints.end(),
+            [] (const DOFWeight& a, const DOFWeight& b) {
+                return a.first < b.first; 
+            });
+        auto last_dof = last->first;
+        std::iter_swap(last, in_constraint.dof_constraints.end() - 1);
+        new_map[last_dof] = in_constraint;
+    }
+    return {new_map};
+}
+
+ConstraintMatrix ConstraintMatrix::from_constraints(
+        const std::vector<Constraint>& constraints) {
+    ConstraintMatrix c;
+    return c.add_constraints(constraints);
+};
+    
+std::ostream& operator<<(std::ostream& os, const ConstraintMatrix& cm) {
+    os << "ConstraintMatrix[[";
+    for (auto it = cm.c_map.begin(); it != cm.c_map.end(); ++it) {
+         os << "(" << it->first << ", " << it->second << "), ";
+    }
+    os << "]]";
+    return os;
+}
+
+std::vector<double> ConstraintMatrix::apply(const std::vector<double>& in) {
+    std::vector<double> out(in.size()); 
+    for (std::size_t i = 0; i < in.size(); i++) {
+        auto dof_and_constraint = c_map.find(i);
+        if (dof_and_constraint == c_map.end()) {
+            out[i] = in[i];
+            continue;
+        }
+
+        auto dof_constraint = dof_and_constraint->second.dof_constraints;
+        double out_val = dof_and_constraint->second.rhs_value;
+        for (std::size_t j = 0; j < dof_constraint.size() - 1; j++) {
+            out_val -= dof_constraint[j].second * out[dof_constraint[j].first];
+        }
+        auto this_dof_weight = (dof_constraint.end() - 1)->second;
+        out[i] = out_val / this_dof_weight;
+    }
+    return out;
+}
+
+Constraint continuity_constraint(int dof1, int dof2) {
+    return {
+        {DOFWeight{dof1, 1.0}, DOFWeight{dof2, -1.0}},
+        0.0
+    };
+}
+
+Constraint offset_constraint(int dof1, int dof2, double offset) {
+    return {
+        continuity_constraint(dof1, dof2).dof_constraints,
+        -offset
+    };
+}
+
+Constraint boundary_condition(int dof, double value) {
+    return {
+        {DOFWeight{dof, 1.0}},
+        value
+    };
+}

@@ -5,7 +5,7 @@
 #include "direct.h"
 
 int main() {
-    int n = (int)1e6;
+    int n = (int)1e4;
     int pts_per_cell = 100;
     int n_exp_pts = 2;
     double mac2 = 4.0;
@@ -28,7 +28,7 @@ int main() {
     fmm_info.L2P();
     TOC("L2P");
 
-    TIC2;
-    direct_n_body(oct.elements, oct.elements, laplace_single, strength);
-    TOC("Direct");
+    // TIC2;
+    // direct_n_body(oct.elements, oct.elements, laplace_single, strength);
+    // TOC("Direct");
 }
