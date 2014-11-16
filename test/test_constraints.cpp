@@ -1,34 +1,46 @@
 #include "UnitTest++.h"
-// #include "constraint.h"
-// #include "common.h"
-// #include <armadillo>
-// 
-// using namespace codim1;
-// 
-// TEST(ConstraintsAreCreated) {
-//     Constraint c = continuity_constraint(1, 2);
-//     Constraint correct = {
-//         DOFWeight(1, 1.0f),
-//         DOFWeight(2, -1.0f)
-//     };
-//     CHECK(c == correct);
-// 
-//     Constraint c2 = offset_constraint(3, 4, 5.0f);
-//     correct = {
-//         DOFWeight(3, 1.0f),
-//         DOFWeight(4, -1.0f),
-//         DOFWeight(RHS, 5.0f)
-//     };
-//     CHECK(c2 == correct);
-// }
-// 
-// TEST(ConstraintMatrixIsAppendedTo) {
-//     Constraint c = continuity_constraint(1, 2);
-//     ConstraintMatrix cm;
-//     add_constraint(cm, c);
-//     CHECK(cm[1] == c);
-// }
-// 
+#include "constraint.h"
+#include <iostream>
+
+TEST(ConstraintsAreCreated) {
+    auto c = continuity_constraint(1, 2);
+    Constraint correct = {
+        {DOFWeight{1, 1.0f}, DOFWeight{2, -1.0f}},
+        0.0
+    };
+    CHECK(c.dof_constraints == correct.dof_constraints);
+    CHECK(c.rhs_value == correct.rhs_value);
+
+    auto c2 = offset_constraint(3, 4, 5.0f);
+    correct = {
+        {DOFWeight{3, 1.0f}, DOFWeight{4, -1.0f}},
+        -5.0
+    };
+    CHECK(c2.dof_constraints == correct.dof_constraints);
+    CHECK(c2.rhs_value == correct.rhs_value);
+}
+
+TEST(ConstraintMatrixIsAppendedTo) {
+    auto c = continuity_constraint(1, 2);
+    auto cm = ConstraintMatrix::from_constraints({c});
+    auto res = cm.c_map.at(2);
+    CHECK(res.dof_constraints[0].first == 1);
+    CHECK(res.dof_constraints[0].second == 1);
+    CHECK(res.dof_constraints[1].first == 2);
+    CHECK(res.dof_constraints[1].second == -1);
+    CHECK(res.rhs_value == 0.0);
+}
+
+TEST(ConstraintMatrixApply) {
+    auto c0 = boundary_condition(1, 4.0);
+    auto c1 = continuity_constraint(1, 2);
+    auto c2 = continuity_constraint(2, 3);
+    auto cm = ConstraintMatrix::from_constraints({c0, c1, c2});
+    auto res = cm.apply({2.0, 0.0, 0.0, 0.0});
+    double res2[4] = {2.0, 4.0, 4.0, 4.0};
+    CHECK_ARRAY_CLOSE(res, res2, 4, 1e-13);
+}
+
 // TEST(AddWithConstraintsSimple) {
 //     arma::Mat<double> mymat = arma::zeros<mat>(4,4);
 //     arma::Col<double> myrhs = arma::zeros<vec>(4);
@@ -69,7 +81,7 @@
 //     CHECK_CLOSE(mymat(1,3), 2.0, 1e-6);
 //     CHECK_CLOSE(myrhs(1), -1.0, 1e-6);
 // }
-
+// 
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();
