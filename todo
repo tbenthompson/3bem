@@ -4,8 +4,6 @@
 ** 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D,
 ** Rearrange to have the limit taking be outside the galerkin integration. Does this help with corners and deadends?
 ** template on double vs float
-** Docker for my development process!
-http://tersesystems.com/2013/11/20/building-a-development-environment-with-docker/
 ** bug occurs when obs quad order != 2
 ** continue to work towards better bem
 -- fix the elasticity segfaults

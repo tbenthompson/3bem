@@ -209,7 +209,8 @@ Vec3<double> near_field(const Problem& p, const QuadStrategy& qs,
 std::vector<double> integral_equation_vector(const Problem& p,
                                              const QuadStrategy& qs,
                                              const ObsPt& obs) {
-    std::vector<double> result(3 * p.src_mesh.facets.size(), 0.0);
+    int n_out_dofs = 3 * p.src_mesh.facets.size();
+    std::vector<double> result(n_out_dofs);
     for (std::size_t i = 0; i < p.src_mesh.facets.size(); i++) {
         FaceInfo src_face(p.src_mesh.facets[i]);
         const double dist2 = appx_face_dist2(obs.loc, src_face.face.vertices);
@@ -229,7 +230,7 @@ std::vector<double> integral_equation_vector(const Problem& p,
             far_field_pairs++;
         }
         for (int b = 0; b < 3; b++) {
-            result[3 * i + b] += integrals[b];
+            result[3 * i + b] = integrals[b];
         }
     }
     return result;
@@ -250,14 +251,16 @@ double eval_integral_equation(const Problem& p, const QuadStrategy& qs,
 //TODO: Use a sparse matrix storage format here.
 std::vector<double> interact_matrix(const Problem& p,
                                     const QuadStrategy& qs) {
-    int n_obs_dofs = 3 * p.obs_mesh.facets.size();
-    int n_src_dofs = 3 * p.src_mesh.facets.size();
+    std::size_t n_obs_dofs = 3 * p.obs_mesh.facets.size();
+    std::size_t n_src_dofs = 3 * p.src_mesh.facets.size();
     std::vector<double> matrix(n_obs_dofs * n_src_dofs, 0.0);
 #pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         FaceInfo obs_face(p.obs_mesh.facets[obs_idx]);
         for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
             auto pt = ObsPt::from_face(qs.obs_quad, obs_face, obs_q);
+            // std::cout << obs_idx << " " << p.obs_mesh.facets.size() << std::endl;
+            // std::cout << pt.loc << std::endl;
 
             const auto row = integral_equation_vector(p, qs, pt);
 
@@ -265,8 +268,8 @@ std::vector<double> interact_matrix(const Problem& p,
                 double obs_basis_eval = linear_interp(qs.obs_quad[obs_q].x_hat,
                                                       unit<double>(v)); 
                 int b = 3 * obs_idx + v;
-                for (int i = 0; i < n_src_dofs; i++) {
-                    matrix[b * n_obs_dofs + i] += obs_basis_eval * row[i] * 
+                for (std::size_t i = 0; i < n_src_dofs; i++) {
+                    matrix[b * n_src_dofs + i] += obs_basis_eval * row[i] * 
                                     qs.obs_quad[obs_q].w * obs_face.jacobian;
                 }
             }
@@ -283,7 +286,7 @@ std::vector<double> bem_mat_mult(const std::vector<double>& A,
 #pragma omp parallel for
     for (int i = 0; i < n_obs_dofs; i++) {
         for (std::size_t j = 0; j < x.size(); j++) {
-            res[i] += A[i * n_obs_dofs + j] * x[j]; 
+            res[i] += A[i * x.size() + j] * x[j]; 
         }
     }
     return res;
