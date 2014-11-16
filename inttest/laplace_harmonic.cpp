@@ -17,8 +17,6 @@ double harmonic_dudn(Vec3<double> x, Vec3<double> center) {
 
 int main() {
     //THIS IS HOT!
-    //TODO: Solving for dudn here should not have equality constraints
-    //imposed
     const Vec3<double> center = {5, 0, 0};
     double r = 3.0;
     double obs_radius = 2.7;
@@ -70,12 +68,12 @@ int main() {
     int count = 0;
     auto dudn_solved = solve_system(rhs, 1e-5,
         [&] (std::vector<double>& x, std::vector<double>& y) {
-            // TIC
-            // std::cout << "iteration " << count << std::endl;
+            TIC
+            std::cout << "iteration " << count << std::endl;
             count++;
             auto y_temp = bem_mat_mult(matrix, n_dofs, x); 
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
-            // TOC("Matrix multiply on " + std::to_string(sphere.facets.size()) + " faces");
+            TOC("Matrix multiply on " + std::to_string(sphere.facets.size()) + " faces");
         });
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
     hdf_out("laplace.hdf5", sphere, dudn_solved); 

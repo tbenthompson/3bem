@@ -125,5 +125,25 @@ Mesh<dim>::from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
     return Mesh<dim>{new_facets, has_refine_mod, refine_mod};
 }
 
+//TODO: FIX THE O(N^2) problem here, use hashes or octree?
+template <int dim>
+std::vector<Constraint> continuity_constraints(const Mesh<dim>& mesh, double eps = 1e-10) {
+    std::vector<Constraint> constraints;
+    for (unsigned int i = 0; i < mesh.facets.size(); i++) {
+        for (unsigned int d1 = 0; d1 < 3; d1++) {
+            for (unsigned int j = i + 1; j < mesh.facets.size(); j++) {
+                for (unsigned int d2 = 0; d2 < 3; d2++) {
+                    if (!all(mesh.facets[i].vertices[d1] == 
+                                mesh.facets[j].vertices[d2], eps)) {
+                        continue;
+                    } 
+                    constraints.push_back(continuity_constraint(3 * i + d1, 3 * j + d2));
+                }
+            }
+        }
+    }
+    return constraints;
+}
+
 template class Mesh<2>;
 template class Mesh<3>;

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <GL/gl.h>
 #include "vec.h"
+#include "constraint.h"
 
 template <int dim>
 struct Facet {
@@ -29,6 +30,10 @@ struct Mesh {
                          bool has_refine_mod = false,
                          const typename Mesh<dim>::RefineFnc& refine_mod = nullptr);
 };
+
+template <int dim>
+std::vector<Constraint> 
+continuity_constraints(const Mesh<dim>& mesh, double eps = 1e-10);
 
 
 #endif
