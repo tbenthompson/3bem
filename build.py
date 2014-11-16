@@ -10,7 +10,7 @@ domain specific language like "make".
 More info:
 http://code.google.com/p/fabricate/
 """
-from fabricate import *
+from build.fabricate import *
 
 import os
 
@@ -89,32 +89,32 @@ def build():
     for d in dirs:
         setup_dir(os.path.join(build_dir, d))
     compile()
-    # link()
+    link()
 
 def oname(filename):
     return os.path.join(build_dir, filename)
 
 def compile():
     for source in lib_srces:
-        abc = run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), lib_cpp_flags)
-    # for source in examples:
-    #     run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
-    # for source in tests:
-    #     run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
-    # for source in inttests:
-    #     run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
+        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), lib_cpp_flags)
+    for source in examples:
+        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
+    for source in tests:
+        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
+    for source in inttests:
+        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
 
-# def link():
-#     lib_objs = [oname(s + '.o') for s in lib_srces]
-#     after()
-#     run(compiler, '-o', oname('lib3bem.so'), lib_objs, lib_link_flags)
-#     after()
-#     for source in examples:
-#         run(compiler, '-o', oname(source), oname(source + '.o'), example_link_flags)
-#     for source in tests:
-#         run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
-#     for source in inttests:
-#         run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
+def link():
+    lib_objs = [oname(s + '.o') for s in lib_srces]
+    after()
+    run(compiler, '-o', oname('lib3bem.so'), lib_objs, lib_link_flags)
+    after()
+    for source in examples:
+        run(compiler, '-o', oname(source), oname(source + '.o'), example_link_flags)
+    for source in tests:
+        run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
+    for source in inttests:
+        run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
 
 def clean():
     autoclean()
@@ -123,4 +123,4 @@ def rebuild():
     clean()
     build()
 
-main(parallel_ok = True, jobs = 12)
+main(parallel_ok = True, jobs = 2)

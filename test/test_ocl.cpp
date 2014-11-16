@@ -2,7 +2,7 @@
 #include "UnitTest++.h"
 
 TEST(SetupOCL) {
-    setup_ocl();
+    // setup_ocl();
 }
 
 int main(int, char const *[])
