@@ -215,6 +215,10 @@ template <typename T>
 Vec3<T> fabs(const Vec3<T>& v) {
     return {std::fabs(v[0]), std::fabs(v[1]), std::fabs(v[2])};
 }
+template <typename T>
+Vec2<T> fabs(const Vec2<T>& v) {
+    return {std::fabs(v[0]), std::fabs(v[1])};
+}
 
 inline Vec3<double> 
 tri_unscaled_normal(const std::array<Vec3<double>,3>& corners) {
@@ -234,5 +238,39 @@ inline double tri_area(const Vec3<double>& unscaled_normal) {
 inline double tri_area(const std::array<Vec3<double>,3>& corners) {
     return tri_area(tri_unscaled_normal(corners));
 }
+
+template <typename T>
+inline Vec3<bool> operator==(const Vec3<T>& t, const T& rhs) {
+    return {t[0] == rhs, t[1] == rhs, t[2] == rhs};
+}
+template <typename T>
+inline Vec2<bool> operator==(const Vec2<T>& t, const T& rhs) {
+    return {t[0] == rhs, t[1] == rhs};
+}
+
+template <typename T>
+inline Vec3<bool> operator!=(const Vec3<T>& t, const T& rhs) {
+    return {t[0] != rhs, t[1] != rhs, t[2] != rhs};
+}
+template <typename T>
+inline Vec2<bool> operator!=(const Vec2<T>& t, const T& rhs) {
+    return {t[0] != rhs, t[1] != rhs};
+}
+
+template <typename T>
+inline Vec3<bool> operator<(const Vec3<T>& t, const T& rhs) {
+    return {t[0] < rhs, t[1] < rhs, t[2] < rhs};
+}
+template <typename T>
+inline Vec2<bool> operator<(const Vec2<T>& t, const T& rhs) {
+    return {t[0] < rhs, t[1] < rhs};
+}
+
+inline bool any(bool a) {return a;}
+inline bool any(Vec3<bool> v) {return v[0] || v[1] || v[2];}
+
+inline bool all(bool a) {return a;}
+inline bool all(Vec3<bool> v) {return v[0] && v[1] && v[2];}
+inline bool all(Vec2<bool> v) {return v[0] && v[1];}
 
 #endif

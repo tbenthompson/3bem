@@ -228,7 +228,7 @@ TEST(DirectInteractConstantLaplace) {
     int n_dofs = sphere.facets.size();
     std::vector<double> str(n_dofs, 1.0);
 
-    QuadStrategy qs(2, 2, 3, 3, 3.0, 1e-2);
+    QuadStrategy qs(2, 2, 3, 4, 3.0, 1e-3);
     Problem p_double = {sphere, sphere, laplace_double, str};
     Problem p_single = {sphere, sphere, laplace_single, str};
     auto res0 = direct_interact(p_double, qs);

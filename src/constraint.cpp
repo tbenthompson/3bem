@@ -47,12 +47,15 @@ std::ostream& operator<<(std::ostream& os, const ConstraintMatrix& cm) {
     return os;
 }
 
-std::vector<double> ConstraintMatrix::apply(const std::vector<double>& in) {
-    std::vector<double> out(in.size()); 
-    for (std::size_t i = 0; i < in.size(); i++) {
+std::vector<double> ConstraintMatrix::get_all(const std::vector<double>& in,
+                                              int total_dofs) {
+    std::vector<double> out(total_dofs); 
+    int next_in = 0;
+    for (std::size_t i = 0; i < total_dofs; i++) {
         auto dof_and_constraint = c_map.find(i);
         if (dof_and_constraint == c_map.end()) {
-            out[i] = in[i];
+            out[i] = in[next_in];
+            next_in++;
             continue;
         }
 
@@ -64,6 +67,19 @@ std::vector<double> ConstraintMatrix::apply(const std::vector<double>& in) {
         auto this_dof_weight = (dof_constraint.end() - 1)->second;
         out[i] = out_val / this_dof_weight;
     }
+    return out;
+}
+
+std::vector<double> ConstraintMatrix::get_unconstrained(const std::vector<double>& all) {
+    std::vector<double> out;
+    for (std::size_t i = 0; i < all.size(); i++) {
+        auto dof_and_constraint = c_map.find(i);
+        if (dof_and_constraint == c_map.end()) {
+            out.push_back(all[i]);
+            continue;
+        }
+    }
+
     return out;
 }
 
