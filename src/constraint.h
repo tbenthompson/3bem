@@ -46,7 +46,9 @@ struct ConstraintMatrix {
 
     ConstraintMatrix add_constraints(const std::vector<Constraint>& constraints);
 
-    std::vector<double> apply(const std::vector<double>& in); 
+    //TODO: total_dofs could be stored by constraintMatrix
+    std::vector<double> get_all(const std::vector<double>& in, int total_dofs); 
+    std::vector<double> get_unconstrained(const std::vector<double>& all);
 
     friend std::ostream& operator<<(std::ostream& os, const ConstraintMatrix& cm);
 

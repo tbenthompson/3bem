@@ -21,7 +21,7 @@ int main() {
     double r = 3.0;
     double obs_radius = 2.7;
     double far_threshold = 2.0;
-    int refine_level = 4;
+    int refine_level = 3;
     int near_quad_pts = 3;
     int near_steps = 6;
     int src_quad_pts = 3;
@@ -33,6 +33,9 @@ int main() {
                     near_steps, far_threshold, tol);
 
     auto sphere = sphere_mesh(center, r).refine_repeatedly(refine_level);
+
+    auto constraints = ConstraintMatrix::from_constraints(
+                            sphere.continuity_constraints());
 
     int n_dofs = 3 * sphere.facets.size();
     std::vector<double> u(n_dofs);
@@ -51,30 +54,35 @@ int main() {
 
     TIC
     Problem p_double = {sphere, sphere, laplace_double, u};
-    auto rhs = direct_interact(p_double, qs);
+    auto rhs_full = direct_interact(p_double, qs);
     TOC("RHS Eval")
 
     Problem p_mass = {sphere, sphere, one, u};
     auto rhs_mass = mass_term(p_mass, qs);
 
-    for (unsigned int i = 0; i < rhs.size(); i++){
-        rhs[i] = rhs[i] - rhs_mass[i];
+    for (unsigned int i = 0; i < rhs_full.size(); i++){
+        rhs_full[i] = rhs_full[i] - rhs_mass[i];
     }
+
+    auto rhs = constraints.get_unconstrained(rhs_full);
 
     TIC2
     Problem p_single = {sphere, sphere, laplace_single, {}};
     auto matrix = interact_matrix(p_single, qs);
     TOC("Matrix construct on " + std::to_string(sphere.facets.size()) + " facets");
     int count = 0;
-    auto dudn_solved = solve_system(rhs, 1e-5,
+    auto dudn_solved_subset = solve_system(rhs, 1e-5,
         [&] (std::vector<double>& x, std::vector<double>& y) {
             TIC
             std::cout << "iteration " << count << std::endl;
             count++;
-            auto y_temp = bem_mat_mult(matrix, n_dofs, x); 
+            auto x_full = constraints.get_all(x, n_dofs);
+            auto y_mult = bem_mat_mult(matrix, n_dofs, x_full); 
+            auto y_temp = constraints.get_unconstrained(y_mult);
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
             TOC("Matrix multiply on " + std::to_string(sphere.facets.size()) + " faces");
         });
+    auto dudn_solved = constraints.get_all(dudn_solved_subset, n_dofs);
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
     hdf_out("laplace.hdf5", sphere, dudn_solved); 
 

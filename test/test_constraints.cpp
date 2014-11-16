@@ -31,57 +31,17 @@ TEST(ConstraintMatrixIsAppendedTo) {
     CHECK(res.rhs_value == 0.0);
 }
 
-TEST(ConstraintMatrixApply) {
+TEST(ConstraintMatrixGetAll) {
     auto c0 = boundary_condition(1, 4.0);
     auto c1 = continuity_constraint(1, 2);
     auto c2 = continuity_constraint(2, 3);
     auto cm = ConstraintMatrix::from_constraints({c0, c1, c2});
-    auto res = cm.apply({2.0, 0.0, 0.0, 0.0});
-    double res2[4] = {2.0, 4.0, 4.0, 4.0};
-    CHECK_ARRAY_CLOSE(res, res2, 4, 1e-13);
+    auto in = cm.get_unconstrained({2.0, 4.0, 4.0, 4.0});
+    auto res = cm.get_all(in, 4);
+    double res_exact[4] = {2.0, 4.0, 4.0, 4.0};
+    CHECK_ARRAY_CLOSE(res, res_exact, 4, 1e-13);
 }
 
-// TEST(AddWithConstraintsSimple) {
-//     arma::Mat<double> mymat = arma::zeros<mat>(4,4);
-//     arma::Col<double> myrhs = arma::zeros<vec>(4);
-//     ConstraintMatrix cm;
-//     add_constraint(cm, continuity_constraint(2, 3));
-//     add_mat_with_constraints(MatrixEntry({1, 1, 2}), mymat, myrhs, cm);
-//     add_mat_with_constraints(MatrixEntry({2, 1, 2}), mymat, myrhs, cm);
-//     CHECK_CLOSE(mymat(1,1), 2.0, 1e-6);
-//     CHECK_CLOSE(mymat(3,1), 2.0, 1e-6);
-// 
-//     add_mat_with_constraints(MatrixEntry({2, 2, 3.7}), mymat, myrhs, cm);
-//     CHECK_CLOSE(mymat(3,3), 3.7, 1e-6);
-// 
-//     add_rhs_with_constraints(DOFWeight({3, 2.0}), myrhs, cm);
-//     CHECK_CLOSE(myrhs(3), 2.0, 1e-6);
-// 
-//     add_rhs_with_constraints(DOFWeight({2, 2.0}), myrhs, cm);
-//     CHECK_CLOSE(myrhs(3), 4.0, 1e-6);
-// }
-// 
-// TEST(AddWithConstraintsComplex) {
-//     arma::Mat<double> mymat = arma::zeros<mat>(4,4);
-//     arma::Col<double> myrhs = arma::zeros<vec>(4);
-// 
-//     ConstraintMatrix cm;
-//     add_constraint(cm, continuity_constraint(2, 3));
-// }
-// 
-// TEST(AddWithInhomogenousConstraints) {
-//     arma::Mat<double> mymat = arma::zeros<mat>(4,4);
-//     arma::Col<double> myrhs = arma::zeros<vec>(4);
-// 
-//     ConstraintMatrix cm;
-//     add_constraint(cm, offset_constraint(2, 3, 0.5));
-// 
-//     add_mat_with_constraints(MatrixEntry({1, 2, 2.0}), mymat, myrhs, cm);
-// 
-//     CHECK_CLOSE(mymat(1,3), 2.0, 1e-6);
-//     CHECK_CLOSE(myrhs(1), -1.0, 1e-6);
-// }
-// 
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();

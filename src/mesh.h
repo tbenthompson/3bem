@@ -25,15 +25,12 @@ struct Mesh {
     Mesh<dim> refine() const;
     Mesh<dim> refine_repeatedly(unsigned int times) const;
 
+    std::vector<Constraint> continuity_constraints(double eps = 1e-10);
+
     static Mesh<dim> from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
                          const std::vector<std::array<int,dim>>& facets,
                          bool has_refine_mod = false,
                          const typename Mesh<dim>::RefineFnc& refine_mod = nullptr);
 };
-
-template <int dim>
-std::vector<Constraint> 
-continuity_constraints(const Mesh<dim>& mesh, double eps = 1e-10);
-
 
 #endif

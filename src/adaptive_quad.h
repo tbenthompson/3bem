@@ -30,21 +30,10 @@
 #include <cmath>
 #include <limits>
 #include <iostream>
+#include "vec.h"
 using std::fabs;
 
 
-template <typename T>
-inline Vec3<bool> operator==(const Vec3<T>& t, const T& rhs) {
-    return {t[0] == rhs, t[1] == rhs, t[2] == rhs};
-}
-template <typename T>
-inline Vec3<bool> operator!=(const Vec3<T>& t, const T& rhs) {
-    return {t[0] != rhs, t[1] != rhs, t[2] != rhs};
-}
-inline bool any(bool a) {return a;}
-inline bool any(Vec3<bool> v) {return v[0] || v[1] || v[2];}
-inline bool all(bool a) {return a;}
-inline bool all(Vec3<bool> v) {return v[0] && v[1] && v[2];}
 template <typename T>
 inline T ones();
 template <>
