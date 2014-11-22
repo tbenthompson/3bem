@@ -145,8 +145,7 @@ std::vector<std::vector<double>> interact_matrix(const Problem& p,
                                                  const QuadStrategy& qs) {
     int n_obs_basis = p.obs_mesh.vertices.size();
     int n_src_basis = p.src_mesh.vertices.size();
-    std::vector<std::vector<double>> matrix(n_obs_basis,
-            std::vector<double>(n_src_basis, 0.0));
+    Mat matrix(n_obs_basis, std::vector<double>(n_src_basis, 0.0));
 // #pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.faces.size(); obs_idx++) {
         FaceInfo obs_face(p.obs_mesh, obs_idx);

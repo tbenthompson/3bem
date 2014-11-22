@@ -22,11 +22,11 @@ petsc_dir = os.environ['PETSC_DIR']
 petsc_arch = os.environ['PETSC_ARCH']
 includes = [
     './src',
-    './lib/',
-    './lib/unittest-cpp/src',
-    './lib/actor-framework/libcaf_core',
-    './lib/actor-framework/libcaf_opencl',
-    './lib/autocheck/include',
+    '../lib/',
+    '../lib/unittest-cpp/src',
+    '../lib/actor-framework/libcaf_core',
+    '../lib/actor-framework/libcaf_opencl',
+    '../lib/autocheck/include',
     petsc_dir + '/' + petsc_arch + '/include',
     petsc_dir + '/include'
 ]
@@ -45,8 +45,8 @@ lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)
 
 link_flags = '-fopenmp -lOpenCL -lhdf5'.split()
-link_flags.append('-Wl,-rpath=./lib/actor-framework/build/lib')
-link_flags.append('-L./lib/actor-framework/build/lib')
+link_flags.append('-Wl,-rpath=../lib/actor-framework/build/lib')
+link_flags.append('-L../lib/actor-framework/build/lib')
 link_flags.append('-lcaf_core')
 link_flags.append('-lcaf_opencl')
 link_flags.append('-Wl,-rpath=' + petsc_dir + '/' + petsc_arch + '/lib')
@@ -58,7 +58,7 @@ lib_link_flags.extend(link_flags)
 
 lib_dep_flags = ['-Wl,-rpath=./build', '-L./build', '-l3bem']
 
-test_link_flags = ['-L./lib/unittest-cpp']
+test_link_flags = ['-L../lib/unittest-cpp']
 test_link_flags.append('-lUnitTest++')
 test_link_flags.extend(lib_dep_flags)
 test_link_flags.extend(link_flags)

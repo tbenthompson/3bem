@@ -19,8 +19,7 @@ struct Problem {
     const std::vector<double>& src_strength;
 };
 
-class FaceInfo {
-public:
+struct FaceInfo {
     FaceInfo(const Mesh& mesh, int face_index);
     
     const int face_index;
@@ -58,7 +57,12 @@ double eval_integral_equation(const Problem& p, const QuadStrategy& qs,
 
 //TODO: Use a sparse matrix storage format here.
 typedef std::vector<std::vector<double>> Mat;
+
+
+
 Mat interact_matrix(const Problem& p, const QuadStrategy& qs);
+
+
 std::vector<double> bem_mat_mult(const Mat& A, const std::vector<double>& x);
 std::vector<double> direct_interact(const Problem& p, const QuadStrategy& qs);
 std::vector<double> mass_term(const Problem& p, const QuadStrategy& qs);

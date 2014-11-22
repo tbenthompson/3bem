@@ -41,6 +41,7 @@ struct QuadStrategy {
     const QuadRule2d src_near_quad;
     
     const double far_threshold;
+
     const int n_singular_steps;
     const std::vector<double> singular_steps;
     const double singular_tol;
