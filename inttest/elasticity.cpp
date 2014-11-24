@@ -12,7 +12,7 @@ int main() {
     //   across the fault when it intersect the surface
 
     double surf_width = 12;
-    int refine_surf = 5;
+    int refine_surf = 6;
     double far_threshold = 3.0;
     int near_quad_pts = 3;
     int near_steps = 5;
