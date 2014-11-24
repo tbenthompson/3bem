@@ -76,6 +76,7 @@ TEST(Condense) {
 }
 
 //TODO: Add some of the tests from codim1_dev for add_vec_with_constraints
+//TODO: Test inhomogenous constraints.
 
 int main(int, char const *[])
 {
