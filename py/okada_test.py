@@ -6,11 +6,22 @@ import matplotlib.pyplot as plt
 from matplotlib.tri import Triangulation
 from okada_wrapper import dc3dwrapper
 
+x_index = [0, 3, 6]
+y_index = [1, 4, 7]
+z_index = [2, 5, 8]
+
 def main(filename, values_dim):
     f = h5py.File(filename)
-    faces = f['faces']
-    vertices = f['vertices']
-    data = f['values'][:,values_dim]
+    facets = f['facets']
+    data = f['values'][:, values_dim]
+    vertices = np.array([
+        facets[:, x_index].flatten(),
+        facets[:, y_index].flatten(),
+        facets[:, z_index].flatten()
+    ]).T
+
+    n_v = vertices.shape[0]
+    faces = np.arange(n_v).reshape((n_v / 3, 3))
 
     # mlab.triangular_mesh(vertices[:, 0], vertices[:, 1], vertices[:, 2],
     #                    faces[:,:], scalars = data)
