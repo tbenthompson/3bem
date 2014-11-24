@@ -6,7 +6,6 @@
 ** template on double vs float
 ** bug occurs when obs quad order != 2
 ** continue to work towards better bem
--- impose constraints
 -- vector direct_interact
 -- dof handling? 
 -- Try out some adaptivity for the surface mesh
