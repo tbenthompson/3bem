@@ -1,6 +1,8 @@
-#include "constraint.h"
 #include <iostream>
 #include <algorithm>
+#include <cassert>
+#include "constraint.h"
+#include "mesh.h"
 
 std::ostream& operator<<(std::ostream& os, const Constraint& c) {
     os << "Constraint[[(RHS, " << c.rhs_value << "), ";
@@ -26,6 +28,7 @@ ConstraintMatrix ConstraintMatrix::add_constraints(
                 return a.first < b.first; 
             });
         auto last_dof = last->first;
+        //TODO: Make the constrained dof first, not last! simpler
         std::iter_swap(last, in_constraint.dof_constraints.end() - 1);
         new_map[last_dof] = in_constraint;
     }
@@ -70,25 +73,36 @@ std::vector<double> ConstraintMatrix::get_all(const std::vector<double>& in,
     return out;
 }
 
-std::vector<double> ConstraintMatrix::condense(const std::vector<double>& all) {
-    std::vector<double> out = all;
-
-    for (auto it = c_map.begin(); it != c_map.end(); ++it) {
-        auto constraints = it->second;
-        for (std::size_t i = 0; i < constraints.dof_constraints.size() - 1; i++) {
-            auto dof_weight = constraints.dof_constraints[i];
-            out[dof_weight.first] += dof_weight.second * all[it->first];
-        }
+//TODO: Is there an alternate formulation for this that does not require modifying the
+//input vec? Should recursive constraints be dealt with upfront? The constrained-dof 
+//is last rule should prevent any cyclic constraints.
+void ConstraintMatrix::add_vec_with_constraints(DOFWeight entry,
+                                                std::vector<double>& vec) {
+    auto dof_and_constraint = c_map.find(entry.first);
+    if (dof_and_constraint == c_map.end()) {
+        vec[entry.first] += entry.second;
+        return;
     }
 
-    return out;
+    auto constraint = dof_and_constraint->second;
+    auto dof_weights = constraint.dof_constraints;
+    int n_dof_weights = dof_weights.size();
+    double this_weight = dof_weights[n_dof_weights - 1].second;
+    for (std::size_t i = 0; i < n_dof_weights - 1; i++) {
+        double recurse_weight = -dof_weights[i].second * entry.second / this_weight;
+        DOFWeight new_entry{dof_weights[i].first, recurse_weight};
+        add_vec_with_constraints(new_entry, vec);
+    }
 }
 
 std::vector<double> ConstraintMatrix::get_reduced(const std::vector<double>& all) {
-    std::vector<double> condensed_dofs = condense(all);
+    std::vector<double> condensed_dofs(all.size(), 0.0);
+    for (std::size_t i = 0; i < all.size(); i++) {
+        add_vec_with_constraints(DOFWeight{i, all[i]}, condensed_dofs);
+    }
 
     std::vector<double> out;
-    for (std::size_t i = 0; i < condensed_dofs.size(); i++) {
+    for (std::size_t i = 0; i < all.size(); i++) {
         auto dof_and_constraint = c_map.find(i);
         if (dof_and_constraint == c_map.end()) {
             out.push_back(condensed_dofs[i]);
@@ -119,3 +133,31 @@ Constraint boundary_condition(int dof, double value) {
         value
     };
 }
+
+//TODO: FIX THE O(N^2) problem here, use hashes or octree?
+template <int dim>
+std::vector<Constraint> mesh_continuity(const Mesh<dim>& m, double eps) {
+
+    std::vector<Constraint> constraints;
+    for (unsigned int i = 0; i < m.facets.size(); i++) {
+        for (unsigned int d1 = 0; d1 < dim; d1++) {
+            for (unsigned int j = i + 1; j < m.facets.size(); j++) {
+                for (unsigned int d2 = 0; d2 < dim; d2++) {
+                    if (!all(fabs(m.facets[i].vertices[d1] - 
+                                  m.facets[j].vertices[d2]) < eps)) {
+                        continue;
+                    } 
+                    constraints.push_back(continuity_constraint(3 * i + d1,
+                                                                3 * j + d2));
+                }
+            }
+        }
+    }
+    return constraints;
+}
+
+template 
+std::vector<Constraint> mesh_continuity<2>(const Mesh<2>& m, double eps);
+template 
+std::vector<Constraint> mesh_continuity<3>(const Mesh<3>& m, double eps);
+

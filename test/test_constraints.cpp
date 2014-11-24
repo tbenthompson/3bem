@@ -1,5 +1,7 @@
 #include "UnitTest++.h"
 #include "constraint.h"
+#include "mesh.h"
+#include "mesh_gen.h"
 #include <iostream>
 
 TEST(ConstraintsAreCreated) {
@@ -41,6 +43,39 @@ TEST(ConstraintMatrixGetAll) {
     double res_exact[4] = {2.0, 4.0, 4.0, 4.0};
     CHECK_ARRAY_CLOSE(res, res_exact, 4, 1e-13);
 }
+
+TEST(ConstraintMesh) {
+    auto sphere = sphere_mesh({0, 0, 0}, 1).refine_repeatedly(2);
+    auto constraints = mesh_continuity(sphere);
+    auto cons_mat = ConstraintMatrix::from_constraints(constraints);
+    CHECK_EQUAL(3 * sphere.facets.size(), 384);
+    CHECK_EQUAL(cons_mat.c_map.size(), 318);
+    auto my_c = cons_mat.c_map.begin()->second.dof_constraints;
+    CHECK_EQUAL(my_c[0].second, 1);
+    CHECK_EQUAL(my_c[1].second, -1);
+}
+
+TEST(Condense) {
+    auto sphere = sphere_mesh({0, 0, 0}, 1).refine_repeatedly(0);
+    auto constraints = mesh_continuity(sphere);
+    auto cons_mat = ConstraintMatrix::from_constraints(constraints);
+    std::vector<double> all_dofs(3 * sphere.facets.size(), 0.0);
+    for (std::size_t i = 0; i < all_dofs.size(); i++) {
+        cons_mat.add_vec_with_constraints({i, 1.0}, all_dofs);
+    }
+    int n_vertices = 0;
+    for (auto c: all_dofs) {
+        // Either a constraint is condensed out and so c == 1
+        // or a constraint represents a vertex with 4 faces and c == 4
+        CHECK(c == 0 || c == 4);
+        if (c == 4) {
+            n_vertices++;
+        }
+    }
+    CHECK_EQUAL(n_vertices, 6);
+}
+
+//TODO: Add some of the tests from codim1_dev for add_vec_with_constraints
 
 int main(int, char const *[])
 {
