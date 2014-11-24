@@ -49,9 +49,13 @@ struct ConstraintMatrix {
     /* Accepts a reduced DOF vector and returns a full DOF vector
      */
     std::vector<double> get_all(const std::vector<double>& in, int total_dofs); 
+
     /* Accepts a full DOF vector and returns the reduced DOF vector.
      */
     std::vector<double> get_reduced(const std::vector<double>& all);
+
+    void add_vec_with_constraints(DOFWeight entry,
+                                                 std::vector<double>& rhs);
     std::vector<double> condense(const std::vector<double>& all);
 
     friend std::ostream& operator<<(std::ostream& os, const ConstraintMatrix& cm);
@@ -74,4 +78,10 @@ Constraint offset_constraint(int dof1, int dof2, double offset);
  * value[dof] = value
  */
 Constraint boundary_condition(int dof, double value);
+
+template <int dim>
+class Mesh;
+
+template <int dim>
+std::vector<Constraint> mesh_continuity(const Mesh<dim>& m, double eps = 1e-10);
 #endif
