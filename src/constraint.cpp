@@ -51,7 +51,7 @@ std::vector<double> ConstraintMatrix::get_all(const std::vector<double>& in,
                                               int total_dofs) {
     std::vector<double> out(total_dofs); 
     int next_in = 0;
-    for (std::size_t i = 0; i < total_dofs; i++) {
+    for (int i = 0; i < total_dofs; i++) {
         auto dof_and_constraint = c_map.find(i);
         if (dof_and_constraint == c_map.end()) {
             out[i] = in[next_in];
@@ -70,12 +70,28 @@ std::vector<double> ConstraintMatrix::get_all(const std::vector<double>& in,
     return out;
 }
 
-std::vector<double> ConstraintMatrix::get_unconstrained(const std::vector<double>& all) {
+std::vector<double> ConstraintMatrix::condense(const std::vector<double>& all) {
+    std::vector<double> out = all;
+
+    for (auto it = c_map.begin(); it != c_map.end(); ++it) {
+        auto constraints = it->second;
+        for (std::size_t i = 0; i < constraints.dof_constraints.size() - 1; i++) {
+            auto dof_weight = constraints.dof_constraints[i];
+            out[dof_weight.first] += dof_weight.second * all[it->first];
+        }
+    }
+
+    return out;
+}
+
+std::vector<double> ConstraintMatrix::get_reduced(const std::vector<double>& all) {
+    std::vector<double> condensed_dofs = condense(all);
+
     std::vector<double> out;
-    for (std::size_t i = 0; i < all.size(); i++) {
+    for (std::size_t i = 0; i < condensed_dofs.size(); i++) {
         auto dof_and_constraint = c_map.find(i);
         if (dof_and_constraint == c_map.end()) {
-            out.push_back(all[i]);
+            out.push_back(condensed_dofs[i]);
             continue;
         }
     }

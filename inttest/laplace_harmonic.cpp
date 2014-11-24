@@ -20,14 +20,14 @@ int main() {
     const Vec3<double> center = {5, 0, 0};
     double r = 3.0;
     double obs_radius = 2.7;
-    double far_threshold = 2.0;
+    double far_threshold = 3.0;
     int refine_level = 3;
-    int near_quad_pts = 3;
-    int near_steps = 6;
-    int src_quad_pts = 3;
+    int near_quad_pts = 4;
+    int near_steps = 8;
+    int src_quad_pts = 4;
     //TODO: Something is seriously wrong when I use obs_quad_pts = 3
     int obs_quad_pts = 2;
-    double tol = 1e-4;
+    double tol = 5e-4;
 
     QuadStrategy qs(obs_quad_pts, src_quad_pts, near_quad_pts,
                     near_steps, far_threshold, tol);
@@ -64,7 +64,11 @@ int main() {
         rhs_full[i] = rhs_full[i] - rhs_mass[i];
     }
 
-    auto rhs = constraints.get_unconstrained(rhs_full);
+    auto rhs = constraints.get_reduced(rhs_full);
+    for(auto r: rhs) {
+        std::cout << r << std::endl;
+    }
+    std::cout << "N_dofs: " << rhs.size() << std::endl;
 
     TIC2
     Problem p_single = {sphere, sphere, laplace_single, {}};
@@ -73,14 +77,14 @@ int main() {
     int count = 0;
     auto dudn_solved_subset = solve_system(rhs, 1e-5,
         [&] (std::vector<double>& x, std::vector<double>& y) {
-            TIC
             std::cout << "iteration " << count << std::endl;
             count++;
+            TIC
             auto x_full = constraints.get_all(x, n_dofs);
             auto y_mult = bem_mat_mult(matrix, n_dofs, x_full); 
-            auto y_temp = constraints.get_unconstrained(y_mult);
-            std::copy(y_temp.begin(), y_temp.end(), y.begin());
+            auto y_temp = constraints.get_reduced(y_mult);
             TOC("Matrix multiply on " + std::to_string(sphere.facets.size()) + " faces");
+            std::copy(y_temp.begin(), y_temp.end(), y.begin());
         });
     auto dudn_solved = constraints.get_all(dudn_solved_subset, n_dofs);
     std::cout << error_inf(dudn_solved, dudn) << std::endl;

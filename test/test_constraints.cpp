@@ -36,7 +36,7 @@ TEST(ConstraintMatrixGetAll) {
     auto c1 = continuity_constraint(1, 2);
     auto c2 = continuity_constraint(2, 3);
     auto cm = ConstraintMatrix::from_constraints({c0, c1, c2});
-    auto in = cm.get_unconstrained({2.0, 4.0, 4.0, 4.0});
+    auto in = cm.get_reduced({2.0, 4.0, 4.0, 4.0});
     auto res = cm.get_all(in, 4);
     double res_exact[4] = {2.0, 4.0, 4.0, 4.0};
     CHECK_ARRAY_CLOSE(res, res_exact, 4, 1e-13);

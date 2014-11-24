@@ -225,7 +225,7 @@ TEST(DirectInteractOne) {
 //TODO: Fixture for this and the next one.
 TEST(DirectInteractConstantLaplace) {
     auto sphere = sphere_mesh({0,0,0}, 1.0).refine_repeatedly(2);
-    int n_dofs = sphere.facets.size();
+    int n_dofs = 3 * sphere.facets.size();
     std::vector<double> str(n_dofs, 1.0);
 
     QuadStrategy qs(2, 2, 3, 4, 3.0, 1e-3);
@@ -241,6 +241,7 @@ TEST(DirectInteractConstantLaplace) {
     auto res2 = mass_term(p_mass, qs);
     CHECK_ARRAY_CLOSE(res0, res2, n_dofs, 3e-2);
     CHECK_ARRAY_CLOSE(res1, res2, n_dofs, 3e-2);
+    CHECK_ARRAY_CLOSE(res0, res1, n_dofs, 3e-2);
 }
 
 int main(int, char const *[])
