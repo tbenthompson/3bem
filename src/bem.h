@@ -60,8 +60,8 @@ FaceInfo<2>::FaceInfo(const Facet<2>& facet):
     face(facet),
     unscaled_n(unscaled_normal(face.vertices)),
     area(hypot(unscaled_n)),
-    jacobian(area),
-    normal(unscaled_n / jacobian)
+    jacobian(area / 2.0),
+    normal(unscaled_n / area)
 {}
 
 template <int dim>
@@ -332,7 +332,7 @@ std::vector<double> interact_matrix(const Problem<dim>& p,
 
             const auto row = integral_equation_vector(p, qs, pt);
 
-            for(int v = 0; v < dim; v++) {
+            for (int v = 0; v < dim; v++) {
                 double obs_basis_eval = linear_interp<dim>(qs.obs_quad[obs_q].x_hat,
                                                       unit<double,dim>(v)); 
                 int b = dim * obs_idx + v;

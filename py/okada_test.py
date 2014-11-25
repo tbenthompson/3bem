@@ -36,7 +36,7 @@ def main(filename, values_dim):
         v = vertices[i,:]
         success, u, grad_u = dc3dwrapper(alpha, v, 2.0, 90, [-1.0, 1.0],
                                          [-1.0, 1.0], [-1.0, 0.0, 0.0])
-        disp[i,:] = u
+        disp[i, :] = u
     print disp[0,:]
     plt.figure()
     trip1 = plt.tripcolor(vertices[:,0], vertices[:,1], data, shading = 'gouraud', vmin = -0.04, vmax = 0.04)
