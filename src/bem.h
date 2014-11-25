@@ -35,6 +35,7 @@ class FaceInfo {
 public:
     FaceInfo(const Facet<dim>& facet);
     
+    //The responsibility is on the user to maintain the lifetime of the facet.
     const Facet<dim>& face;
     const Vec<double,dim> unscaled_n;
     const double area;
