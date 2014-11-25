@@ -147,8 +147,8 @@ std::vector<Constraint> mesh_continuity(const Mesh<dim>& m, double eps) {
                                   m.facets[j].vertices[d2]) < eps)) {
                         continue;
                     } 
-                    constraints.push_back(continuity_constraint(3 * i + d1,
-                                                                3 * j + d2));
+                    constraints.push_back(continuity_constraint(dim * i + d1,
+                                                                dim * j + d2));
                 }
             }
         }

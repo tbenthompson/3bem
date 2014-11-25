@@ -43,30 +43,6 @@ std::vector<double> bem_mat_mult(const std::vector<double>& A,
     return res;
 }
 
-std::vector<double> mass_term(const Problem<3>& p,
-                              const QuadStrategy<3>& qs) {
-    int n_obs_dofs = 3 * p.obs_mesh.facets.size();
-    std::vector<double> integrals(n_obs_dofs, 0.0);
-    for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
-        FaceInfo<3> obs_face(p.obs_mesh.facets[obs_idx]);
-        for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
-            auto qpt = qs.obs_quad[obs_q];
-            int dof = 3 * obs_idx;
-            Vec3<double> face_vals = {
-                p.src_strength[dof], p.src_strength[dof + 1], p.src_strength[dof + 2]
-            };
-            double interp_val = linear_interp<3>(qpt.x_hat, face_vals);
-
-            for(int v = 0; v < 3; v++) {
-                double obs_basis_eval = linear_interp<3>(qpt.x_hat, unit<double,3>(v)); 
-                integrals[dof + v] += obs_face.jacobian * obs_basis_eval * 
-                                      interp_val * qpt.w;
-            }
-        }
-    }
-    return integrals;
-}
-
 double get_len_scale(Mesh<3>& mesh, int which_face, int q) {
     return std::sqrt(tri_area(mesh.facets[which_face].vertices)) / q;
 }

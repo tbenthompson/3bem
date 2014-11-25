@@ -53,7 +53,7 @@ inline double laplace_single2d(const double& r2,
                         const Vec2<double>& delta,
                         const Vec2<double>& nsrc,
                         const Vec2<double>& nobs) {
-    return -std::log(r2) / (4 * M_PI);
+    return -std::log(r2) / (2 * M_PI);
 }
 
 inline double laplace_double2d(const double& r2,

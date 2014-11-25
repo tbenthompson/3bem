@@ -296,12 +296,12 @@ TEST(ConstantLaplace2D) {
     int refine = 4;
     Vec2<double> center = {20.0, 0.0};
     Mesh<2> src_circle = circle_mesh(center, 19.0).refine_repeatedly(refine);
-    QuadStrategy<2> qs(3, 3, 3, 8, 3.0, 1e-3);
+    QuadStrategy<2> qs(3, 3, 3, 5, 3.0, 1e-3);
     std::vector<double> u(2 * src_circle.facets.size(), 1.0);
     for (double i = 1.0; i < 18.0; i++) {
         Mesh<2> obs_circle = circle_mesh(center, i).refine_repeatedly(refine);
         Problem<2> p{src_circle, obs_circle, laplace_double2d, u};
-        for (int i = 0; i < obs_circle.facets.size(); i++) {
+        for (std::size_t i = 0; i < obs_circle.facets.size(); i++) {
             ObsPt<2> pt = {0.390, obs_circle.facets[i].vertices[0], {0,0}}; 
             double result = eval_integral_equation(p, qs, pt);
             CHECK_CLOSE(result, 1.0, 1e-4);

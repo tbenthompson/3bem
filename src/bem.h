@@ -354,7 +354,32 @@ std::vector<double> direct_interact(const Problem<dim>& p,
                         p.src_strength);
 }
 
-std::vector<double> mass_term(const Problem<3>& p, const QuadStrategy<3>& qs);
+template <int dim>
+std::vector<double> mass_term(const Problem<dim>& p,
+                              const QuadStrategy<dim>& qs) {
+    int n_obs_dofs = dim * p.obs_mesh.facets.size();
+    std::vector<double> integrals(n_obs_dofs, 0.0);
+    for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
+        FaceInfo<dim> obs_face(p.obs_mesh.facets[obs_idx]);
+        for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
+            auto qpt = qs.obs_quad[obs_q];
+            int dof = dim * obs_idx;
+            Vec<double,dim> face_vals;
+            for (int d = 0; d < dim; d++) {
+                face_vals[d] = p.src_strength[dof + d];
+            }
+            double interp_val = linear_interp<dim>(qpt.x_hat, face_vals);
+
+            for(int v = 0; v < dim; v++) {
+                double obs_basis_eval = linear_interp<dim>(qpt.x_hat,
+                                                           unit<double,dim>(v)); 
+                integrals[dof + v] += obs_face.jacobian * obs_basis_eval * 
+                                      interp_val * qpt.w;
+            }
+        }
+    }
+    return integrals;
+}
 
 
 double get_len_scale(Mesh<3>& mesh, int which_face, int q);
