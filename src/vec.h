@@ -204,9 +204,19 @@ inline T dist(const Vec<T,dim>& v0, const Vec<T,dim>& v1) {
     return hypot(v1 - v0);
 }
 
-template <typename T>
-Vec3<T> unit(const int k) {
-    Vec3<T> e_k = {0.0, 0.0, 0.0};
+template <typename T, unsigned long dim>
+inline Vec<T,dim> unit(const int k);
+
+template <>
+inline Vec3<double> unit<double,3>(const int k) {
+    Vec3<double> e_k = {0.0, 0.0, 0.0};
+    e_k[k] = 1.0;
+    return e_k;
+}
+
+template <>
+inline Vec2<double> unit<double,2>(const int k) {
+    Vec2<double> e_k = {0.0, 0.0};
     e_k[k] = 1.0;
     return e_k;
 }
@@ -280,5 +290,23 @@ inline bool any(Vec3<bool> v) {return v[0] || v[1] || v[2];}
 inline bool all(bool a) {return a;}
 inline bool all(Vec3<bool> v) {return v[0] && v[1] && v[2];}
 inline bool all(Vec2<bool> v) {return v[0] && v[1];}
+
+template <typename T>
+inline T ones();
+template <>
+inline double ones<double>() {return 1.0;}
+template <>
+inline Vec3<double> ones<Vec3<double>>() {return {1.0, 1.0, 1.0};}
+template <>
+inline Vec2<double> ones<Vec2<double>>() {return {1.0, 1.0};}
+
+template <typename T>
+inline T zeros();
+template <>
+inline double zeros<double>() {return 0.0;}
+template <>
+inline Vec3<double> zeros<Vec3<double>>() {return {0.0, 0.0, 0.0};}
+template <>
+inline Vec2<double> zeros<Vec2<double>>() {return {0.0, 0.0};}
 
 #endif
