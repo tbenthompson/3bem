@@ -18,12 +18,13 @@ struct IntegrationProb {
         obs_loc({2.0, 2.0, 2.0}),
         obs_n({1.0, 0.0, 0.0}),
         q(tri_gauss(2)),
-        face(Facet<3>{src_locs[0], src_locs[1], src_locs[2]})
+        face({src_locs[0], src_locs[1], src_locs[2]})
     { }
     
     void go() {
         auto basis = integrate<Vec3<double>,2>(q, [&] (std::array<double,2> x_hat) {
-                return eval_quad_pt<3>(x_hat, kernel, face, obs_loc, obs_n);
+                return eval_quad_pt<3>(x_hat, kernel, FaceInfo<3>(face),
+                                       obs_loc, obs_n);
             });
         result = dot(basis, src_vals);
     }
@@ -40,7 +41,7 @@ struct IntegrationProb {
     Vec3<double> obs_loc;
     Vec3<double> obs_n;
     QuadRule<2> q;
-    FaceInfo<3> face;
+    Facet<3> face;
 };
 
 TEST_FIXTURE(IntegrationProb, IntegralOne) {
@@ -287,6 +288,21 @@ TEST(OneSegment) {
                 double exact_val = exact[k](obs_x, obs_y);
                 CHECK_CLOSE(result, exact_val, 1e-4);
             }
+        }
+    }
+}
+
+TEST(ConstantLaplace2D) {
+    Vec2<double> center = {20.0, 0.0};
+    Mesh<2> src_circle = circle_mesh(center, 19.0).refine_repeatedly(5);
+    QuadStrategy<2> qs(2, 2, 3, 4, 3.0, 1e-3);
+    std::vector<double> u(2 * src_circle.facets.size(), 1.0);
+    for (double i = 1.0; i < 18.0; i++) {
+        Mesh<2> obs_circle = circle_mesh(center, i).refine_repeatedly(5);
+        Problem<2> p{src_circle, obs_circle, laplace_double2d, u};
+        auto obs_values = direct_interact(p, qs);
+        for (auto o: obs_values) {
+            CHECK_CLOSE(o, 1.0, 1e-4);
         }
     }
 }

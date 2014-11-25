@@ -33,13 +33,6 @@
 #include "vec.h"
 using std::fabs;
 
-
-template <typename T>
-inline T ones();
-template <>
-inline double ones<double>() {return 1.0;}
-template <>
-inline Vec3<double> ones<Vec3<double>>() {return {1.0, 1.0, 1.0};}
 inline double max(double x) {return x;}
 inline double max(Vec3<double> x) {return std::max(x[0], std::max(x[1], x[2]));}
 
@@ -111,6 +104,14 @@ double get_error_is(double p_tol, double erri1, double erri2, double is,
     }
 
     return retval;
+}
+
+Vec2<double> get_error_is(double p_tol, Vec2<double> erri1, Vec2<double> erri2,
+                          Vec2<double> is, double a, double b) {
+    return {
+        get_error_is(p_tol, erri1[0], erri2[0], is[0], a, b),
+        get_error_is(p_tol, erri1[1], erri2[1], is[1], a, b)
+    };
 }
 
 Vec3<double> get_error_is(double p_tol, Vec3<double> erri1, Vec3<double> erri2,
