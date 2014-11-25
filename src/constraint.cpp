@@ -88,7 +88,7 @@ void ConstraintMatrix::add_vec_with_constraints(DOFWeight entry,
     auto dof_weights = constraint.dof_constraints;
     int n_dof_weights = dof_weights.size();
     double this_weight = dof_weights[n_dof_weights - 1].second;
-    for (std::size_t i = 0; i < n_dof_weights - 1; i++) {
+    for (int i = 0; i < n_dof_weights - 1; i++) {
         double recurse_weight = -dof_weights[i].second * entry.second / this_weight;
         DOFWeight new_entry{dof_weights[i].first, recurse_weight};
         add_vec_with_constraints(new_entry, vec);

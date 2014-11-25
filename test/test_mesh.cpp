@@ -21,6 +21,19 @@ TEST(Mesh2D) {
     CHECK_CLOSE(length, 2 * M_PI, 1e-1);
 }
 
+TEST(CircleMesh) {
+    std::array<double, 2> center = {20.0, 0.0};
+    auto src_circle = circle_mesh(center, 19.0).refine_repeatedly(4);
+    CHECK_CLOSE(src_circle.facets[16].vertices[0][0], 20.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[32].vertices[0][0], 1.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[48].vertices[0][0], 20.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[0].vertices[0][0], 39.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[16].vertices[0][1], 19.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[32].vertices[0][1], 0.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[48].vertices[0][1], -19.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[0].vertices[0][1], 0.0, 1e-4);
+}
+
 double surface_area(Mesh<3> m) {
     double sa = 0;
     for (auto f: m.facets) {

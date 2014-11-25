@@ -10,35 +10,37 @@ struct QuadPt {
     double w;
 };
 
-template <typename T, int dim>
-T integrate(const std::vector<QuadPt<dim>>& qr, 
-            std::function<T(std::array<double,dim>)> fnc);
+template <int dim>
+using QuadRule = std::vector<QuadPt<dim>>;
 
-typedef std::vector<QuadPt<1>> QuadRule1d;
-typedef std::vector<QuadPt<2>> QuadRule2d;
+template <typename T, int dim>
+T integrate(const QuadRule<dim>& qr,
+            const std::function<T(std::array<double,dim>)>& fnc);
 
 /* One dimensional quadrature methods */
-QuadRule1d double_exp(int n, double h);
-QuadRule1d gauss(unsigned int n);
-QuadRule1d diligenti_mapping(unsigned int n, double x0, int q);
+QuadRule<1> double_exp(int n, double h);
+QuadRule<1> double_exp(int n);
+QuadRule<1> gauss(unsigned int n);
+QuadRule<1> diligenti_mapping(unsigned int n, double x0, int q);
 
 /* Two dimensional quadrature methods */
-QuadRule2d tensor_product(QuadRule1d xq, QuadRule1d yq);
-QuadRule2d tensor_gauss(int n_pts);
-QuadRule2d tensor_double_exp(int n_pts, double h);
-QuadRule2d tri_gauss(int n_pts);
-QuadRule2d tri_double_exp(int n_pts, double h);
-QuadRule2d tri_double_exp(int n_pts);
-QuadRule2d square_to_tri(QuadRule2d square_quad);
+QuadRule<2> tensor_product(QuadRule<1> xq, QuadRule<1> yq);
+QuadRule<2> tensor_gauss(int n_pts);
+QuadRule<2> tensor_double_exp(int n_pts, double h);
+QuadRule<2> tri_gauss(int n_pts);
+QuadRule<2> tri_double_exp(int n_pts, double h);
+QuadRule<2> tri_double_exp(int n_pts);
+QuadRule<2> square_to_tri(QuadRule<2> square_quad);
 
+template <int dim>
 struct QuadStrategy {
     QuadStrategy(int obs_order);
     QuadStrategy(int obs_order, int src_far_order, int src_near_order,
                  int n_singular_steps, double far_threshold, double singular_tol);
 
-    const QuadRule2d obs_quad;
-    const QuadRule2d src_far_quad;
-    const QuadRule2d src_near_quad;
+    const QuadRule<dim-1> obs_quad;
+    const QuadRule<dim-1> src_far_quad;
+    const QuadRule<dim-1> src_near_quad;
     
     const double far_threshold;
     const int n_singular_steps;

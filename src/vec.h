@@ -221,13 +221,21 @@ Vec2<T> fabs(const Vec2<T>& v) {
 }
 
 inline Vec3<double> 
-tri_unscaled_normal(const std::array<Vec3<double>,3>& corners) {
+unscaled_normal(const std::array<Vec3<double>,3>& corners) {
     return cross(corners[2] - corners[0], corners[2] - corners[1]);
+}
+
+inline Vec2<double> 
+unscaled_normal(const std::array<Vec2<double>,2>& corners) {
+    return {
+        -(corners[1][1] - corners[0][1]),
+        corners[1][0] - corners[0][0]
+    };
 }
 
 inline Vec3<double> 
 tri_normal(const std::array<Vec3<double>,3>& corners) {
-    auto unscaled = tri_unscaled_normal(corners);
+    auto unscaled = unscaled_normal(corners);
     return normalized(unscaled);
 }
 
@@ -236,7 +244,7 @@ inline double tri_area(const Vec3<double>& unscaled_normal) {
 }
 
 inline double tri_area(const std::array<Vec3<double>,3>& corners) {
-    return tri_area(tri_unscaled_normal(corners));
+    return tri_area(unscaled_normal(corners));
 }
 
 template <typename T>
