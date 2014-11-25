@@ -265,16 +265,14 @@ TEST(OneSegment) {
     std::vector<std::function<double (double, double)>> exact =
         {exact_single, exact_double};
     std::vector<Kernel<2>> kernel = {laplace_single2d, laplace_double2d};
-    FaceInfo<2> face({v0, v1});
+    Facet<2> facet{{v0, v1}};
+    FaceInfo<2> face(facet);
     CHECK_EQUAL(face.jacobian, 2.0);
     CHECK_EQUAL(face.area, 2.0);
 
-    // for (int k = 0; k < 2; k++) {
-    //     for (int i = 0; i < 20; i++) {
-    //         for (int j = 0; j < 20; j++) {
-    for (int k = 0; k < 1; k++) {
-        for (int i = 0; i < 1; i++) {
-            for (int j = 0; j < 1; j++) {
+    for (int k = 0; k < 2; k++) {
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
                 double obs_x = -5.0 + 10 * (i / 19.0);
                 double obs_y = -5.0 + 10 * (j / 19.0);
                 Vec2<double> obs_loc = {obs_x, obs_y};
@@ -283,7 +281,7 @@ TEST(OneSegment) {
                     [&](const Vec<double,1> x_hat) {
                         auto eval = eval_quad_pt<2>(x_hat, kernel[k], face,
                                                     obs_loc, obs_normal);
-                        return eval[0] + eval[1];
+                        return 0.5 * (eval[0] + eval[1]);
                     });
                         
                 double exact_val = exact[k](obs_x, obs_y);
