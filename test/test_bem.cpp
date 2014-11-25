@@ -23,7 +23,7 @@ struct IntegrationProb {
     
     void go() {
         auto basis = integrate<Vec3<double>,2>(q, [&] (std::array<double,2> x_hat) {
-                return eval_quad_pt(x_hat, kernel, face, obs_loc, obs_n);
+                return eval_quad_pt<3>(x_hat, kernel, face, obs_loc, obs_n);
             });
         result = dot(basis, src_vals);
     }
@@ -32,21 +32,21 @@ struct IntegrationProb {
         CHECK_CLOSE(result, exact, 1e-5);
     }
 
-    Kernel kernel;
+    Kernel<3> kernel;
     double result;
     double exact;
     std::vector<Vec3<double>> src_locs;
     Vec3<double> src_vals;
     Vec3<double> obs_loc;
     Vec3<double> obs_n;
-    QuadRule2d q;
-    FaceInfo face;
+    QuadRule<2> q;
+    FaceInfo<3> face;
 };
 
 TEST_FIXTURE(IntegrationProb, IntegralOne) {
     double abc = integrate<double,2>(q, [](std::array<double,2> x_hat){return 1.0;});
     CHECK_CLOSE(abc, 0.5, 1e-12);
-    kernel = one;
+    kernel = one<3>;
     exact = 1.0; go(); check();
 }
 
@@ -90,7 +90,7 @@ TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
 
 //TODO: This should be refactored a bit!
 struct EvalProb {
-    EvalProb(int refine_level, int near_eval, int gauss_order, const Kernel& k,
+    EvalProb(int refine_level, int near_eval, int gauss_order, const Kernel<3>& k,
              Vec3<double> center = Vec3<double>{0,0,0},
              double r = 3.0):
         sphere(sphere_mesh(center,r).refine_repeatedly(refine_level)),
@@ -103,12 +103,12 @@ struct EvalProb {
     {}
 
     double go() {
-        Problem p = {sphere, sphere, kernel, src_strength};
+        Problem<3> p = {sphere, sphere, kernel, src_strength};
 
         return eval_integral_equation(p, qs, {obs_length_scale, obs_pt, obs_n});
     }
     double go_row() {
-        Problem p = {sphere, sphere, kernel, src_strength};
+        Problem<3> p = {sphere, sphere, kernel, src_strength};
 
         auto row = integral_equation_vector(p, qs, {obs_length_scale, obs_pt, obs_n});
         double row_sum = 0.0;
@@ -119,8 +119,8 @@ struct EvalProb {
     }
 
     Mesh3D sphere;
-    QuadStrategy qs;
-    Kernel kernel;
+    QuadStrategy<3> qs;
+    Kernel<3> kernel;
     Vec3<double> obs_pt;
     Vec3<double> obs_n;
     double obs_length_scale;
@@ -128,7 +128,7 @@ struct EvalProb {
 }; 
 
 TEST(EvalIntegralEquationSphereSurfaceArea) {
-    EvalProb ep(5, 3, 2, one);
+    EvalProb ep(5, 3, 2, one<3>);
     double result = ep.go();
     double result2 = ep.go_row();
     double exact_surf_area = 4*M_PI*9;
@@ -176,8 +176,8 @@ TEST(MassTerm) {
             }
         }
     }
-    Problem p = {sphere, sphere, one, str};
-    QuadStrategy qs(2);
+    Problem<3> p = {sphere, sphere, one<3>, str};
+    QuadStrategy<3> qs(2);
     auto res = mass_term(p, qs);
     CHECK_EQUAL(res.size(), 3 * sphere.facets.size());
     double true_area = 0.0;
@@ -196,8 +196,8 @@ TEST(DirectInteractOne) {
     int n_dofs = 3 * sphere.facets.size();
     std::vector<double> str(n_dofs, 1.0);
 
-    QuadStrategy qs(2, 2, 3, 3, 3.0, 1e-2);
-    Problem p = {sphere, sphere, one, str};
+    QuadStrategy<3> qs(2, 2, 3, 3, 3.0, 1e-2);
+    Problem<3> p = {sphere, sphere, one<3>, str};
     auto res = direct_interact(p, qs);
     auto matrix = interact_matrix(p, qs);
 
@@ -228,20 +228,69 @@ TEST(DirectInteractConstantLaplace) {
     int n_dofs = 3 * sphere.facets.size();
     std::vector<double> str(n_dofs, 1.0);
 
-    QuadStrategy qs(2, 2, 3, 4, 3.0, 1e-3);
-    Problem p_double = {sphere, sphere, laplace_double, str};
-    Problem p_single = {sphere, sphere, laplace_single, str};
+    QuadStrategy<3> qs(2, 2, 3, 4, 3.0, 1e-3);
+    Problem<3> p_double = {sphere, sphere, laplace_double, str};
+    Problem<3> p_single = {sphere, sphere, laplace_single, str};
     auto res0 = direct_interact(p_double, qs);
     auto res1 = direct_interact(p_single, qs);
     for (unsigned int i = 0; i < res1.size(); i++) {
         res1[i] = -res1[i];
     }
 
-    Problem p_mass = {sphere, sphere, one, str};
+    Problem<3> p_mass = {sphere, sphere, one<3>, str};
     auto res2 = mass_term(p_mass, qs);
     CHECK_ARRAY_CLOSE(res0, res2, n_dofs, 3e-2);
     CHECK_ARRAY_CLOSE(res1, res2, n_dofs, 3e-2);
     CHECK_ARRAY_CLOSE(res0, res1, n_dofs, 3e-2);
+}
+
+/* Two dimensional test cases */
+double exact_single(double obs_x, double obs_y) {
+    return -0.0795775 * (
+        -2 * obs_y * atan((-1 + obs_x) / obs_y) +
+        2 * obs_y * atan((1 + obs_x) / obs_y) -
+        (-1 + obs_x) * (-2 + log(pow((1 - obs_x), 2) + pow(obs_y, 2))) +
+        (1 + obs_x) * (-2 + log(pow((1 + obs_x), 2) + pow(obs_y, 2))));
+}
+
+double exact_double(double x, double y) {
+    return (atan((1 - x) / y) + atan((1 + x) / y)) / (2 * M_PI);
+}
+
+TEST(OneSegment) {
+    std::array<double, 2> v0 = {-1.0, 0.0};
+    std::array<double, 2> v1 = {1.0, 0.0};
+
+    auto quad = gauss(15);
+    std::vector<std::function<double (double, double)>> exact =
+        {exact_single, exact_double};
+    std::vector<Kernel<2>> kernel = {laplace_single2d, laplace_double2d};
+    FaceInfo<2> face({v0, v1});
+    CHECK_EQUAL(face.jacobian, 2.0);
+    CHECK_EQUAL(face.area, 2.0);
+
+    // for (int k = 0; k < 2; k++) {
+    //     for (int i = 0; i < 20; i++) {
+    //         for (int j = 0; j < 20; j++) {
+    for (int k = 0; k < 1; k++) {
+        for (int i = 0; i < 1; i++) {
+            for (int j = 0; j < 1; j++) {
+                double obs_x = -5.0 + 10 * (i / 19.0);
+                double obs_y = -5.0 + 10 * (j / 19.0);
+                Vec2<double> obs_loc = {obs_x, obs_y};
+                Vec2<double> obs_normal = {0.0, 0.0};
+                double result = integrate<double,1>(quad, 
+                    [&](const Vec<double,1> x_hat) {
+                        auto eval = eval_quad_pt<2>(x_hat, kernel[k], face,
+                                                    obs_loc, obs_normal);
+                        return eval[0] + eval[1];
+                    });
+                        
+                double exact_val = exact[k](obs_x, obs_y);
+                CHECK_CLOSE(result, exact_val, 1e-4);
+            }
+        }
+    }
 }
 
 int main(int, char const *[])

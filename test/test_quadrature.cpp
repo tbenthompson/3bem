@@ -94,7 +94,7 @@ TEST(DiligentiMapping) {
 }
 
 TEST(QuadRule2dConstructor) {
-    QuadRule2d q(10);
+    QuadRule<2> q(10);
     CHECK_EQUAL(q.size(), 10);
 }
 
@@ -142,7 +142,7 @@ TEST(IntegrateTriPoly) {
     CHECK_CLOSE(result, 17. / 4200, 1e-15);
 }
 
-void test_tri_integrate(QuadRule2d q2d_tri) {
+void test_tri_integrate(QuadRule<2> q2d_tri) {
     double result = integrate<double,2>(q2d_tri, [](std::array<double,2> x) {
         return std::exp(x[0] / (x[1] - 1.1));
     });

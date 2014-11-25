@@ -6,29 +6,31 @@
 
 #include "vec.h"
 
-#define wrap_K(KNAME, K, J) \
+#define wrap_K3(KNAME, K, J) \
     [&] (const double& r2, const Vec3<double>& delta,\
          const Vec3<double> nsrc, const Vec3<double>& nobs) {\
         return this->KNAME<K,J>(r2, delta, nsrc, nobs);\
     }
 
-#define KERNELMAT(KNAME, ARRNAME) \
-    const std::array<std::array<Kernel,3>,3> ARRNAME = {{ {{\
-            wrap_K(KNAME, 0, 0), wrap_K(KNAME, 0, 1), wrap_K(KNAME, 0, 2) \
+#define KERNELMAT3(KNAME, ARRNAME) \
+    const std::array<std::array<Kernel<3>,3>,3> ARRNAME = {{ {{\
+            wrap_K3(KNAME, 0, 0), wrap_K3(KNAME, 0, 1), wrap_K3(KNAME, 0, 2) \
         }}, {{\
-            wrap_K(KNAME, 1, 0), wrap_K(KNAME, 1, 1), wrap_K(KNAME, 1, 2)\
+            wrap_K3(KNAME, 1, 0), wrap_K3(KNAME, 1, 1), wrap_K3(KNAME, 1, 2)\
         }}, {{\
-            wrap_K(KNAME, 2, 0), wrap_K(KNAME, 2, 1), wrap_K(KNAME, 2, 2)\
+            wrap_K3(KNAME, 2, 0), wrap_K3(KNAME, 2, 1), wrap_K3(KNAME, 2, 2)\
         }}\
     }}\
 
-typedef std::function<double(const double&, const Vec3<double>&,
-                             const Vec3<double>&, const Vec3<double>&)> Kernel;
+template <int dim>
+using Kernel = std::function<double(const double&, const Vec<double,dim>&,
+                             const Vec<double,dim>&, const Vec<double,dim>&)>;
 
+template <int dim>
 inline double one(const double& r2, 
-             const Vec3<double>& delta,
-             const Vec3<double>& nsrc,
-             const Vec3<double>& nobs) {
+             const Vec<double,dim>& delta,
+             const Vec<double,dim>& nsrc,
+             const Vec<double,dim>& nobs) {
     return 1.0;
 }
 
@@ -46,6 +48,21 @@ inline double laplace_double(const double& r2,
                         const Vec3<double>& nobs) {
     return -dot(nsrc, delta) / (4 * M_PI * r2 * std::sqrt(r2));
 }
+
+inline double laplace_single2d(const double& r2,
+                        const Vec2<double>& delta,
+                        const Vec2<double>& nsrc,
+                        const Vec2<double>& nobs) {
+    return -std::log(r2) / (4 * M_PI);
+}
+
+inline double laplace_double2d(const double& r2,
+                        const Vec2<double>& delta,
+                        const Vec2<double>& nsrc,
+                        const Vec2<double>& nobs) {
+    return -dot(nsrc, delta) / (2 * M_PI * r2);
+}
+
 
 const double kronecker[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
@@ -134,10 +151,10 @@ public:
         return C * (line1 + line2 + line3 + line4);
     }
     
-    KERNELMAT(hypersingular, hypersingular_mat);
-    KERNELMAT(displacement, displacement_mat);
-    KERNELMAT(traction, traction_mat);
-    KERNELMAT(adjoint_traction, adjoint_traction_mat);
+    KERNELMAT3(hypersingular, hypersingular_mat);
+    KERNELMAT3(displacement, displacement_mat);
+    KERNELMAT3(traction, traction_mat);
+    KERNELMAT3(adjoint_traction, adjoint_traction_mat);
 
     const double shear_modulus;
     const double poisson_ratio;

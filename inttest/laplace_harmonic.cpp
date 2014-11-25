@@ -21,7 +21,7 @@ int main() {
     double r = 3.0;
     double obs_radius = 2.7;
     double far_threshold = 3.0;
-    int refine_level = 5;
+    int refine_level = 3;
     int near_quad_pts = 3;
     int near_steps = 8;
     int src_quad_pts = 2;
@@ -29,7 +29,7 @@ int main() {
     int obs_quad_pts = 2;
     double tol = 1e-4;
 
-    QuadStrategy qs(obs_quad_pts, src_quad_pts, near_quad_pts,
+    QuadStrategy<3> qs(obs_quad_pts, src_quad_pts, near_quad_pts,
                     near_steps, far_threshold, tol);
 
     auto sphere = sphere_mesh(center, r).refine_repeatedly(refine_level);
@@ -52,11 +52,11 @@ int main() {
     }
 
     TIC
-    Problem p_double = {sphere, sphere, laplace_double, u};
+    Problem<3> p_double = {sphere, sphere, laplace_double, u};
     auto rhs_full = direct_interact(p_double, qs);
     TOC("RHS Eval")
 
-    Problem p_mass = {sphere, sphere, one, u};
+    Problem<3> p_mass = {sphere, sphere, one<3>, u};
     auto rhs_mass = mass_term(p_mass, qs);
 
     for (unsigned int i = 0; i < rhs_full.size(); i++){
@@ -67,7 +67,7 @@ int main() {
     std::cout << "N_dofs: " << rhs.size() << std::endl;
 
     TIC2
-    Problem p_single = {sphere, sphere, laplace_single, {}};
+    Problem<3> p_single = {sphere, sphere, laplace_single, {}};
     auto matrix = interact_matrix(p_single, qs);
     TOC("Matrix construct on " + std::to_string(sphere.facets.size()) + " facets");
     int count = 0;
@@ -92,10 +92,10 @@ int main() {
         auto obs_pt = random_pt_sphere(center, obs_radius);
 
         auto obs_normal = normalized(center - obs_pt);
-        ObsPt obs = {obs_len_scale, obs_pt, obs_normal};
+        ObsPt<3> obs = {obs_len_scale, obs_pt, obs_normal};
        
         double double_layer = eval_integral_equation(p_double, qs, obs);
-        Problem p_s = {sphere, sphere, laplace_single, dudn};
+        Problem<3> p_s = {sphere, sphere, laplace_single, dudn};
         double single_layer = eval_integral_equation(p_s, qs, obs);
         double result = double_layer - single_layer;
         double exact = 1.0 / hypot(obs_pt);

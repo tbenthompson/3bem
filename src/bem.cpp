@@ -4,34 +4,33 @@
 #include "adaptive_quad.h"
 #include "quadrature.h"
 
-FaceInfo::FaceInfo(const Facet<3>& facet):
+template <>
+FaceInfo<3>::FaceInfo(const Facet<3>& facet):
     face(facet),
-    unscaled_normal(tri_unscaled_normal(face.vertices)),
-    area(tri_area(unscaled_normal)),
+    unscaled_n(unscaled_normal(face.vertices)),
+    area(tri_area(unscaled_n)),
     jacobian(area * 2.0),
-    normal(unscaled_normal / jacobian)
+    normal(unscaled_n / jacobian)
 {}
 
-ObsPt ObsPt::from_face(const QuadRule2d& obs_quad,
-                       const FaceInfo& obs_face, int idx) {
+template <>
+FaceInfo<2>::FaceInfo(const Facet<2>& facet):
+    face(facet),
+    unscaled_n(unscaled_normal(face.vertices)),
+    area(hypot(unscaled_n)),
+    jacobian(area),
+    normal(unscaled_n / jacobian)
+{}
+
+template <int dim>
+ObsPt<dim> ObsPt<dim>::from_face(const QuadRule<dim-1>& obs_quad,
+                       const FaceInfo<dim>& obs_face, int idx) {
     return {
         //TODO: need to divide by q or something like that
         std::sqrt(obs_face.area),
         ref_to_real(obs_quad[idx].x_hat, obs_face.face.vertices),
         obs_face.normal 
     };
-}
-
-Vec3<double> eval_quad_pt(const Vec2<double>& x_hat,
-                          const Kernel& kernel,
-                          const FaceInfo& face,
-                          const Vec3<double>& obs_loc,
-                          const Vec3<double>& obs_n) {
-    const auto src_pt = ref_to_real(x_hat, face.face.vertices);
-    const auto d = src_pt - obs_loc;
-    const auto r2 = dot(d, d);
-    const auto kernel_val = kernel(r2, d, face.normal, obs_n);
-    return (kernel_val * face.jacobian) * linear_basis(x_hat);
 }
 
 double appx_face_dist2(const Vec3<double>& pt,
@@ -76,10 +75,9 @@ static unsigned long adjacent_pairs = 0;
 
 template <typename T>
 T adaptlobstp2(const double a, const double b, 
-              const T& fa, const T& fb, const T& is, double outer_x, const Kernel& kernel,
-                          const FaceInfo& face,
-                          const Vec3<double>& obs_loc,
-                          const Vec3<double>& obs_n)
+              const T& fa, const T& fb, const T& is, double outer_x, 
+              const Kernel<3>& kernel, const FaceInfo<3>& face, const Vec3<double>& obs_loc,
+                const Vec3<double>& obs_n)
 {
     // std::cout << a << " " << b << std::endl;
     double m = (a + b) / 2.; 
@@ -92,11 +90,11 @@ T adaptlobstp2(const double a, const double b,
     double mr = m + bh;
     double mrr = m + ah;
 
-    T fmll = eval_quad_pt(Vec2<double>{outer_x, mll}, kernel, face, obs_loc, obs_n);
-    T fml = eval_quad_pt(Vec2<double>{outer_x, ml}, kernel, face, obs_loc, obs_n);
-    T fm = eval_quad_pt(Vec2<double>{outer_x, m}, kernel, face, obs_loc, obs_n);
-    T fmr = eval_quad_pt(Vec2<double>{outer_x, mr}, kernel, face, obs_loc, obs_n);
-    T fmrr = eval_quad_pt(Vec2<double>{outer_x, mrr}, kernel, face, obs_loc, obs_n);
+    T fmll = eval_quad_pt<3>(Vec2<double>{outer_x, mll}, kernel, face, obs_loc, obs_n);
+    T fml = eval_quad_pt<3>(Vec2<double>{outer_x, ml}, kernel, face, obs_loc, obs_n);
+    T fm = eval_quad_pt<3>(Vec2<double>{outer_x, m}, kernel, face, obs_loc, obs_n);
+    T fmr = eval_quad_pt<3>(Vec2<double>{outer_x, mr}, kernel, face, obs_loc, obs_n);
+    T fmrr = eval_quad_pt<3>(Vec2<double>{outer_x, mrr}, kernel, face, obs_loc, obs_n);
     interacts += 5;
 
     T i2 = (h / 6.) * (fa + fb + 5.0 * (fml + fmr));    
@@ -124,8 +122,8 @@ T adaptlobstp2(const double a, const double b,
 //TODO: Refactor the shit out of this! Super ugly.
 template <typename T>
 T adaptive_integrate2(double a, double b, 
-                      double p_tol, double outer_x, const Kernel& kernel,
-                          const FaceInfo& face,
+                      double p_tol, double outer_x, const Kernel<3>& kernel,
+                          const FaceInfo<3>& face,
                           const Vec3<double>& obs_loc,
                           const Vec3<double>& obs_n)
 {
@@ -133,19 +131,19 @@ T adaptive_integrate2(double a, double b,
     double h = (b - a) / 2.;
 
     const T y[13] = {
-        eval_quad_pt(Vec2<double>{outer_x, a}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, m - lobatto_x1 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, m - lobatto_alpha * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, m - lobatto_x2 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, m - lobatto_beta * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, m - lobatto_x3 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, m}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, m + lobatto_x3 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, m + lobatto_beta * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, m + lobatto_x2 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, m + lobatto_alpha * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, m + lobatto_x1 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt(Vec2<double>{outer_x, b}, kernel, face, obs_loc, obs_n)
+        eval_quad_pt<3>(Vec2<double>{outer_x, a}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, m - lobatto_x1 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, m - lobatto_alpha * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, m - lobatto_x2 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, m - lobatto_beta * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, m - lobatto_x3 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, m}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, m + lobatto_x3 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, m + lobatto_beta * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, m + lobatto_x2 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, m + lobatto_alpha * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, m + lobatto_x1 * h}, kernel, face, obs_loc, obs_n),
+        eval_quad_pt<3>(Vec2<double>{outer_x, b}, kernel, face, obs_loc, obs_n)
     };
     
     const T fa = y[0];
@@ -175,8 +173,8 @@ T adaptive_integrate2(double a, double b,
     return adaptlobstp2(a, b, fa, fb, err_is, outer_x, kernel, face, obs_loc, obs_n);
 }
 
-Vec3<double> near_field(const Problem& p, const QuadStrategy& qs,
-                        const ObsPt& obs, const FaceInfo& src_face,
+Vec3<double> near_field(const Problem<3>& p, const QuadStrategy<3>& qs,
+                        const ObsPt<3>& obs, const FaceInfo<3>& src_face,
                         const double dist2) {
     std::vector<Vec3<double>> near_steps(qs.n_singular_steps, {0,0,0});
     for (int nf = 0; nf < qs.n_singular_steps; nf++) {
@@ -186,7 +184,7 @@ Vec3<double> near_field(const Problem& p, const QuadStrategy& qs,
         if (dist2 > 0.5 * src_face.area) {
             for (std::size_t i = 0; i < qs.src_near_quad.size(); i++) {
                 near_steps[nf] += qs.src_near_quad[i].w *
-                    eval_quad_pt(qs.src_near_quad[i].x_hat, p.K, src_face,
+                    eval_quad_pt<3>(qs.src_near_quad[i].x_hat, p.K, src_face,
                                  nf_obs_pt, obs.normal);
             }
             interacts += qs.src_near_quad.size();
@@ -206,13 +204,13 @@ Vec3<double> near_field(const Problem& p, const QuadStrategy& qs,
     return richardson_step(near_steps);
 }
 
-std::vector<double> integral_equation_vector(const Problem& p,
-                                             const QuadStrategy& qs,
-                                             const ObsPt& obs) {
+std::vector<double> integral_equation_vector(const Problem<3>& p,
+                                             const QuadStrategy<3>& qs,
+                                             const ObsPt<3>& obs) {
     int n_out_dofs = 3 * p.src_mesh.facets.size();
     std::vector<double> result(n_out_dofs);
     for (std::size_t i = 0; i < p.src_mesh.facets.size(); i++) {
-        FaceInfo src_face(p.src_mesh.facets[i]);
+        FaceInfo<3> src_face(p.src_mesh.facets[i]);
         const double dist2 = appx_face_dist2(obs.loc, src_face.face.vertices);
 
         Vec3<double> integrals;
@@ -223,7 +221,7 @@ std::vector<double> integral_equation_vector(const Problem& p,
             integrals = {0.0, 0.0, 0.0};
             for (std::size_t i = 0; i < qs.src_far_quad.size(); i++) {
                 integrals += qs.src_far_quad[i].w *
-                    eval_quad_pt(qs.src_far_quad[i].x_hat, p.K, src_face,
+                    eval_quad_pt<3>(qs.src_far_quad[i].x_hat, p.K, src_face,
                                  obs.loc, obs.normal);
             }
             interacts += qs.src_far_quad.size();
@@ -238,8 +236,8 @@ std::vector<double> integral_equation_vector(const Problem& p,
 
 /* Evaluate the integral equation for a specific observation point.
  */
-double eval_integral_equation(const Problem& p, const QuadStrategy& qs,
-                              const ObsPt& obs) {
+double eval_integral_equation(const Problem<3>& p, const QuadStrategy<3>& qs,
+                              const ObsPt<3>& obs) {
     double result = 0.0;
     auto row = integral_equation_vector(p, qs, obs);
     for (std::size_t i = 0; i < row.size(); i++) {
@@ -249,23 +247,23 @@ double eval_integral_equation(const Problem& p, const QuadStrategy& qs,
 }
 
 //TODO: Use a sparse matrix storage format here.
-std::vector<double> interact_matrix(const Problem& p,
-                                    const QuadStrategy& qs) {
+std::vector<double> interact_matrix(const Problem<3>& p,
+                                    const QuadStrategy<3>& qs) {
     std::size_t n_obs_dofs = 3 * p.obs_mesh.facets.size();
     std::size_t n_src_dofs = 3 * p.src_mesh.facets.size();
     std::vector<double> matrix(n_obs_dofs * n_src_dofs, 0.0);
 #pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
-        FaceInfo obs_face(p.obs_mesh.facets[obs_idx]);
+        FaceInfo<3> obs_face(p.obs_mesh.facets[obs_idx]);
         for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
-            auto pt = ObsPt::from_face(qs.obs_quad, obs_face, obs_q);
+            auto pt = ObsPt<3>::from_face(qs.obs_quad, obs_face, obs_q);
             // std::cout << obs_idx << " " << p.obs_mesh.facets.size() << std::endl;
             // std::cout << pt.loc << std::endl;
 
             const auto row = integral_equation_vector(p, qs, pt);
 
             for(int v = 0; v < 3; v++) {
-                double obs_basis_eval = linear_interp(qs.obs_quad[obs_q].x_hat,
+                double obs_basis_eval = linear_interp<3>(qs.obs_quad[obs_q].x_hat,
                                                       unit<double>(v)); 
                 int b = 3 * obs_idx + v;
                 for (std::size_t i = 0; i < n_src_dofs; i++) {
@@ -292,28 +290,28 @@ std::vector<double> bem_mat_mult(const std::vector<double>& A,
     return res;
 }
 
-std::vector<double> direct_interact(const Problem& p,
-                                    const QuadStrategy& qs) {
+std::vector<double> direct_interact(const Problem<3>& p,
+                                    const QuadStrategy<3>& qs) {
     return bem_mat_mult(interact_matrix(p, qs), 
                         p.obs_mesh.facets.size() * 3, p.src_strength);
 }
 
-std::vector<double> mass_term(const Problem& p,
-                              const QuadStrategy& qs) {
+std::vector<double> mass_term(const Problem<3>& p,
+                              const QuadStrategy<3>& qs) {
     int n_obs_dofs = 3 * p.obs_mesh.facets.size();
     std::vector<double> integrals(n_obs_dofs, 0.0);
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
-        FaceInfo obs_face(p.obs_mesh.facets[obs_idx]);
+        FaceInfo<3> obs_face(p.obs_mesh.facets[obs_idx]);
         for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
             auto qpt = qs.obs_quad[obs_q];
             int dof = 3 * obs_idx;
             Vec3<double> face_vals = {
                 p.src_strength[dof], p.src_strength[dof + 1], p.src_strength[dof + 2]
             };
-            double interp_val = linear_interp(qpt.x_hat, face_vals);
+            double interp_val = linear_interp<3>(qpt.x_hat, face_vals);
 
             for(int v = 0; v < 3; v++) {
-                double obs_basis_eval = linear_interp(qpt.x_hat, unit<double>(v)); 
+                double obs_basis_eval = linear_interp<3>(qpt.x_hat, unit<double>(v)); 
                 integrals[dof + v] += obs_face.jacobian * obs_basis_eval * 
                                       interp_val * qpt.w;
             }
