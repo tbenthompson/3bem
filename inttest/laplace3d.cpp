@@ -84,7 +84,7 @@ int main() {
         });
     auto dudn_solved = constraints.get_all(dudn_solved_subset, n_dofs);
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
-    hdf_out("laplace.hdf5", sphere, dudn_solved); 
+    hdf_out("laplace3d.hdf5", sphere, dudn_solved); 
     return 0;
 
     double obs_len_scale = get_len_scale(sphere, 0, obs_quad_pts);
