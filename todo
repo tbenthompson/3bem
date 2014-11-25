@@ -1,7 +1,3 @@
-** 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D,
-** 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D,
-** 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D,
-** 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D, 2D,
 ** Rearrange to have the limit taking be outside the galerkin integration. Does this help with corners and deadends?
 ** template on double vs float
 ** bug occurs when obs quad order != 2
@@ -12,6 +8,6 @@
 -- try the nearly singular tri rule = http://www98.griffith.edu.au/dspace/bitstream/handle/10072/54329/86520_1.pdf?sequence=1
 ** 3-10th order basis functions for solution and geometry
 -- on triangles? how?
--- need nodal 
+-- need nodal triangular basis -- the hesthaven electrostatics paper!
 ** Biggest time sink is the calculation of adjacent and identical element interactions
 -- adaptive
