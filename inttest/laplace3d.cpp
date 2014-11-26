@@ -85,7 +85,6 @@ int main() {
     auto dudn_solved = constraints.get_all(dudn_solved_subset, n_dofs);
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
     hdf_out("laplace3d.hdf5", sphere, dudn_solved); 
-    return 0;
 
     double obs_len_scale = get_len_scale(sphere, 0, obs_quad_pts);
     for(int i = 0; i < 100; i++) {
@@ -98,7 +97,7 @@ int main() {
         Problem<3> p_s = {sphere, sphere, laplace_single, dudn};
         double single_layer = eval_integral_equation(p_s, qs, obs);
         double result = double_layer - single_layer;
-        double exact = 1.0 / hypot(obs_pt);
+        double exact = harmonic_u(obs_pt);
         double error = std::fabs(exact - result);
         if (error > 1e-2) {
             std::cout << "Failed with point: " << obs_pt << std::endl;

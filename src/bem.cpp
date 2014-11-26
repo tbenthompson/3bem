@@ -27,8 +27,8 @@ T richardson_step(const std::vector<T>& values) {
 }
 
 template double richardson_step(const std::vector<double>&);
-template Vec3<double> richardson_step(const std::vector<Vec3<double>>&);
 template Vec2<double> richardson_step(const std::vector<Vec2<double>>&);
+template Vec3<double> richardson_step(const std::vector<Vec3<double>>&);
 
 std::vector<double> bem_mat_mult(const std::vector<double>& A, 
                                  int n_obs_dofs,
@@ -41,8 +41,4 @@ std::vector<double> bem_mat_mult(const std::vector<double>& A,
         }
     }
     return res;
-}
-
-double get_len_scale(Mesh<3>& mesh, int which_face, int q) {
-    return std::sqrt(tri_area(mesh.facets[which_face].vertices)) / q;
 }

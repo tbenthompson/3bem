@@ -182,14 +182,14 @@ T hypot(const Vec<T,dim>& v) {
     return std::sqrt(hypot2(v));
 }
 
-template <typename T>
-void normalize(Vec3<T>& v) {
+template <typename T, unsigned long dim>
+void normalize(Vec<T,dim>& v) {
     v /= hypot(v);
 }
 
-template <typename T>
-Vec3<T> normalized(const Vec3<T>& v) {
-    Vec3<T> res = v;
+template <typename T, unsigned long dim>
+Vec<T,dim> normalized(const Vec<T,dim>& v) {
+    Vec<T,dim> res = v;
     normalize(res);
     return res;
 }
