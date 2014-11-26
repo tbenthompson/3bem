@@ -192,36 +192,6 @@ TEST(MassTerm) {
     CHECK_CLOSE(mass_area, (5.0 / 6.0) * true_area, 1e-12);
 }
 
-TEST(DirectInteractOne) {
-    auto sphere = sphere_mesh({0,0,0}, 1.0).refine_repeatedly(3);
-    int n_dofs = 3 * sphere.facets.size();
-    std::vector<double> str(n_dofs, 1.0);
-
-    QuadStrategy<3> qs(2, 2, 3, 3, 3.0, 1e-2);
-    Problem<3> p = {sphere, sphere, one<3>, str};
-    auto res = direct_interact(p, qs);
-    auto matrix = interact_matrix(p, qs);
-
-    std::vector<double> res2(n_dofs, 0.0);
-    for (int i = 0; i < n_dofs; i++) {
-        for (int j = 0; j < n_dofs; j++) {
-            res2[i] += matrix[i * n_dofs + j] * str[j]; 
-        }
-    }
-    double total = 0.0;
-    for (auto r: res) {
-        total += r;
-    }
-    double total2 = 0.0;
-    for (auto r2: res2) {
-        total2 += r2;
-    }
-    double sa2 = pow(4 * M_PI, 2);
-    double error = std::fabs((sa2 - total) / sa2);
-    double error2 = std::fabs((sa2 - total2) / sa2);
-    CHECK_CLOSE(error, 0.0, 6.4e-2);
-    CHECK_CLOSE(error2, 0.0, 6.4e-2);
-}
 
 //TODO: Fixture for this and the next one.
 TEST(DirectInteractConstantLaplace) {
@@ -258,7 +228,11 @@ double exact_double(double x, double y) {
     return (atan((1 - x) / y) + atan((1 + x) / y)) / (2 * M_PI);
 }
 
-TEST(OneSegment) {
+/* Check that integrals over a single element are being properly
+ * computed in 2D. Do this for many different observation points and two
+ * different kernels (laplace_single, laplace_double)
+ */
+TEST(OneSegment2D) {
     std::array<double, 2> v0 = {-1.0, 0.0};
     std::array<double, 2> v1 = {1.0, 0.0};
 
@@ -268,7 +242,7 @@ TEST(OneSegment) {
     std::vector<Kernel<2>> kernel = {laplace_single2d, laplace_double2d};
     Facet<2> facet{{v0, v1}};
     FaceInfo<2> face(facet);
-    CHECK_EQUAL(face.jacobian, 2.0);
+    CHECK_EQUAL(face.jacobian, 1.0);
     CHECK_EQUAL(face.area, 2.0);
 
     for (int k = 0; k < 2; k++) {
@@ -282,7 +256,7 @@ TEST(OneSegment) {
                     [&](const Vec<double,1> x_hat) {
                         auto eval = eval_quad_pt<2>(x_hat, kernel[k], face,
                                                     obs_loc, obs_normal);
-                        return 0.5 * (eval[0] + eval[1]);
+                        return (eval[0] + eval[1]);
                     });
                         
                 double exact_val = exact[k](obs_x, obs_y);
@@ -293,7 +267,7 @@ TEST(OneSegment) {
 }
 
 TEST(ConstantLaplace2D) {
-    int refine = 4;
+    int refine = 5;
     Vec2<double> center = {20.0, 0.0};
     Mesh<2> src_circle = circle_mesh(center, 19.0).refine_repeatedly(refine);
     QuadStrategy<2> qs(3, 3, 3, 5, 3.0, 1e-3);
@@ -301,13 +275,63 @@ TEST(ConstantLaplace2D) {
     for (double i = 1.0; i < 18.0; i++) {
         Mesh<2> obs_circle = circle_mesh(center, i).refine_repeatedly(refine);
         Problem<2> p{src_circle, obs_circle, laplace_double2d, u};
+
+        // Do it via eval_integral_equation for each vertex.
         for (std::size_t i = 0; i < obs_circle.facets.size(); i++) {
             ObsPt<2> pt = {0.390, obs_circle.facets[i].vertices[0], {0,0}}; 
             double result = eval_integral_equation(p, qs, pt);
             CHECK_CLOSE(result, 1.0, 1e-4);
         }
+
+        // Now, do all of the observation quadrature points using direct_interact
+        // But, we need to scale by the length of the element of the observation
+        // mesh, because the new values are for element interactions, not pt
+        // interactions.
+        double scaling_factor = 0.5 * dist(obs_circle.facets[0].vertices[0],
+                                           obs_circle.facets[0].vertices[1]);
+        auto results = direct_interact(p, qs);
+        std::vector<double> all_ones(results.size(), scaling_factor);
+        CHECK_ARRAY_CLOSE(results, all_ones, results.size(), 1e-4);
     }
 }
+
+template <int dim>
+void direct_interact_one_test(const Mesh<dim>& mesh,
+                              double correct) {
+    int n_dofs = dim * mesh.facets.size();
+    std::vector<double> str(n_dofs, 1.0);
+
+    QuadStrategy<dim> qs(2, 2, 3, 3, 3.0, 1e-2);
+    Problem<dim> p = {mesh, mesh, one<dim>, str};
+    auto res = direct_interact(p, qs);
+    auto matrix = interact_matrix(p, qs);
+
+    auto res2 = bem_mat_mult(matrix, n_dofs, str);
+    double total = 0.0;
+    for (auto r: res) {
+        total += r;
+    }
+    double total2 = 0.0;
+    for (auto r2: res2) {
+        total2 += r2;
+    }
+    double sa2 = std::pow(correct, 2);
+    double error = std::fabs((sa2 - total) / sa2);
+    double error2 = std::fabs((sa2 - total2) / sa2);
+    CHECK_CLOSE(error, 0.0, 6.4e-2);
+    CHECK_CLOSE(error2, 0.0, 6.4e-2);
+}
+
+TEST(DirectInteractOne2d) {
+    auto circle = circle_mesh({0,0}, 1.0).refine_repeatedly(4);
+    direct_interact_one_test(circle, 2 * M_PI);
+}
+
+TEST(DirectInteractOne3d) {
+    auto sphere = sphere_mesh({0,0,0}, 1.0).refine_repeatedly(3);
+    direct_interact_one_test(sphere, 4 * M_PI);
+}
+
 
 int main(int, char const *[])
 {

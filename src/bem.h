@@ -61,7 +61,7 @@ FaceInfo<2>::FaceInfo(const Facet<2>& facet):
     unscaled_n(unscaled_normal(face.vertices)),
     area(hypot(unscaled_n)),
     jacobian(area / 2.0),
-    normal(unscaled_n / area)
+    normal(normalized(unscaled_n))
 {}
 
 template <int dim>
@@ -322,7 +322,7 @@ std::vector<double> interact_matrix(const Problem<dim>& p,
     std::size_t n_obs_dofs = dim * p.obs_mesh.facets.size();
     std::size_t n_src_dofs = dim * p.src_mesh.facets.size();
     std::vector<double> matrix(n_obs_dofs * n_src_dofs, 0.0);
-#pragma omp parallel for
+// #pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         FaceInfo<dim> obs_face(p.obs_mesh.facets[obs_idx]);
         for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
@@ -382,5 +382,17 @@ std::vector<double> mass_term(const Problem<dim>& p,
 }
 
 
-double get_len_scale(Mesh<3>& mesh, int which_face, int q);
+template <int dim>
+double get_len_scale(Mesh<dim>& mesh, int which_face, int q);
+
+template <>
+double get_len_scale<3>(Mesh<3>& mesh, int which_face, int q) {
+    return std::sqrt(tri_area(mesh.facets[which_face].vertices)) / q;
+}
+
+template <>
+double get_len_scale<2>(Mesh<2>& mesh, int which_face, int q) {
+    return dist(mesh.facets[which_face].vertices[1],
+                mesh.facets[which_face].vertices[0]) / q;
+}
 #endif
