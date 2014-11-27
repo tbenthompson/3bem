@@ -8,18 +8,18 @@
 #include <iostream>
 
 double harmonic_u(Vec2<double> x) {
-    // return std::log(hypot(x));
-    return std::atan(x[1] / x[0]);
+    return std::log(hypot(x));
+    // return std::atan(x[1] / x[0]);
 }
 
 double harmonic_dudn(Vec2<double> loc, Vec2<double> center) {
     auto n = normalized(center - loc);
-    // return dot(n, loc / hypot2(loc));
-    double x = loc[0];
-    double y = loc[1];
-    double dy = 1.0 / (x * (1 + (y * y / (x * x))));
-    double dx = (-y / x) * dy;
-    return dot(n, {dx, dy});
+    return dot(n, loc / hypot2(loc));
+    // double x = loc[0];
+    // double y = loc[1];
+    // double dy = 1.0 / (x * (1 + (y * y / (x * x))));
+    // double dx = (-y / x) * dy;
+    // return dot(n, {dx, dy});
 }
 
 int main() {
@@ -28,7 +28,7 @@ int main() {
     //with the harmonic function part abstracted out?
     const Vec2<double> center = {5, 0};
     double r = 3.0;
-    double obs_radius = 2.7;
+    double obs_radius = 2.9;
     double far_threshold = 3.0;
     int refine_level = 8;
     int near_quad_pts = 4;
@@ -67,40 +67,45 @@ int main() {
 
     Problem<2> p_mass = {circle, circle, one<2>, u};
     auto rhs_mass = mass_term(p_mass, qs);
-
+    
+    assert(rhs_full.size() == rhs_mass.size());
     for (unsigned int i = 0; i < rhs_full.size(); i++){
         rhs_full[i] = rhs_full[i] - rhs_mass[i];
     }
 
     auto rhs = constraints.get_reduced(rhs_full);
-    std::cout << "N_dofs: " << rhs.size() << std::endl;
 
     TIC2
-    Problem<2> p_single = {circle, circle, laplace_single2d, {}};
+    Problem<2> p_single = {circle, circle, laplace_single2d, dudn};
     auto matrix = interact_matrix(p_single, qs);
     TOC("Matrix construct on " + std::to_string(circle.facets.size()) + " facets");
     int count = 0;
-    // return 0;
-    auto dudn_solved_subset = solve_system(rhs, 1e-5,
-        [&] (std::vector<double>& x, std::vector<double>& y) {
-            std::cout << "iteration " << count << std::endl;
-            count++;
-            TIC
-            auto x_full = constraints.get_all(x, n_dofs);
-            auto y_mult = bem_mat_mult(matrix, n_dofs, x_full); 
-            auto y_temp = constraints.get_reduced(y_mult);
-            std::copy(y_temp.begin(), y_temp.end(), y.begin());
-            TOC("Matrix multiply on " + 
-                std::to_string(circle.facets.size()) +
-                " faces");
-        });
-    auto dudn_solved = constraints.get_all(dudn_solved_subset, n_dofs);
-    for (int i = 0; i < dudn.size(); i++) {
-        std::cout << dudn[i] << " " << dudn_solved[i] << std::endl;
-    }
-    std::cout << error_inf(dudn_solved, dudn) << std::endl;
+
+    // auto test_lhs = constraints.get_reduced(bem_mat_mult(matrix, n_dofs, dudn));
+    // for (int i = 0; i < test_lhs.size(); i++) {
+    //     std::cout << rhs[i] << std::endl;
+    //     std::cout << test_lhs[i] << std::endl << std::endl;
+    // }
+    // return 0; 
+    // auto dudn_solved_subset = solve_system(rhs, 1e-5,
+    //     [&] (std::vector<double>& x, std::vector<double>& y) {
+    //         std::cout << "iteration " << count << std::endl;
+    //         count++;
+    //         TIC
+    //         auto x_full = constraints.get_all(x, n_dofs);
+    //         auto y_mult = bem_mat_mult(matrix, n_dofs, x_full); 
+    //         auto y_temp = constraints.get_reduced(y_mult);
+    //         std::copy(y_temp.begin(), y_temp.end(), y.begin());
+    //         TOC("Matrix multiply on " + 
+    //             std::to_string(circle.facets.size()) +
+    //             " faces");
+    //     });
+    // auto dudn_solved = constraints.get_all(dudn_solved_subset, n_dofs);
+    // for (int i = 0; i < dudn.size(); i++) {
+    //     std::cout << dudn[i] << " " << 1.5 * dudn_solved[i] << std::endl;
+    // }
+    // std::cout << error_inf(dudn_solved, dudn) << std::endl;
     // hdf_out("laplace2d.hdf5", circle, dudn_solved); 
-    return 0;
 
     double obs_len_scale = get_len_scale(circle, 0, obs_quad_pts);
     for(int i = 0; i < 100; i++) {

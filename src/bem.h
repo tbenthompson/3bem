@@ -1,6 +1,7 @@
 #ifndef __AAAAAAAAA_BEM_H
 #define __AAAAAAAAA_BEM_H
 
+#include <cassert>
 #include <functional>
 #include <array>
 #include <vector>
@@ -322,7 +323,7 @@ std::vector<double> interact_matrix(const Problem<dim>& p,
     std::size_t n_obs_dofs = dim * p.obs_mesh.facets.size();
     std::size_t n_src_dofs = dim * p.src_mesh.facets.size();
     std::vector<double> matrix(n_obs_dofs * n_src_dofs, 0.0);
-// #pragma omp parallel for
+#pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         FaceInfo<dim> obs_face(p.obs_mesh.facets[obs_idx]);
         for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
@@ -349,7 +350,9 @@ std::vector<double> interact_matrix(const Problem<dim>& p,
 template <int dim>
 std::vector<double> direct_interact(const Problem<dim>& p,
                                     const QuadStrategy<dim>& qs) {
-    return bem_mat_mult(interact_matrix(p, qs), 
+    auto matrix = interact_matrix(p, qs);
+    assert(p.obs_mesh.facets.size() * dim * p.src_strength.size() == matrix.size());
+    return bem_mat_mult(matrix, 
                         p.obs_mesh.facets.size() * dim,
                         p.src_strength);
 }
