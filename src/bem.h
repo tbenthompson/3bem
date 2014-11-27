@@ -60,9 +60,9 @@ template <>
 FaceInfo<2>::FaceInfo(const Facet<2>& facet):
     face(facet),
     unscaled_n(unscaled_normal(face.vertices)),
-    area(hypot(unscaled_n)),
-    jacobian(area / 2.0),
-    normal(normalized(unscaled_n))
+    area(hypot2(unscaled_n)),
+    jacobian(std::sqrt(area) / 2.0),
+    normal(0.5 * unscaled_n / jacobian)
 {}
 
 template <int dim>
@@ -239,6 +239,8 @@ Vec<double,2> adaptive_nearfield<2>(const Problem<2>& p,
         }, 0.0, 1.0, qs.singular_tol);
 }
 
+const double adjacent_threshold[2] = {1000.5, 0.5};
+
 template <int dim>
 Vec<double,dim> near_field(const Problem<dim>& p, const QuadStrategy<dim>& qs,
                         const ObsPt<dim>& obs, const FaceInfo<dim>& src_face,
@@ -249,7 +251,7 @@ Vec<double,dim> near_field(const Problem<dim>& p, const QuadStrategy<dim>& qs,
         double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
         auto nf_obs_pt = obs.loc + nfdn * obs.normal;
          
-        if (dist2 > 0.5 * src_face.area) {
+        if (dist2 > adjacent_threshold[dim - 2] * src_face.area) {
             for (std::size_t i = 0; i < qs.src_near_quad.size(); i++) {
                 near_steps[nf] += qs.src_near_quad[i].w *
                     eval_quad_pt<dim>(qs.src_near_quad[i].x_hat, p.K, src_face,
@@ -333,15 +335,36 @@ std::vector<double> interact_matrix(const Problem<dim>& p,
 
             const auto row = integral_equation_vector(p, qs, pt);
 
+            const auto basis = linear_basis(qs.obs_quad[obs_q].x_hat);
+            // std::cout << qs.obs_quad[obs_q].x_hat << " " << basis << std::endl;
+
+            double row_sum = 0.0;
+            for (int i = 0; i < n_src_dofs; i++) {
+                row_sum += row[i];
+            }
+            // std::cout << row_sum << std::endl;
+            // std::cout << qs.obs_quad[obs_q].w << std::endl;
+            Vec<double,dim> total = {0.0,0.0};
             for (int v = 0; v < dim; v++) {
-                double obs_basis_eval = linear_interp<dim>(qs.obs_quad[obs_q].x_hat,
-                                                      unit<double,dim>(v)); 
                 int b = dim * obs_idx + v;
+                // std::cout << b << std::endl;
                 for (std::size_t i = 0; i < n_src_dofs; i++) {
-                    matrix[b * n_src_dofs + i] += obs_basis_eval * row[i] * 
-                                    qs.obs_quad[obs_q].w * obs_face.jacobian;
+                    double addition = basis[v] * row[i] * qs.obs_quad[obs_q].w *
+                                      obs_face.jacobian;
+                    matrix[b * n_src_dofs + i] += addition;
+                    total[v] += addition;
                 }
             }
+            // std::cout << total << std::endl;
+            Vec<double,2> entry_sum = {0.0,0.0};
+            for (int i = 0; i < n_src_dofs; i++) {
+                for (int v = 0; v < 2; v++) {
+                    entry_sum[v] += matrix[(dim * obs_idx + v) * n_src_dofs + i];
+                }
+            }
+            // std::cout << entry_sum << std::endl;
+
+            // std::cout << std::endl << std::endl;
         }
     }
     return matrix;
@@ -373,10 +396,10 @@ std::vector<double> mass_term(const Problem<dim>& p,
             }
             double interp_val = linear_interp<dim>(qpt.x_hat, face_vals);
 
+            auto basis = linear_basis(qpt.x_hat);
+
             for(int v = 0; v < dim; v++) {
-                double obs_basis_eval = linear_interp<dim>(qpt.x_hat,
-                                                           unit<double,dim>(v)); 
-                integrals[dof + v] += obs_face.jacobian * obs_basis_eval * 
+                integrals[dof + v] += obs_face.jacobian * basis[v] * 
                                       interp_val * qpt.w;
             }
         }
