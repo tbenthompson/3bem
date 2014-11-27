@@ -33,6 +33,7 @@ template Vec3<double> richardson_step(const std::vector<Vec3<double>>&);
 std::vector<double> bem_mat_mult(const std::vector<double>& A, 
                                  int n_obs_dofs,
                                  const std::vector<double>& x) {
+    assert(n_obs_dofs * x.size() == A.size());
     std::vector<double> res(n_obs_dofs, 0.0);
 #pragma omp parallel for
     for (int i = 0; i < n_obs_dofs; i++) {

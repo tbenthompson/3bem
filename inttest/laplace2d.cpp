@@ -29,11 +29,11 @@ int main() {
     const Vec2<double> center = {5, 0};
     double r = 3.0;
     double obs_radius = 2.9;
-    double far_threshold = 3.0;
+    double far_threshold = 500.0;
     int refine_level = 8;
-    int near_quad_pts = 4;
+    int near_quad_pts = 6;
     int near_steps = 8;
-    int src_quad_pts = 4;
+    int src_quad_pts = 6;
     //TODO: Something is seriously wrong when I use obs_quad_pts = 3
     int obs_quad_pts = 2;
     double tol = 1e-4;
@@ -51,6 +51,7 @@ int main() {
         for (int d = 0; d < 2; d++) {
             u[2 * i + d] = harmonic_u(circle.facets[i].vertices[d]);
         }
+        /* std::cout << u[2 * i + 0] << " " << u[2 * i + 1] << std::endl; */
     }
 
     std::vector<double> dudn(n_dofs);
@@ -62,18 +63,19 @@ int main() {
 
     TIC
     Problem<2> p_double = {circle, circle, laplace_double2d, u};
-    auto rhs_full = direct_interact(p_double, qs);
+    auto rhs_double = direct_interact(p_double, qs);
     TOC("RHS Eval")
+    // return 0;
 
     Problem<2> p_mass = {circle, circle, one<2>, u};
     auto rhs_mass = mass_term(p_mass, qs);
+    assert(rhs_double.size() == rhs_mass.size());
     
-    assert(rhs_full.size() == rhs_mass.size());
+    std::vector<double> rhs_full(n_dofs);
     for (unsigned int i = 0; i < rhs_full.size(); i++){
-        rhs_full[i] = rhs_full[i] - rhs_mass[i];
+        rhs_full[i] = rhs_double[i] + rhs_mass[i];
     }
 
-    auto rhs = constraints.get_reduced(rhs_full);
 
     TIC2
     Problem<2> p_single = {circle, circle, laplace_single2d, dudn};
@@ -81,12 +83,18 @@ int main() {
     TOC("Matrix construct on " + std::to_string(circle.facets.size()) + " facets");
     int count = 0;
 
-    // auto test_lhs = constraints.get_reduced(bem_mat_mult(matrix, n_dofs, dudn));
-    // for (int i = 0; i < test_lhs.size(); i++) {
-    //     std::cout << rhs[i] << std::endl;
-    //     std::cout << test_lhs[i] << std::endl << std::endl;
-    // }
-    // return 0; 
+    assert(matrix.size() == n_dofs * n_dofs);
+    assert(dudn.size() == n_dofs);
+    auto test_lhs = bem_mat_mult(matrix, n_dofs, dudn);
+
+    for (std::size_t i = 0; i < test_lhs.size(); i++) {
+        std::cout << rhs_double[i] << " " << i << std::endl;
+        std::cout << rhs_full[i] << " " << rhs_double[i] << " " << rhs_mass[i] << std::endl;
+        std::cout << test_lhs[i] << std::endl << std::endl;
+    }
+    return 0;
+
+    auto rhs = constraints.get_reduced(rhs_full);
     // auto dudn_solved_subset = solve_system(rhs, 1e-5,
     //     [&] (std::vector<double>& x, std::vector<double>& y) {
     //         std::cout << "iteration " << count << std::endl;
@@ -116,11 +124,10 @@ int main() {
         ObsPt<2> obs = {obs_len_scale, obs_pt, obs_normal};
        
         double double_layer = eval_integral_equation(p_double, qs, obs);
-        Problem<2> p_s = {circle, circle, laplace_single2d, dudn};
-        double single_layer = eval_integral_equation(p_s, qs, obs);
-        double result = double_layer - single_layer;
+        double single_layer = eval_integral_equation(p_single, qs, obs);
+        double result = single_layer - double_layer;
         double exact = harmonic_u(obs_pt);
-        double error = std::fabs(exact - result);
+        double error = std::fabs((exact - result) / exact);
         if (error > 1e-2) {
             std::cout << "Failed with point: " << obs_pt << std::endl;
             std::cout << "Exact: " << exact << std::endl;

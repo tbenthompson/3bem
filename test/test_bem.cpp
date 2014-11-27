@@ -243,7 +243,7 @@ TEST(OneSegment2D) {
     Facet<2> facet{{v0, v1}};
     FaceInfo<2> face(facet);
     CHECK_EQUAL(face.jacobian, 1.0);
-    CHECK_EQUAL(face.area, 2.0);
+    CHECK_EQUAL(face.area, 4.0);
 
     for (int k = 0; k < 2; k++) {
         for (int i = 0; i < 20; i++) {
@@ -267,12 +267,12 @@ TEST(OneSegment2D) {
 }
 
 TEST(ConstantLaplace2D) {
-    int refine = 5;
+    int refine = 6;
     Vec2<double> center = {20.0, 0.0};
     Mesh<2> src_circle = circle_mesh(center, 19.0).refine_repeatedly(refine);
     QuadStrategy<2> qs(3, 3, 3, 5, 3.0, 1e-3);
-    std::vector<double> u(2 * src_circle.facets.size(), 1.0);
-    for (double i = 1.0; i < 18.0; i++) {
+    std::vector<double> u(2 * src_circle.facets.size(), 7.0);
+    for (double i = 1.0; i < 19.0; i++) {
         Mesh<2> obs_circle = circle_mesh(center, i).refine_repeatedly(refine);
         Problem<2> p{src_circle, obs_circle, laplace_double2d, u};
 
@@ -280,7 +280,7 @@ TEST(ConstantLaplace2D) {
         for (std::size_t i = 0; i < obs_circle.facets.size(); i++) {
             ObsPt<2> pt = {0.390, obs_circle.facets[i].vertices[0], {0,0}}; 
             double result = eval_integral_equation(p, qs, pt);
-            CHECK_CLOSE(-result, 1.0, 1e-4);
+            CHECK_CLOSE(result, -7.0, 1e-4);
         }
 
         // Now, do all of the observation quadrature points using direct_interact
@@ -290,8 +290,8 @@ TEST(ConstantLaplace2D) {
         double scaling_factor = 0.5 * dist(obs_circle.facets[0].vertices[0],
                                            obs_circle.facets[0].vertices[1]);
         auto results = direct_interact(p, qs);
-        std::vector<double> all_ones(results.size(), -scaling_factor);
-        CHECK_ARRAY_CLOSE(results, all_ones, results.size(), 1e-4);
+        std::vector<double> all_ones(results.size(), -7.0 * scaling_factor);
+        CHECK_ARRAY_CLOSE(results, all_ones, results.size(), 1e-3);
     }
 }
 

@@ -20,7 +20,7 @@ TEST(LinearMapping) {
             double ref = real_to_ref(real, v0, v1);
             std::array<Vec2<double>,2> locs = {{{v0,0}, {v1,0}}};
             double real2 = ref_to_real({ref}, locs)[0];
-            return std::fabs(real - real2) < 1e-12;
+            return std::fabs(real - real2) < 1e-11;
         }, 100, arb);
 }
 
