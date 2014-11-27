@@ -60,7 +60,7 @@ int main() {
     auto rhs_mass = mass_term(p_mass, qs);
 
     for (unsigned int i = 0; i < rhs_full.size(); i++){
-        rhs_full[i] = rhs_full[i] - rhs_mass[i];
+        rhs_full[i] = rhs_full[i] + rhs_mass[i];
     }
 
     auto rhs = constraints.get_reduced(rhs_full);
@@ -96,7 +96,7 @@ int main() {
         double double_layer = eval_integral_equation(p_double, qs, obs);
         Problem<3> p_s = {sphere, sphere, laplace_single, dudn};
         double single_layer = eval_integral_equation(p_s, qs, obs);
-        double result = double_layer - single_layer;
+        double result = single_layer - double_layer;
         double exact = harmonic_u(obs_pt);
         double error = std::fabs(exact - result);
         if (error > 1e-2) {

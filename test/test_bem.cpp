@@ -53,12 +53,12 @@ TEST_FIXTURE(IntegrationProb, IntegralOne) {
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceSingle) {
     kernel = laplace_single;
-    exact = -0.0269063; go(); check();
+    exact = 0.0269063; go(); check();
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceDouble) {
     kernel = laplace_double;
-    exact = 0.00621003; go(); check();
+    exact = -0.00621003; go(); check();
 }
 
 TEST(Richardson) {
@@ -86,7 +86,7 @@ TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
         offset /= 2;
     }
     double result = richardson_step(vals);
-    CHECK_CLOSE(result, -0.0269063, 1e-6);
+    CHECK_CLOSE(result, 0.0269063, 1e-6);
 }
 
 //TODO: This should be refactored a bit!
@@ -141,8 +141,8 @@ TEST(ConstantLaplace) {
     EvalProb ep(5, 3, 2, laplace_double);
     double result = ep.go();
     double result2 = ep.go_row();
-    CHECK_CLOSE(result, 1.0, 1e-3);
-    CHECK_CLOSE(result2, 1.0, 1e-3);
+    CHECK_CLOSE(result, -1.0, 1e-3);
+    CHECK_CLOSE(result2, -1.0, 1e-3);
 }
 
 TEST(ConstantLaplaceBoundary) {
@@ -153,8 +153,8 @@ TEST(ConstantLaplaceBoundary) {
             ep.obs_n = -normalized(ep.obs_pt);
             double result = ep.go();
             double result2 = ep.go();
-            CHECK_CLOSE(result, 1.0, 1e-2);
-            CHECK_CLOSE(result2, 1.0, 1e-2);
+            CHECK_CLOSE(result, -1.0, 1e-2);
+            CHECK_CLOSE(result2, -1.0, 1e-2);
         }
     }
 }
@@ -163,8 +163,8 @@ TEST(MatrixRowVsEval) {
     EvalProb ep(4, 3, 2, laplace_double);
     double result = ep.go();
     double result2 = ep.go_row();
-    CHECK_CLOSE(result, 1.0, 1e-3);
-    CHECK_CLOSE(result2, 1.0, 1e-3);
+    CHECK_CLOSE(result, -1.0, 1e-3);
+    CHECK_CLOSE(result2, -1.0, 1e-3);
 }
 
 TEST(MassTerm) {
@@ -203,10 +203,10 @@ TEST(DirectInteractConstantLaplace) {
     Problem<3> p_double = {sphere, sphere, laplace_double, str};
     Problem<3> p_single = {sphere, sphere, laplace_single, str};
     auto res0 = direct_interact(p_double, qs);
-    auto res1 = direct_interact(p_single, qs);
-    for (unsigned int i = 0; i < res1.size(); i++) {
-        res1[i] = -res1[i];
+    for (std::size_t i = 0; i < res0.size(); i++) {
+        res0[i] = -res0[i];
     }
+    auto res1 = direct_interact(p_single, qs);
 
     Problem<3> p_mass = {sphere, sphere, one<3>, str};
     auto res2 = mass_term(p_mass, qs);
@@ -217,7 +217,7 @@ TEST(DirectInteractConstantLaplace) {
 
 /* Two dimensional test cases */
 double exact_single(double obs_x, double obs_y) {
-    return -0.0795775 * (
+    return 0.0795775 * (
         -2 * obs_y * atan((-1 + obs_x) / obs_y) +
         2 * obs_y * atan((1 + obs_x) / obs_y) -
         (-1 + obs_x) * (-2 + log(pow((1 - obs_x), 2) + pow(obs_y, 2))) +
@@ -225,7 +225,7 @@ double exact_single(double obs_x, double obs_y) {
 }
 
 double exact_double(double x, double y) {
-    return (atan((1 - x) / y) + atan((1 + x) / y)) / (2 * M_PI);
+    return -(atan((1 - x) / y) + atan((1 + x) / y)) / (2 * M_PI);
 }
 
 /* Check that integrals over a single element are being properly
@@ -280,7 +280,7 @@ TEST(ConstantLaplace2D) {
         for (std::size_t i = 0; i < obs_circle.facets.size(); i++) {
             ObsPt<2> pt = {0.390, obs_circle.facets[i].vertices[0], {0,0}}; 
             double result = eval_integral_equation(p, qs, pt);
-            CHECK_CLOSE(result, 1.0, 1e-4);
+            CHECK_CLOSE(-result, 1.0, 1e-4);
         }
 
         // Now, do all of the observation quadrature points using direct_interact
@@ -290,7 +290,7 @@ TEST(ConstantLaplace2D) {
         double scaling_factor = 0.5 * dist(obs_circle.facets[0].vertices[0],
                                            obs_circle.facets[0].vertices[1]);
         auto results = direct_interact(p, qs);
-        std::vector<double> all_ones(results.size(), scaling_factor);
+        std::vector<double> all_ones(results.size(), -scaling_factor);
         CHECK_ARRAY_CLOSE(results, all_ones, results.size(), 1e-4);
     }
 }
@@ -335,6 +335,6 @@ TEST(DirectInteractOne3d) {
 
 int main(int, char const *[])
 {
-    // return UnitTest::RunAllTests();
-    return RunOneTest("ConstantLaplace2D");
+    return UnitTest::RunAllTests();
+    // return RunOneTest("ConstantLaplace2D");
 }
