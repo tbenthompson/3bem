@@ -78,9 +78,19 @@ inline Vec3<double> spherify_pt(Vec3<double> pt,
     return ret;
 }
 
-inline Vec3<double> random_pt_sphere(Vec3<double> c, double r) {
+template <int dim>
+inline Vec<double,dim> random_pt_sphere(Vec<double,dim> c, double r);
+
+template <>
+inline Vec3<double> random_pt_sphere<3>(Vec3<double> c, double r) {
     auto pt = random_pt();
     return spherify_pt(pt, c, r);
+}
+
+template <>
+inline Vec2<double> random_pt_sphere<2>(Vec2<double> c, double r) {
+    auto sphere_pt = random_pt_sphere<3>({c[0], c[1], 0.0}, r);
+    return {sphere_pt[0], sphere_pt[1]};
 }
 
 inline double error_inf(const std::vector<double>& a, 
@@ -94,7 +104,8 @@ inline double error_inf(const std::vector<double>& a,
 
 template <int dim>
 class Mesh;
-typedef Mesh<3> Mesh3D;
-void hdf_out(const std::string& filename, const Mesh3D& mesh,
+
+template <int dim>
+void hdf_out(const std::string& filename, const Mesh<dim>& mesh,
              const std::vector<double>& data);
 #endif
