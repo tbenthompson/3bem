@@ -52,12 +52,12 @@ TEST_FIXTURE(IntegrationProb, IntegralOne) {
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceSingle) {
-    kernel = laplace_single;
+    kernel = laplace_single<3>;
     exact = 0.0269063; go(); check();
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceDouble) {
-    kernel = laplace_double;
+    kernel = laplace_double<3>;
     exact = -0.00621003; go(); check();
 }
 
@@ -75,7 +75,7 @@ TEST(RichardsonZeros) {
 
 TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
     q = tri_gauss(3);
-    kernel = laplace_single;
+    kernel = laplace_single<3>;
     double offset = 0.5;
     std::vector<double> vals;
     obs_n = {1,0,0};
@@ -138,7 +138,7 @@ TEST(EvalIntegralEquationSphereSurfaceArea) {
 }
 
 TEST(ConstantLaplace) {
-    EvalProb ep(5, 3, 2, laplace_double);
+    EvalProb ep(5, 3, 2, laplace_double<3>);
     double result = ep.go();
     double result2 = ep.go_row();
     CHECK_CLOSE(result, -1.0, 1e-3);
@@ -146,7 +146,7 @@ TEST(ConstantLaplace) {
 }
 
 TEST(ConstantLaplaceBoundary) {
-    EvalProb ep(1, 3, 3, laplace_double);
+    EvalProb ep(1, 3, 3, laplace_double<3>);
     for (auto f: ep.sphere.facets) {
         for (auto v: f.vertices) {
             ep.obs_pt = v;
@@ -160,7 +160,7 @@ TEST(ConstantLaplaceBoundary) {
 }
 
 TEST(MatrixRowVsEval) {
-    EvalProb ep(4, 3, 2, laplace_double);
+    EvalProb ep(4, 3, 2, laplace_double<3>);
     double result = ep.go();
     double result2 = ep.go_row();
     CHECK_CLOSE(result, -1.0, 1e-3);
@@ -200,8 +200,8 @@ TEST(DirectInteractConstantLaplace) {
     std::vector<double> str(n_dofs, 1.0);
 
     QuadStrategy<3> qs(2, 2, 3, 4, 3.0, 1e-3);
-    Problem<3> p_double = {sphere, sphere, laplace_double, str};
-    Problem<3> p_single = {sphere, sphere, laplace_single, str};
+    Problem<3> p_double = {sphere, sphere, laplace_double<3>, str};
+    Problem<3> p_single = {sphere, sphere, laplace_single<3>, str};
     auto res0 = direct_interact(p_double, qs);
     for (std::size_t i = 0; i < res0.size(); i++) {
         res0[i] = -res0[i];
@@ -239,7 +239,7 @@ TEST(OneSegment2D) {
     auto quad = gauss(15);
     std::vector<std::function<double (double, double)>> exact =
         {exact_single, exact_double};
-    std::vector<Kernel<2>> kernel = {laplace_single2d, laplace_double2d};
+    std::vector<Kernel<2>> kernel = {laplace_single<2>, laplace_double<2>};
     Facet<2> facet{{v0, v1}};
     FaceInfo<2> face(facet);
     CHECK_EQUAL(face.jacobian, 1.0);
@@ -274,7 +274,7 @@ TEST(ConstantLaplace2D) {
     std::vector<double> u(2 * src_circle.facets.size(), 7.0);
     for (double i = 1.0; i < 19.0; i++) {
         Mesh<2> obs_circle = circle_mesh(center, i).refine_repeatedly(refine);
-        Problem<2> p{src_circle, obs_circle, laplace_double2d, u};
+        Problem<2> p{src_circle, obs_circle, laplace_double<2>, u};
 
         // Do it via eval_integral_equation for each vertex.
         for (std::size_t i = 0; i < obs_circle.facets.size(); i++) {

@@ -247,7 +247,7 @@ Vec<double,dim> near_field(const Problem<dim>& p, const QuadStrategy<dim>& qs,
     std::vector<Vec<double,dim>> near_steps(qs.n_singular_steps, 
                                             zeros<Vec<double, dim>>());
     for (int nf = 0; nf < qs.n_singular_steps; nf++) {
-        double nfdn = 5 * 0.0001 * qs.singular_steps[nf];
+        double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
         auto nf_obs_pt = obs.loc + nfdn * obs.normal;
          
         if (dist2 < 0.5 * src_face.area) {

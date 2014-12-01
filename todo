@@ -1,4 +1,3 @@
-** Rearrange to have the limit taking be outside the galerkin integration. Does this help with corners and deadends?
 ** template on double vs float
 ** bug occurs when obs quad order != 2
 ** continue to work towards better bem
@@ -11,3 +10,7 @@
 -- need nodal triangular basis -- the hesthaven electrostatics paper!
 ** Biggest time sink is the calculation of adjacent and identical element interactions
 -- adaptive
+
+** Improve compile times:
+-- move templates into cpp files and librarify them 
+--- vec.h, bem.h, etc

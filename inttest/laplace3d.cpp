@@ -1,27 +1,25 @@
-#include "kernels.h"
-#include "bem.h"
-#include "quadrature.h"
-#include "mesh.h"
+#include "laplace.h"
 #include "mesh_gen.h"
-#include "util.h"
-#include "petsc_interface.h"
 #include <iostream>
 
 double harmonic_u(Vec3<double> x) {
     return 1.0 / hypot(x);
 }
 
-double harmonic_dudn(Vec3<double> x, Vec3<double> center) {
-    return -(sum(x * normalized(x - center))) / pow(hypot(x), 3);
+double harmonic_dudn(Vec3<double> x, Vec3<double> n) {
+    return dot(x, n) / pow(hypot(x), 3);
 }
 
 int main() {
-    //THIS IS HOT!
     const Vec3<double> center = {5, 0, 0};
     double r = 3.0;
+    int refine_level = 3;
+    auto sphere = sphere_mesh(center, r).refine_repeatedly(refine_level);
+    // run_laplace_test<3>(sphere, harmonic_u, harmonic_dudn);
+
+    //THIS IS HOT!
     double obs_radius = 2.7;
     double far_threshold = 3.0;
-    int refine_level = 3;
     int near_quad_pts = 3;
     int near_steps = 8;
     int src_quad_pts = 2;
@@ -32,7 +30,6 @@ int main() {
     QuadStrategy<3> qs(obs_quad_pts, src_quad_pts, near_quad_pts,
                     near_steps, far_threshold, tol);
 
-    auto sphere = sphere_mesh(center, r).refine_repeatedly(refine_level);
 
     auto constraints = ConstraintMatrix::from_constraints(mesh_continuity(sphere));
 
@@ -47,12 +44,13 @@ int main() {
     std::vector<double> dudn(n_dofs);
     for (unsigned int i = 0; i < sphere.facets.size(); i++) {
         for (int d = 0; d < 3; d++) {
-            dudn[3 * i + d] = harmonic_dudn(sphere.facets[i].vertices[d], center);
+            auto n = normalized(unscaled_normal(sphere.facets[i].vertices));
+            dudn[3 * i + d] = harmonic_dudn(sphere.facets[i].vertices[d], n);
         }
     }
 
     TIC
-    Problem<3> p_double = {sphere, sphere, laplace_double, u};
+    Problem<3> p_double = {sphere, sphere, laplace_double<3>, u};
     auto rhs_full = direct_interact(p_double, qs);
     TOC("RHS Eval")
 
@@ -67,7 +65,7 @@ int main() {
     std::cout << "N_dofs: " << rhs.size() << std::endl;
 
     TIC2
-    Problem<3> p_single = {sphere, sphere, laplace_single, {}};
+    Problem<3> p_single = {sphere, sphere, laplace_single<3>, {}};
     auto matrix = interact_matrix(p_single, qs);
     TOC("Matrix construct on " + std::to_string(sphere.facets.size()) + " facets");
     int count = 0;
@@ -94,7 +92,7 @@ int main() {
         ObsPt<3> obs = {obs_len_scale, obs_pt, obs_normal};
        
         double double_layer = eval_integral_equation(p_double, qs, obs);
-        Problem<3> p_s = {sphere, sphere, laplace_single, dudn};
+        Problem<3> p_s = {sphere, sphere, laplace_single<3>, dudn};
         double single_layer = eval_integral_equation(p_s, qs, obs);
         double result = single_layer - double_layer;
         double exact = harmonic_u(obs_pt);
