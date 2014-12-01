@@ -15,21 +15,22 @@ std::vector<int> naturals(int max) {
 }
 
 //TODO: Allow multiple output vectors.
-void hdf_out(const std::string& filename, const Mesh<3>& mesh,
+template <int dim>
+void hdf_out(const std::string& filename, const Mesh<dim>& mesh,
              const std::vector<double>& data) {
 
     /* Create a new file using default properties. */
     hid_t file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     /* Create the data space for the vertices dataset. */
-    hsize_t dims[2];
-    dims[0] = mesh.facets.size();
-    dims[1] = 9;
-    hid_t facets_dataspace_id = H5Screate_simple(2, dims, NULL);
+    hsize_t data_dims[2];
+    data_dims[0] = mesh.facets.size();
+    data_dims[1] = dim * dim;
+    hid_t facets_dataspace_id = H5Screate_simple(2, data_dims, NULL);
 
-    dims[0] = mesh.facets.size() * 3;
-    dims[1] = 1;
-    hid_t values_dataspace_id = H5Screate_simple(2, dims, NULL); 
+    data_dims[0] = mesh.facets.size() * dim;
+    data_dims[1] = 1;
+    hid_t values_dataspace_id = H5Screate_simple(2, data_dims, NULL); 
 
     /* Create the dataset. */
     hid_t facets_dataset_id = H5Dcreate2(file_id, "/facets", H5T_NATIVE_DOUBLE,
@@ -54,3 +55,8 @@ void hdf_out(const std::string& filename, const Mesh<3>& mesh,
     /* Close the file. */
     H5Fclose(file_id);
 }
+
+template
+void hdf_out<2>(const std::string&, const Mesh<2>&, const std::vector<double>&);
+template
+void hdf_out<3>(const std::string&, const Mesh<3>&, const std::vector<double>&);

@@ -119,7 +119,7 @@ struct EvalProb {
         return row_sum;
     }
 
-    Mesh3D sphere;
+    Mesh<3> sphere;
     QuadStrategy<3> qs;
     Kernel<3> kernel;
     Vec3<double> obs_pt;
