@@ -7,19 +7,14 @@
 #include "kernels.h"
 #include "quadrature.h"
 #include "util.h"
+#include "basis.h"
 #include "petsc_interface.h"
 
-template <int dim>
-using HarmonicFnc = std::function<double(Vec<double,dim>)>;
-
-template <int dim>
-using HarmonicDeriv = std::function<double(Vec<double,dim>, Vec<double,dim>)>;
-
-template <int dim>
-void run_laplace_test(const Mesh<dim>& mesh,
+template <int dim, typename Fnc, typename Deriv>
+void dirichlet_laplace_test(const Mesh<dim>& mesh,
                       std::vector<Vec<double,dim>> test_interior_pts,
-                      const HarmonicFnc<dim>& fnc,
-                      const HarmonicDeriv<dim>& deriv) {
+                      const Fnc& fnc,
+                      const Deriv& deriv) {
     double far_threshold = 3.0;
     int near_quad_pts = 3;
     int near_steps = 8;
@@ -27,29 +22,14 @@ void run_laplace_test(const Mesh<dim>& mesh,
     //TODO: Something is seriously wrong when I use obs_quad_pts = 3
     int obs_quad_pts = 2;
     double tol = 1e-4;
-    double linear_solve_tol = 1e-5;
-
     QuadStrategy<dim> qs(obs_quad_pts, src_quad_pts, near_quad_pts,
                          near_steps, far_threshold, tol);
 
     auto constraints = ConstraintMatrix::from_constraints(mesh_continuity(mesh));
 
     //TODO: Interpolate function
-    int n_dofs = dim * mesh.facets.size();
-    std::vector<double> u(n_dofs);
-    for (unsigned int i = 0; i < mesh.facets.size(); i++) {
-        for (int d = 0; d < dim; d++) {
-            u[dim * i + d] = fnc(mesh.facets[i].vertices[d]);
-        }
-    }
-
-    std::vector<double> dudn(n_dofs);
-    for (unsigned int i = 0; i < mesh.facets.size(); i++) {
-        for (int d = 0; d < dim; d++) {
-            auto n = normalized(unscaled_normal(mesh.facets[i].vertices));
-            dudn[dim * i + d] = deriv(mesh.facets[i].vertices[d], n); 
-        }
-    }
+    auto u = interpolate(mesh, fnc);
+    auto dudn = interpolate(mesh, deriv);
 
     // Construct and evaluate the RHS for a Dirichlet Laplace problem:
     // The integral equation is: DoubleLayer(u) + u = SingleLayer(dudn)
@@ -62,6 +42,7 @@ void run_laplace_test(const Mesh<dim>& mesh,
     Problem<dim> p_mass = {mesh, mesh, one<dim>, u};
     auto rhs_mass = mass_term(p_mass, qs);
     
+    int n_dofs = dim * mesh.facets.size();
     std::vector<double> rhs_full(n_dofs);
     double mass_factor[2] = {0.75, 1.0};
     for (unsigned int i = 0; i < rhs_full.size(); i++){
@@ -82,6 +63,7 @@ void run_laplace_test(const Mesh<dim>& mesh,
     // Actually solve the linear system by providing a function to evaluate
     // matrix vector products.
     int count = 0;
+    double linear_solve_tol = 1e-5;
     auto dudn_solved_subset = solve_system(rhs, linear_solve_tol,
         [&] (std::vector<double>& x, std::vector<double>& y) {
             std::cout << "iteration " << count << std::endl;
