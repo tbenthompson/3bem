@@ -248,19 +248,20 @@ Vec<double,dim> near_field(const Problem<dim>& p, const QuadStrategy<dim>& qs,
     std::vector<Vec<double,dim>> near_steps(qs.n_singular_steps, 
                                             zeros<Vec<double, dim>>());
     for (int nf = 0; nf < qs.n_singular_steps; nf++) {
-        double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
+        double nfdn = 5 * 0.0001 * qs.singular_steps[nf];
         auto nf_obs_pt = obs.loc + nfdn * obs.normal;
          
-        if (dist2 > adjacent_threshold[dim - 2] * src_face.area) {
+        // if (dist2 < adjacent_threshold[dim - 2] * src_face.area) {
+        if (dist2 < 0.5 * src_face.area) {
+            auto ns = adaptive_nearfield<dim>(p, qs, obs, src_face, nf_obs_pt);
+            near_steps[nf] += ns;
+        } else {
+            // std::cout << "NON_ADJACENT" << std::endl;
             for (std::size_t i = 0; i < qs.src_near_quad.size(); i++) {
                 near_steps[nf] += qs.src_near_quad[i].w *
                     eval_quad_pt<dim>(qs.src_near_quad[i].x_hat, p.K, src_face,
                                  nf_obs_pt, obs.normal);
             }
-        } else {
-            Vec<double,dim> ns =
-                adaptive_nearfield<dim>(p, qs, obs, src_face, nf_obs_pt);
-            near_steps[nf] += ns;
         }
     }
     return richardson_step(near_steps);
@@ -288,6 +289,7 @@ std::vector<double> integral_equation_vector(const Problem<dim>& p,
 
         Vec<double,dim> integrals;
         if (dist2 < pow(qs.far_threshold, 2) * src_face.area) {
+        // if (true) {
             integrals = near_field(p, qs, obs, src_face, dist2);
         } else {
             // farfield
