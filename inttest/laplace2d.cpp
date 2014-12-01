@@ -8,19 +8,19 @@
 #include <iostream>
 
 double harmonic_u(Vec2<double> x) {
-    // return std::log(std::sqrt(x[0] * x[0] + x[1] * x[1]));
-    return std::atan(x[1] / x[0]);
+    return std::log(std::sqrt(x[0] * x[0] + x[1] * x[1]));
+    // return std::atan(x[1] / x[0]);
 }
 
 double harmonic_dudn(Vec2<double> loc, Vec2<double> center) {
     auto n = normalized(center - loc);
-    /* return dot(n, loc) / hypot2(loc); */
+    return dot(n, loc) / hypot2(loc);
     
-    double x = loc[0];
-    double y = loc[1];
-    double dy = 1.0 / (x * (1 + (y * y / (x * x))));
-    double dx = (-y / x) * dy;
-    return dot(n, {dx, dy});
+    // double x = loc[0];
+    // double y = loc[1];
+    // double dy = 1.0 / (x * (1 + (y * y / (x * x))));
+    // double dx = (-y / x) * dy;
+    // return dot(n, {dx, dy});
 }
 
 int main() {
@@ -31,13 +31,13 @@ int main() {
     double r = 3.0;
     double obs_radius = 2.9;
     double far_threshold = 3.0;
-    int refine_level = 10;
-    int near_quad_pts = 6;
-    int near_steps = 8;
-    int src_quad_pts = 6;
+    int refine_level = 7;
+    int near_quad_pts = 3;
+    int near_steps = 6;
+    int src_quad_pts = 3;
     //TODO: Something is seriously wrong when I use obs_quad_pts = 3
     int obs_quad_pts = 2;
-    double tol = 1e-4;
+    double tol = 1e-3;
 
     QuadStrategy<2> qs(obs_quad_pts, src_quad_pts, near_quad_pts,
                     near_steps, far_threshold, tol);
@@ -52,7 +52,6 @@ int main() {
         for (int d = 0; d < 2; d++) {
             u[2 * i + d] = harmonic_u(circle.facets[i].vertices[d]);
         }
-        /* std::cout << u[2 * i + 0] << " " << u[2 * i + 1] << std::endl; */
     }
 
     std::vector<double> dudn(n_dofs);
@@ -65,19 +64,15 @@ int main() {
     TIC
     Problem<2> p_double = {circle, circle, laplace_double2d, u};
     auto rhs_double = direct_interact(p_double, qs);
-    TOC("RHS Eval")
-    // return 0;
 
     Problem<2> p_mass = {circle, circle, one<2>, u};
     auto rhs_mass = mass_term(p_mass, qs);
-    assert(rhs_double.size() == rhs_mass.size());
     
     std::vector<double> rhs_full(n_dofs);
     for (unsigned int i = 0; i < rhs_full.size(); i++){
-    // ????????????????????????????????????????????
-    // Why the 0.75? I do not understand. This is strange.
         rhs_full[i] = 1 * rhs_double[i] + 0.75 * rhs_mass[i];
     }
+    TOC("RHS Eval")
 
 
     TIC2
@@ -86,19 +81,7 @@ int main() {
     TOC("Matrix construct on " + std::to_string(circle.facets.size()) + " facets");
     int count = 0;
 
-    auto lhs_full = bem_mat_mult(matrix, n_dofs, dudn);
-
-
-    auto rhs_mass_red = constraints.get_reduced(rhs_mass);
-    auto rhs_double_red = constraints.get_reduced(rhs_double);
     auto rhs = constraints.get_reduced(rhs_full);
-    auto lhs = constraints.get_reduced(lhs_full);
-    for (std::size_t i = 0; i < lhs.size(); i++) {
-        std::cout << lhs[i] << std::endl;
-        std::cout << rhs[i] << std::endl;
-        std::cout << rhs_mass_red[i] << " " << rhs_double_red[i] << std::endl << std::endl;
-    }
-    // return 0;
     auto dudn_solved_subset = solve_system(rhs, 1e-5,
         [&] (std::vector<double>& x, std::vector<double>& y) {
             std::cout << "iteration " << count << std::endl;
