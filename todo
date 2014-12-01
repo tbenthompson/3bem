@@ -1,3 +1,4 @@
+** antiplane fault test case
 ** template on double vs float
 ** bug occurs when obs quad order != 2
 ** continue to work towards better bem
