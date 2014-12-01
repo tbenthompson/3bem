@@ -103,26 +103,6 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
             std::cout << result << " " << exact << std::endl;
         }
     }
-    // double obs_len_scale = get_len_scale(circle, 0, obs_quad_pts);
-    // for(int i = 0; i < 100; i++) {
-    //
-    //     auto obs_pt3d = random_pt_sphere({center[0], center[1], 0.0}, obs_radius);
-    //     Vec2<double> obs_pt = {obs_pt3d[0], obs_pt3d[1]};
-
-    //     auto obs_normal = normalized(center - obs_pt);
-    //     ObsPt<2> obs = {obs_len_scale, obs_pt, obs_normal};
-    //    
-    //     double double_layer = eval_integral_equation(p_double, qs, obs);
-    //     double single_layer = eval_integral_equation(p_single, qs, obs);
-    //     double result = single_layer - double_layer;
-    //     double exact = harmonic_u(obs_pt);
-    //     double error = std::fabs((exact - result) / exact);
-    //     if (error > 1e-2) {
-    //         std::cout << "Failed with point: " << obs_pt << std::endl;
-    //         std::cout << "Exact: " << exact << std::endl;
-    //         std::cout << "Result: " << result << std::endl << std::endl;
-    //     }
-    // }
 }
 
 #endif
