@@ -217,7 +217,7 @@ std::vector<double> get_singular_steps(int n_steps) {
 
 template <int dim>
 QuadStrategy<dim>::QuadStrategy(int obs_order):
-    QuadStrategy(obs_order, obs_order, obs_order * 2, 4, 3.0, 1e-2)
+    QuadStrategy(obs_order, obs_order, obs_order * 2, 8, 3.0, 1e-4)
 {}
 
 template <>

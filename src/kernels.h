@@ -41,6 +41,9 @@ inline double laplace_single(const double& r2, const Vec<double,dim>& delta,
 template <int dim>
 inline double laplace_double(const double& r2, const Vec<double,dim>& delta,
                         const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs);
+template <int dim>
+inline double laplace_hypersingular(const double& r2, const Vec<double,dim>& delta,
+                        const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs);
 
 template <>
 inline double laplace_single<3>(const double& r2, const Vec3<double>& delta,
@@ -64,6 +67,14 @@ template <>
 inline double laplace_double<2>(const double& r2, const Vec2<double>& delta,
                         const Vec2<double>& nsrc, const Vec2<double>& nobs) {
     return dot(nsrc, delta) / (2 * M_PI * r2);
+}
+
+template <>
+inline double laplace_hypersingular<2>(const double& r2, const Vec2<double>& delta,
+                        const Vec2<double>& nsrc, const Vec2<double>& nobs) {
+    return ((-dot(nobs, nsrc) / r2) + 
+            ((2 * dot(nsrc, delta) * dot(nobs, delta)) / (r2 * r2)))
+        / (2 * M_PI);
 }
 
 

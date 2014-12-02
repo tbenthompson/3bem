@@ -72,6 +72,12 @@ Mesh<3> sphere_mesh(const Vec3<double>& center, double r, bool interior) {
         });
 }
 
+Mesh<2> line_mesh(const Vec2<double>& a, const Vec2<double>& b) {
+    std::vector<Vec<double,2>> vertices = {a, b};
+    std::vector<std::array<int, 2>> segs = { {0, 1} };
+    return Mesh<2>::from_vertices_faces(vertices, segs, false, nullptr);
+}
+
 Mesh<2> square_mesh() {
     std::vector<Vec<double,2>> vertices = {
         {0.0, 0.0}, {1.0, 0.0}, {1.0, 1.0}, {0.0, 1.0},

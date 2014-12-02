@@ -33,7 +33,7 @@ struct ThetaDudn {
 
 int main() {
     double obs_radius = 2.9;
-    int refine_level = 7;
+    int refine_level = 4;
     int n_test_pts = 100;
     auto circle = circle_mesh(center, r).refine_repeatedly(refine_level);
     std::vector<Vec2<double>> test_pts(n_test_pts);
