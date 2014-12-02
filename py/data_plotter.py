@@ -23,11 +23,11 @@ def plot2d(facets, data):
     # plt.plot(x, exact, 'r')
     x = vertices[:, 0]
     s = 1
-    uz = s / (2 * np.pi) * np.arctan(1.0 / x)
-    # plt.plot(x, uz, 'r.-')
-    # plt.plot(x, data, 'b.-')
-    plt.plot(x, np.abs(uz - data))
-    plt.ylim([0, 1e-14])
+    uz = s * np.arctan(1.0 / x) / np.pi
+    plt.plot(x, uz, 'r.-')
+    plt.plot(x, data, 'b.-')
+    # plt.plot(x, np.abs(uz - data))
+    # plt.ylim([0, 1e-14])
     plt.show()
 
 def plot3d(facets, data):
