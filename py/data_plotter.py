@@ -12,16 +12,20 @@ def plot2d(facets, data):
         facets[:, y_index].flatten()
     ]).T
 
-    theta = np.linspace(0, 2 * np.pi, 1000)
-    x = 5 + 3 * np.cos(theta)
-    y = 3 * np.sin(theta)
-    n_mag = np.sqrt((5 - x) ** 2 + y ** 2)
-    dy = 1.0 / (x * (1 + (y * y / (x * x))))
-    dx = (-y / x) * dy
-    exact = (5 - x) * dx - y * dy
-    exact /= n_mag;
-    plt.plot(x, exact, 'r')
-    plt.plot(vertices[:, 0], data, 'b')
+    # theta = np.linspace(0, 2 * np.pi, 1000)
+    # x = 5 + 3 * np.cos(theta)
+    # y = 3 * np.sin(theta)
+    # n_mag = np.sqrt((5 - x) ** 2 + y ** 2)
+    # dy = 1.0 / (x * (1 + (y * y / (x * x))))
+    # dx = (-y / x) * dy
+    # exact = (5 - x) * dx - y * dy
+    # exact /= n_mag;
+    # plt.plot(x, exact, 'r')
+    x = np.linspace(-10, 10, 1000)
+    s = 1
+    uz = s / (2 * np.pi) * np.arctan(1.0 / x)
+    plt.plot(x, uz, 'r.-')
+    plt.plot(vertices[:, 0], data, 'b.-')
     plt.show()
 
 def plot3d(facets, data):

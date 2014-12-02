@@ -27,7 +27,6 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     auto constraints = ConstraintMatrix::from_constraints(mesh_continuity(mesh));
 
-    //TODO: Interpolate function
     auto u = interpolate(mesh, fnc);
     auto dudn = interpolate(mesh, deriv);
 
@@ -44,7 +43,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     
     int n_dofs = dim * mesh.facets.size();
     std::vector<double> rhs_full(n_dofs);
-    double mass_factor[2] = {0.75, 1.0};
+    double mass_factor[2] = {1.0, 1.0};
     for (unsigned int i = 0; i < rhs_full.size(); i++){
         rhs_full[i] = rhs_double[i] + mass_factor[dim - 2] * rhs_mass[i];
     }
