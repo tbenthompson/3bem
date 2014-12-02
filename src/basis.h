@@ -4,6 +4,7 @@
 
 //TODO: higher order basis!
 //TODO: move some of the stuff from numerics here.
+//TODO: interpolation with constraints
 
 template <int dim, typename Fnc>
 std::vector<double> interpolate(const Mesh<dim>& mesh,

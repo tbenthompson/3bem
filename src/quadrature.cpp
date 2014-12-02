@@ -226,7 +226,7 @@ QuadStrategy<2>::QuadStrategy(int obs_order, int src_far_order, int src_near_ord
                            double singular_tol):
     obs_quad(gauss(obs_order)),
     src_far_quad(gauss(src_far_order)),
-    src_near_quad(double_exp(src_near_order)),
+    src_near_quad(gauss(src_near_order)),
     far_threshold(far_threshold),
     n_singular_steps(n_singular_steps),
     singular_steps(get_singular_steps(n_singular_steps)),
@@ -239,7 +239,7 @@ QuadStrategy<3>::QuadStrategy(int obs_order, int src_far_order, int src_near_ord
                            double singular_tol):
     obs_quad(tri_gauss(obs_order)),
     src_far_quad(tri_gauss(src_far_order)),
-    src_near_quad(tri_double_exp(src_near_order)),
+    src_near_quad(tri_gauss(src_near_order)),
     far_threshold(far_threshold),
     n_singular_steps(n_singular_steps),
     singular_steps(get_singular_steps(n_singular_steps)),
