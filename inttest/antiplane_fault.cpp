@@ -29,13 +29,11 @@ void full_space() {
 
     // Quadrature details -- these parameters basically achieve machine precision
     double far_threshold = 4.0;
-    int near_quad_pts = 17;
     int near_steps = 8;
     int src_quad_pts = 6;
     int obs_quad_pts = 2;
     double tol = 1e-13;
-    QuadStrategy<2> qs(obs_quad_pts, src_quad_pts, near_quad_pts,
-                         near_steps, far_threshold, tol);
+    QuadStrategy<2> qs(obs_quad_pts, src_quad_pts, near_steps, far_threshold, tol);
 
 
     // Interpolate the integral equation onto the y = -0.5 surface

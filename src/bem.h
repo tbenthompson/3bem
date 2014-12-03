@@ -246,22 +246,17 @@ Vec<double,dim> near_field(const Problem<dim>& p, const QuadStrategy<dim>& qs,
                         const double dist2) {
     std::vector<Vec<double,dim>> near_steps(qs.n_singular_steps, 
                                             zeros<Vec<double, dim>>());
-    for (int nf = 0; nf < qs.n_singular_steps; nf++) {
-        double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
-        auto nf_obs_pt = obs.loc + nfdn * obs.normal;
-         
-        if (dist2 < 0.5 * src_face.area) {
+    if (dist2 < 3.0 * src_face.area) { 
+        for (int nf = 0; nf < qs.n_singular_steps; nf++) {
+            double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
+            auto nf_obs_pt = obs.loc + nfdn * obs.normal;
             auto ns = adaptive_nearfield<dim>(p, qs, obs, src_face, nf_obs_pt);
             near_steps[nf] += ns;
-        } else {
-            for (std::size_t i = 0; i < qs.src_near_quad.size(); i++) {
-                near_steps[nf] += qs.src_near_quad[i].w *
-                    eval_quad_pt<dim>(qs.src_near_quad[i].x_hat, p.K, src_face,
-                                 nf_obs_pt, obs.normal);
-            }
         }
+        return richardson_step(near_steps);
+    } else {
+        return adaptive_nearfield<dim>(p, qs, obs, src_face, obs.loc);
     }
-    return richardson_step(near_steps);
 }
 
 template <int dim>

@@ -29,12 +29,11 @@ QuadRule<2> square_to_tri(QuadRule<2> square_quad);
 template <int dim>
 struct QuadStrategy {
     QuadStrategy(int obs_order);
-    QuadStrategy(int obs_order, int src_far_order, int src_near_order,
-                 int n_singular_steps, double far_threshold, double singular_tol);
+    QuadStrategy(int obs_order, int src_far_order, int n_singular_steps,
+                 double far_threshold, double singular_tol);
 
     const QuadRule<dim-1> obs_quad;
     const QuadRule<dim-1> src_far_quad;
-    const QuadRule<dim-1> src_near_quad;
     
     const double far_threshold;
     const int n_singular_steps;
