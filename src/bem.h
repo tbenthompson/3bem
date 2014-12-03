@@ -259,6 +259,12 @@ Vec<double,dim> near_field(const Problem<dim>& p, const QuadStrategy<dim>& qs,
     }
 }
 
+/* It may be that the exact distance to an element is not required,
+ * but a low precision approximate distance is useful.
+ * This function simply approximates the distance by the distance from
+ * the given point to each vertex of the element.
+ * TODO: A better approximation would include the centroid
+ */
 template <int dim>
 double appx_face_dist2(const Vec<double,dim>& pt,
                        const std::array<Vec<double,dim>,dim>& vs) {
@@ -269,6 +275,13 @@ double appx_face_dist2(const Vec<double,dim>& pt,
     return res;
 }
 
+/* Given an unknown function defined in terms of a polynomial basis:
+ * u(x) = \sum_i U_i \phi_i(x)
+ * Determine the coefficients for the expansion of an integral term in
+ * terms of U_i.
+ * In other words, this function calculates the vector Q_i where
+ * Q_i = \int_{S_{src}} K(x,y) \phi_i(y) dy
+ */
 template <int dim>
 std::vector<double> integral_equation_vector(const Problem<dim>& p,
                                              const QuadStrategy<dim>& qs,
@@ -298,7 +311,11 @@ std::vector<double> integral_equation_vector(const Problem<dim>& p,
     return result;
 }
 
-/* Evaluate the integral equation for a specific observation point.
+/* Evaluate the integral equation for a specific observation point:
+ * \int_{S_{src}} K(x,y) u(y) dy
+ * y is given by the ObsPt<dim> obs.
+ * The caller provides a quadrature strategy that specifies the order and 
+ * tolerance for evaluating the integral equation.
  */
 template <int dim>
 double eval_integral_equation(const Problem<dim>& p, const QuadStrategy<dim>& qs,
@@ -312,6 +329,12 @@ double eval_integral_equation(const Problem<dim>& p, const QuadStrategy<dim>& qs
 }
 
 //TODO: Use a sparse matrix storage format here.
+/* Given a kernel function and two meshes this function calculates the
+ * Galerkin boundary element matrix representing the operator 
+ * \int_{S_{obs}} \phi_i(x) \int_{S_{src}} K(x,y) \phi_j(y) dy dx
+ * where S_{obs} is the observation mesh, S_{src} is the source mesh,
+ * K(x,y) is the kernel function and \phi_i(x) is a basis function.
+ */
 template <int dim>
 std::vector<double> interact_matrix(const Problem<dim>& p,
                                     const QuadStrategy<dim>& qs) {
@@ -351,6 +374,13 @@ std::vector<double> direct_interact(const Problem<dim>& p,
                         p.src_strength);
 }
 
+/* In many integral equations, one of the functions of interest appears
+ * outside of an integration, possibly as the result of integrating against
+ * a delta function. 
+ * In a galerkin boundary element formulation, these free terms look like:
+ * \int_S \phi_i(x) u(x) dx.
+ * This function calculates such integrals using gaussian quadrature.
+ */
 template <int dim>
 std::vector<double> mass_term(const Problem<dim>& p,
                               const QuadStrategy<dim>& qs) {
