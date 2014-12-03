@@ -146,7 +146,7 @@ TEST(ConstantLaplace) {
 }
 
 TEST(ConstantLaplaceBoundary) {
-    EvalProb ep(1, 3, 3, laplace_double<3>);
+    EvalProb ep(2, 4, 4, laplace_double<3>);
     for (auto f: ep.sphere.facets) {
         for (auto v: f.vertices) {
             ep.obs_pt = v;
