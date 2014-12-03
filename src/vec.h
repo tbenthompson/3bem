@@ -257,6 +257,66 @@ inline double tri_area(const std::array<Vec3<double>,3>& corners) {
     return tri_area(unscaled_normal(corners));
 }
 
+//TODO: Pull some of this out into a separate module "geometry.h"
+//TODO: Consider using CGAL or other big fancy libraries
+enum Side {FRONT, INTERSECT, BEHIND};
+
+/* Determine which side of the plane/line defined by triangle/segment 
+ * the provided point is on.
+ */
+template <int dim>
+Side which_side_point(const std::array<Vec<double,dim>,dim>& face,
+                const Vec<double,dim>& pt) {
+    auto normal = unscaled_normal(face);
+    double dot_val = dot(pt - face[0], normal);
+    if (dot_val > 0) { return FRONT; }
+    else if (dot_val < 0) { return BEHIND; }
+    else { return INTERSECT; }
+}
+
+/* Returns the side of a plane that a triangle/segment is on. */
+template <int dim>
+Side facet_side(std::array<Side,dim> s);
+
+template <>
+inline Side facet_side<2>(std::array<Side,2> s) {
+    if (s[0] == s[1]) { return s[0]; } 
+    else if(s[0] == INTERSECT) { return s[1]; }
+    else if(s[1] == INTERSECT) { return s[0]; }
+    else { return INTERSECT; }
+}
+
+template <>
+inline Side facet_side<3>(std::array<Side,3> s) {
+    auto edge0 = facet_side<2>({s[0], s[1]});
+    auto edge1 = facet_side<2>({s[0], s[2]});
+    auto edge2 = facet_side<2>({s[1], s[2]});
+    if (edge0 == INTERSECT && edge1 == edge2) {
+        return edge1;
+    }
+    if (edge1 == INTERSECT && edge2 == edge0) {
+        return edge2;
+    }
+    if (edge2 == INTERSECT && edge0 == edge1) {
+        return edge0;
+    }
+    return edge0;
+}
+
+
+/* Determine the side of the plane/line defined by triangle/segment
+ * that the given triangle/segment is on
+ */
+template <int dim>
+Side which_side_facet(const std::array<Vec<double,dim>,dim>& plane,
+                const std::array<Vec<double,dim>,dim>& face) {
+    std::array<Side,dim> sides;
+    for (int d = 0; d < dim; d++) {
+        sides[d] = which_side_point<dim>(plane, face[d]);
+    }
+    return facet_side<dim>(sides);
+}
+
 template <typename T>
 inline Vec3<bool> operator==(const Vec3<T>& t, const T& rhs) {
     return {t[0] == rhs, t[1] == rhs, t[2] == rhs};

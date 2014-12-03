@@ -139,12 +139,13 @@ template <int dim>
 std::vector<Constraint> mesh_continuity(const Mesh<dim>& m, double eps) {
 
     std::vector<Constraint> constraints;
-    for (unsigned int i = 0; i < m.facets.size(); i++) {
-        for (unsigned int d1 = 0; d1 < dim; d1++) {
-            for (unsigned int j = i + 1; j < m.facets.size(); j++) {
-                for (unsigned int d2 = 0; d2 < dim; d2++) {
-                    if (!all(fabs(m.facets[i].vertices[d1] - 
-                                  m.facets[j].vertices[d2]) < eps)) {
+    for (std::size_t i = 0; i < m.facets.size(); i++) {
+        for (std::size_t d1 = 0; d1 < dim; d1++) {
+            auto i_pt = m.facets[i].vertices[d1];
+            for (std::size_t j = i + 1; j < m.facets.size(); j++) {
+                for (std::size_t d2 = 0; d2 < dim; d2++) {
+                    auto j_pt = m.facets[j].vertices[d2];
+                    if (!all(fabs(i_pt - j_pt) < eps)) {
                         continue;
                     } 
                     constraints.push_back(continuity_constraint(dim * i + d1,
@@ -156,8 +157,66 @@ std::vector<Constraint> mesh_continuity(const Mesh<dim>& m, double eps) {
     return constraints;
 }
 
+//TODO: FIX THE O(N^2) problem here, use hashes or octree?
+template <int dim> 
+ConstraintMatrix apply_discontinuities(const Mesh<dim>& surface,
+                                       const Mesh<dim>& disc,
+                                       const ConstraintMatrix& c_matrix,
+                                       double eps = 1e-10) {
+    auto out_c_map = c_matrix.c_map;
+    for (std::size_t i = 0; i < disc.facets.size(); i++) {
+        for (std::size_t d1 = 0; d1 < dim; d1++) {
+            auto disc_pt = disc.facets[i].vertices[d1];
+            for (std::size_t j = 0; j < surface.facets.size(); j++) {
+                for (std::size_t d2 = 0; d2 < dim; d2++) {
+                    auto surf_pt = surface.facets[j].vertices[d2];
+
+                    // If the vertices do not overlap, nothing is done.
+                    if (!all(fabs(disc_pt - surf_pt) < eps)) {
+                        continue;
+                    } 
+
+                    // Is this DOF constrained? If not, move on.
+                    int dof = dim * j + d2;
+                    auto dof_and_constraint = out_c_map.find(dof);
+                    if (dof_and_constraint == out_c_map.end()) {
+                        continue;
+                    }
+
+                    // Get the other dof for the constraint.
+                    // TODO: Need better DOF handling
+                    int other_dof = dof_and_constraint->second.dof_constraints[0].first;
+                    int other_vert = other_dof % 3;
+                    int other_face = (other_dof - other_vert) / 3;
+                    
+                    // Calculate which side of the disc face the other vertex is on.
+                    auto my_side = which_side_facet<dim>(disc.facets[i].vertices, 
+                                                surface.facets[j].vertices);
+                    auto other_side = which_side_facet<dim>(disc.facets[i].vertices, 
+                                                surface.facets[other_face].vertices);
+                    if (my_side == other_side) {
+                        continue;
+                    }
+                    out_c_map.erase(dof);
+                }
+            }
+        }
+    }
+    return ConstraintMatrix{out_c_map};
+}
+
+// INSTANTIATE TEMPLATES:
 template 
 std::vector<Constraint> mesh_continuity<2>(const Mesh<2>& m, double eps);
 template 
 std::vector<Constraint> mesh_continuity<3>(const Mesh<3>& m, double eps);
+
+template
+ConstraintMatrix apply_discontinuities<2>(const Mesh<2>& surface,
+                                          const Mesh<2>& disc,
+                                          const ConstraintMatrix& c_mat, double eps);
+template
+ConstraintMatrix apply_discontinuities<3>(const Mesh<3>& surface,
+                                          const Mesh<3>& disc,
+                                          const ConstraintMatrix& c_mat, double eps);
 

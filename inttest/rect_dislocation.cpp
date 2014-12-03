@@ -11,26 +11,27 @@ int main() {
     //-- constraints are becoming a problem -- need to loosen constraints
     //   across the fault when it intersect the surface
 
-    double surf_width = 12;
-    int refine_surf = 4;
+    double surf_width = 4;
+    int refine_surf = 6;
     double far_threshold = 3.0;
     int near_quad_pts = 3;
     int near_steps = 5;
     int src_quad_pts = 2;
     int obs_quad_pts = 2;
-    double singular_tolerance = 1e-2;
+    double singular_tolerance = 1e-3;
 
     auto fault = rect_mesh(
-        {-1, 0, -3.0}, {-1, 0, -1.0},
-        {1, 0, -1.0}, {1, 0, -3.0}
-    ).refine_repeatedly(2);
+        {-1, 0, -3.0}, {-1, 0, -0.0},
+        {1, 0, -0.0}, {1, 0, -3.0}
+    ).refine_repeatedly(refine_surf - 2);
 
     auto surface = rect_mesh(
         {-surf_width, -surf_width, 0}, {-surf_width, surf_width, 0},
         {surf_width, surf_width, 0}, {surf_width, -surf_width, 0}
     ).refine_repeatedly(refine_surf);
 
-    auto constraints = ConstraintMatrix::from_constraints(mesh_continuity(surface));
+    auto raw_constraints = ConstraintMatrix::from_constraints(mesh_continuity(surface));
+    auto constraints = apply_discontinuities(surface, fault, raw_constraints);
     std::cout << surface.facets.size() << std::endl;
 
     QuadStrategy<3> qs(obs_quad_pts, src_quad_pts, near_quad_pts,

@@ -56,21 +56,14 @@ void full_space() {
 void half_space() {
     // HALF SPACE STRIKE SLIP FAULT IN ANTIPLANE STRAIN
 
+    // Simple low accuracy quadrature strategy.
     QuadStrategy<2> qs(2);
 
     // Earth's surface
     auto surface2 = line_mesh({-25, 0.0}, {25, 0.0}).refine_repeatedly(10);
     auto raw_constraints = ConstraintMatrix::from_constraints(mesh_continuity(surface2));
     //TODO: generalize the breaking of constraints across a fault-surface intersection
-    auto new_c_map = raw_constraints.c_map;
-    for (std::size_t i = 0; i < surface2.facets.size(); i++) {
-        auto x = surface2.facets[i].vertices[0][0];
-        if (std::fabs(x) < 0.1) {
-            new_c_map.erase(2 * i);
-            new_c_map.erase(2 * i - 1);
-        }
-    }
-    auto constraints = ConstraintMatrix{new_c_map};
+    auto constraints = apply_discontinuities(surface2, fault, raw_constraints);
     
     TIC
     // The RHS is the effect of the fault on the surface.
