@@ -12,7 +12,6 @@ int main() {
     double surf_width = 4;
     int refine_surf = 4;
     double far_threshold = 3.0;
-    int near_quad_pts = 3;
     int near_steps = 5;
     int src_quad_pts = 2;
     int obs_quad_pts = 2;
@@ -32,7 +31,7 @@ int main() {
     auto constraints = apply_discontinuities(surface, fault, raw_constraints);
     std::cout << surface.facets.size() << std::endl;
 
-    QuadStrategy<3> qs(obs_quad_pts, src_quad_pts, near_quad_pts,
+    QuadStrategy<3> qs(obs_quad_pts, src_quad_pts,
                     near_steps, far_threshold, singular_tolerance);
 
     ElasticKernels ek(30e9, 0.25);

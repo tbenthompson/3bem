@@ -95,7 +95,7 @@ struct EvalProb {
              Vec3<double> center = Vec3<double>{0,0,0},
              double r = 3.0):
         sphere(sphere_mesh(center,r).refine_repeatedly(refine_level)),
-        qs(gauss_order, gauss_order, gauss_order, near_eval, 2.0, 1e-2),
+        qs(gauss_order, gauss_order, near_eval, 2.0, 1e-2),
         kernel(k),
         obs_pt(random_pt()),
         obs_n(random_pt()),
@@ -199,7 +199,7 @@ TEST(DirectInteractConstantLaplace) {
     int n_dofs = 3 * sphere.facets.size();
     std::vector<double> str(n_dofs, 1.0);
 
-    QuadStrategy<3> qs(2, 2, 3, 4, 3.0, 1e-3);
+    QuadStrategy<3> qs(2, 2, 4, 3.0, 1e-3);
     Problem<3> p_double = {sphere, sphere, laplace_double<3>, str};
     Problem<3> p_single = {sphere, sphere, laplace_single<3>, str};
     auto res0 = direct_interact(p_double, qs);
@@ -270,7 +270,7 @@ TEST(ConstantLaplace2D) {
     int refine = 6;
     Vec2<double> center = {20.0, 0.0};
     Mesh<2> src_circle = circle_mesh(center, 19.0).refine_repeatedly(refine);
-    QuadStrategy<2> qs(3, 3, 3, 5, 3.0, 1e-3);
+    QuadStrategy<2> qs(3, 3, 5, 3.0, 1e-3);
     std::vector<double> u(2 * src_circle.facets.size(), 7.0);
     for (double i = 1.0; i < 19.0; i++) {
         Mesh<2> obs_circle = circle_mesh(center, i).refine_repeatedly(refine);
@@ -301,7 +301,7 @@ void direct_interact_one_test(const Mesh<dim>& mesh,
     int n_dofs = dim * mesh.facets.size();
     std::vector<double> str(n_dofs, 1.0);
 
-    QuadStrategy<dim> qs(2, 2, 3, 3, 3.0, 1e-2);
+    QuadStrategy<dim> qs(2, 2, 3, 3.0, 1e-2);
     Problem<dim> p = {mesh, mesh, one<dim>, str};
     auto res = direct_interact(p, qs);
     auto matrix = interact_matrix(p, qs);

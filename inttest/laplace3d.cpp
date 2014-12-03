@@ -17,8 +17,7 @@ struct InvDudn {
 };
 
 int main() {
-    //TODO: Something is seriously wrong when I use obs_quad_pts = 3
-    double obs_radius = 2.7;
+    double obs_radius = 2.9;
     int refine_level = 3;
     int n_test_pts = 100;
     auto sphere = sphere_mesh(center, r).refine_repeatedly(refine_level);

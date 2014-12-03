@@ -53,7 +53,8 @@ QuadRule<1> gauss(unsigned int n) {
     assert(n > 0);
     QuadRule<1> retval(n);
     const double tolerance = 1e-14;
-    //Because gaussian quadrature rules are symmetric, I only 
+    //Because gaussian quadrature rules are symmetric, I only compute half of
+    //the points and then mirror across x = 0.
     const unsigned int m = (n+1)/2;
     for (unsigned int i=0;i < m;i++)
     {
@@ -149,16 +150,15 @@ std::vector<double> get_singular_steps(int n_steps) {
 
 template <int dim>
 QuadStrategy<dim>::QuadStrategy(int obs_order):
-    QuadStrategy(obs_order, obs_order, obs_order * 2, 8, 3.0, 1e-4)
+    QuadStrategy(obs_order, obs_order, 8, 3.0, 1e-4)
 {}
 
 template <>
-QuadStrategy<2>::QuadStrategy(int obs_order, int src_far_order, int src_near_order,
+QuadStrategy<2>::QuadStrategy(int obs_order, int src_far_order, 
                            int n_singular_steps, double far_threshold,
                            double singular_tol):
     obs_quad(gauss(obs_order)),
     src_far_quad(gauss(src_far_order)),
-    src_near_quad(gauss(src_near_order)),
     far_threshold(far_threshold),
     n_singular_steps(n_singular_steps),
     singular_steps(get_singular_steps(n_singular_steps)),
@@ -166,12 +166,11 @@ QuadStrategy<2>::QuadStrategy(int obs_order, int src_far_order, int src_near_ord
 {}
 
 template <>
-QuadStrategy<3>::QuadStrategy(int obs_order, int src_far_order, int src_near_order,
+QuadStrategy<3>::QuadStrategy(int obs_order, int src_far_order, 
                            int n_singular_steps, double far_threshold,
                            double singular_tol):
     obs_quad(tri_gauss(obs_order)),
     src_far_quad(tri_gauss(src_far_order)),
-    src_near_quad(tri_gauss(src_near_order)),
     far_threshold(far_threshold),
     n_singular_steps(n_singular_steps),
     singular_steps(get_singular_steps(n_singular_steps)),
