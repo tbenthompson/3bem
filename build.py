@@ -36,8 +36,6 @@ includes = [
     './src',
     '../lib/',
     '../lib/unittest-cpp/src',
-    '../lib/actor-framework/libcaf_core',
-    '../lib/actor-framework/libcaf_opencl',
     '../lib/autocheck/include',
     petsc_dir + '/' + petsc_arch + '/include',
     petsc_dir + '/include'
@@ -56,11 +54,7 @@ cpp_flags.extend(profile_flags)
 lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)
 
-link_flags = '-fopenmp -lOpenCL -lhdf5'.split()
-link_flags.append('-Wl,-rpath=../lib/actor-framework/build/lib')
-link_flags.append('-L../lib/actor-framework/build/lib')
-link_flags.append('-lcaf_core')
-link_flags.append('-lcaf_opencl')
+link_flags = '-fopenmp -lhdf5'.split()
 link_flags.append('-Wl,-rpath=' + petsc_dir + '/' + petsc_arch + '/lib')
 link_flags.append('-L' + petsc_dir + '/' + petsc_arch + '/lib')
 link_flags.append('-lpetsc')
