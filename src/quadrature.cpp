@@ -27,26 +27,6 @@ template Vec3<double> integrate(const QuadRule<1>&,
 template Vec3<double> integrate(const QuadRule<2>&,
         const std::function<Vec3<double>(std::array<double,2>)>&);
 
-
-/* Compute the Double exponential (also called Tanh-Sinh) 
- * quadrature rule with 2n + 1 points.
- */
-QuadRule<1> double_exp(int n, double h) {
-    QuadRule<1> retval;
-    for (int i = -n; i <= n; i++) {
-        const double sinhterm = 0.5 * M_PI * std::sinh(i * h);
-        const double coshsinh = std::cosh(sinhterm);
-        const double x = std::tanh(sinhterm);
-        const double w = h * 0.5 * M_PI * std::cosh(i * h) / (coshsinh * coshsinh);
-        retval.push_back({{x},w});
-    }
-    return retval;
-}
-
-QuadRule<1> double_exp(int n) {
-    return double_exp(n, 0.6 / std::log(n));
-}
-
 /* Evaluate legendre polynomials P_{n}(x) and P_{n - 1}(x).
  * This is a helper function for the Gaussian quadrature algorithm.
  */
@@ -104,36 +84,6 @@ QuadRule<1> gauss(unsigned int n) {
     return retval;
 }
 
-/* A nonlinear mapping that smooths out a singular or near-singular integral.
- *
- * n is the number of points of the underlying Gauss quadrature rule.
- * x0 is the location in reference space of the singularity or most singular point.
- * q specifies how smooth to make the integrand. It must be an odd positive integer.
- *
- * This quadrature rule is presented in section 4.1 of the paper:
- * Aimi, a., and M. Diligenti. “Numerical Integration in 3D Galerkin BEM Solution of HBIEs.” Computational Mechanics 28, no. 3–4 (April 01, 2002): 233–49. doi:10.1007/s00466-001-0284-9.
- * To derive the version used below:
- */
-QuadRule<1> diligenti_mapping(unsigned int n, double x0, int q) {
-    double x0_mapped = from_11_to_01(x0);
-    double inv_q = 1.0 / q;
-    double qth_root_x0 = pow(x0_mapped, inv_q);
-    double qth_root_1mx0 = pow(1 - x0_mapped, inv_q);
-    double zs = qth_root_x0 / (qth_root_x0 + qth_root_1mx0);
-    double delta = (1 - x0_mapped) / pow((1 - zs), q);
-
-    auto underlying = gauss(n);
-    QuadRule<1> retval(n);
-    for (unsigned int i = 0; i < n; i++) {
-        double z_hat = from_11_to_01(underlying[i].x_hat[0]) - zs;
-        double x = from_01_to_11(x0_mapped + delta * pow(z_hat, q));
-        double w = underlying[i].w * q * delta * pow(z_hat, q - 1);
-        retval[i] = {{x},w};
-    }
-    return retval;
-}
-
-
 /* Produce a 2D tensor product quadrature rule from the product of two
  * one quadrature rule. 
  */
@@ -186,24 +136,6 @@ QuadRule<2> tensor_gauss(int n_pts) {
  */
 QuadRule<2> tri_gauss(int n_pts) {
     return square_to_tri(tensor_gauss(n_pts));
-}
-
-/* Produces a 2D tensor product double exponential rule. */
-QuadRule<2> tensor_double_exp(int n_pts, double h) {
-    auto de1d = double_exp(n_pts, h);
-    return tensor_product(de1d, de1d);
-}
-
-/* Produces a 2D tensor product double exponetial rule mapped into the unit
- * triangle (0,0)-(1,0)-(0,1).
- */
-QuadRule<2> tri_double_exp(int n_pts, double h) {
-    return square_to_tri(tensor_double_exp(n_pts, h));
-}
-
-QuadRule<2> tri_double_exp(int n_pts) {
-    double h = 0.6 / std::log(n_pts);
-    return tri_double_exp(n_pts, h);
 }
 
 std::vector<double> get_singular_steps(int n_steps) {

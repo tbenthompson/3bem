@@ -20,10 +20,13 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     int near_steps = 8;
     int src_quad_pts = 2;
     //TODO: Something is seriously wrong when I use obs_quad_pts = 3
-    int obs_quad_pts = 2;
+    int obs_quad_pts = 3;
     double tol = 1e-4;
     QuadStrategy<dim> qs(obs_quad_pts, src_quad_pts, near_quad_pts,
                          near_steps, far_threshold, tol);
+    for(auto qpt: qs.obs_quad) {
+        std::cout << qpt.x_hat << " " << qpt.w << std::endl;
+    }
 
     auto constraints = ConstraintMatrix::from_constraints(mesh_continuity(mesh));
 

@@ -18,18 +18,12 @@ T integrate(const QuadRule<dim>& qr,
             const std::function<T(std::array<double,dim>)>& fnc);
 
 /* One dimensional quadrature methods */
-QuadRule<1> double_exp(int n, double h);
-QuadRule<1> double_exp(int n);
 QuadRule<1> gauss(unsigned int n);
-QuadRule<1> diligenti_mapping(unsigned int n, double x0, int q);
 
 /* Two dimensional quadrature methods */
 QuadRule<2> tensor_product(QuadRule<1> xq, QuadRule<1> yq);
 QuadRule<2> tensor_gauss(int n_pts);
-QuadRule<2> tensor_double_exp(int n_pts, double h);
 QuadRule<2> tri_gauss(int n_pts);
-QuadRule<2> tri_double_exp(int n_pts, double h);
-QuadRule<2> tri_double_exp(int n_pts);
 QuadRule<2> square_to_tri(QuadRule<2> square_quad);
 
 template <int dim>

@@ -8,11 +8,9 @@
 int main() {
     //TODO: Problems:
     //-- doing ~9x as much work because the problem is not vectored
-    //-- constraints are becoming a problem -- need to loosen constraints
-    //   across the fault when it intersect the surface
 
     double surf_width = 4;
-    int refine_surf = 6;
+    int refine_surf = 4;
     double far_threshold = 3.0;
     int near_quad_pts = 3;
     int near_steps = 5;
