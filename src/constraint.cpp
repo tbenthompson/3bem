@@ -51,7 +51,7 @@ std::ostream& operator<<(std::ostream& os, const ConstraintMatrix& cm) {
 }
 
 std::vector<double> ConstraintMatrix::get_all(const std::vector<double>& in,
-                                              int total_dofs) {
+                                              int total_dofs) const {
     std::vector<double> out(total_dofs); 
     int next_in = 0;
     for (int i = 0; i < total_dofs; i++) {
@@ -76,8 +76,8 @@ std::vector<double> ConstraintMatrix::get_all(const std::vector<double>& in,
 //TODO: Is there an alternate formulation for this that does not require modifying the
 //input vec? Should recursive constraints be dealt with upfront? The constrained-dof 
 //is last rule should prevent any cyclic constraints.
-void ConstraintMatrix::add_vec_with_constraints(DOFWeight entry,
-                                                std::vector<double>& vec) {
+void ConstraintMatrix::add_vec_with_constraints(const DOFWeight& entry,
+                                                std::vector<double>& vec) const {
     auto dof_and_constraint = c_map.find(entry.first);
     if (dof_and_constraint == c_map.end()) {
         vec[entry.first] += entry.second;
@@ -95,7 +95,7 @@ void ConstraintMatrix::add_vec_with_constraints(DOFWeight entry,
     }
 }
 
-std::vector<double> ConstraintMatrix::get_reduced(const std::vector<double>& all) {
+std::vector<double> ConstraintMatrix::get_reduced(const std::vector<double>& all) const {
     std::vector<double> condensed_dofs(all.size(), 0.0);
     for (std::size_t i = 0; i < all.size(); i++) {
         add_vec_with_constraints(DOFWeight{i, all[i]}, condensed_dofs);
