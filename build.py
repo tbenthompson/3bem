@@ -41,7 +41,7 @@ includes = [
     petsc_dir + '/include'
 ]
 
-cpp_flags = '-Wall -std=c++11 -fopenmp -mavx'.split()
+cpp_flags = '-Wall -std=c++11 -fopenmp'.split()
 cpp_flags.extend(['-I' + loc for loc in includes])
 
 debug_flags = '-g -Og -DDEBUG=1'.split()
