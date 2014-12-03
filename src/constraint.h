@@ -82,6 +82,23 @@ Constraint boundary_condition(int dof, double value);
 template <int dim>
 class Mesh;
 
+/* Find the overlapping vertices for the given mesh and produce continuity
+ * constraints. 
+ * TODO: Handle hanging nodes?
+ */
 template <int dim>
 std::vector<Constraint> mesh_continuity(const Mesh<dim>& m, double eps = 1e-10);
+
+/* Find the vertices overlapping between a discontinuity mesh and a surface
+ * on which continuity constraints have been applied. 
+ * Note that continuity constraints and ONLY continuity constraints should
+ * have been applied prior to using this function.
+ * TODO: Handle more general cases where its not just the vertices that 
+ * overlap.
+ */
+template <int dim> 
+ConstraintMatrix apply_discontinuities(const Mesh<dim>& surface,
+                                       const Mesh<dim>& disc,
+                                       const ConstraintMatrix& c_mat,
+                                       double eps = 1e-10);
 #endif

@@ -60,6 +60,36 @@ TEST(VecPrint) {
     std::cout << a << std::endl;
 }
 
+TEST(WhichSidePT3D) {
+    auto val = which_side_point<3>({{{0,0,0}, {1,0,0}, {0,1,0}}}, {0,0,-1});
+    CHECK_EQUAL(val, BEHIND);
+    val = which_side_point<3>({{{0,0,0}, {1,0,0}, {0,1,0}}}, {0,0,1});
+    CHECK_EQUAL(val, FRONT);
+    val = which_side_point<3>({{{0,0,0}, {1,0,0}, {0,1,0}}}, {0,0,0});
+    CHECK_EQUAL(val, INTERSECT);
+}
+
+TEST(WhichSidePT2D) {
+    auto val = which_side_point<2>({{{0,0}, {1,0}}}, {0,-1});
+    CHECK_EQUAL(val, BEHIND);
+    val = which_side_point<2>({{{0,0}, {1,0}}}, {0,1});
+    CHECK_EQUAL(val, FRONT);
+    val = which_side_point<2>({{{0,0}, {1,0}}}, {0,0});
+    CHECK_EQUAL(val, INTERSECT);
+}
+
+TEST(SegmentSide) {
+    CHECK_EQUAL(facet_side<2>({FRONT, BEHIND}), INTERSECT);
+    CHECK_EQUAL(facet_side<2>({FRONT, FRONT}), FRONT);
+    CHECK_EQUAL(facet_side<2>({FRONT, INTERSECT}), FRONT);
+}
+
+TEST(TriSide) {
+    CHECK_EQUAL(facet_side<3>({FRONT, FRONT, FRONT}), FRONT);
+    CHECK_EQUAL(facet_side<3>({INTERSECT, FRONT, FRONT}), FRONT);
+    CHECK_EQUAL(facet_side<3>({INTERSECT, INTERSECT, FRONT}), FRONT);
+    CHECK_EQUAL(facet_side<3>({BEHIND, INTERSECT, BEHIND}), BEHIND);
+}
 
 int main() {
     return UnitTest::RunAllTests();

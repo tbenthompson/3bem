@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 # from mpl_toolkits.mplot3d import Axes3D
+import mayavi.mlab as mlab
 from matplotlib.tri import Triangulation
 from okada_wrapper import dc3dwrapper
 
@@ -35,29 +36,33 @@ def main(filename, values_dim):
         alpha = (l+m) / (l + 2 * m)
         v = vertices[i,:]
         success, u, grad_u = dc3dwrapper(alpha, v, 2.0, 90, [-1.0, 1.0],
-                                         [-1.0, 1.0], [-1.0, 0.0, 0.0])
+                                         [-1.0, 2.0], [-1.0, 0.0, 0.0])
+        if success != 0:
+            print "WHOA"
         disp[i, :] = u
     print disp[0,:]
+    vmax = 0.2
+    opts = dict(shading = 'gouraud', vmin = -vmax, vmax = vmax)
     plt.figure()
-    trip1 = plt.tripcolor(vertices[:,0], vertices[:,1], data, shading = 'gouraud', vmin = -0.04, vmax = 0.04)
+    trip1 = plt.tripcolor(vertices[:,0], vertices[:,1], faces, data, **opts)
     # plt.tricontourf(vertices[:,0], vertices[:,1], data, shading = 'gouraud')
     # plt.tricontour(vertices[:,0], vertices[:,1], data,
     #                colors = ['k'], linestyles = 'solid', shading = 'gouraud')
     plt.colorbar()
     plt.figure()
-    trip2 = plt.tripcolor(vertices[:,0], vertices[:,1], disp[:,0], shading = 'gouraud', vmin = -0.04, vmax = 0.04)
+    trip2 = plt.tripcolor(vertices[:,0], vertices[:,1], faces, disp[:,0], **opts)
     # plt.tricontourf(vertices[:,0], vertices[:,1], disp[:,0], shading = 'gouraud')
     # plt.tricontour(vertices[:,0], vertices[:,1], disp[:,0],
     #                colors = ['k'], linestyles = 'solid', shading = 'gouraud')
     plt.colorbar()
 
-    diff = disp[:,0] - data#np.log(np.abs((disp[:,0] - data) / 1)) / np.log(10)
-    plt.figure()
-    trip3 = plt.tripcolor(vertices[:,0], vertices[:,1], diff, shading = 'gouraud', vmin = -0.04, vmax = 0.04)
-    plt.colorbar()
-    plt.figure()
-    trip3 = plt.tripcolor(vertices[:,0], vertices[:,1], diff, shading = 'gouraud')
-    plt.colorbar()
+    # diff = disp[:,0] - data#np.log(np.abs((disp[:,0] - data) / 1)) / np.log(10)
+    # plt.figure()
+    # trip3 = plt.tripcolor(vertices[:,0], vertices[:,1], faces, diff, **opts)
+    # plt.colorbar()
+    # plt.figure()
+    # trip3 = plt.tripcolor(vertices[:,0], vertices[:,1], faces, diff, shading = 'gouraud')
+    # plt.colorbar()
     plt.show()
 
 
