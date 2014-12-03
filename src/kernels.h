@@ -35,6 +35,7 @@ inline double one(const double& r2,
 }
 
 
+/* Laplace/Poisson equation kernels. */
 template <int dim>
 inline double laplace_single(const double& r2, const Vec<double,dim>& delta,
                         const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs);
@@ -77,7 +78,7 @@ inline double laplace_hypersingular<2>(const double& r2, const Vec2<double>& del
         / (2 * M_PI);
 }
 
-
+/* 3D linear isotropic elastic kernels. */
 const double kronecker[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
 class ElasticKernels {

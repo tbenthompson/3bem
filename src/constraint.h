@@ -48,15 +48,14 @@ struct ConstraintMatrix {
 
     /* Accepts a reduced DOF vector and returns a full DOF vector
      */
-    std::vector<double> get_all(const std::vector<double>& in, int total_dofs); 
+    std::vector<double> get_all(const std::vector<double>& in, int total_dofs) const; 
 
     /* Accepts a full DOF vector and returns the reduced DOF vector.
      */
-    std::vector<double> get_reduced(const std::vector<double>& all);
+    std::vector<double> get_reduced(const std::vector<double>& all) const;
 
-    void add_vec_with_constraints(DOFWeight entry,
-                                                 std::vector<double>& rhs);
-    std::vector<double> condense(const std::vector<double>& all);
+    void add_vec_with_constraints(const DOFWeight& entry, std::vector<double>& rhs) const;
+    std::vector<double> condense(const std::vector<double>& all) const;
 
     friend std::ostream& operator<<(std::ostream& os, const ConstraintMatrix& cm);
 

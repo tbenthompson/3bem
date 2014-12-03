@@ -25,7 +25,9 @@ void full_space() {
     // FULL SPACE STRIKE SLIP FAULT IN ANTIPLANE STRAIN
 
     // Surface mesh at y = -0.5
-    auto surface1 = line_mesh({-10, -0.5}, {10, -0.5}).refine_repeatedly(9);
+    auto surface1 = line_mesh({-10, -0.5}, {10, -0.5}).refine_repeatedly(14);
+    auto raw_constraints = ConstraintMatrix::from_constraints(mesh_continuity(surface1));
+    auto constraints = apply_discontinuities(surface1, fault, raw_constraints);
 
     // Quadrature details -- these parameters basically achieve machine precision
     double far_threshold = 4.0;
@@ -37,8 +39,9 @@ void full_space() {
 
 
     // Interpolate the integral equation onto the y = -0.5 surface
+    TIC
     Problem<2> p_fullspace = {fault, surface1, laplace_double<2>, one_vec};
-    auto disp = interpolate(surface1, [&] (Vec2<double> x) {
+    auto disp = constrained_interpolate(surface1, [&] (Vec2<double> x) {
             ObsPt<2> obs = {0.001, x, {0, 1}};
             double val = eval_integral_equation(p_fullspace, qs, obs);
             double exact = std::atan(0.5 / x[0]) / M_PI;
@@ -46,7 +49,8 @@ void full_space() {
                 std::cout << "FAILED Antiplane for x = " << x << std::endl;
             }
             return val;
-        });
+        }, constraints);
+    TOC("Solve fullspace antiplane strike slip motion")
 
     hdf_out("antiplane_full_space.hdf5", surface1, disp);
 }
@@ -60,7 +64,6 @@ void half_space() {
     // Earth's surface
     auto surface2 = line_mesh({-25, 0.0}, {25, 0.0}).refine_repeatedly(10);
     auto raw_constraints = ConstraintMatrix::from_constraints(mesh_continuity(surface2));
-    //TODO: generalize the breaking of constraints across a fault-surface intersection
     auto constraints = apply_discontinuities(surface2, fault, raw_constraints);
     
     TIC

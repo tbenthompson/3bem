@@ -141,7 +141,6 @@ T adaptlobstp2(const double a, const double b,
     }
 }
 
-//TODO: Refactor the shit out of this! Super ugly.
 template <typename T>
 T adaptive_integrate2(double a, double b, 
                       double p_tol, double outer_x, const Kernel<3>& kernel,
@@ -210,6 +209,7 @@ Vec<double,dim> adaptive_nearfield(const Problem<dim>& p,
                                     const FaceInfo<dim>& src_face,
                                     const Vec<double,dim>& nf_obs_pt);
 
+//TODO: Add a test for this function
 template <>
 Vec<double,3> adaptive_nearfield<3>(const Problem<3>& p,
                                     const QuadStrategy<3>& qs,
@@ -227,6 +227,7 @@ Vec<double,3> adaptive_nearfield<3>(const Problem<3>& p,
         }, 0.0, 1.0, qs.singular_tol);
 }
 
+//TODO: Add a test for this function
 template <>
 Vec<double,2> adaptive_nearfield<2>(const Problem<2>& p,
                                     const QuadStrategy<2>& qs,
