@@ -12,6 +12,7 @@ def plot2d(facets, data):
         facets[:, y_index].flatten()
     ]).T
 
+    # Harmonic laplace test
     # theta = np.linspace(0, 2 * np.pi, 1000)
     # x = 5 + 3 * np.cos(theta)
     # y = 3 * np.sin(theta)
@@ -21,13 +22,29 @@ def plot2d(facets, data):
     # exact = (5 - x) * dx - y * dy
     # exact /= n_mag;
     # plt.plot(x, exact, 'r')
+
+    # Antiplane
+    # x = vertices[:, 0]
+    # s = 1
+    # uz = s * np.arctan(1.0 / x) / np.pi
+    # plt.plot(x, uz, 'r.-')
+    # plt.plot(x, data, 'b.-')
+
+    # Plane strain
     x = vertices[:, 0]
     s = 1
-    uz = s * np.arctan(1.0 / x) / np.pi
-    plt.plot(x, uz, 'r.-')
+    delta = 3 * np.pi / 4
+    d = 1
+    xd = d / np.tan(delta)
+    xsi = (x - xd) / d
+    ux = (-s / np.pi) * (
+            np.cos(delta) * (np.arctan(xsi) - (np.pi / 2) * np.sign(x)) +
+            (np.sin(delta) - xsi * np.cos(delta)) / (1 + xsi ** 2))
+    uy = (s / np.pi) * (
+            np.sin(delta) * (np.arctan(xsi) - (np.pi / 2) * np.sign(x)) +
+            (np.cos(delta) + xsi * np.sin(delta)) / (1 + xsi ** 2))
+    plt.plot(x, ux, 'r.-')
     plt.plot(x, data, 'b.-')
-    # plt.plot(x, np.abs(uz - data))
-    # plt.ylim([0, 1e-14])
     plt.show()
 
 def plot3d(facets, data):
