@@ -52,7 +52,7 @@ void full_space() {
         }, constraints);
     TOC("Solve fullspace antiplane strike slip motion")
 
-    hdf_out("antiplane_full_space.hdf5", surface1, disp);
+    hdf_out_surface("antiplane_full_space.hdf5", surface1, disp);
 }
     
 void half_space() {
@@ -62,7 +62,7 @@ void half_space() {
     QuadStrategy<2> qs(2);
 
     // Earth's surface
-    auto surface2 = line_mesh({-25, 0.0}, {25, 0.0}).refine_repeatedly(10);
+    auto surface2 = line_mesh({-50, 0.0}, {50, 0.0}).refine_repeatedly(9);
     auto raw_constraints = ConstraintMatrix::from_constraints(mesh_continuity(surface2));
     auto constraints = apply_discontinuities(surface2, fault, raw_constraints);
     
@@ -92,7 +92,47 @@ void half_space() {
     TOC("Solve antiplane half space.");
     auto soln = constraints.get_all(soln_reduced, n_dofs);
 
-    hdf_out("antiplane_half_space.hdf5", surface2, soln);
+    hdf_out_surface("antiplane_half_space.hdf5", surface2, soln);
+
+
+    // Loop over a bunch of interior points and evaluate the displacement
+    std::vector<Vec2<double>> interior_pts;
+    std::vector<double> interior_disp;
+    std::vector<double> interior_trac;
+    Vec2<double> x_bounds = {-5, 5};
+    Vec2<double> y_bounds = {-5, 0};
+    int nx = 200; int ny = 200;
+    double x = x_bounds[0];
+    TIC2
+    for (int i = 0; i < nx; i++) {
+        double y = y_bounds[0];
+        for (int j = 0; j < ny; j++) {
+            Vec2<double> pt = {x, y};
+            interior_pts.push_back(pt);
+
+            ObsPt<2> obs1 = {0.001, pt, {0,-1}};
+
+            Problem<2> p_disp_fault = {fault, surface2, laplace_double<2>, one_vec};
+            Problem<2> p_disp_surf = {surface2, surface2, laplace_double<2>, soln};
+            double eval_fault = eval_integral_equation(p_disp_fault, qs, obs1);
+            double eval_surf = eval_integral_equation(p_disp_surf, qs, obs1);
+            double eval = eval_surf + eval_fault;
+            interior_disp.push_back(eval);
+
+            Problem<2> p_trac_fault = {fault, surface2, laplace_hypersingular<2>, one_vec};
+            Problem<2> p_trac_surf = {surface2, surface2, laplace_hypersingular<2>, soln};
+            eval_fault = eval_integral_equation(p_trac_fault, qs, obs1);
+            eval_surf = eval_integral_equation(p_trac_surf, qs, obs1);
+            eval = -eval_surf - eval_fault;
+            interior_trac.push_back(eval);
+
+            y += (y_bounds[1] - y_bounds[0]) / ((double)ny - 1);
+        }
+        x += (x_bounds[1] - x_bounds[0]) / ((double)nx - 1);
+    }
+    hdf_out_volume<2>("antiplane_half_space_voluz.hdf5", interior_pts, interior_disp);
+    hdf_out_volume<2>("antiplane_half_space_volty.hdf5", interior_pts, interior_trac);
+    TOC("Interior eval.")
 }
 
 int main() {

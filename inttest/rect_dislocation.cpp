@@ -10,7 +10,7 @@ int main() {
     //-- doing ~9x as much work because the problem is not vectored
 
     double surf_width = 4;
-    int refine_surf = 4;
+    int refine_surf = 6;
     double far_threshold = 3.0;
     int near_steps = 5;
     int src_quad_pts = 2;
@@ -124,7 +124,7 @@ int main() {
                   reduced_soln.begin());
         soln[i] = constraints.get_all(reduced_soln, n_surface_dofs);
     }
-    hdf_out("strike_slip0.hdf5", surface, soln[0]); 
-    hdf_out("strike_slip1.hdf5", surface, soln[1]); 
-    hdf_out("strike_slip2.hdf5", surface, soln[2]); 
+    hdf_out_surface("strike_slip0.hdf5", surface, soln[0]); 
+    hdf_out_surface("strike_slip1.hdf5", surface, soln[1]); 
+    hdf_out_surface("strike_slip2.hdf5", surface, soln[2]); 
 }
