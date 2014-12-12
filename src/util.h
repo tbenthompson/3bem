@@ -106,6 +106,11 @@ template <int dim>
 class Mesh;
 
 template <int dim>
-void hdf_out(const std::string& filename, const Mesh<dim>& mesh,
-             const std::vector<double>& data);
+void hdf_out_surface(const std::string& filename, const Mesh<dim>& mesh,
+                     const std::vector<double>& data);
+
+template <int dim> 
+void hdf_out_volume(const std::string& filename,
+                    const std::vector<Vec<double,dim>>& points,
+                    const std::vector<double>& data);
 #endif

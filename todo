@@ -1,14 +1,22 @@
-** template on double vs float
+** decouple the richardson direction from the evaluation normal
 ** continue to work towards better bem
 -- vector direct_interact and dof handling? 
--- Try out some adaptivity for the surface mesh
--- try the nearly singular tri rule = http://www98.griffith.edu.au/dspace/bitstream/handle/10072/54329/86520_1.pdf?sequence=1
-** 3-10th order basis functions for solution and geometry
--- on triangles? how?
--- need nodal triangular basis -- the hesthaven electrostatics paper!
-** Biggest time sink is the calculation of adjacent and identical element interactions
--- adaptive
+** LMS problem
+** gravity problem in plane strain -- valleys!
+** link BEM to FMM
+** design an input file format and load 2D/3D problems
+** more systematic python loading/viewing
 
+
+
+Longer term:
+** stokes flow example
+** higher order bases
+** simple adaptive meshing
+** faster near-field matrix construction
+-- try the nearly singular tri rule = 
+    http://www98.griffith.edu.au/dspace/bitstream/handle/10072/54329/86520_1.pdf?sequence=1
 ** Improve compile times:
 -- move templates into cpp files and librarify them 
 --- vec.h, bem.h, etc
+** template on double vs float?

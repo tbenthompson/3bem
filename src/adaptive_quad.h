@@ -73,7 +73,7 @@ T adaptlobstp(const std::function<T(double)>& f, const double a, const double b,
     if (all(is + (i1 - i2) == is)) {
         return i1;
     } else if (mll <= a or b <= mrr) {
-        std::cout << "YIKES!" << std::endl;
+        // std::cout << "YIKES FROM ADAPT!" << std::endl;
         return i1;
     } else {
         return adaptlobstp(f, a, mll, fa, fmll, is)

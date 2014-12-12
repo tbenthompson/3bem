@@ -84,7 +84,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     // Output the error and the solution 
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
-    hdf_out("laplace" + std::to_string(dim) + "d.hdf5", mesh, dudn_solved); 
+    hdf_out_surface("laplace" + std::to_string(dim) + "d.hdf5", mesh, dudn_solved); 
 
     for(int i = 0; i < test_interior_pts.size(); i++) {
         auto obs_pt = test_interior_pts[i]; 

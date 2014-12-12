@@ -129,7 +129,7 @@ T adaptlobstp2(const double a, const double b,
     if (all(is + (i1 - i2) == is)) {
         return i1;
     } else if (mll <= a or b <= mrr) {
-        std::cout << "YIKES!" << std::endl;
+        std::cout << "YIKES FROM ADAPTIVE!" << std::endl;
         return i1;
     } else {
         return adaptlobstp2(a, mll, fa, fmll, is, outer_x, kernel, face, obs_loc, obs_n)

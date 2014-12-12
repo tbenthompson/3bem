@@ -24,27 +24,27 @@ def plot2d(facets, data):
     # plt.plot(x, exact, 'r')
 
     # Antiplane
-    # x = vertices[:, 0]
-    # s = 1
-    # uz = s * np.arctan(1.0 / x) / np.pi
-    # plt.plot(x, uz, 'r.-')
-    # plt.plot(x, data, 'b.-')
-
-    # Plane strain
     x = vertices[:, 0]
     s = 1
-    delta = 3 * np.pi / 4
-    d = 1
-    xd = d / np.tan(delta)
-    xsi = (x - xd) / d
-    ux = (-s / np.pi) * (
-            np.cos(delta) * (np.arctan(xsi) - (np.pi / 2) * np.sign(x)) +
-            (np.sin(delta) - xsi * np.cos(delta)) / (1 + xsi ** 2))
-    uy = (s / np.pi) * (
-            np.sin(delta) * (np.arctan(xsi) - (np.pi / 2) * np.sign(x)) +
-            (np.cos(delta) + xsi * np.sin(delta)) / (1 + xsi ** 2))
-    plt.plot(x, ux, 'r.-')
+    uz = s * np.arctan(1.0 / x) / np.pi
+    plt.plot(x, uz, 'r.-')
     plt.plot(x, data, 'b.-')
+
+    # Plane strain
+    # x = vertices[:, 0]
+    # s = 1
+    # delta = 3 * np.pi / 4
+    # d = 1
+    # xd = d / np.tan(delta)
+    # xsi = (x - xd) / d
+    # ux = (-s / np.pi) * (
+    #         np.cos(delta) * (np.arctan(xsi) - (np.pi / 2) * np.sign(x)) +
+    #         (np.sin(delta) - xsi * np.cos(delta)) / (1 + xsi ** 2))
+    # uy = (s / np.pi) * (
+    #         np.sin(delta) * (np.arctan(xsi) - (np.pi / 2) * np.sign(x)) +
+    #         (np.cos(delta) + xsi * np.sin(delta)) / (1 + xsi ** 2))
+    # plt.plot(x, uy, 'r.-')
+    # plt.plot(x, data, 'b.-')
     plt.show()
 
 def plot3d(facets, data):
@@ -66,7 +66,7 @@ def plot3d(facets, data):
 
 def main(filename, values_dim):
     f = h5py.File(filename)
-    facets = f['facets']
+    facets = f['locations']
     data = f['values'][:, values_dim]
     if (facets.shape[1] == 9):
         plot3d(facets, data)
