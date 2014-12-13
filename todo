@@ -1,4 +1,5 @@
 ** decouple the richardson direction from the evaluation normal
+-- full traction evaluation for antiplane
 ** continue to work towards better bem
 -- vector direct_interact and dof handling? 
 ** LMS problem

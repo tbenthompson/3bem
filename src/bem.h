@@ -69,11 +69,13 @@ FaceInfo<2>::FaceInfo(const Facet<2>& facet):
 template <int dim>
 struct ObsPt {
     static ObsPt<dim> from_face(const QuadRule<dim-1>& obs_quad,
-                       const FaceInfo<dim>& obs_face, int idx) {
+                                const FaceInfo<dim>& obs_face,
+                                int idx) {
         return {
             //TODO: need to divide by q or something like that
             std::sqrt(obs_face.area),
             ref_to_real(obs_quad[idx].x_hat, obs_face.face.vertices),
+            obs_face.normal,
             obs_face.normal 
         };
     }
@@ -81,6 +83,7 @@ struct ObsPt {
     const double len_scale;
     const Vec<double,dim> loc;
     const Vec<double,dim> normal;
+    const Vec<double,dim> richardson_dir;
 };
 
 template <int dim>
@@ -250,7 +253,7 @@ Vec<double,dim> near_field(const Problem<dim>& p, const QuadStrategy<dim>& qs,
     if (dist2 < 3.0 * src_face.area) { 
         for (int nf = 0; nf < qs.n_singular_steps; nf++) {
             double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
-            auto nf_obs_pt = obs.loc + nfdn * obs.normal;
+            auto nf_obs_pt = obs.loc + nfdn * obs.richardson_dir;
             auto ns = adaptive_nearfield<dim>(p, qs, obs, src_face, nf_obs_pt);
             near_steps[nf] += ns;
         }

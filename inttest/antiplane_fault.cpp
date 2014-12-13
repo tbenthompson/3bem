@@ -42,7 +42,7 @@ void full_space() {
     TIC
     Problem<2> p_fullspace = {fault, surface1, laplace_double<2>, one_vec};
     auto disp = constrained_interpolate(surface1, [&] (Vec2<double> x) {
-            ObsPt<2> obs = {0.001, x, {0, 1}};
+            ObsPt<2> obs = {0.001, x, {0, 1}, {0, -1}};
             double val = eval_integral_equation(p_fullspace, qs, obs);
             double exact = std::atan(0.5 / x[0]) / M_PI;
             if (std::fabs(exact - val) > 1e-13 && x[0] != 0) {
@@ -52,7 +52,7 @@ void full_space() {
         }, constraints);
     TOC("Solve fullspace antiplane strike slip motion")
 
-    hdf_out_surface("antiplane_full_space.hdf5", surface1, disp);
+    hdf_out_surface("antiplane_full_space.hdf5", surface1, {disp});
 }
     
 void half_space() {
@@ -92,7 +92,7 @@ void half_space() {
     TOC("Solve antiplane half space.");
     auto soln = constraints.get_all(soln_reduced, n_dofs);
 
-    hdf_out_surface("antiplane_half_space.hdf5", surface2, soln);
+    hdf_out_surface("antiplane_half_space.hdf5", surface2, {soln});
 
 
     // Loop over a bunch of interior points and evaluate the displacement
@@ -110,7 +110,7 @@ void half_space() {
             Vec2<double> pt = {x, y};
             interior_pts.push_back(pt);
 
-            ObsPt<2> obs1 = {0.001, pt, {0,-1}};
+            ObsPt<2> obs1 = {0.001, pt, {0, 1}, {0, -1}};
 
             Problem<2> p_disp_fault = {fault, surface2, laplace_double<2>, one_vec};
             Problem<2> p_disp_surf = {surface2, surface2, laplace_double<2>, soln};
@@ -123,15 +123,15 @@ void half_space() {
             Problem<2> p_trac_surf = {surface2, surface2, laplace_hypersingular<2>, soln};
             eval_fault = eval_integral_equation(p_trac_fault, qs, obs1);
             eval_surf = eval_integral_equation(p_trac_surf, qs, obs1);
-            eval = -eval_surf - eval_fault;
+            eval = eval_surf + eval_fault;
             interior_trac.push_back(eval);
 
             y += (y_bounds[1] - y_bounds[0]) / ((double)ny - 1);
         }
         x += (x_bounds[1] - x_bounds[0]) / ((double)nx - 1);
     }
-    hdf_out_volume<2>("antiplane_half_space_voluz.hdf5", interior_pts, interior_disp);
-    hdf_out_volume<2>("antiplane_half_space_volty.hdf5", interior_pts, interior_trac);
+    hdf_out_volume<2>("antiplane_half_space_voluz.hdf5", interior_pts, {interior_disp});
+    hdf_out_volume<2>("antiplane_half_space_volty.hdf5", interior_pts, {interior_trac});
     TOC("Interior eval.")
 }
 

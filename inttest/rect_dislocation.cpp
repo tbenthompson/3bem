@@ -124,7 +124,5 @@ int main() {
                   reduced_soln.begin());
         soln[i] = constraints.get_all(reduced_soln, n_surface_dofs);
     }
-    hdf_out_surface("strike_slip0.hdf5", surface, soln[0]); 
-    hdf_out_surface("strike_slip1.hdf5", surface, soln[1]); 
-    hdf_out_surface("strike_slip2.hdf5", surface, soln[2]); 
+    hdf_out_surface("rect_dislocation.hdf5", surface, {soln[0], soln[1], soln[2]}); 
 }
