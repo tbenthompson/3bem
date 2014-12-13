@@ -107,6 +107,5 @@ int main() {
                   reduced_soln.begin());
         soln[i] = constraints.get_all(reduced_soln, n_surface_dofs);
     }
-    hdf_out_surface("2dthrust0.hdf5", surface, soln[0]); 
-    hdf_out_surface("2dthrust1.hdf5", surface, soln[1]); 
+    hdf_out_surface("2dthrust0.hdf5", surface, {soln[0], soln[1]});
 }
