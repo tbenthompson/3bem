@@ -96,42 +96,50 @@ void half_space() {
 
 
     // Loop over a bunch of interior points and evaluate the displacement
-    std::vector<Vec2<double>> interior_pts;
-    std::vector<double> interior_disp;
-    std::vector<double> interior_trac;
+    int nx = 200; int ny = 200;
+    int n_tot = nx * ny;
+    std::vector<Vec2<double>> interior_pts(n_tot);
+    std::vector<double> interior_disp(n_tot);
+    std::vector<double> interior_trac[2];
+    interior_trac[0].resize(n_tot);
+    interior_trac[1].resize(n_tot);
+
     Vec2<double> x_bounds = {-5, 5};
     Vec2<double> y_bounds = {-5, 0};
-    int nx = 200; int ny = 200;
-    double x = x_bounds[0];
     TIC2
+#pragma omp parallel for
     for (int i = 0; i < nx; i++) {
-        double y = y_bounds[0];
+        double x = x_bounds[0] + i * (x_bounds[1] - x_bounds[0]) / ((double)nx - 1);
         for (int j = 0; j < ny; j++) {
+            double y = y_bounds[0] + j * (y_bounds[1] - y_bounds[0]) / ((double)ny - 1);
             Vec2<double> pt = {x, y};
-            interior_pts.push_back(pt);
+            interior_pts[i * ny + j] = pt;
 
-            ObsPt<2> obs1 = {0.001, pt, {0, 1}, {0, -1}};
+            ObsPt<2> obs[] = {
+                {0.001, pt, {0, 1}, {0, -1}},
+                {0.001, pt, {1, 0}, {0, -1}}
+            };
 
             Problem<2> p_disp_fault = {fault, surface2, laplace_double<2>, one_vec};
             Problem<2> p_disp_surf = {surface2, surface2, laplace_double<2>, soln};
-            double eval_fault = eval_integral_equation(p_disp_fault, qs, obs1);
-            double eval_surf = eval_integral_equation(p_disp_surf, qs, obs1);
+            double eval_fault = eval_integral_equation(p_disp_fault, qs, obs[0]);
+            double eval_surf = eval_integral_equation(p_disp_surf, qs, obs[0]);
             double eval = eval_surf + eval_fault;
-            interior_disp.push_back(eval);
+            interior_disp[i * ny + j] = eval;
 
-            Problem<2> p_trac_fault = {fault, surface2, laplace_hypersingular<2>, one_vec};
-            Problem<2> p_trac_surf = {surface2, surface2, laplace_hypersingular<2>, soln};
-            eval_fault = eval_integral_equation(p_trac_fault, qs, obs1);
-            eval_surf = eval_integral_equation(p_trac_surf, qs, obs1);
-            eval = eval_surf + eval_fault;
-            interior_trac.push_back(eval);
+            for (int d = 0; d < 2; d++) {
+                Problem<2> p_trac_fault = {fault, surface2, laplace_hypersingular<2>, one_vec};
+                Problem<2> p_trac_surf = {surface2, surface2, laplace_hypersingular<2>, soln};
+                eval_fault = eval_integral_equation(p_trac_fault, qs, obs[d]);
+                eval_surf = eval_integral_equation(p_trac_surf, qs, obs[d]);
+                eval = eval_surf + eval_fault;
+                interior_trac[d][i * ny + j] = eval;
+            }
 
-            y += (y_bounds[1] - y_bounds[0]) / ((double)ny - 1);
         }
-        x += (x_bounds[1] - x_bounds[0]) / ((double)nx - 1);
     }
-    hdf_out_volume<2>("antiplane_half_space_voluz.hdf5", interior_pts, {interior_disp});
-    hdf_out_volume<2>("antiplane_half_space_volty.hdf5", interior_pts, {interior_trac});
+    hdf_out_volume<2>("antiplane_half_space_volu.hdf5", interior_pts, {interior_disp});
+    hdf_out_volume<2>("antiplane_half_space_volt.hdf5", interior_pts, {interior_trac[0], interior_trac[1]});
     TOC("Interior eval.")
 }
 
