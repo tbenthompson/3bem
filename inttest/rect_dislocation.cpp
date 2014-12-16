@@ -6,11 +6,11 @@
 #include "util.h"
 
 int main() {
-    //TODO: Problems:
-    //-- doing ~9x as much work because the problem is not vectored
+    //TODO: Clearly need a better way of handling vector problems!
+    //-- doing ~9x as much work because the problem is not vectored/tensored
 
     double surf_width = 4;
-    int refine_surf = 6;
+    int refine_surf = 4;
     double far_threshold = 3.0;
     int near_steps = 5;
     int src_quad_pts = 2;
@@ -34,11 +34,11 @@ int main() {
     QuadStrategy<3> qs(obs_quad_pts, src_quad_pts,
                     near_steps, far_threshold, singular_tolerance);
 
-    ElasticKernels ek(30e9, 0.25);
+    ElasticKernels<3> ek(30e9, 0.25);
     
     std::size_t n_fault_dofs = 3 * fault.facets.size();
     std::size_t n_surface_dofs = 3 * surface.facets.size();
-    //TODO: Clearly need a better way of handling vector problems!
+
     std::array<std::vector<double>,3> du = {
         std::vector<double>(n_fault_dofs, 1.0),   
         std::vector<double>(n_fault_dofs, 0.0),   

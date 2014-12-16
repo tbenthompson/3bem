@@ -35,7 +35,7 @@ void test_elastic_kernel(std::string name) {
         Vec3<double> obs_n = {std::stod(es[15]), std::stod(es[16]), std::stod(es[17])};
         auto delta = (src_loc - obs_loc);
         double r2 = hypot2(delta);
-        ElasticKernels ek(shear_mod, poisson_ratio);
+        ElasticKernels<3> ek(shear_mod, poisson_ratio);
         double attempt = 0;
         if (name == "disp") {
              attempt = ek.displacement<k,j>(r2, delta, src_n, obs_n);
