@@ -97,14 +97,21 @@ inline double laplace_hypersingular<2>(const double& r2, const Vec2<double>& del
 /* 3D linear isotropic elastic kernels. */
 const double kronecker[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
-struct ElasticKernels {
+template <int dim>
+struct ElasticKernels;
+
+template <>
+struct ElasticKernels<3> {
     ElasticKernels(double shear_modulus, double poisson_ratio):
         shear_modulus(shear_modulus),
         poisson_ratio(poisson_ratio),
         disp_C1(1.0 / (16 * M_PI * shear_modulus * (1 - poisson_ratio))),
         disp_C2(3 - 4 * poisson_ratio),
         trac_C1(1.0 / (8 * M_PI * (1 - poisson_ratio))),
-        trac_C2(1 - 2 * poisson_ratio)
+        trac_C2(1 - 2 * poisson_ratio),
+        hyp_C1(shear_modulus / (4 * M_PI * (1 - poisson_ratio))),
+        hyp_C2(-1 + 4 * poisson_ratio),
+        hyp_C3(3 * poisson_ratio)
     {}
 
     /* The displacement kernel U* taken from the SGBEM book by 
@@ -163,7 +170,6 @@ struct ElasticKernels {
      * S_{lkm} * n_{obs,l} 
      * Then replace m with j to get the formula below.
      */
-    //TODO: precompute some of the constants in here.
     template <int k, int j>
     double hypersingular(const double& r2, 
                     const Vec3<double>& delta, 
@@ -180,10 +186,10 @@ struct ElasticKernels {
         const auto line2 = trac_C2 * (
             3 * nsrc[j] * dr[k] * drdm + kronecker[k][j] * dot(nsrc, nobs) 
             + nsrc[k] * nobs[j]);
-        const auto line3 = 3 * poisson_ratio * (
+        const auto line3 = hyp_C3 * (
                 nsrc[k] * dr[j] * drdm + dot(nsrc, nobs) * dr[k] * dr[j]);
-        const auto line4 = -(1 - 4 * poisson_ratio) * nsrc[j] * nobs[k];
-        const auto C = (shear_modulus / (4 * M_PI * (1 - poisson_ratio) * r2 * r));
+        const auto line4 = hyp_C2 * nsrc[j] * nobs[k];
+        const auto C = hyp_C1 / (r2 * r);
         return C * (line1 + line2 + line3 + line4);
     }
     
@@ -198,10 +204,14 @@ struct ElasticKernels {
     const double disp_C2;
     const double trac_C1;
     const double trac_C2;
+    const double hyp_C1;
+    const double hyp_C2;
+    const double hyp_C3;
 };
 
-struct PlaneStrainKernels {
-    PlaneStrainKernels(double shear_modulus, double poisson_ratio):
+template <>
+struct ElasticKernels<2> {
+    ElasticKernels(double shear_modulus, double poisson_ratio):
         shear_modulus(shear_modulus),
         poisson_ratio(poisson_ratio),
         trac_C2(1 - 2 * poisson_ratio)

@@ -37,6 +37,7 @@ includes = [
     '../lib/',
     '../lib/unittest-cpp/src',
     '../lib/autocheck/include',
+    '../lib/rapidjson/include',
     petsc_dir + '/' + petsc_arch + '/include',
     petsc_dir + '/include'
 ]

@@ -19,7 +19,7 @@ int main() {
     auto raw_constraints = ConstraintMatrix::from_constraints(mesh_continuity(surface));
     auto constraints = apply_discontinuities(surface, fault, raw_constraints);
 
-    PlaneStrainKernels ek(30e9, 0.25);
+    ElasticKernels<2> ek(30e9, 0.25);
 
     std::size_t n_fault_dofs = 2 * fault.facets.size();
     std::size_t n_surface_dofs = 2 * surface.facets.size();
