@@ -3,6 +3,8 @@
 #include "numerics.h"
 #include "util.h"
 
+using namespace tbem;
+
 struct Data {
     Vec3<double> a = {{1.0, 1.0, 2.0}};
     Vec3<double> b = {{2.0, 0.5, -1.0}};

@@ -9,6 +9,8 @@ namespace ac = autocheck;
 #include "quadrature.h"
 #include "adaptive_quad.h"
 
+using namespace tbem;
+
 TEST(GaussQuadrature) {
     auto qr = gauss(4);
     CHECK(qr.size() == 4);

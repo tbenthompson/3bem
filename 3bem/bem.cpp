@@ -1,9 +1,10 @@
 #include <cassert>
 #include "bem.h"
 
-
 /* Perform the richardson extrapolation for the nearfield quadrature. 
  */
+namespace tbem {
+
 template <typename T>
 T richardson_step(const std::vector<T>& values) {
     assert(values.size() > 1);
@@ -43,3 +44,5 @@ std::vector<double> bem_mat_mult(const std::vector<double>& A,
     }
     return res;
 }
+
+} //END NAMESPACE tbem

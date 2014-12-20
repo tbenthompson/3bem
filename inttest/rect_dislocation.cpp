@@ -5,6 +5,8 @@
 #include "petsc_interface.h"
 #include "util.h"
 
+using namespace tbem;
+
 int main() {
     //TODO: Clearly need a better way of handling vector problems!
     //-- doing ~9x as much work because the problem is not vectored/tensored

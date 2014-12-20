@@ -3,6 +3,8 @@
 #include "mesh.h"
 #include "mesh_gen.h"
 
+using namespace tbem;
+
 TEST(Interpolate) {
     auto m = sphere_mesh({0,0,0}, 1).refine_repeatedly(4);
     auto res = interpolate(m, [](const Vec<double,3>& x) {return x[0];});

@@ -7,6 +7,7 @@
 #include "petsc_interface.h"
 #include "basis.h"
 #include "bem.h"
+using namespace tbem;
 
 /* This code:
  * 1. solves for the displacement at y = -0.5 in a full space due to the
@@ -20,6 +21,7 @@ auto fault = line_mesh({0, -1}, {0, 0}).refine_repeatedly(0);
 
 // Unit slip on the fault plane.
 std::vector<double> one_vec(2 * fault.facets.size(), 1.0);
+
 
 void full_space() {
     // FULL SPACE STRIKE SLIP FAULT IN ANTIPLANE STRAIN

@@ -4,6 +4,8 @@
 #include <vector>
 #include <unordered_map>
 
+namespace tbem {
+
 /* A list of matrix constraints is generated from the mesh
  * connectivity and boundary conditions. These constraints
  * are represented by an integer referring to the relevant
@@ -100,4 +102,6 @@ ConstraintMatrix apply_discontinuities(const Mesh<dim>& surface,
                                        const Mesh<dim>& disc,
                                        const ConstraintMatrix& c_mat,
                                        double eps = 1e-10);
+
+} //END NAMESPACE tbem
 #endif

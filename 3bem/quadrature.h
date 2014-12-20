@@ -4,6 +4,8 @@
 #include <utility>
 #include <functional>
 
+namespace tbem {
+
 template <int dim>
 struct QuadPt {
     std::array<double,dim> x_hat;
@@ -40,4 +42,6 @@ struct QuadStrategy {
     const std::vector<double> singular_steps;
     const double singular_tol;
 };
+
+} // END namespace tbem
 #endif

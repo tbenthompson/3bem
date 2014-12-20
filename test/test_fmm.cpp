@@ -5,6 +5,8 @@
 #include "util.h"
 #include "direct.h"
 
+using namespace tbem;
+
 Octree simple_pts_tree(int n, int cell_max) {
     auto pts = random_pts(n);
     return Octree(pts, cell_max);

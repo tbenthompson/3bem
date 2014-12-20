@@ -9,6 +9,8 @@
 #include "vec.h"
 #include "constraint.h"
 
+namespace tbem {
+
 template <int dim>
 struct Facet {
     const Vec<Vec<double,dim>,dim> vertices;
@@ -30,5 +32,7 @@ struct Mesh {
                          bool has_refine_mod = false,
                          const typename Mesh<dim>::RefineFnc& refine_mod = nullptr);
 };
+
+} //END NAMESPACE tbem
 
 #endif

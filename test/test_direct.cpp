@@ -4,6 +4,8 @@
 #include "util.h"
 #include "direct.h"
 
+using namespace tbem;
+
 const double PI = 4.0 * std::atan(1.0);
 
 TEST(Direct) {

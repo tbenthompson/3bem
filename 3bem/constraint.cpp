@@ -4,6 +4,8 @@
 #include "constraint.h"
 #include "mesh.h"
 
+namespace tbem {
+
 std::ostream& operator<<(std::ostream& os, const Constraint& c) {
     os << "Constraint[[(RHS, " << c.rhs_value << "), ";
     for (auto v: c.dof_constraints) {
@@ -220,3 +222,5 @@ ConstraintMatrix apply_discontinuities<3>(const Mesh<3>& surface,
                                           const Mesh<3>& disc,
                                           const ConstraintMatrix& c_mat, double eps);
 
+
+} // END namespace tbem

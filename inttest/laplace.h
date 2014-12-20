@@ -10,6 +10,8 @@
 #include "basis.h"
 #include "petsc_interface.h"
 
+using namespace tbem;
+
 template <int dim, typename Fnc, typename Deriv>
 void dirichlet_laplace_test(const Mesh<dim>& mesh,
                       std::vector<Vec<double,dim>> test_interior_pts,

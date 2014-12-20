@@ -7,6 +7,7 @@
 #include <iostream>
 #include <limits>
 
+namespace tbem { 
 
 /* A box class defined by its center and half_width. These are using as
  * bounding boxes for the nodes in the octree hierarchy.
@@ -118,4 +119,6 @@ public:
     //The deepest possible depth
     static const int deepest = 1 << 18;
 };
+
+} // END namespace tbem
 #endif

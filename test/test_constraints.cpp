@@ -4,6 +4,8 @@
 #include "mesh_gen.h"
 #include <iostream>
 
+using namespace tbem;
+
 TEST(ConstraintsAreCreated) {
     auto c = continuity_constraint(1, 2);
     Constraint correct = {
