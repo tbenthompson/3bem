@@ -1,0 +1,11 @@
+.deps
+build/*
+!build/fabricate.py
+archive/*
+lib/*
+*.so
+*.swp
+*.o
+*.s
+*.pyc
+*.hdf5
