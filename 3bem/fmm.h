@@ -5,6 +5,8 @@
 #include <vector>
 #include <functional>
 
+namespace tbem {
+
 class OctreeCell;
 class Octree;
 class Box;
@@ -106,4 +108,6 @@ double interp_operator(const OctreeCell& cell,
                        double nodex, double nodey, double nodez,
                        double ptx, double pty, double ptz,
                        int n_exp_pts);
+
+} // END namespace tbem
 #endif

@@ -6,6 +6,8 @@ namespace ac = autocheck;
 #include <iostream>
 #include "util.h"
 
+using namespace tbem;
+
 TEST(Naturals) {
     auto nats5 = naturals(3, 8);
     double correct[] = {3, 4, 5, 6, 7};

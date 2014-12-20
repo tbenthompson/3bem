@@ -5,6 +5,8 @@
 #include <iostream>
 #include <vector>
 
+namespace tbem {
+
 /* Some methods for efficient indexing of std::vector by a std::array<int,n>
  */
 template <typename T>
@@ -368,5 +370,7 @@ template <>
 inline Vec3<double> zeros<Vec3<double>>() {return {0.0, 0.0, 0.0};}
 template <>
 inline Vec2<double> zeros<Vec2<double>>() {return {0.0, 0.0};}
+
+} // END namespace tbem
 
 #endif

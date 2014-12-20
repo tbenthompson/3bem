@@ -12,6 +12,10 @@
 #include "adaptive_quad.h"
 #include "quadrature.h"
 
+
+namespace tbem {
+
+
 template <int dim>
 class QuadStrategy;
 
@@ -426,4 +430,6 @@ double get_len_scale<2>(Mesh<2>& mesh, int which_face, int q) {
     return dist(mesh.facets[which_face].vertices[1],
                 mesh.facets[which_face].vertices[0]) / q;
 }
+
+} // END NAMESPACE tbem
 #endif

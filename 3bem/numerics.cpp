@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cassert>
 
+namespace tbem {
 
 /* Evaluate the chebyshev polynomials up through degree n = n_max
  * at the point x_hat in the range [-1, 1].
@@ -81,3 +82,5 @@ std::vector<double> cheb_pts_first_kind(unsigned int n_pts) {
     }
     return x;
 }
+
+} //END NAMESPACE tbem

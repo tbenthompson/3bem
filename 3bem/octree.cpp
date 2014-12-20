@@ -4,6 +4,8 @@
 #include "vec.h"
 #include <assert.h>
 
+namespace tbem {
+
 // TODO: Should these box_from_* functions be Box constructors?
 Box box_from_min_max(const Vec3<double> min_corner,
                      const Vec3<double> max_corner) {
@@ -197,3 +199,5 @@ OctreeCell& Octree::get_root() {
 int Octree::get_root_index() const {
     return cells.size() - 1;
 }
+
+} // END namespace tbem

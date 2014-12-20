@@ -6,6 +6,8 @@
 #include "numerics.h"
 #include <immintrin.h>
 
+namespace tbem {
+
 typedef std::function<double (double, double, double, double, double, double)> Kernel;
 
 inline double one_kernel(double,double,double,double,double,double) {
@@ -42,4 +44,6 @@ inline std::vector<double> direct_n_body(std::array<std::vector<double>,3>& src_
     }
     return out_vals;
 }
+
+} // END namespace tbem
 #endif

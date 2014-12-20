@@ -3,6 +3,8 @@
 #include "util.h"
 #include "shared.h"
 
+using namespace tbem;
+
 TEST(MortonEncode) {
     int split = 2;
     //TODO: This could be a property based test. Use autocheck.

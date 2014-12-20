@@ -1,5 +1,6 @@
 #include "octree.h"
 #include "util.h"
+using namespace tbem;
 
 int main() {
     const int n = 3e7;

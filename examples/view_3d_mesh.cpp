@@ -4,6 +4,8 @@
 #include "numerics.h"
 #include <GL/glut.h>
 
+using namespace tbem;
+
 void draw_mesh(Mesh<3> msh) {
     glBegin(GL_TRIANGLES);
     for(auto f: msh.facets) {

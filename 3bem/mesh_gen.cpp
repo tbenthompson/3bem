@@ -1,6 +1,8 @@
 #include "mesh_gen.h"
 #include "vec.h"
 
+namespace tbem {
+
 Mesh<3> cube_mesh() {
     std::vector<std::array<double, 3>> vertices = {
         {0.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,1.0,1.0},
@@ -106,3 +108,5 @@ Mesh<2> circle_mesh(std::array<double,2> c, double r) {
             };
         });
 }
+
+} //END namespace tbem
