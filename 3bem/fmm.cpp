@@ -7,6 +7,8 @@
 #include "util.h"
 #include <list>
 
+namespace tbem {
+
 std::array<std::vector<double>,3> get_3d_expansion_nodes(int n_exp_pts) {
     auto nodes = cheb_pts_first_kind(n_exp_pts);
     std::array<std::vector<double>,3> nodes_3d;
@@ -439,3 +441,5 @@ void FMMInfo::fmm() {
     exec_jobs<&FMMInfo::M2P_cell_cell>(*this, m2p_jobs, "M2P");
     // TOC("M2P");
 }
+
+} // END namespace tbem

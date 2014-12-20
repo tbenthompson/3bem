@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <iostream>
 
+namespace tbem {
+
 template <typename T, typename Compare>
 std::vector<int> sort_permutation(std::vector<T> const& vec,
                                   Compare compare)
@@ -46,4 +48,6 @@ inline uint64_t morton_encode(unsigned int x, unsigned int y, unsigned int z) {
     uint64_t answer = 0 | split_by_3(x) | split_by_3(y) << 1 | split_by_3(z) << 2;
     return answer;
 }
+
+} // END namespace tbem
 #endif

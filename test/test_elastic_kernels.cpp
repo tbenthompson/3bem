@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+using namespace tbem;
 
 template <int k, int j>
 void test_elastic_kernel(std::string name) {

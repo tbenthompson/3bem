@@ -1,6 +1,8 @@
 #include "mesh.h"
 #include "util.h"
 
+namespace tbem {
+
 /* Produces 2 new segments by splitting the current segment 
  * in half.
  */
@@ -127,3 +129,5 @@ Mesh<dim>::from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
 
 template class Mesh<2>;
 template class Mesh<3>;
+
+} //END NAMESPACE tbem

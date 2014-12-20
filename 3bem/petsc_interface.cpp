@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iostream>
 
+namespace tbem {
+
 /* Useful for debugging PETSc code.
  */
 void print_vec(Vec& x) {
@@ -109,3 +111,5 @@ std::vector<double> solve_system(std::vector<double> rhs,
     ierr = KSPSolve(ksp, b, xo);CHKERRABORT(comm,ierr);
     return retval;
 }
+
+} // END namespace tbem

@@ -8,6 +8,8 @@
 #include <string>
 #include "vec.h"
 
+namespace tbem {
+
 #define TIC\
     std::chrono::high_resolution_clock::time_point start =\
         std::chrono::high_resolution_clock::now();\
@@ -113,4 +115,6 @@ template <int dim>
 void hdf_out_volume(const std::string& filename,
                     const std::vector<Vec<double,dim>>& points,
                     const std::vector<std::vector<double>>& data);
+
+} //END namespace tbem
 #endif

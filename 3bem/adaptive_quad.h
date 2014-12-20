@@ -31,6 +31,8 @@
 #include <limits>
 #include <iostream>
 #include "vec.h"
+
+namespace tbem {
 using std::fabs;
 
 inline double max(double x) {return x;}
@@ -98,7 +100,7 @@ double get_error_is(double p_tol, double erri1, double erri2, double is,
         tol = p_tol / R;
     }
 
-    double retval = std::fabs(is) * tol / eps;
+    double retval = fabs(is) * tol / eps;
     if (retval == 0.0) {
         retval = b - a;
     }
@@ -172,4 +174,5 @@ T adaptive_integrate(const std::function<T(double)>& f, double a, double b, doub
     return adaptlobstp(f, a, b, fa, fb, err_is);
 }
 
+} //END NAMESPACE tbem
 #endif

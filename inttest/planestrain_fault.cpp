@@ -5,6 +5,8 @@
 #include "petsc_interface.h"
 #include "util.h"
 
+using namespace tbem;
+
 int main() {
     // HALF SPACE THRUST FAULT IN PLANE STRAIN
 

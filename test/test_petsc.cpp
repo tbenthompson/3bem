@@ -3,6 +3,8 @@
 #include "util.h"
 #include <iostream>
 
+using namespace tbem;
+
 TEST(SolveSystem) {
     int n = 10;
     int divide = 3.0;

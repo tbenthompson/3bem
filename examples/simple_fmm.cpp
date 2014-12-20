@@ -3,6 +3,7 @@
 #include "numerics.h"
 #include "util.h"
 #include "direct.h"
+using namespace tbem;
 
 int main() {
     int n = (int)1e4;
