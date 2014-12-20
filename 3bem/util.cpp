@@ -2,6 +2,8 @@
 #include "hdf5.h"
 #include "mesh.h"
 
+namespace tbem {
+
 /* equivalent to range(min, max) in python */
 std::vector<int> naturals(int min, int max) {
     std::vector<int> indices(max);
@@ -112,3 +114,5 @@ void hdf_out_volume<2>(const std::string&, const std::vector<Vec<double,2>>&,
 template
 void hdf_out_volume<3>(const std::string&, const std::vector<Vec<double,3>>&,
                        const std::vector<std::vector<double>>&);
+
+} //END NAMESPACE TBEM

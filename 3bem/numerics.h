@@ -6,6 +6,8 @@
 #include <functional>
 #include "vec.h"
 
+namespace tbem {
+
 // Map from [-1, 1] to [0, 1].
 inline double from_11_to_01(double x) {
     return 0.5 * x + 0.5;
@@ -67,5 +69,7 @@ double s_n(double x_hat, double y_hat, unsigned int n);
 double s_n_fast(double x_hat, double y_hat, unsigned int n);
 std::vector<double> cheb_pts_first_kind(unsigned int n_pts);
 std::pair<double, double> legendre_and_n_minus_1(unsigned int n, double x);
+
+} //END NAMESPACE tbem
 
 #endif

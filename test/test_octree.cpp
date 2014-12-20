@@ -1,6 +1,7 @@
 #include "UnitTest++.h"
 #include "octree.h"
 #include "util.h"
+using namespace tbem;
 
 TEST(BoundingBox) {
     auto es = three_pts();

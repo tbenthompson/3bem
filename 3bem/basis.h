@@ -6,6 +6,8 @@
 //TODO: move some of the stuff from numerics here.
 //TODO: interpolation with constraints
 
+namespace tbem {
+
 /* Interpolates a function onto the linear basis defined by the specified
  * mesh.
  */
@@ -33,5 +35,7 @@ std::vector<double> constrained_interpolate(const Mesh<dim>& mesh,
     }
     return c_mat.get_all(res, n_dofs);
 }
+
+} //END NAMESPACE tbem
 
 #endif

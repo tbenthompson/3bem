@@ -11,6 +11,8 @@ namespace ac = autocheck;
 #include "util.h"
 #include "shared.h"
 
+using namespace tbem;
+
 struct IntegrationProb {
     IntegrationProb():
         src_locs({{{0,0,0},{2,0,0},{0,1,0}}}),

@@ -5,6 +5,7 @@
 ** link BEM to FMM
 ** design an input file format and load 2D/3D problems
 ** more systematic python loading/viewing
+** some way of distinguishing files in the library for includes
 
 
 

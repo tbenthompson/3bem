@@ -22,8 +22,8 @@ def files_in_dir(directory, ext):
             ret.append(os.path.join(directory, file_name))
     return ret
 
-dirs = ['src', 'examples', 'test', 'inttest']
-lib_srces = files_in_dir("src", "cpp")
+dirs = ['3bem', 'examples', 'test', 'inttest']
+lib_srces = files_in_dir("3bem", "cpp")
 examples = files_in_dir("examples", "cpp")
 tests = files_in_dir("test", "cpp")
 inttests = files_in_dir("inttest", "cpp")
@@ -33,11 +33,10 @@ compiler = 'mpic++'
 petsc_dir = os.environ['PETSC_DIR']
 petsc_arch = os.environ['PETSC_ARCH']
 includes = [
-    './src',
+    './3bem',
     '../lib/',
     '../lib/unittest-cpp/src',
     '../lib/autocheck/include',
-    '../lib/rapidjson/include',
     petsc_dir + '/' + petsc_arch + '/include',
     petsc_dir + '/include'
 ]

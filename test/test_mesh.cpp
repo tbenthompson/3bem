@@ -4,6 +4,8 @@
 #include "mesh.h"
 #include "mesh_gen.h"
 
+using namespace tbem;
+
 double perimeter(Mesh<2> m) {
     double p = 0;
     for (auto f: m.facets) {

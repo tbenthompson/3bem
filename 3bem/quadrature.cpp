@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cassert>
 
+namespace tbem {
+
 /* A helper function for integrating a given function using a quadrature rule.
  * Via templating, can be used with 1D, 2D, double, Vec3<double> quadrature.
  */
@@ -179,3 +181,5 @@ QuadStrategy<3>::QuadStrategy(int obs_order, int src_far_order,
 
 template class QuadStrategy<2>;
 template class QuadStrategy<3>;
+
+} //END NAMESPACE tbem

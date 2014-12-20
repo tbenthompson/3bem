@@ -6,6 +6,8 @@
 
 #include "vec.h"
 
+namespace tbem { 
+
 //TODO: Think about separating each kernel into its own class and removing
 //some of this fluff.
 #define wrap_K2(KNAME, K, J) \
@@ -249,4 +251,5 @@ struct ElasticKernels<2> {
     const double trac_C2;
 };
 
+} // END namespace tbem
 #endif
