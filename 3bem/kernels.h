@@ -211,16 +211,54 @@ struct ElasticKernels<3> {
     const double hyp_C3;
 };
 
+/* See docs for ElasticKernels<3>
+ */
 template <>
 struct ElasticKernels<2> {
     ElasticKernels(double shear_modulus, double poisson_ratio):
         shear_modulus(shear_modulus),
         poisson_ratio(poisson_ratio),
+        disp_C1(1.0 / (8 * M_PI * shear_modulus * (1 - poisson_ratio))),
+        disp_C2(3 - 4 * poisson_ratio),
+        trac_C1(1.0 / (4 * M_PI * (1 - poisson_ratio))),
         trac_C2(1 - 2 * poisson_ratio)
     {}
 
-    /* See docs for ElasticKernels.hypersingular.
-     */
+    template <int k, int j>
+    double displacement(double r2, 
+                        const Vec2<double>& delta, 
+                        const Vec2<double>& nsrc,
+                        const Vec2<double>& nobs) const {
+        double r = std::sqrt(r2);
+        return disp_C1 *
+               (-disp_C2 * kronecker[k][j] * std::log(r)  + 
+                delta[k] * delta[j] / r2);
+    }
+
+    template <int k, int j>
+    double traction(double r2, 
+                    const Vec2<double>& delta, 
+                    const Vec2<double>& nsrc,
+                    const Vec2<double>& nobs) const {
+        double r = std::sqrt(r2);
+        const auto drdn = dot(delta, nsrc) / r;
+        const auto term1 = (trac_C2 * kronecker[k][j] + 2 * delta[k] * delta[j] / r2);
+        const auto term2 = trac_C2 * (nsrc[j] * delta[k] - nsrc[k] * delta[j]) / r;
+        return -(trac_C1 / r2) * (term1 * drdn - term2);
+    }
+
+    template <int k, int j>
+    double adjoint_traction(double r2, 
+                    const Vec2<double>& delta, 
+                    const Vec2<double>& nsrc,
+                    const Vec2<double>& nobs) const {
+        double r = std::sqrt(r2);
+        const auto drdm = dot(delta, nobs) / r;
+        const auto term1 = (trac_C2 * kronecker[k][j] + 2 * delta[k] * delta[j] / r2);
+        const auto term2 = trac_C2 * (nobs[j] * delta[k] - nobs[k] * delta[j]) / r;
+        return (trac_C1 / r2) * (term1 * drdm + term2);
+    }
+
     template <int k, int j>
     double hypersingular(const double& r2, 
                     const Vec2<double>& delta, 
@@ -244,10 +282,14 @@ struct ElasticKernels<2> {
         return C * (line1 + line2 + line3 + line4);
     }
 
+    KERNELMAT2(adjoint_traction, adjoint_traction_mat);
     KERNELMAT2(hypersingular, hypersingular_mat);
 
     const double shear_modulus;
     const double poisson_ratio;
+    const double disp_C1;
+    const double disp_C2;
+    const double trac_C1;
     const double trac_C2;
 };
 
