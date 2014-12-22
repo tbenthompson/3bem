@@ -108,13 +108,14 @@ struct EvalProb {
     double go() {
         Problem<3> p = {sphere, sphere, kernel, src_strength};
 
-        return eval_integral_equation(p, qs, {obs_length_scale, obs_pt, obs_n, obs_n});
+        return eval_integral_equation(p, qs, 
+            {obs_length_scale, obs_pt, obs_n, obs_n});
     }
     double go_row() {
         Problem<3> p = {sphere, sphere, kernel, src_strength};
 
         auto row = integral_equation_vector(p, qs, 
-                                            {obs_length_scale, obs_pt, obs_n, obs_n});
+            {obs_length_scale, obs_pt, obs_n, obs_n});
         double row_sum = 0.0;
         for(std::size_t i = 0; i < row.size(); i++) {
             row_sum += row[i] * src_strength[i];
