@@ -108,41 +108,27 @@ MeshField<T,dim>::refine_repeatedly(unsigned int times) const {
 /* Given a list of vertices and a list of faces that references the vertex
  * list, this will construct a mesh object.
  */
-template <int dim>
-Mesh<dim>
-mesh_from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
+template <typename T, int dim>
+MeshField<T,dim>
+MeshField<T,dim>::from_vertices_faces(const std::vector<T>& vertices,
                          const std::vector<std::array<int,dim>>& facets,
                          bool has_refine_mod,
-                         const typename Mesh<dim>::RefineFnc& refine_mod) {
-    std::vector<Facet<dim>> new_facets;
+                         const typename MeshField<T,dim>::RefineFnc& refine_mod) {
+    std::vector<FacetField<T,dim>> new_facets;
     for (auto in_facet: facets) { 
-        Vec<Vec<double,dim>,dim> out_verts;
+        Vec<T,dim> out_verts;
         for (int d = 0; d < dim; d++) {
             out_verts[d] = vertices[in_facet[d]];
         }
-        auto out_facet = Facet<dim>{out_verts};
+        auto out_facet = FacetField<T,dim>{out_verts};
         new_facets.push_back(out_facet);
     }
-    return Mesh<dim>{new_facets, has_refine_mod, refine_mod};
+    return MeshField<T,dim>{new_facets, has_refine_mod, refine_mod};
 }
 
 template class MeshField<double,2>;
 template class MeshField<Vec<double,2>,2>;
 template class MeshField<double,3>;
 template class MeshField<Vec<double,3>,3>;
-
-template
-Mesh<3>
-mesh_from_vertices_faces<3>(const std::vector<Vec<double,3>>& vertices,
-                         const std::vector<std::array<int,3>>& facets,
-                         bool has_refine_mod,
-                         const Mesh<3>::RefineFnc& refine_mod);
-
-template
-Mesh<2>
-mesh_from_vertices_faces<2>(const std::vector<Vec<double,2>>& vertices,
-                         const std::vector<std::array<int,2>>& facets,
-                         bool has_refine_mod,
-                         const Mesh<2>::RefineFnc& refine_mod);
 
 } //END NAMESPACE tbem
