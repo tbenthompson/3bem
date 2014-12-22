@@ -105,6 +105,25 @@ MeshField<T,dim>::refine_repeatedly(unsigned int times) const {
     return refine_repeatedly(times - 1).refine();
 }
 
+template <typename T, int dim>
+MeshField<T,dim> 
+MeshField<T,dim>::form_union(const MeshField<T,dim>& other) const {
+    if (has_refine_mod == true || other.has_refine_mod == true) {
+        throw std::domain_error("Mesh unions can only be formed from meshes\
+                                 with has_refine_mod == false");
+    }
+
+    std::vector<FacetField<T,dim>> new_facets;
+    for (auto f: facets) {
+        new_facets.push_back(f);
+    }
+    for (auto f: other.facets) {
+        new_facets.push_back(f);
+    }
+
+    return MeshField<T,dim>{new_facets, false, nullptr};
+}
+
 /* Given a list of vertices and a list of faces that references the vertex
  * list, this will construct a mesh object.
  */
