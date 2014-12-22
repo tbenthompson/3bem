@@ -1,4 +1,5 @@
 #include "bem.h"
+#include "constraint.h"
 #include "mesh_gen.h"
 #include "quadrature.h"
 #include "kernels.h"
@@ -18,8 +19,9 @@ int main() {
 
     // Earth's surface
     auto surface = line_mesh({-25, 0.0}, {25, 0.0}).refine_repeatedly(8);
-    auto raw_constraints = ConstraintMatrix::from_constraints(mesh_continuity(surface));
-    auto constraints = apply_discontinuities(surface, fault, raw_constraints);
+    auto raw_constraints =
+        ConstraintMatrix::from_constraints(mesh_continuity<2>(surface));
+    auto constraints = apply_discontinuities<2>(surface, fault, raw_constraints);
 
     ElasticKernels<2> ek(30e9, 0.25);
 
@@ -109,5 +111,5 @@ int main() {
                   reduced_soln.begin());
         soln[i] = constraints.get_all(reduced_soln, n_surface_dofs);
     }
-    hdf_out_surface("2dthrust0.hdf5", surface, {soln[0], soln[1]});
+    hdf_out_surface<2>("2dthrust0.hdf5", surface, {soln[0], soln[1]});
 }

@@ -24,7 +24,7 @@ Mesh<3> cube_mesh() {
         faces.push_back({3 * i, 3 * i + 1, 3 * i + 2});
     }
 
-    return Mesh<3>::from_vertices_faces(vertices, faces, false, nullptr);
+    return mesh_from_vertices_faces<3>(vertices, faces, false, nullptr);
 }
 
 Mesh<3> rect_mesh(const Vec3<double>& lower_left,
@@ -39,7 +39,7 @@ Mesh<3> rect_mesh(const Vec3<double>& lower_left,
         {0, 3, 2}, {0, 2, 1}
     };
 
-    return Mesh<3>::from_vertices_faces(vertices, faces, false, nullptr);
+    return mesh_from_vertices_faces<3>(vertices, faces, false, nullptr);
 }
 
 Mesh<3> sphere_mesh(const Vec3<double>& center, double r, bool interior) {
@@ -64,7 +64,7 @@ Mesh<3> sphere_mesh(const Vec3<double>& center, double r, bool interior) {
         }
     }
 
-    return Mesh<3>::from_vertices_faces(vertices, faces, true,
+    return mesh_from_vertices_faces<3>(vertices, faces, true,
         [=](std::array<double,3> x) {
             double dist = std::sqrt(dist2(x, center));
             x[0] = (r / dist) * (x[0] - center[0]) + center[0];
@@ -77,7 +77,7 @@ Mesh<3> sphere_mesh(const Vec3<double>& center, double r, bool interior) {
 Mesh<2> line_mesh(const Vec2<double>& a, const Vec2<double>& b) {
     std::vector<Vec<double,2>> vertices = {a, b};
     std::vector<std::array<int, 2>> segs = { {0, 1} };
-    return Mesh<2>::from_vertices_faces(vertices, segs, false, nullptr);
+    return mesh_from_vertices_faces<2>(vertices, segs, false, nullptr);
 }
 
 Mesh<2> square_mesh() {
@@ -89,7 +89,7 @@ Mesh<2> square_mesh() {
         {0, 1}, {1, 2}, {2, 3}, {3, 0}
     };
 
-    return Mesh<2>::from_vertices_faces(vertices, segs, false, nullptr);
+    return mesh_from_vertices_faces<2>(vertices, segs, false, nullptr);
 }
 
 Mesh<2> circle_mesh(std::array<double,2> c, double r) {
@@ -99,7 +99,7 @@ Mesh<2> circle_mesh(std::array<double,2> c, double r) {
     std::vector<std::array<int, 2>> segs = {
         {0, 1}, {1, 2}, {2, 3}, {3, 0}
     };
-    return Mesh<2>::from_vertices_faces(vertices, segs, true, 
+    return mesh_from_vertices_faces<2>(vertices, segs, true, 
         [=](const Vec2<double>& x) {
             double dist = std::sqrt(dist2(x, c));
             return Vec2<double>{

@@ -101,7 +101,7 @@ struct EvalProb {
         kernel(k),
         obs_pt(random_pt()),
         obs_n(random_pt()),
-        obs_length_scale(get_len_scale(sphere, 0, gauss_order)),
+        obs_length_scale(get_len_scale<3>(sphere, 0, gauss_order)),
         src_strength(std::vector<double>(3 * sphere.facets.size(), 1.0))
     {}
 
@@ -327,12 +327,12 @@ void direct_interact_one_test(const Mesh<dim>& mesh,
 
 TEST(DirectInteractOne2d) {
     auto circle = circle_mesh({0,0}, 1.0).refine_repeatedly(4);
-    direct_interact_one_test(circle, 2 * M_PI);
+    direct_interact_one_test<2>(circle, 2 * M_PI);
 }
 
 TEST(DirectInteractOne3d) {
     auto sphere = sphere_mesh({0,0,0}, 1.0).refine_repeatedly(3);
-    direct_interact_one_test(sphere, 4 * M_PI);
+    direct_interact_one_test<3>(sphere, 4 * M_PI);
 }
 
 

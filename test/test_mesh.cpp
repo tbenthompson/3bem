@@ -51,6 +51,11 @@ TEST(Mesh3D) {
     CHECK_CLOSE(sa, 4 * M_PI, 1e-1);
 }
 
+TEST(FacetField) {
+    FacetField<double,3> a = {1,2,3};
+    CHECK_EQUAL(a.vertices, (Vec<double,3>{1,2,3}));
+}
+
 int main(int, char const *[])
 {
     int retval = UnitTest::RunAllTests();
