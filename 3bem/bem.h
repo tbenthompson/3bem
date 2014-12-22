@@ -15,21 +15,6 @@
 
 namespace tbem {
 
-
-template <int dim>
-class QuadStrategy;
-
-template <int dim>
-struct QuadPt;
-
-template <int dim>
-using QuadRule = std::vector<QuadPt<dim>>;
-
-template <int dim>
-class Facet;
-template <int dim>
-class Mesh;
-
 template <int dim>
 struct Problem {
     const Mesh<dim>& src_mesh;

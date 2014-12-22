@@ -104,8 +104,11 @@ inline double error_inf(const std::vector<double>& a,
     return error;
 }
 
+//Forward declaration of Mesh.
+template <typename T, int dim>
+struct MeshField;
 template <int dim>
-class Mesh;
+using Mesh = MeshField<Vec<double,dim>,dim>;
 
 template <int dim>
 void hdf_out_surface(const std::string& filename, const Mesh<dim>& mesh,

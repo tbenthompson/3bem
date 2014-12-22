@@ -25,10 +25,11 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     QuadStrategy<dim> qs(obs_quad_pts, src_quad_pts,
                          near_steps, far_threshold, tol);
 
-    auto constraints = ConstraintMatrix::from_constraints(mesh_continuity(mesh));
+    auto constraints =
+        ConstraintMatrix::from_constraints(mesh_continuity<dim>(mesh));
 
-    auto u = constrained_interpolate(mesh, fnc, constraints);
-    auto dudn = constrained_interpolate(mesh, deriv, constraints);
+    auto u = constrained_interpolate<dim>(mesh, fnc, constraints);
+    auto dudn = constrained_interpolate<dim>(mesh, deriv, constraints);
 
     // Construct and evaluate the RHS for a Dirichlet Laplace problem:
     // The integral equation is: DoubleLayer(u) + u = SingleLayer(dudn)
@@ -86,7 +87,8 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     // Output the error and the solution 
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
-    hdf_out_surface("laplace" + std::to_string(dim) + "d.hdf5", mesh, {dudn_solved}); 
+    hdf_out_surface<dim>("laplace" + std::to_string(dim) + "d.hdf5", 
+            mesh, {dudn_solved});
 
     for(int i = 0; i < test_interior_pts.size(); i++) {
         auto obs_pt = test_interior_pts[i]; 

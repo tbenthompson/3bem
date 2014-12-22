@@ -48,7 +48,7 @@ TEST(ConstraintMatrixGetAll) {
 
 TEST(ConstraintMesh) {
     auto sphere = sphere_mesh({0, 0, 0}, 1).refine_repeatedly(2);
-    auto constraints = mesh_continuity(sphere);
+    auto constraints = mesh_continuity<3>(sphere);
     auto cons_mat = ConstraintMatrix::from_constraints(constraints);
     CHECK_EQUAL(3 * sphere.facets.size(), 384);
     CHECK_EQUAL(cons_mat.c_map.size(), 318);
@@ -59,7 +59,7 @@ TEST(ConstraintMesh) {
 
 TEST(Condense) {
     auto sphere = sphere_mesh({0, 0, 0}, 1).refine_repeatedly(0);
-    auto constraints = mesh_continuity(sphere);
+    auto constraints = mesh_continuity<3>(sphere);
     auto cons_mat = ConstraintMatrix::from_constraints(constraints);
     std::vector<double> all_dofs(3 * sphere.facets.size(), 0.0);
     for (std::size_t i = 0; i < all_dofs.size(); i++) {
@@ -79,7 +79,8 @@ TEST(Condense) {
 
 TEST(MeshContinuity2D) {
     auto circle = circle_mesh({0,0},1).refine_repeatedly(4);
-    auto constraints = ConstraintMatrix::from_constraints(mesh_continuity(circle));
+    auto constraints =
+        ConstraintMatrix::from_constraints(mesh_continuity<2>(circle));
     std::vector<double> reduced(circle.facets.size(), 1.0);
     auto all_vec = constraints.get_all(reduced, 2 * circle.facets.size());
     for (auto a: all_vec) {

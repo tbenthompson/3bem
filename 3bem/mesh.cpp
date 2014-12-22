@@ -1,16 +1,18 @@
 #include "mesh.h"
 #include "util.h"
 
+
 namespace tbem {
 
 /* Produces 2 new segments by splitting the current segment 
- * in half.
+ * in half. 
  */
-std::array<Facet<2>,2> refine_facet(const Facet<2>& f) {
+template <typename T>
+std::array<FacetField<T,2>,2> refine_facet(const FacetField<T,2>& f) {
     auto midpt = (f.vertices[0] + f.vertices[1]) / 2.0;
     return {
-        Facet<2>{{f.vertices[0], midpt}},
-        Facet<2>{{midpt, f.vertices[1]}}
+        FacetField<T,2>{{f.vertices[0], midpt}},
+        FacetField<T,2>{{midpt, f.vertices[1]}}
     };
 }
 
@@ -23,7 +25,8 @@ std::array<Facet<2>,2> refine_facet(const Facet<2>& f) {
  *      (My first ever ASCII art, a masterpiece that will
  *      stand the test of time!)
  */
-std::array<Facet<3>,4> refine_facet(const Facet<3>& f) {
+template <typename T>
+std::array<FacetField<T,3>,4> refine_facet(const FacetField<T,3>& f) {
     auto midpt01 = (f.vertices[0] + f.vertices[1]) / 2.0;
     auto midpt12 = (f.vertices[1] + f.vertices[2]) / 2.0;
     auto midpt20 = (f.vertices[2] + f.vertices[0]) / 2.0;
@@ -33,10 +36,10 @@ std::array<Facet<3>,4> refine_facet(const Facet<3>& f) {
     //in the refined triangle. Following this principle for all the triangles
     //gives this set of new faces
     return {
-        Facet<3>{{f.vertices[0], midpt01, midpt20}},
-        Facet<3>{{f.vertices[1], midpt12, midpt01}},
-        Facet<3>{{f.vertices[2], midpt20, midpt12}},
-        Facet<3>{{midpt01, midpt12, midpt20}}
+        FacetField<T,3>{{f.vertices[0], midpt01, midpt20}},
+        FacetField<T,3>{{f.vertices[1], midpt12, midpt01}},
+        FacetField<T,3>{{f.vertices[2], midpt20, midpt12}},
+        FacetField<T,3>{{midpt01, midpt12, midpt20}}
     };
 }
 
@@ -44,27 +47,23 @@ std::array<Facet<3>,4> refine_facet(const Facet<3>& f) {
  * can be used to, for example, enforce that all refined vertices in
  * a sphere mesh lie a certain distance from the sphere's center.
  */
-template <int dim>
-Facet<dim> refine_modify(const Facet<dim>& f, const Mesh<dim>& m) {
+template <typename T,int dim>
+FacetField<T,dim> refine_modify(const FacetField<T,dim>& f,
+                                const MeshField<T,dim>& m) {
     if (!m.has_refine_mod) {
         return f;
     }
-    Vec<Vec<double,dim>,dim> vertices;
+    Vec<T,dim> vertices;
     for (int d = 0; d < dim; d++) {
         vertices[d] = m.refine_mod(f.vertices[d]);
     }
-    return Facet<dim>{vertices};
+    return FacetField<T,dim>{vertices};
 }
 
-template 
-Facet<2> refine_modify(const Facet<2>& f, const Mesh<2>& m);
-template
-Facet<3> refine_modify(const Facet<3>& f, const Mesh<3>& m);
-
-template <int dim>
-Mesh<dim> 
-Mesh<dim>::refine(const std::vector<int>& refine_these) const {
-    std::vector<Facet<dim>> out_facets;
+template <typename T, int dim>
+MeshField<T,dim> 
+MeshField<T,dim>::refine(const std::vector<int>& refine_these) const {
+    std::vector<FacetField<T,dim>> out_facets;
 
     // Sort the refined edges so that we only have to check the
     // next one at any point in the loop.
@@ -78,7 +77,7 @@ Mesh<dim>::refine(const std::vector<int>& refine_these) const {
         if (i == refine_these[current]) {
             auto refined = refine_facet(facets[i]);
             for (auto r: refined) {
-                auto mod_r = refine_modify(r, *this);
+                auto mod_r = refine_modify<T,dim>(r, *this);
                 out_facets.push_back(mod_r);
             }
             current++;
@@ -86,20 +85,20 @@ Mesh<dim>::refine(const std::vector<int>& refine_these) const {
             out_facets.push_back(facets[i]);
         }
     }
-    return Mesh<dim>{out_facets, has_refine_mod, refine_mod};
+    return MeshField<T,dim>{out_facets, has_refine_mod, refine_mod};
 }
 
 /* A helper function to refine all the facets. */
-template <int dim>
-Mesh<dim> 
-Mesh<dim>::refine() const {
+template <typename T, int dim>
+MeshField<T,dim> 
+MeshField<T,dim>::refine() const {
     return refine(naturals(facets.size()));
 }
 
 /* A helper function to refine all the facets multiple times. */
-template <int dim>
-Mesh<dim> 
-Mesh<dim>::refine_repeatedly(unsigned int times) const {
+template <typename T, int dim>
+MeshField<T,dim> 
+MeshField<T,dim>::refine_repeatedly(unsigned int times) const {
     if (times == 0) {
         return *this;
     }
@@ -111,7 +110,7 @@ Mesh<dim>::refine_repeatedly(unsigned int times) const {
  */
 template <int dim>
 Mesh<dim>
-Mesh<dim>::from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
+mesh_from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
                          const std::vector<std::array<int,dim>>& facets,
                          bool has_refine_mod,
                          const typename Mesh<dim>::RefineFnc& refine_mod) {
@@ -127,7 +126,23 @@ Mesh<dim>::from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
     return Mesh<dim>{new_facets, has_refine_mod, refine_mod};
 }
 
-template class Mesh<2>;
-template class Mesh<3>;
+template class MeshField<double,2>;
+template class MeshField<Vec<double,2>,2>;
+template class MeshField<double,3>;
+template class MeshField<Vec<double,3>,3>;
+
+template
+Mesh<3>
+mesh_from_vertices_faces<3>(const std::vector<Vec<double,3>>& vertices,
+                         const std::vector<std::array<int,3>>& facets,
+                         bool has_refine_mod,
+                         const Mesh<3>::RefineFnc& refine_mod);
+
+template
+Mesh<2>
+mesh_from_vertices_faces<2>(const std::vector<Vec<double,2>>& vertices,
+                         const std::vector<std::array<int,2>>& facets,
+                         bool has_refine_mod,
+                         const Mesh<2>::RefineFnc& refine_mod);
 
 } //END NAMESPACE tbem

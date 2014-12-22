@@ -6,6 +6,7 @@
 
 namespace tbem {
 
+
 /* A list of matrix constraints is generated from the mesh
  * connectivity and boundary conditions. These constraints
  * are represented by an integer referring to the relevant
@@ -80,8 +81,13 @@ Constraint offset_constraint(int dof1, int dof2, double offset);
  */
 Constraint boundary_condition(int dof, double value);
 
+//Forward declaration of Vec and Mesh.
+template <typename T, unsigned long dim>
+using Vec = std::array<T,dim>;
+template <typename T, int dim>
+struct MeshField;
 template <int dim>
-class Mesh;
+using Mesh = MeshField<Vec<double,dim>,dim>;
 
 /* Find the overlapping vertices for the given mesh and produce continuity
  * constraints. 
