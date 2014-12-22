@@ -1,4 +1,5 @@
 #include "bem.h"
+#include "constraint.h"
 #include "mesh_gen.h"
 #include "quadrature.h"
 #include "kernels.h"
@@ -29,8 +30,9 @@ int main() {
         {surf_width, surf_width, 0}, {surf_width, -surf_width, 0}
     ).refine_repeatedly(refine_surf);
 
-    auto raw_constraints = ConstraintMatrix::from_constraints(mesh_continuity(surface));
-    auto constraints = apply_discontinuities(surface, fault, raw_constraints);
+    auto raw_constraints =
+        ConstraintMatrix::from_constraints(mesh_continuity<3>(surface));
+    auto constraints = apply_discontinuities<3>(surface, fault, raw_constraints);
     std::cout << surface.facets.size() << std::endl;
 
     QuadStrategy<3> qs(obs_quad_pts, src_quad_pts,
@@ -126,5 +128,7 @@ int main() {
                   reduced_soln.begin());
         soln[i] = constraints.get_all(reduced_soln, n_surface_dofs);
     }
-    hdf_out_surface("rect_dislocation.hdf5", surface, {soln[0], soln[1], soln[2]}); 
+    hdf_out_surface<3>(
+        "rect_dislocation.hdf5", surface, {soln[0], soln[1], soln[2]}
+    ); 
 }

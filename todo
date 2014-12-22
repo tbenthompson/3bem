@@ -1,15 +1,17 @@
 ** continue to work towards better bem
 -- vector direct_interact and dof handling? 
-** LMS problem
+** redo LMS problem
 ** gravity problem in plane strain -- valleys!
 ** link BEM to FMM
 ** design an input file format and load 2D/3D problems
 ** more systematic python loading/viewing
-** some way of distinguishing files in the library for includes
+** interpolation of a field along with a mesh
+** unioning two meshes
 
 
 
 Longer term:
+** do the same kernel checking for 2d elastic as 3d elastic
 ** stokes flow example
 ** higher order bases
 ** simple adaptive meshing
