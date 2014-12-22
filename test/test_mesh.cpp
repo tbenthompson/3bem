@@ -51,6 +51,28 @@ TEST(Mesh3D) {
     CHECK_CLOSE(sa, 4 * M_PI, 1e-1);
 }
 
+TEST(FacetField) {
+    FacetField<double,3> a = {1,2,3};
+    CHECK_EQUAL(a.vertices, (Vec<double,3>{1,2,3}));
+}
+
+TEST(MeshField) {
+    MeshField<double,3> mf{
+        { {0.0, 1.0, 2.0}, {2.0, 3.0, 4.0}, {4.0, 5.0, 6.0} },
+        false, nullptr
+    };
+    auto mf_refined = mf.refine();
+    CHECK_EQUAL(mf_refined.facets[0].vertices[1], 0.5);
+}
+
+TEST(MeshFieldUnion) {
+    MeshField<double,3> mf1{ { {0.0, 1.0, 2.0} }, false, nullptr };
+    MeshField<double,3> mf2{ { {2.0, 3.0, 4.0}, {4.0, 5.0, 6.0} }, false, nullptr };
+    auto mf_combined = mf1.form_union(mf2);
+    CHECK_EQUAL(mf_combined.facets.size(), 3);
+    CHECK_EQUAL(mf_combined.facets[1].vertices[2], 4.0);
+}
+
 int main(int, char const *[])
 {
     int retval = UnitTest::RunAllTests();

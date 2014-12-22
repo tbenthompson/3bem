@@ -1,5 +1,6 @@
 #include "vec.h"
 #include "mesh.h"
+#include "constraint.h"
 #include "mesh_gen.h"
 #include "kernels.h"
 #include "quadrature.h"
@@ -28,8 +29,9 @@ void full_space() {
 
     // Surface mesh at y = -0.5
     auto surface1 = line_mesh({-10, -0.5}, {10, -0.5}).refine_repeatedly(14);
-    auto raw_constraints = ConstraintMatrix::from_constraints(mesh_continuity(surface1));
-    auto constraints = apply_discontinuities(surface1, fault, raw_constraints);
+    auto raw_constraints =
+        ConstraintMatrix::from_constraints(mesh_continuity<2>(surface1));
+    auto constraints = apply_discontinuities<2>(surface1, fault, raw_constraints);
 
     // Quadrature details -- these parameters basically achieve machine precision
     double far_threshold = 4.0;
@@ -43,7 +45,7 @@ void full_space() {
     // Interpolate the integral equation onto the y = -0.5 surface
     TIC
     Problem<2> p_fullspace = {fault, surface1, laplace_double<2>, one_vec};
-    auto disp = constrained_interpolate(surface1, [&] (Vec2<double> x) {
+    auto disp = constrained_interpolate<2>(surface1, [&] (Vec2<double> x) {
             ObsPt<2> obs = {0.001, x, {0, 1}, {0, -1}};
             double val = eval_integral_equation(p_fullspace, qs, obs);
             double exact = std::atan(0.5 / x[0]) / M_PI;
@@ -54,7 +56,7 @@ void full_space() {
         }, constraints);
     TOC("Solve fullspace antiplane strike slip motion")
 
-    hdf_out_surface("antiplane_full_space.hdf5", surface1, {disp});
+    hdf_out_surface<2>("antiplane_full_space.hdf5", surface1, {disp});
 }
     
 void half_space() {
@@ -65,12 +67,15 @@ void half_space() {
 
     // Earth's surface
     auto surface2 = line_mesh({-50, 0.0}, {50, 0.0}).refine_repeatedly(9);
-    auto raw_constraints = ConstraintMatrix::from_constraints(mesh_continuity(surface2));
-    auto constraints = apply_discontinuities(surface2, fault, raw_constraints);
+    auto raw_constraints =
+        ConstraintMatrix::from_constraints(mesh_continuity<2>(surface2));
+    auto constraints = apply_discontinuities<2>(surface2, fault, raw_constraints);
     
     TIC
     // The RHS is the effect of the fault on the surface.
-    Problem<2> p_rhs_halfspace = {fault, surface2, laplace_hypersingular<2>, one_vec};
+    Problem<2> p_rhs_halfspace =
+        {fault, surface2, laplace_hypersingular<2>, one_vec};
+
     auto rhs_all_dofs = direct_interact(p_rhs_halfspace, qs);
     for (std::size_t i = 0; i < rhs_all_dofs.size(); i++) {
         rhs_all_dofs[i] = -rhs_all_dofs[i];
@@ -94,7 +99,7 @@ void half_space() {
     TOC("Solve antiplane half space.");
     auto soln = constraints.get_all(soln_reduced, n_dofs);
 
-    hdf_out_surface("antiplane_half_space.hdf5", surface2, {soln});
+    hdf_out_surface<2>("antiplane_half_space.hdf5", surface2, {soln});
 
 
     // Loop over a bunch of interior points and evaluate the displacement
