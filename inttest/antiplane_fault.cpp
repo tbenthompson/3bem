@@ -73,7 +73,9 @@ void half_space() {
     
     TIC
     // The RHS is the effect of the fault on the surface.
-    Problem<2> p_rhs_halfspace = {fault, surface2, laplace_hypersingular<2>, one_vec};
+    Problem<2> p_rhs_halfspace =
+        {fault, surface2, laplace_hypersingular<2>, one_vec};
+
     auto rhs_all_dofs = direct_interact(p_rhs_halfspace, qs);
     for (std::size_t i = 0; i < rhs_all_dofs.size(); i++) {
         rhs_all_dofs[i] = -rhs_all_dofs[i];

@@ -35,16 +35,17 @@ struct MeshField {
     MeshField<T,dim> refine(const std::vector<int>& refine_these) const;
     MeshField<T,dim> refine() const;
     MeshField<T,dim> refine_repeatedly(unsigned int times) const;
+
+    static
+    MeshField<T,dim> from_vertices_faces(const std::vector<T>& vertices,
+                         const std::vector<std::array<int,dim>>& facets,
+                         bool has_refine_mod,
+                         const typename MeshField<T,dim>::RefineFnc& refine_mod);
 };
 
 template <int dim>
 using Mesh = MeshField<Vec<double,dim>,dim>;
 
-template <int dim>
-Mesh<dim> mesh_from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
-                         const std::vector<std::array<int,dim>>& facets,
-                         bool has_refine_mod = false,
-                         const typename Mesh<dim>::RefineFnc& refine_mod = nullptr);
 
 } //END NAMESPACE tbem
 
