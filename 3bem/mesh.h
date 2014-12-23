@@ -38,7 +38,9 @@ struct MeshField {
     MeshField<T,dim> refine_repeatedly(unsigned int times) const;
     // Combine two meshes into one. Requires that the meshes not have
     // a refinement modifier
-    MeshField<T,dim> form_union(const MeshField<T,dim>& other) const;
+
+    static
+    MeshField<T,dim> form_union(const std::vector<MeshField<T,dim>>& others);
 
     static
     MeshField<T,dim> from_vertices_faces(const std::vector<T>& vertices,
