@@ -68,7 +68,7 @@ TEST(MeshField) {
 TEST(MeshFieldUnion) {
     MeshField<double,3> mf1{ { {0.0, 1.0, 2.0} }, false, nullptr };
     MeshField<double,3> mf2{ { {2.0, 3.0, 4.0}, {4.0, 5.0, 6.0} }, false, nullptr };
-    auto mf_combined = mf1.form_union(mf2);
+    auto mf_combined = MeshField<double,3>::form_union({mf1, mf2});
     CHECK_EQUAL(mf_combined.facets.size(), 3);
     CHECK_EQUAL(mf_combined.facets[1].vertices[2], 4.0);
 }
