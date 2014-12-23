@@ -107,18 +107,17 @@ MeshField<T,dim>::refine_repeatedly(unsigned int times) const {
 
 template <typename T, int dim>
 MeshField<T,dim> 
-MeshField<T,dim>::form_union(const MeshField<T,dim>& other) const {
-    if (has_refine_mod == true || other.has_refine_mod == true) {
-        throw std::domain_error("Mesh unions can only be formed from meshes\
-                                 with has_refine_mod == false");
-    }
+MeshField<T,dim>::form_union(const std::vector<MeshField<T,dim>>& meshes) {
 
     std::vector<FacetField<T,dim>> new_facets;
-    for (auto f: facets) {
-        new_facets.push_back(f);
-    }
-    for (auto f: other.facets) {
-        new_facets.push_back(f);
+    for (int i = 0; i < meshes.size(); i++) {
+        if (meshes[i].has_refine_mod == true) {
+            throw std::domain_error("Mesh unions can only be formed from meshes\
+                                     with has_refine_mod == false");
+        }
+        for (auto f: meshes[i].facets) {
+            new_facets.push_back(f);
+        }
     }
 
     return MeshField<T,dim>{new_facets, false, nullptr};

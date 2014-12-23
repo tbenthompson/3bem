@@ -5,9 +5,6 @@
 ** link BEM to FMM
 ** design an input file format and load 2D/3D problems
 ** more systematic python loading/viewing
-** interpolation of a field along with a mesh
-** unioning two meshes
-
 
 
 Longer term:
