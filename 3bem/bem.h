@@ -214,9 +214,9 @@ Vec<double,3> adaptive_nearfield<3>(const Problem<3>& p,
                 return zeros<Vec<double,3>>();
             }
             return adaptive_integrate2<Vec<double,3>>(
-                        0.0, 1 - x_hat, qs.singular_tol, x_hat, p.K,
+                        0.0, 1 - x_hat, qs.near_tol, x_hat, p.K,
                         src_face, nf_obs_pt, obs.normal);
-        }, 0.0, 1.0, qs.singular_tol);
+        }, 0.0, 1.0, qs.near_tol);
 }
 
 //TODO: Add a test for this function
@@ -230,7 +230,7 @@ Vec<double,2> adaptive_nearfield<2>(const Problem<2>& p,
         [&] (double x_hat) {
             return eval_quad_pt<2>(Vec<double,1>{x_hat}, p.K, src_face,
                                    nf_obs_pt, obs.normal);
-        }, -1.0, 1.0, qs.singular_tol);
+        }, -1.0, 1.0, qs.near_tol);
 }
 
 template <int dim>

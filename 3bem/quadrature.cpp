@@ -53,7 +53,7 @@ std::pair<double, double> legendre_and_n_minus_1(unsigned int n,
  */
 QuadRule<1> gauss(unsigned int n) {
     assert(n > 0);
-    QuadRule<1> retval(n);
+    std::vector<Vec2<double>> points(n);
     const double tolerance = 1e-14;
     //Because gaussian quadrature rules are symmetric, I only compute half of
     //the points and then mirror across x = 0.
@@ -80,8 +80,13 @@ QuadRule<1> gauss(unsigned int n) {
         }
 
         double w = 2 * (n + 1) * (n + 1) / (n * n * (1 - x * x) * dp * dp);
-        retval[i] = {{-x},w};
-        retval[n - i - 1] = {{x},w};
+        points[i] = {-x, w};
+        points[n - i - 1] = {x, w};
+    }
+
+    QuadRule<1> retval;
+    for (int i = 0; i < n; i++) {
+        retval.push_back(QuadPt<1>{points[i][0], points[i][1]});
     }
 
     return retval;
@@ -93,14 +98,13 @@ QuadRule<1> gauss(unsigned int n) {
 QuadRule<2> tensor_product(QuadRule<1> xq, QuadRule<1> yq) {
     unsigned int xn = xq.size();
     unsigned int yn = yq.size();
-    QuadRule<2> retval(xn * yn);
+    QuadRule<2> retval;
     for(unsigned int i = 0; i < xn; i++) {
         for(unsigned int j = 0; j < yn; j++) {
-            int idx_2d = i * yn + j;
-            retval[idx_2d] = {
+            retval.push_back(QuadPt<2>{
                 {xq[i].x_hat[0], yq[j].x_hat[0]},
                 xq[i].w * yq[j].w
-            };
+            });
         }
     }
     return retval;
@@ -113,15 +117,15 @@ QuadRule<2> square_to_tri(QuadRule<2> square_quad) {
     // assert(square_quad.y_hat.size() == square_quad.weights.size())
 
     unsigned int nq = square_quad.size();
-    QuadRule<2> retval(nq);
+    QuadRule<2> retval;
     for (unsigned int i = 0; i < nq; i++) {
         double x_01 = from_11_to_01(square_quad[i].x_hat[0]);
         double y_01 = from_11_to_01(square_quad[i].x_hat[1]);
         double w = square_quad[i].w;
-        retval[i] = {
+        retval.push_back(QuadPt<2>{
             {x_01 * (1 - y_01), y_01},
             (w / 4.0) * (1 - y_01)
-        };
+        });
     }
     return retval;
 }
@@ -158,25 +162,25 @@ QuadStrategy<dim>::QuadStrategy(int obs_order):
 template <>
 QuadStrategy<2>::QuadStrategy(int obs_order, int src_far_order, 
                            int n_singular_steps, double far_threshold,
-                           double singular_tol):
+                           double near_tol):
     obs_quad(gauss(obs_order)),
     src_far_quad(gauss(src_far_order)),
     far_threshold(far_threshold),
     n_singular_steps(n_singular_steps),
     singular_steps(get_singular_steps(n_singular_steps)),
-    singular_tol(singular_tol)
+    near_tol(near_tol)
 {}
 
 template <>
 QuadStrategy<3>::QuadStrategy(int obs_order, int src_far_order, 
                            int n_singular_steps, double far_threshold,
-                           double singular_tol):
+                           double near_tol):
     obs_quad(tri_gauss(obs_order)),
     src_far_quad(tri_gauss(src_far_order)),
     far_threshold(far_threshold),
     n_singular_steps(n_singular_steps),
     singular_steps(get_singular_steps(n_singular_steps)),
-    singular_tol(singular_tol)
+    near_tol(near_tol)
 {}
 
 template class QuadStrategy<2>;

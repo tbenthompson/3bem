@@ -5,6 +5,7 @@
 #include "kernels.h"
 #include "petsc_interface.h"
 #include "util.h"
+#include "output.h"
 
 using namespace tbem;
 
