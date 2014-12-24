@@ -6,7 +6,7 @@
 using namespace tbem;
 
 int main() {
-    int n = (int)1e4;
+    int n = (int)1e7;
     int pts_per_cell = 100;
     int n_exp_pts = 2;
     double mac2 = 4.0;

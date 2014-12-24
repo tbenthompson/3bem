@@ -85,7 +85,7 @@ QuadRule<1> gauss(unsigned int n) {
     }
 
     QuadRule<1> retval;
-    for (int i = 0; i < n; i++) {
+    for (std::size_t i = 0; i < n; i++) {
         retval.push_back(QuadPt<1>{points[i][0], points[i][1]});
     }
 
