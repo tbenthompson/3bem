@@ -1,14 +1,6 @@
 #ifndef __HJKHSDFLJSLLHA_LAPLACE_H
 #define __HJKHSDFLJSLLHA_LAPLACE_H
-#include <functional>
-#include "vec.h"
-#include "mesh.h"
-#include "bem.h"
-#include "kernels.h"
-#include "quadrature.h"
-#include "util.h"
-#include "basis.h"
-#include "petsc_interface.h"
+#include "3bem.h"
 
 using namespace tbem;
 

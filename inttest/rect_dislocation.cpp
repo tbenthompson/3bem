@@ -1,10 +1,4 @@
-#include "bem.h"
-#include "constraint.h"
-#include "mesh_gen.h"
-#include "quadrature.h"
-#include "kernels.h"
-#include "petsc_interface.h"
-#include "util.h"
+#include "3bem.h"
 
 using namespace tbem;
 
@@ -18,7 +12,7 @@ int main() {
     int near_steps = 5;
     int src_quad_pts = 2;
     int obs_quad_pts = 2;
-    double singular_tolerance = 1e-3;
+    double near_tol = 1e-3;
 
     auto fault = rect_mesh(
         {-1, 0, -3.0}, {-1, 0, -0.0},
@@ -36,7 +30,7 @@ int main() {
     std::cout << surface.facets.size() << std::endl;
 
     QuadStrategy<3> qs(obs_quad_pts, src_quad_pts,
-                    near_steps, far_threshold, singular_tolerance);
+                    near_steps, far_threshold, near_tol);
 
     ElasticKernels<3> ek(30e9, 0.25);
     
