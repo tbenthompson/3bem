@@ -1,6 +1,4 @@
-#include "mesh_gen.h"
 #include "laplace.h"
-#include <iostream>
 
 Vec2<double> center = {5, 0};
 double r = 3.0;
