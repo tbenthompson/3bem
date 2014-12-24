@@ -8,6 +8,7 @@
 #include "petsc_interface.h"
 #include "basis.h"
 #include "bem.h"
+#include "output.h"
 using namespace tbem;
 
 /* This code:

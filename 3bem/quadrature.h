@@ -8,8 +8,8 @@ namespace tbem {
 
 template <int dim>
 struct QuadPt {
-    std::array<double,dim> x_hat;
-    double w;
+    const std::array<double,dim> x_hat;
+    const double w;
 };
 
 template <int dim>
@@ -32,7 +32,7 @@ template <int dim>
 struct QuadStrategy {
     QuadStrategy(int obs_order);
     QuadStrategy(int obs_order, int src_far_order, int n_singular_steps,
-                 double far_threshold, double singular_tol);
+                 double far_threshold, double near_tol);
 
     const QuadRule<dim-1> obs_quad;
     const QuadRule<dim-1> src_far_quad;
@@ -40,7 +40,7 @@ struct QuadStrategy {
     const double far_threshold;
     const int n_singular_steps;
     const std::vector<double> singular_steps;
-    const double singular_tol;
+    const double near_tol;
 };
 
 } // END namespace tbem
