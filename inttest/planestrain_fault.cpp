@@ -1,10 +1,4 @@
-#include "bem.h"
-#include "constraint.h"
-#include "mesh_gen.h"
-#include "quadrature.h"
-#include "kernels.h"
-#include "petsc_interface.h"
-#include "util.h"
+#include "3bem.h"
 
 using namespace tbem;
 

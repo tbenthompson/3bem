@@ -35,6 +35,8 @@ std::array<T, 3> index3(const std::vector<T>& x, const std::array<int, 3>& indic
  *
  * It would be interesting to extend this to use expression templates for
  * lazy evaluation of results.
+ *
+ * Extending this to use recursion to do 1D,2D,3D all in one.
  */
 
 // Cool! C++11 templated typedef
