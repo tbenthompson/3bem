@@ -282,6 +282,8 @@ struct ElasticKernels<2> {
         return C * (line1 + line2 + line3 + line4);
     }
 
+    KERNELMAT2(displacement, displacement_mat);
+    KERNELMAT2(traction, traction_mat);
     KERNELMAT2(adjoint_traction, adjoint_traction_mat);
     KERNELMAT2(hypersingular, hypersingular_mat);
 
