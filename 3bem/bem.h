@@ -239,9 +239,11 @@ Vec<double,dim> near_field(const Problem<dim>& p, const QuadStrategy<dim>& qs,
                         const double dist2) {
     std::vector<Vec<double,dim>> near_steps(qs.n_singular_steps, 
                                             zeros<Vec<double, dim>>());
-    if (dist2 < 3.0 * src_face.area) { 
+    const double singular_threshold = 3.0;
+    const double safe_dist_ratio = 5.0;
+    if (dist2 < singular_threshold * src_face.area) { 
         for (int nf = 0; nf < qs.n_singular_steps; nf++) {
-            double nfdn = 5 * obs.len_scale * qs.singular_steps[nf];
+            double nfdn = safe_dist_ratio * obs.len_scale * qs.singular_steps[nf];
             auto nf_obs_pt = obs.loc + nfdn * obs.richardson_dir;
             auto ns = adaptive_nearfield<dim>(p, qs, obs, src_face, nf_obs_pt);
             near_steps[nf] += ns;

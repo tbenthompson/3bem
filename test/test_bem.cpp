@@ -336,6 +336,39 @@ TEST(DirectInteractOne3d) {
     direct_interact_one_test<3>(sphere, 4 * M_PI);
 }
 
+TEST(FaceInfo2D) {
+    Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{1.0, 0.0}};
+    FaceInfo<2> face_info(f);
+    CHECK_EQUAL(&face_info.face, &f);
+    CHECK_EQUAL(face_info.area, 1);
+    CHECK_EQUAL(face_info.jacobian, 0.5);
+    CHECK_EQUAL(face_info.normal, (Vec2<double>{0.0, 1.0}));
+}
+
+TEST(FaceInfo3D) {
+    Facet<3> f{
+        Vec3<double>{0.0, 0.0, 0.0},
+        Vec3<double>{1.0, 0.0, 0.0},
+        Vec3<double>{0.0, 1.0, 0.0}
+    };
+    FaceInfo<3> face_info(f);
+    CHECK_EQUAL(&face_info.face, &f);
+    CHECK_EQUAL(face_info.area, 0.5);
+    CHECK_EQUAL(face_info.jacobian, 1.0);
+    CHECK_EQUAL(face_info.normal, (Vec3<double>{0.0, 0.0, 1.0}));
+}
+
+TEST(ObsPtFromFace) {
+    Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{1.0, 1.0}};
+    FaceInfo<2> face_info(f);
+    auto qg = gauss(1);
+    int idx = 0;
+    auto obs = ObsPt<2>::from_face(qg, face_info, idx);
+    CHECK_EQUAL(obs.len_scale, std::sqrt(2));
+    CHECK_EQUAL(obs.loc, (Vec2<double>{0.5, 0.5}));
+    CHECK_EQUAL(obs.normal, (Vec2<double>{-1.0 / std::sqrt(2), 1.0 / std::sqrt(2)}));
+    CHECK_EQUAL(obs.richardson_dir, obs.normal);
+}
 
 int main(int, char const *[])
 {
