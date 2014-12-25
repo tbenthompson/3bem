@@ -16,12 +16,12 @@ TEST(ConstraintsAreCreated) {
     CHECK(c.rhs_value == correct.rhs_value);
 
     auto c2 = offset_constraint(3, 4, 5.0f);
-    correct = {
+    Constraint correct2 = {
         {DOFWeight{3, 1.0f}, DOFWeight{4, -1.0f}},
         -5.0
     };
-    CHECK(c2.dof_constraints == correct.dof_constraints);
-    CHECK(c2.rhs_value == correct.rhs_value);
+    CHECK(c2.dof_constraints == correct2.dof_constraints);
+    CHECK(c2.rhs_value == correct2.rhs_value);
 }
 
 TEST(ConstraintMatrixIsAppendedTo) {

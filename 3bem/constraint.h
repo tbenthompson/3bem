@@ -33,8 +33,8 @@ typedef std::pair<int, double> DOFWeight;
 * first dof is implicitly the constrained dof.
 */
 struct Constraint {
-    std::vector<DOFWeight> dof_constraints;
-    double rhs_value;
+    const std::vector<DOFWeight> dof_constraints;
+    const double rhs_value;
     friend std::ostream& operator<<(std::ostream& os, const Constraint& c);
 };
 
