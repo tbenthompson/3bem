@@ -12,6 +12,7 @@ namespace tbem {
 /* A box class defined by its center and half_width. These are using as
  * bounding boxes for the nodes in the octree hierarchy.
  */
+//TODO: Make this an immutable data type.
 class Box {
 public:
     std::array<double,3> center;
@@ -43,6 +44,7 @@ inline int to_octree_space(double x, double center,
 }
 
 
+//TODO: Make this an immutable data type.
 class OctreeCell {
 public:
     // Vertical depth of the cell. The root is level 0.
@@ -78,6 +80,7 @@ public:
     bool is_leaf;
 };
 
+//TODO: Make this an immutable data type.
 //TODO: I could filter out parts of the tree where a cell has only one child.
 //----- this relies on the tree usage not being dependent on the 
 //      division by 2 for each axis.

@@ -41,7 +41,7 @@ struct Constraint {
 /* Store a constraint matrix as a map from the constrained dof to
  * the constraint on that dof. The constrained dof will be the last
  * one in the constraint. This allows looping through a vector and
- * applying constraints without worrying about cycles.
+ * applying constraints without worrying about cycles (IS THIS SENTENCE TRUE?).
  */
 struct ConstraintMatrix {
     typedef std::unordered_map<int,Constraint> MapT;
