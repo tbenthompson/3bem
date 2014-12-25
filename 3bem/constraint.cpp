@@ -17,23 +17,25 @@ std::ostream& operator<<(std::ostream& os, const Constraint& c) {
 
 ConstraintMatrix ConstraintMatrix::add_constraints(
                                  const std::vector<Constraint>& constraints) {
-    MapT new_map;
+    std::vector<std::pair<int, Constraint>> entries;
     for (auto it = c_map.begin(); it != c_map.end(); ++it) {
-        new_map[it->first] = it->second;
+        entries.push_back({it->first, it->second});
     }
 
     for (std::size_t i = 0; i < constraints.size(); ++i) {
         auto in_constraint = constraints[i];
-        auto last = std::max_element(in_constraint.dof_constraints.begin(), 
-                                     in_constraint.dof_constraints.end(),
+        auto new_dof_constraints = in_constraint.dof_constraints;
+        auto last = std::max_element(new_dof_constraints.begin(), 
+                                     new_dof_constraints.end(),
             [] (const DOFWeight& a, const DOFWeight& b) {
                 return a.first < b.first; 
             });
         auto last_dof = last->first;
+        std::iter_swap(last, new_dof_constraints.end() - 1);
         //TODO: Make the constrained dof first, not last! simpler
-        std::iter_swap(last, in_constraint.dof_constraints.end() - 1);
-        new_map[last_dof] = in_constraint;
+        entries.push_back({last_dof, {new_dof_constraints, in_constraint.rhs_value}});
     }
+    MapT new_map(entries.begin(), entries.end());
     return {new_map};
 }
 
