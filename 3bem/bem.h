@@ -26,33 +26,40 @@ struct Problem {
 template <int dim>
 class FaceInfo {
 public:
-    FaceInfo(const Facet<dim>& facet);
-    
     //The responsibility is on the user to maintain the lifetime of the facet.
     const Facet<dim>& face;
-    const Vec<double,dim> unscaled_n;
-    const double area;
+
+    const double area_scale;
+    const double length_scale;
     const double jacobian;
     const Vec<double,dim> normal;
+
+    static const double inv_ref_facet_area;
+    static FaceInfo<dim> build(const Facet<dim>& facet);
 };
 
-template <>
-FaceInfo<3>::FaceInfo(const Facet<3>& facet):
-    face(facet),
-    unscaled_n(unscaled_normal(face.vertices)),
-    area(tri_area(unscaled_n)),
-    jacobian(area * 2.0),
-    normal(unscaled_n / jacobian)
-{}
+template <> const double FaceInfo<3>::inv_ref_facet_area = 2.0;
+template <> const double FaceInfo<2>::inv_ref_facet_area = 0.5;
 
 template <>
-FaceInfo<2>::FaceInfo(const Facet<2>& facet):
-    face(facet),
-    unscaled_n(unscaled_normal(face.vertices)),
-    area(hypot2(unscaled_n)),
-    jacobian(std::sqrt(area) / 2.0),
-    normal(0.5 * unscaled_n / jacobian)
-{}
+FaceInfo<3> FaceInfo<3>::build(const Facet<3>& facet){
+    auto unscaled_n = unscaled_normal(facet.vertices);
+    auto area = tri_area(unscaled_n);
+    auto length_scale = std::sqrt(area);
+    auto jacobian = area * inv_ref_facet_area;
+    auto normal = unscaled_n / jacobian;
+    return FaceInfo<3>{facet, area, length_scale, jacobian, normal};
+}
+
+template <>
+FaceInfo<2> FaceInfo<2>::build(const Facet<2>& facet){
+    auto unscaled_n = unscaled_normal(facet.vertices);
+    auto area_scale = hypot2(unscaled_n);
+    auto length = std::sqrt(area_scale);
+    auto jacobian = length * inv_ref_facet_area;
+    auto normal = unscaled_n / length;
+    return FaceInfo<2>{facet, area_scale, length, jacobian, normal};
+}
 
 template <int dim>
 struct ObsPt {
@@ -60,7 +67,7 @@ struct ObsPt {
                                 const FaceInfo<dim>& obs_face,
                                 int idx) {
         return {
-            std::sqrt(obs_face.area),
+            obs_face.length_scale,
             ref_to_real(obs_quad[idx].x_hat, obs_face.face.vertices),
             obs_face.normal,
             obs_face.normal 
@@ -237,7 +244,7 @@ Vec<double,dim> near_field(const Problem<dim>& p, const QuadStrategy<dim>& qs,
                                             zeros<Vec<double, dim>>());
     const double singular_threshold = 3.0;
     const double safe_dist_ratio = 5.0;
-    if (dist2 < singular_threshold * src_face.area) { 
+    if (dist2 < singular_threshold * src_face.area_scale) { 
         for (int nf = 0; nf < qs.n_singular_steps; nf++) {
             double nfdn = safe_dist_ratio * obs.len_scale * qs.singular_steps[nf];
             auto nf_obs_pt = obs.loc + nfdn * obs.richardson_dir;
@@ -279,11 +286,11 @@ std::vector<double> integral_equation_vector(const Problem<dim>& p,
     int n_out_dofs = dim * p.src_mesh.facets.size();
     std::vector<double> result(n_out_dofs);
     for (std::size_t i = 0; i < p.src_mesh.facets.size(); i++) {
-        FaceInfo<dim> src_face(p.src_mesh.facets[i]);
+        auto src_face = FaceInfo<dim>::build(p.src_mesh.facets[i]);
         const double dist2 = appx_face_dist2<dim>(obs.loc, src_face.face.vertices);
 
         Vec<double,dim> integrals;
-        if (dist2 < pow(qs.far_threshold, 2) * src_face.area) {
+        if (dist2 < pow(qs.far_threshold, 2) * src_face.area_scale) {
             integrals = near_field(p, qs, obs, src_face, dist2);
         } else {
             // farfield
@@ -332,7 +339,7 @@ std::vector<double> interact_matrix(const Problem<dim>& p,
     std::vector<double> matrix(n_obs_dofs * n_src_dofs, 0.0);
 #pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
-        FaceInfo<dim> obs_face(p.obs_mesh.facets[obs_idx]);
+        auto obs_face = FaceInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
         for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
             auto pt = ObsPt<dim>::from_face(qs.obs_quad, obs_face, obs_q);
 
@@ -376,7 +383,7 @@ std::vector<double> mass_term(const Problem<dim>& p,
     int n_obs_dofs = dim * p.obs_mesh.facets.size();
     std::vector<double> integrals(n_obs_dofs, 0.0);
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
-        FaceInfo<dim> obs_face(p.obs_mesh.facets[obs_idx]);
+        auto obs_face = FaceInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
         for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
             auto qpt = qs.obs_quad[obs_q];
             int dof = dim * obs_idx;
