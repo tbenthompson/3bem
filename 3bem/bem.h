@@ -65,8 +65,9 @@ template <int dim>
 struct ObsPt {
     static ObsPt<dim> from_face(const Vec<double,dim-1>& ref_loc,
                                 const FaceInfo<dim>& obs_face) {
+        const int basis_order = 1;
         return {
-            obs_face.length_scale,
+            obs_face.length_scale / basis_order,
             ref_to_real(ref_loc, obs_face.face.vertices),
             obs_face.normal,
             obs_face.normal 

@@ -42,10 +42,6 @@ TASKS:
 
 -- Consider using CGAL or other big fancy libraries for computational geometry
 
--- In FaceInfo, Rename area to area_scale so that it makes sense in 2D
-
--- For the near-field length scale, determine what factor to divide by in order to make the richardson quadrature start far/near enough away. It should depend in some way on the basis functions or observation point quadrature order. Probably the basis order... 
-
 -- Tests for the 2D and 3D adaptive_nearfield quadrature.
 
 -- A better approximation to the distance to a face might include the centroid (see appx_face_dist2)
