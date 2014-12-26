@@ -22,6 +22,8 @@ Longer term:
 
 
 TASKS:
+-- Add an integral term object into bem.h
+
 -- Add some of the tests from codim1_dev for add_vec_with_constraints to test_constraints
 
 -- Tests for inhomogeneous constraints

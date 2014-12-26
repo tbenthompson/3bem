@@ -200,14 +200,14 @@ std::vector<double> bem_mat_mult(const std::vector<double>& A,
 
 
 template <int dim> 
-Vec<double,dim> adaptive_nearfield(const Problem<dim>& p,
-                                    const QuadStrategy<dim>& qs,
-                                    const ObsPt<dim>& obs,
-                                    const FaceInfo<dim>& src_face,
-                                    const Vec<double,dim>& nf_obs_pt);
+Vec<double,dim> compute_adaptively(const Problem<dim>& p,
+                                   const QuadStrategy<dim>& qs,
+                                   const ObsPt<dim>& obs,
+                                   const FaceInfo<dim>& src_face,
+                                   const Vec<double,dim>& nf_obs_pt);
 
 template <>
-Vec<double,3> adaptive_nearfield<3>(const Problem<3>& p,
+Vec<double,3> compute_adaptively<3>(const Problem<3>& p,
                                     const QuadStrategy<3>& qs,
                                     const ObsPt<3>& obs,
                                     const FaceInfo<3>& src_face,
@@ -224,7 +224,7 @@ Vec<double,3> adaptive_nearfield<3>(const Problem<3>& p,
 }
 
 template <>
-Vec<double,2> adaptive_nearfield<2>(const Problem<2>& p,
+Vec<double,2> compute_adaptively<2>(const Problem<2>& p,
                                     const QuadStrategy<2>& qs,
                                     const ObsPt<2>& obs,
                                     const FaceInfo<2>& src_face,
@@ -236,24 +236,38 @@ Vec<double,2> adaptive_nearfield<2>(const Problem<2>& p,
         }, -1.0, 1.0, qs.near_tol);
 }
 
-template <int dim>
-Vec<double,dim> near_field(const Problem<dim>& p, const QuadStrategy<dim>& qs,
-                        const ObsPt<dim>& obs, const FaceInfo<dim>& src_face,
-                        const double dist2) {
-    std::vector<Vec<double,dim>> near_steps(qs.n_singular_steps, 
-                                            zeros<Vec<double, dim>>());
-    const double singular_threshold = 3.0;
+template <int dim> 
+Vec<double,dim> compute_as_limit(const Problem<dim>& p,
+                                 const QuadStrategy<dim>& qs,
+                                 const ObsPt<dim>& obs,
+                                 const FaceInfo<dim>& src_face) {
     const double safe_dist_ratio = 5.0;
+    std::vector<Vec<double,dim>> near_steps(
+            qs.n_singular_steps, zeros<Vec<double, dim>>()
+        );
+    for (int nf = 0; nf < qs.n_singular_steps; nf++) {
+        double nfdn = safe_dist_ratio * obs.len_scale * qs.singular_steps[nf];
+        auto nf_obs_pt = obs.loc + nfdn * obs.richardson_dir;
+        auto ns = compute_adaptively<dim>(
+                p, qs, obs, src_face, nf_obs_pt
+            );
+        near_steps[nf] += ns;
+    }
+    return richardson_step(near_steps);
+}
+                                          
+
+template <int dim>
+Vec<double,dim> near_field(const Problem<dim>& p,
+                           const QuadStrategy<dim>& qs,
+                           const ObsPt<dim>& obs,
+                           const FaceInfo<dim>& src_face,
+                           const double dist2) {
+    const double singular_threshold = 3.0;
     if (dist2 < singular_threshold * src_face.area_scale) { 
-        for (int nf = 0; nf < qs.n_singular_steps; nf++) {
-            double nfdn = safe_dist_ratio * obs.len_scale * qs.singular_steps[nf];
-            auto nf_obs_pt = obs.loc + nfdn * obs.richardson_dir;
-            auto ns = adaptive_nearfield<dim>(p, qs, obs, src_face, nf_obs_pt);
-            near_steps[nf] += ns;
-        }
-        return richardson_step(near_steps);
+        return compute_as_limit(p, qs, obs, src_face);
     } else {
-        return adaptive_nearfield<dim>(p, qs, obs, src_face, obs.loc);
+        return compute_adaptively<dim>(p, qs, obs, src_face, obs.loc);
     }
 }
 
