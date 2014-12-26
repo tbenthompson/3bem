@@ -3,9 +3,6 @@
 #include "mesh.h"
 #include "constraint.h"
 
-//TODO: higher order basis!
-//TODO: move some of the stuff from numerics here.
-//TODO: interpolation with constraints
 
 namespace tbem {
 

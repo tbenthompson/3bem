@@ -91,7 +91,6 @@ TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
     CHECK_CLOSE(result, 0.0269063, 1e-6);
 }
 
-//TODO: This should be refactored a bit!
 struct EvalProb {
     EvalProb(int refine_level, int near_eval, int gauss_order, const Kernel<3>& k,
              Vec3<double> center = Vec3<double>{0,0,0},
@@ -197,7 +196,6 @@ TEST(MassTerm) {
 }
 
 
-//TODO: Fixture for this and the next one.
 TEST(DirectInteractConstantLaplace) {
     auto sphere = sphere_mesh({0,0,0}, 1.0).refine_repeatedly(2);
     int n_dofs = 3 * sphere.facets.size();

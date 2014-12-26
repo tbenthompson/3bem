@@ -32,7 +32,6 @@ ConstraintMatrix ConstraintMatrix::add_constraints(
             });
         auto last_dof = last->first;
         std::iter_swap(last, new_dof_constraints.end() - 1);
-        //TODO: Make the constrained dof first, not last! simpler
         entries.push_back({last_dof, {new_dof_constraints, in_constraint.rhs_value}});
     }
     MapT new_map(entries.begin(), entries.end());
@@ -77,9 +76,6 @@ std::vector<double> ConstraintMatrix::get_all(const std::vector<double>& in,
     return out;
 }
 
-//TODO: Is there an alternate formulation for this that does not require modifying the
-//input vec? Should recursive constraints be dealt with upfront? The constrained-dof 
-//is last rule should prevent any cyclic constraints.
 void ConstraintMatrix::add_vec_with_constraints(const DOFWeight& entry,
                                                 std::vector<double>& vec) const {
     auto dof_and_constraint = c_map.find(entry.first);
@@ -138,7 +134,6 @@ Constraint boundary_condition(int dof, double value) {
     };
 }
 
-//TODO: FIX THE O(N^2) problem here, use hashes or octree?
 template <int dim>
 std::vector<Constraint> mesh_continuity(const Mesh<dim>& m, double eps) {
 
@@ -161,7 +156,6 @@ std::vector<Constraint> mesh_continuity(const Mesh<dim>& m, double eps) {
     return constraints;
 }
 
-//TODO: FIX THE O(N^2) problem here, use hashes or octree?
 template <int dim> 
 ConstraintMatrix apply_discontinuities(const Mesh<dim>& surface,
                                        const Mesh<dim>& disc,
@@ -188,7 +182,6 @@ ConstraintMatrix apply_discontinuities(const Mesh<dim>& surface,
                     }
 
                     // Get the other dof for the constraint.
-                    // TODO: Need better DOF handling
                     int other_dof = dof_and_constraint->second.dof_constraints[0].first;
                     int other_vert = other_dof % 3;
                     int other_face = (other_dof - other_vert) / 3;

@@ -261,8 +261,6 @@ inline double tri_area(const std::array<Vec3<double>,3>& corners) {
     return tri_area(unscaled_normal(corners));
 }
 
-//TODO: Pull some of this out into a separate module "geometry.h"
-//TODO: Consider using CGAL or other big fancy libraries
 enum Side {FRONT, INTERSECT, BEHIND};
 
 /* Determine which side of the plane/line defined by triangle/segment 

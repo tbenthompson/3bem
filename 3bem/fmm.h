@@ -13,17 +13,6 @@ class Box;
     
 typedef std::function<double (double, double, double, double, double, double)> Kernel;
 
-//TODO: This functionality requires significant refactoring:
-//-- immutable data types
-//-- use a recurse and coalesce strategy for accumulating the jobs
-//-- get rid of the float_ variables
-//-- use a recurse and coalesce strategy for accumulating the multipoles 
-//   and locals
-//-- make sure these modifications don't damage the efficiency
-//TODO: Make the functions for the different operations more uniform 
-// -- global operation (P2M, treecode, FMM)
-// -- cell-wise operations
-// -- node-wise operations
 
 class FMMInfo {
 public:

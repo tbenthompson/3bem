@@ -49,7 +49,6 @@ template <>
 FaceInfo<2>::FaceInfo(const Facet<2>& facet):
     face(facet),
     unscaled_n(unscaled_normal(face.vertices)),
-    //TODO: rename area to area_scale so that it makes sense in 2D
     area(hypot2(unscaled_n)),
     jacobian(std::sqrt(area) / 2.0),
     normal(0.5 * unscaled_n / jacobian)
@@ -61,7 +60,6 @@ struct ObsPt {
                                 const FaceInfo<dim>& obs_face,
                                 int idx) {
         return {
-            //TODO: need to divide by q or something like that
             std::sqrt(obs_face.area),
             ref_to_real(obs_quad[idx].x_hat, obs_face.face.vertices),
             obs_face.normal,
@@ -201,7 +199,6 @@ Vec<double,dim> adaptive_nearfield(const Problem<dim>& p,
                                     const FaceInfo<dim>& src_face,
                                     const Vec<double,dim>& nf_obs_pt);
 
-//TODO: Add a test for this function
 template <>
 Vec<double,3> adaptive_nearfield<3>(const Problem<3>& p,
                                     const QuadStrategy<3>& qs,
@@ -219,7 +216,6 @@ Vec<double,3> adaptive_nearfield<3>(const Problem<3>& p,
         }, 0.0, 1.0, qs.near_tol);
 }
 
-//TODO: Add a test for this function
 template <>
 Vec<double,2> adaptive_nearfield<2>(const Problem<2>& p,
                                     const QuadStrategy<2>& qs,
@@ -258,7 +254,6 @@ Vec<double,dim> near_field(const Problem<dim>& p, const QuadStrategy<dim>& qs,
  * but a low precision approximate distance is useful.
  * This function simply approximates the distance by the distance from
  * the given point to each vertex of the element.
- * TODO: A better approximation would include the centroid
  */
 template <int dim>
 double appx_face_dist2(const Vec<double,dim>& pt,
@@ -323,7 +318,6 @@ double eval_integral_equation(const Problem<dim>& p, const QuadStrategy<dim>& qs
     return result;
 }
 
-//TODO: Use a sparse matrix storage format here.
 /* Given a kernel function and two meshes this function calculates the
  * Galerkin boundary element matrix representing the operator 
  * \int_{S_{obs}} \phi_i(x) \int_{S_{src}} K(x,y) \phi_j(y) dy dx
