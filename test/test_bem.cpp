@@ -361,9 +361,7 @@ TEST(FaceInfo3D) {
 TEST(ObsPtFromFace) {
     Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{1.0, 1.0}};
     auto face_info = FaceInfo<2>::build(f);
-    auto qg = gauss(1);
-    int idx = 0;
-    auto obs = ObsPt<2>::from_face(qg, face_info, idx);
+    auto obs = ObsPt<2>::from_face({0}, face_info);
     CHECK_EQUAL(obs.len_scale, std::sqrt(2));
     CHECK_EQUAL(obs.loc, (Vec2<double>{0.5, 0.5}));
     CHECK_EQUAL(obs.normal, (Vec2<double>{-1.0 / std::sqrt(2), 1.0 / std::sqrt(2)}));

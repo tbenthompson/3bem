@@ -63,12 +63,11 @@ FaceInfo<2> FaceInfo<2>::build(const Facet<2>& facet){
 
 template <int dim>
 struct ObsPt {
-    static ObsPt<dim> from_face(const QuadRule<dim-1>& obs_quad,
-                                const FaceInfo<dim>& obs_face,
-                                int idx) {
+    static ObsPt<dim> from_face(const Vec<double,dim-1>& ref_loc,
+                                const FaceInfo<dim>& obs_face) {
         return {
             obs_face.length_scale,
-            ref_to_real(obs_quad[idx].x_hat, obs_face.face.vertices),
+            ref_to_real(ref_loc, obs_face.face.vertices),
             obs_face.normal,
             obs_face.normal 
         };
@@ -341,7 +340,7 @@ std::vector<double> interact_matrix(const Problem<dim>& p,
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FaceInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
         for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
-            auto pt = ObsPt<dim>::from_face(qs.obs_quad, obs_face, obs_q);
+            auto pt = ObsPt<dim>::from_face(qs.obs_quad[obs_q].x_hat, obs_face);
 
             const auto row = integral_equation_vector(p, qs, pt);
 
