@@ -3,9 +3,6 @@
 using namespace tbem;
 
 int main() {
-    //TODO: Clearly need a better way of handling vector problems!
-    //-- doing ~9x as much work because the problem is not vectored/tensored
-
     double surf_width = 4;
     int refine_surf = 4;
     double far_threshold = 3.0;

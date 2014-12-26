@@ -87,16 +87,17 @@ TEST(MeshContinuity2D) {
         CHECK_CLOSE(a, 1.0, 1e-12);
     }
     for (auto it = constraints.c_map.begin(); it != constraints.c_map.end(); it++) {
-        // Of a pair of DOFs, the higher index should be the even one for the 
-        // standard indexing. Thus, the constrained dofs should be even.
+        // Of a pair of DOFs, the higher index should be even,
+        // Because the last DOF is constrained, 
+        // the constrained dofs should be even.
+
+        // But, we don't check the last DOF which will be constrained by the first
+        // DOF (connecting the circle) since then the evenness will be broken.
         if (it->first != (int)(2 * circle.facets.size() - 1)) {
             CHECK_EQUAL(it->first % 2, 0);
         }
     }
 }
-
-//TODO: Add some of the tests from codim1_dev for add_vec_with_constraints
-//TODO: Test inhomogenous constraints.
 
 int main(int, char const *[])
 {

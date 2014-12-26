@@ -31,7 +31,6 @@ TEST(DegenerateBoundingBox) {
 TEST(ToOctreeSpace) {
     const double n = 10;
     const double sub_n = 10;
-    //TODO: This could be a property based test.
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < sub_n; j++) {
             double loc = (i / n) + j / (sub_n * n);

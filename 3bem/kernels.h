@@ -8,8 +8,6 @@
 
 namespace tbem { 
 
-//TODO: Think about separating each kernel into its own class and removing
-//some of this fluff.
 #define wrap_K2(KNAME, K, J) \
     [&] (const double& r2, const Vec2<double>& delta,\
          const Vec2<double> nsrc, const Vec2<double>& nobs) {\

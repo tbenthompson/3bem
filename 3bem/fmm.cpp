@@ -103,7 +103,6 @@ void FMMInfo::P2M_helper(int m_cell_idx) {
                 continue;
             }
             auto child = src_oct.cells[child_idx];
-            //TODO: Extract this function as P2M_cell_cell.
             for(unsigned int i = 0; i < nodes[0].size(); i++) {
                 int child_node_idx = nodes[0].size() * child_idx + i;
                 std::array<double,3> mapped_pt_src;
@@ -291,7 +290,6 @@ void FMMInfo::L2P_helper(int l_cell_idx) {
 
             // top-down tree traversal, recurse after doing work
             auto child = obs_oct.cells[child_idx];
-            //TODO: Extract this function as L2P_cell_cell.
             for(unsigned int i = 0; i < nodes[0].size(); i++) {
                 int child_node_idx = nodes[0].size() * child_idx + i;
                 std::array<double,3> mapped_local_pt;

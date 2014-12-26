@@ -6,7 +6,6 @@
 
 namespace tbem {
 
-// TODO: Should these box_from_* functions be Box constructors?
 Box box_from_min_max(const Vec3<double> min_corner,
                      const Vec3<double> max_corner) {
     Box ext;
@@ -55,7 +54,6 @@ Octree::Octree(std::array<std::vector<double>,3>& p_elements,
 { 
     bounds = bounding_box(elements, 0, n_elements());
 
-    // 
     // Fudge the width for the box used to calculate morton codes
     // so that no point is exactly on the outer boundary of the box.
     // This allows ignoring the edge case.
@@ -64,15 +62,6 @@ Octree::Octree(std::array<std::vector<double>,3>& p_elements,
         morton_bounds.half_width[d] *= 1.001;
     }
 
-    //TODO: To parallelize this, don't build the tree top-down. Build it
-    //from the bottom-up. Every element knows its position in the tree already,
-    //I just need to compute the morton code on each level to determine that.
-    //The problem becomes adaptivity. To achieve adaptivity, I could 
-    //temporarily build a hash table mapping cells to a list of elements and 
-    //then statically convert that into a top-down tree. But, because the 
-    //lower nodes are already constructed, constructing the upper nodes
-    //is not dependent on them -- in other words, this construction is
-    //completely parallelizable.
     for (unsigned int i = 0; i < n_elements(); i++) {
         morton_codes[i] = compute_morton(elements[0][i],
                                          elements[1][i],
@@ -142,12 +131,9 @@ int Octree::build_child(OctreeCell& cur_cell, int i, int j, int k) {
         return -1;
     }
 
-    //TODO: If computing bounding boxes from pts becomes too much work,
-    //the current bounding box can be computed from the children's bounding
-    //boxes.
     Box box;
     if (end - begin == 1) {
-        //TODO: Extract this get_box or get_single_pt_box function or both.
+
         Vec3<double> center;
         Vec3<double> half_width;
         for (int d = 0; d < 3; d++) {

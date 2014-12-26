@@ -12,7 +12,6 @@ namespace tbem {
 /* A box class defined by its center and half_width. These are using as
  * bounding boxes for the nodes in the octree hierarchy.
  */
-//TODO: Make this an immutable data type.
 class Box {
 public:
     std::array<double,3> center;
@@ -43,18 +42,14 @@ inline int to_octree_space(double x, double center,
     return res;
 }
 
-
-//TODO: Make this an immutable data type.
 class OctreeCell {
 public:
     // Vertical depth of the cell. The root is level 0.
-    // TODO: May not be necessary to store this.
     unsigned int level;
 
     // The location of the cell within this level. For example,
     // a level 2 cell would have a location ranging from 0 to 3
     // in each index, for a total of 8^2 = 64 cells on level 2.
-    // TODO: May not be necessary to store this.
     std::array<int,3> loc;
 
     // The bounding box for the surrounded particles.
@@ -66,7 +61,6 @@ public:
     unsigned int end;
 
     //The beginning and end morton codes of the cell.
-    //TODO: Are these necessary except for construction?
     uint64_t min_code;
     uint64_t max_code;
 
@@ -80,10 +74,6 @@ public:
     bool is_leaf;
 };
 
-//TODO: Make this an immutable data type.
-//TODO: I could filter out parts of the tree where a cell has only one child.
-//----- this relies on the tree usage not being dependent on the 
-//      division by 2 for each axis.
 /* One quirk to the behavior of this octree implementation:
  * All points must be on the interior of the octree, they cannot be on
  * the boundaries. This allows the "to_octree_space" function to ignore the

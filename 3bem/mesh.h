@@ -29,16 +29,15 @@ template <typename T, int dim>
 struct MeshField {
     typedef std::function<T(T)> RefineFnc;
     const std::vector<FacetField<T,dim>> facets;
-    //TODO: Consider getting rid of the refine_mod stuff.
     const bool has_refine_mod;
     const RefineFnc refine_mod;
 
     MeshField<T,dim> refine(const std::vector<int>& refine_these) const;
     MeshField<T,dim> refine() const;
     MeshField<T,dim> refine_repeatedly(unsigned int times) const;
+
     // Combine two meshes into one. Requires that the meshes not have
     // a refinement modifier
-
     static
     MeshField<T,dim> form_union(const std::vector<MeshField<T,dim>>& others);
 
