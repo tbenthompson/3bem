@@ -19,9 +19,13 @@ Longer term:
 ** template on double vs float?
 
 
-
-
 TASKS:
+-- Restrict the IntegralTerm elements to the ones that are actually needed.
+
+-- Be consistent about which files contain outwards facing API and which files contain implementation details.
+
+-- Move docs to the headers.
+
 -- Add an integral term object into bem.h
 
 -- Add some of the tests from codim1_dev for add_vec_with_constraints to test_constraints

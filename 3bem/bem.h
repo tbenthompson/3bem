@@ -198,19 +198,26 @@ std::vector<double> bem_mat_mult(const std::vector<double>& A,
                                  int n_obs_dofs,
                                  const std::vector<double>& x);
 
+/* Data transfer object for computing integral terms. 
+ * Values are stored by reference for efficiency's sake.
+ * This means that the responsibility for maintaining their lifetime is on the
+ * user.
+ */
+template <int dim>
+struct IntegralTerm {
+    const QuadStrategy<dim>& qs;
+    const Kernel<dim>& K;
+    const ObsPt<dim>& obs;
+    const FaceInfo<dim>& src_face;
+    const double appx_pt_face_dist_squared;
+};
 
 template <int dim> 
-Vec<double,dim> compute_adaptively(const Problem<dim>& p,
-                                   const QuadStrategy<dim>& qs,
-                                   const ObsPt<dim>& obs,
-                                   const FaceInfo<dim>& src_face,
+Vec<double,dim> compute_adaptively(const IntegralTerm<dim>& term,
                                    const Vec<double,dim>& nf_obs_pt);
 
 template <>
-Vec<double,3> compute_adaptively<3>(const Problem<3>& p,
-                                    const QuadStrategy<3>& qs,
-                                    const ObsPt<3>& obs,
-                                    const FaceInfo<3>& src_face,
+Vec<double,3> compute_adaptively<3>(const IntegralTerm<3>& term,
                                     const Vec<double,3>& nf_obs_pt) {
     return adaptive_integrate<Vec<double,3>>(
         [&] (double x_hat) {
@@ -218,56 +225,71 @@ Vec<double,3> compute_adaptively<3>(const Problem<3>& p,
                 return zeros<Vec<double,3>>();
             }
             return adaptive_integrate2<Vec<double,3>>(
-                        0.0, 1 - x_hat, qs.near_tol, x_hat, p.K,
-                        src_face, nf_obs_pt, obs.normal);
-        }, 0.0, 1.0, qs.near_tol);
+                        0.0, 1 - x_hat, term.qs.near_tol, x_hat, term.K,
+                        term.src_face, nf_obs_pt, term.obs.normal);
+        }, 0.0, 1.0, term.qs.near_tol);
 }
 
 template <>
-Vec<double,2> compute_adaptively<2>(const Problem<2>& p,
-                                    const QuadStrategy<2>& qs,
-                                    const ObsPt<2>& obs,
-                                    const FaceInfo<2>& src_face,
+Vec<double,2> compute_adaptively<2>(const IntegralTerm<2>& term,
                                     const Vec<double,2>& nf_obs_pt) {
     return adaptive_integrate<Vec<double,2>>(
         [&] (double x_hat) {
-            return eval_quad_pt<2>(Vec<double,1>{x_hat}, p.K, src_face,
-                                   nf_obs_pt, obs.normal);
-        }, -1.0, 1.0, qs.near_tol);
+            return eval_quad_pt<2>(Vec<double,1>{x_hat}, term.K, term.src_face,
+                                   nf_obs_pt, term.obs.normal);
+        }, -1.0, 1.0, term.qs.near_tol);
 }
 
 template <int dim> 
-Vec<double,dim> compute_as_limit(const Problem<dim>& p,
-                                 const QuadStrategy<dim>& qs,
-                                 const ObsPt<dim>& obs,
-                                 const FaceInfo<dim>& src_face) {
+Vec<double,dim> compute_as_limit(const IntegralTerm<dim>& term) {
     const double safe_dist_ratio = 5.0;
-    std::vector<Vec<double,dim>> near_steps(
-            qs.n_singular_steps, zeros<Vec<double, dim>>()
-        );
-    for (int nf = 0; nf < qs.n_singular_steps; nf++) {
-        double nfdn = safe_dist_ratio * obs.len_scale * qs.singular_steps[nf];
-        auto nf_obs_pt = obs.loc + nfdn * obs.richardson_dir;
-        auto ns = compute_adaptively<dim>(
-                p, qs, obs, src_face, nf_obs_pt
-            );
-        near_steps[nf] += ns;
+
+    std::vector<Vec<double,dim>> near_steps(term.qs.n_singular_steps);
+    for (int nf = 0; nf < term.qs.n_singular_steps; nf++) {
+        double nfdn = safe_dist_ratio * 
+                      term.obs.len_scale *
+                      term.qs.singular_steps[nf];
+        auto nf_obs_pt = term.obs.loc + nfdn * term.obs.richardson_dir;
+        auto sequence_element = compute_adaptively<dim>(term, nf_obs_pt);
+        near_steps[nf] = sequence_element;
     }
+
     return richardson_step(near_steps);
 }
                                           
 
 template <int dim>
-Vec<double,dim> near_field(const Problem<dim>& p,
-                           const QuadStrategy<dim>& qs,
-                           const ObsPt<dim>& obs,
-                           const FaceInfo<dim>& src_face,
-                           const double dist2) {
+Vec<double,dim> compute_near_term(const IntegralTerm<dim>& term) {
     const double singular_threshold = 3.0;
-    if (dist2 < singular_threshold * src_face.area_scale) { 
-        return compute_as_limit(p, qs, obs, src_face);
+    if (term.appx_pt_face_dist_squared < 
+            singular_threshold * term.src_face.area_scale) { 
+        return compute_as_limit(term);
     } else {
-        return compute_adaptively<dim>(p, qs, obs, src_face, obs.loc);
+        return compute_adaptively<dim>(term, term.obs.loc);
+    }
+}
+
+template <int dim>
+Vec<double,dim> compute_far_term(const IntegralTerm<dim>& term) {
+    auto integrals = zeros<Vec<double,dim>>();
+    for (std::size_t i = 0; i < term.qs.src_far_quad.size(); i++) {
+        integrals += term.qs.src_far_quad[i].w *
+            eval_quad_pt<dim>(
+                term.qs.src_far_quad[i].x_hat,
+                term.K, term.src_face,
+                term.obs.loc, term.obs.normal
+            );
+    }
+    return integrals;
+}
+
+template <int dim>
+Vec<double,dim> compute_term(const IntegralTerm<dim>& term) {
+    if (term.appx_pt_face_dist_squared < 
+            pow(term.qs.far_threshold, 2) * term.src_face.area_scale) {
+        return compute_near_term(term);
+    } else {
+        return compute_far_term(term);
     }
 }
 
@@ -303,18 +325,7 @@ std::vector<double> integral_equation_vector(const Problem<dim>& p,
         auto src_face = FaceInfo<dim>::build(p.src_mesh.facets[i]);
         const double dist2 = appx_face_dist2<dim>(obs.loc, src_face.face.vertices);
 
-        Vec<double,dim> integrals;
-        if (dist2 < pow(qs.far_threshold, 2) * src_face.area_scale) {
-            integrals = near_field(p, qs, obs, src_face, dist2);
-        } else {
-            // farfield
-            integrals = zeros<Vec<double,dim>>();
-            for (std::size_t i = 0; i < qs.src_far_quad.size(); i++) {
-                integrals += qs.src_far_quad[i].w *
-                    eval_quad_pt<dim>(qs.src_far_quad[i].x_hat, p.K, src_face,
-                                 obs.loc, obs.normal);
-            }
-        }
+        auto integrals = compute_term<dim>({qs, p.K, obs, src_face, dist2});
         for (int b = 0; b < dim; b++) {
             result[dim * i + b] = integrals[b];
         }
