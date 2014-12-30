@@ -356,6 +356,12 @@ inline Vec2<bool> operator<(const Vec2<T>& t, const T& rhs) {
     return {t[0] < rhs, t[1] < rhs};
 }
 
+inline double max(double x) {return x;}
+inline double max(Vec3<double> x) {return std::max(x[0], std::max(x[1], x[2]));}
+
+inline double min(double x) {return x;}
+inline double min(Vec3<double> x) {return std::min(x[0], std::min(x[1], x[2]));}
+
 inline bool any(bool a) {return a;}
 inline bool any(Vec3<bool> v) {return v[0] || v[1] || v[2];}
 

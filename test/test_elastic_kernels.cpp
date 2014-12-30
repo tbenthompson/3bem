@@ -19,27 +19,33 @@ Vec<double,dim> vec_from_indices(std::vector<std::string> row_entries,
     return out;
 }
 
-template <int k, int j, int dim>
-double call_kernel(const double r2,
+template <int dim>
+Vec<Vec<double,dim>,dim> call_kernel(const double r2,
                    const Vec<double,dim>& delta, 
                    const Vec<double,dim>& src_n,
                    const Vec<double,dim>& obs_n,
                    const std::string& name,
-                   const ElasticKernels<dim>& ek) {
+                   double shear_modulus,
+                   double poisson_ratio) {
     if (name == "disp") {
-         return ek.displacement_mat[k][j](r2, delta, src_n, obs_n);
+         return ElasticDisplacement<dim>(shear_modulus, poisson_ratio)
+                                        (r2, delta, src_n, obs_n);
     } else if (name == "trac") {
-         return ek.traction_mat[k][j](r2, delta, src_n, obs_n);
+         return ElasticTraction<dim>(shear_modulus, poisson_ratio)
+                                    (r2, delta, src_n, obs_n);
+
     } else if (name == "adj_trac") {
-         return ek.adjoint_traction_mat[k][j](r2, delta, src_n, obs_n);
+         return ElasticAdjointTraction<dim>(shear_modulus, poisson_ratio)
+                                           (r2, delta, src_n, obs_n);
     } else if (name == "hyp") {
-         return ek.hypersingular_mat[k][j](r2, delta, src_n, obs_n);
+         return ElasticHypersingular<dim>(shear_modulus, poisson_ratio)
+                                           (r2, delta, src_n, obs_n);
     } 
     throw std::invalid_argument("name must be one of \
                                 ['disp', 'trac', 'adj_trac', 'hyp']");
 }
 
-template <int k, int j, int dim>
+template <int dim>
 void test_elastic_kernel(std::string name) {
     const int src_loc_indices[3] = {6, 7, 8};
     const int obs_loc_indices[3] = {9, 10, 11};
@@ -59,7 +65,10 @@ void test_elastic_kernel(std::string name) {
         while (std::getline(iss, entry,',')) {
             es.push_back(entry);
         }
-        if (es[1] != name || std::stoi(es[2]) != k || std::stoi(es[3]) != j) {
+
+        int k = std::stoi(es[2]);
+        int j = std::stoi(es[3]);
+        if (es[1] != name) {
             continue;
         }
         double shear_mod = std::stod(es[4]);
@@ -74,7 +83,8 @@ void test_elastic_kernel(std::string name) {
         ElasticKernels<dim> ek(shear_mod, poisson_ratio);
 
         double exact = std::stod(es[0]);
-        double attempt = call_kernel<k,j,dim>(r2, delta, src_n, obs_n, name, ek);
+        double attempt = call_kernel<dim>(r2, delta, src_n, obs_n,
+                                          name, shear_mod, poisson_ratio)[k][j];
         double error = std::fabs(exact - attempt) /
                        ((std::fabs(exact) + std::fabs(attempt)) / 2);
         // std::cout << "Name: " << name << " k,j,dim:" << k << j << dim << std::endl;
@@ -85,31 +95,18 @@ void test_elastic_kernel(std::string name) {
     test_data.close();
 }
 
-template <int k, int j, int dim>
-void test_tensor_entry() {
-    test_elastic_kernel<k,j,dim>("disp");
-    test_elastic_kernel<k,j,dim>("trac");
-    test_elastic_kernel<k,j,dim>("adj_trac");
-    test_elastic_kernel<k,j,dim>("hyp");
-}
-
-template <int k, int dim>
-void test_tensor_row() {
-    test_tensor_entry<k,0,dim>();
-    test_tensor_entry<k,1,dim>();
-    test_tensor_entry<k,2,dim>();
-}
-
 TEST(TestElasticTensorKernels2D) {
-    test_tensor_row<0,2>();
-    test_tensor_row<1,2>();
-    test_tensor_row<2,2>();
+    test_elastic_kernel<2>("disp");
+    test_elastic_kernel<2>("trac");
+    test_elastic_kernel<2>("adj_trac");
+    test_elastic_kernel<2>("hyp");
 }
 
 TEST(TestElasticTensorKernels3D) {
-    test_tensor_row<0,3>();
-    test_tensor_row<1,3>();
-    test_tensor_row<2,3>();
+    test_elastic_kernel<3>("disp");
+    test_elastic_kernel<3>("trac");
+    test_elastic_kernel<3>("adj_trac");
+    test_elastic_kernel<3>("hyp");
 }
 
 int main(int, char const *[])

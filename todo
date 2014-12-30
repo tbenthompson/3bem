@@ -8,6 +8,8 @@ Longer term:
     /54329/86520_1.pdf?sequence=1
 
 TASKS:
+-- KernelData object 
+
 -- Vector direct_interact
 
 -- Some profiling on the functions inside an iterative matrix solve
