@@ -99,6 +99,22 @@ TEST(MeshContinuity2D) {
     }
 }
 
+TEST(ConstraintOutput) {
+    Constraint c{{{0, 1}, {1, 1}}, 0.0};
+    std::stringstream output_buf;
+    output_buf << c;
+    CHECK_EQUAL(output_buf.str(), "Constraint[[(RHS, 0), (0, 1), (1, 1), ]]");
+}
+
+TEST(ConstraintMatrixOutput) {
+    Constraint c{{{0, 1}, {1, 1}}, 0.0};
+    auto c_mat = ConstraintMatrix::from_constraints({c});
+    std::stringstream output_buf;
+    output_buf << c_mat;
+    CHECK_EQUAL(output_buf.str(), 
+        "ConstraintMatrix[[(1, Constraint[[(RHS, 0), (0, 1), (1, 1), ]]), ]]");
+}
+
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();
