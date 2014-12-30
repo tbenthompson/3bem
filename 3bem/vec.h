@@ -162,6 +162,12 @@ T sum(const Vec2<T>& a) {
     return a[0] + a[1];
 }
 
+template <unsigned long dim>
+Vec<Vec<double,dim>,dim> outer_product(Vec<double,dim> a,
+                                       Vec<double,dim> b) {
+    return {a[0] * b, a[1] * b};
+}
+
 template <typename T>
 Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
     return {

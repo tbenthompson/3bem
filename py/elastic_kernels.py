@@ -18,69 +18,94 @@ mx, my, mz = sp.symbols('mx, my, mz')
 sm_val = 30e9
 pr_val = 0.25
 
-def disp_creator(k, j):
+kronecker = np.identity(3)
+
+def disp_creator(k, j, dimension):
+    if dimension == 2:
+        return disp_creator_2d(k, j)
+    elif dimension == 3:
+        return disp_creator_3d(k, j)
+
+def disp_creator_2d(k, j):
+    C1 = 1 / (8 * sp.pi * sm * (1 - pr))
+    C2 = (3 - 4 * pr)
+    delta = [x1 - x2, y1 - y2]
+    r2 = sum([d ** 2 for d in delta])
+    disp = C1 * (-C2 * kronecker[k,j] * sp.log(sp.sqrt(r2)) +
+                 (delta[k] * delta[j] / r2))
+    return disp
+
+def disp_creator_3d(k, j):
     C1 = 1 / (16 * sp.pi * sm * (1 - pr))
     C2 = (3 - 4 * pr)
     delta = [x1 - x2, y1 - y2, z1 - z2]
     r2 = sum([d**2 for d in delta])
 
     disp = (C1 / sp.sqrt(r2)) *\
-           (C2 * (1 if k == j else 0) + delta[k] * delta[j] / r2)
+           (C2 * kronecker[k,j] + delta[k] * delta[j] / r2)
     return disp
 
+def get_dimension_indices(dim):
+    if dim == 2:
+        return [0,1]
+    elif dim == 3:
+        return [0,1,2]
+
+def stress_from_strain(strain, strain_trace, shear_mod, lame_lambda, l, m):
+    return lame_lambda * strain_trace * kronecker[l,m] +\
+           2 * shear_mod * strain[l][m]
 # Symbolically finds the tractions corresponding to a displacement field.
 # t_i = c_ijkl ((u_k,l + u_l,k) / 2) * n_j
-def traction_operator(disp_vec, pos_vec, index, normal):
+def traction_operator(disp_vec, pos_vec, index, normal, dimension):
+    dim_indices = get_dimension_indices(dimension)
     disp_grad = [[sp.diff(disp_vec[l], pos_vec[m])
-                    for m in [0,1,2]] for l in [0,1,2]]
+                    for m in dim_indices] for l in dim_indices]
     strain = [[(disp_grad[l][m] + disp_grad[m][l]) / 2
-                    for m in [0,1,2]] for l in [0,1,2]]
-    strain_trace = (strain[0][0] + strain[1][1] + strain[2][2])
+                    for m in dim_indices] for l in dim_indices]
+    strain_trace = sum([strain[d][d] for d in dim_indices])
 
     lame_lambda = (2 * sm * pr) / (1 - 2 * pr)
-    def stress_from_strain(l, m):
-        return lame_lambda * strain_trace * (1 if l == m else 0) +\
-               2 * sm * strain[l][m]
-    stress = [[stress_from_strain(l, m) for m in [0,1,2]] for l in [0,1,2]]
-    trac = stress[index][0] * normal[0] +\
-           stress[index][1] * normal[1] +\
-           stress[index][2] * normal[2]
+    stress = [[stress_from_strain(strain, strain_trace, sm, lame_lambda, l, m)
+                for m in dim_indices] for l in dim_indices]
+    trac = sum([stress[index][d] * normal[d] for d in dim_indices])
     return trac
 
 # Displacement kernel is given.
 # Traction kernel is the traction operator w.r.t. the source coords.
 # Adjoint traction kernel is the traction operator w.r.t. the observation coords.
 # Hypersingular kernel is the double traction operator w.r.t. both coords.
-def derive_kernels(k, j):
-    disp = disp_creator(k, j)
+def derive_kernels(k, j, dimension):
+    disp = disp_creator(k, j, dimension)
 
-    src_disp_vec = [disp_creator(k, dir) for dir in [0,1,2]]
+    dim_indices = get_dimension_indices(dimension)
+
+    src_disp_vec = [disp_creator(k, dir, dimension) for dir in dim_indices]
     src_pos_vec = [x1, y1, z1]
     src_n = [nx, ny, nz]
 
-    obs_disp_vec = [disp_creator(dir, j) for dir in [0,1,2]]
+    obs_disp_vec = [disp_creator(dir, j, dimension) for dir in dim_indices]
     obs_pos_vec = [x2, y2, z2]
     obs_n = [mx, my, mz]
 
-    trac = traction_operator(src_disp_vec, src_pos_vec, j, src_n)
+    trac = traction_operator(src_disp_vec, src_pos_vec, j, src_n, dimension)
 
-    adj_trac = traction_operator(obs_disp_vec, obs_pos_vec, k, obs_n)
+    adj_trac = traction_operator(obs_disp_vec, obs_pos_vec, k, obs_n, dimension)
 
-    tracx = traction_operator([disp_creator(0, d) for d in [0,1,2]],
-                              src_pos_vec, j, src_n)
-    tracy = traction_operator([disp_creator(1, d) for d in [0,1,2]],
-                              src_pos_vec, j, src_n)
-    tracz = traction_operator([disp_creator(2, d) for d in [0,1,2]],
-                              src_pos_vec, j, src_n)
-    hyp_disp_vec = [tracx, tracy, tracz]
-    hyp = traction_operator(hyp_disp_vec, obs_pos_vec, k, obs_n)
+    hypersingular_disp_vec = [
+        traction_operator(
+            [disp_creator(obs_d, src_d, dimension) for src_d in dim_indices],
+            src_pos_vec, j, src_n, dimension
+        )
+        for obs_d in dim_indices
+    ]
+    hyp = traction_operator(hypersingular_disp_vec, obs_pos_vec, k, obs_n, dimension)
 
     return disp, trac, adj_trac, hyp
 
 # Get some random points to test compare the hand-derived and symbolically
 # derived elastostatic kernels.
 def get_arg_sets():
-    n_arg_sets = 25
+    n_arg_sets = 10
 
     arg_sets = []
     for i in range(n_arg_sets):
@@ -94,11 +119,11 @@ def get_arg_sets():
                         n_vec.tolist() + m_vec.tolist())
     return arg_sets
 
-def main(pair, data_file):
+def create_tensor_entry_data(pair, data_file, dimension):
     k, j = pair
     arg_sets = get_arg_sets()
 
-    disp, trac, adj_trac, hyp = derive_kernels(k, j)
+    disp, trac, adj_trac, hyp = derive_kernels(k, j, dimension)
     print k,j
 
     args = (sm, pr, x1, y1, z1, x2, y2, z2, nx, ny, nz, mx, my, mz)
@@ -117,10 +142,13 @@ def main(pair, data_file):
 #output value, "trac", i, j, sm, pr, x1, x2, y1, y2, z1, z2, nx, ny, nz, mx, my, mz
             data_file.write(data + '\n')
 
+def create_test_data_for_each_tensor_entry(dimension):
+    test_data = open('test/test_data_elastic' + str(dimension), 'w')
+    for k in range(dimension):
+        for j in range(dimension):
+            create_tensor_entry_data((k,j), test_data, dimension)
+    test_data.close()
 
 if __name__ == "__main__":
-    test_data = open('test/test_data', 'w')
-    for k in range(3):
-        for j in range(3):
-            main((k,j), test_data)
-    test_data.close()
+    create_test_data_for_each_tensor_entry(2)
+    create_test_data_for_each_tensor_entry(3)

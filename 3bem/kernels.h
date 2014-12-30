@@ -242,7 +242,7 @@ struct ElasticKernels<2> {
         const auto drdn = dot(delta, nsrc) / r;
         const auto term1 = (trac_C2 * kronecker[k][j] + 2 * delta[k] * delta[j] / r2);
         const auto term2 = trac_C2 * (nsrc[j] * delta[k] - nsrc[k] * delta[j]) / r;
-        return -(trac_C1 / r2) * (term1 * drdn - term2);
+        return -(trac_C1 / r) * (term1 * drdn - term2);
     }
 
     template <int k, int j>
@@ -254,7 +254,7 @@ struct ElasticKernels<2> {
         const auto drdm = dot(delta, nobs) / r;
         const auto term1 = (trac_C2 * kronecker[k][j] + 2 * delta[k] * delta[j] / r2);
         const auto term2 = trac_C2 * (nobs[j] * delta[k] - nobs[k] * delta[j]) / r;
-        return (trac_C1 / r2) * (term1 * drdm + term2);
+        return (trac_C1 / r) * (term1 * drdm + term2);
     }
 
     template <int k, int j>

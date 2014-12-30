@@ -13,6 +13,7 @@ http://code.google.com/p/fabricate/
 from build.fabricate import *
 
 import os
+import subprocess
 
 def files_in_dir(directory, ext):
     ret = []
@@ -47,14 +48,18 @@ cpp_flags.extend(['-I' + loc for loc in includes])
 debug_flags = '-g -Og -DDEBUG=1'.split()
 release_flags = '-DNDEBUG=1 -Ofast -ffast-math -funroll-loops'.split()
 profile_flags = release_flags + ['-g']
+test_coverage_flags = ['--coverage']
+test_coverage_flags.extend(debug_flags)
+
+cpp_flags.extend(test_coverage_flags)
 # cpp_flags.extend(debug_flags)
 # cpp_flags.extend(release_flags)
-cpp_flags.extend(profile_flags)
+# cpp_flags.extend(profile_flags)
 
 lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)
 
-link_flags = '-fopenmp -lhdf5'.split()
+link_flags = '--coverage -fopenmp -lhdf5'.split()
 link_flags.append('-Wl,-rpath=' + petsc_dir + '/' + petsc_arch + '/lib')
 link_flags.append('-L' + petsc_dir + '/' + petsc_arch + '/lib')
 link_flags.append('-lpetsc')
@@ -109,6 +114,32 @@ def link():
         run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
     for source in inttests:
         run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
+
+def run_test_set(test_names):
+    for test_file in test_names:
+        # Calling after() forces fabricate.py to wait until the current command
+        # is done before beginning another command, preventing parallelism
+        # between commands. The tests themselves use parallelism so they should
+        # be run without other tests running concurrently.
+        try:
+            run(oname(test_file))
+        except e:
+            print e
+        after()
+
+def run_tests():
+    run_test_set(tests)
+
+def run_integration_tests():
+    run_test_set(inttests)
+
+def lcov():
+    coverage_file = oname('coverage.info')
+    lcov_outdir = oname('lcov_out')
+    after()
+    run('lcov', '--capture', '--directory', build_dir, '--output-file', coverage_file)
+    after()
+    run('genhtml', coverage_file, '--output-directory', lcov_outdir)
 
 def clean():
     autoclean()

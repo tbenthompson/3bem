@@ -93,6 +93,25 @@ TEST(TriSide) {
     CHECK_EQUAL(facet_side<3>({BEHIND, INTERSECT, BEHIND}), BEHIND);
 }
 
+// TEST(OuterProductVector) {
+//     Vec2<double> K = {1.0, 1.0};
+//     Vec2<double> x = {3.0, 4.0};
+//     auto result = outer_product(K, x);
+//     Vec2<Vec2<double>> correct{{{3.0, 3.0}, {4.0, 4.0}}};
+//     CHECK_EQUAL(result, correct);
+// }
+
+// TEST(OuterProductTensorVector) {
+//     Vec2<Vec2<double>> K{{1.0, 0.0}, {0.0,1.0}};
+//     Vec2<double> x = {3.0, 4.0};
+//     Vec2<Vec2<Vec2<double>>> correct{
+//         {{3.0, 3.0}, {0.0, 0.0}},
+//         {{0.0, 0.0}, {4.0, 4.0}}
+//     };
+//     auto result = outer_product(K, x);
+//     CHECK_EQUAL(result, correct);
+// }
+
 int main() {
     return UnitTest::RunAllTests();
 }

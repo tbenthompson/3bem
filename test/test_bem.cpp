@@ -25,7 +25,7 @@ struct IntegrationProb {
     
     void go() {
         auto basis = integrate<Vec3<double>,2>(q, [&] (std::array<double,2> x_hat) {
-                return eval_quad_pt<3>(x_hat, kernel, FaceInfo<3>::build(face),
+                return eval_quad_pt<3>(x_hat, kernel, FacetInfo<3>::build(face),
                                        obs_loc, obs_n);
             });
         result = dot(basis, src_vals);
@@ -243,7 +243,7 @@ TEST(OneSegment2D) {
         {exact_single, exact_double};
     std::vector<Kernel<2>> kernel = {laplace_single<2>, laplace_double<2>};
     Facet<2> facet{{v0, v1}};
-    auto face = FaceInfo<2>::build(facet);
+    auto face = FacetInfo<2>::build(facet);
     CHECK_EQUAL(face.jacobian, 1.0);
     CHECK_EQUAL(face.area_scale, 4.0);
 
@@ -334,9 +334,9 @@ TEST(DirectInteractOne3d) {
     direct_interact_one_test<3>(sphere, 4 * M_PI);
 }
 
-TEST(FaceInfo2D) {
+TEST(FacetInfo2D) {
     Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{1.0, 0.0}};
-    auto face_info = FaceInfo<2>::build(f);
+    auto face_info = FacetInfo<2>::build(f);
     CHECK_EQUAL(&face_info.face, &f);
     CHECK_EQUAL(face_info.area_scale, 1);
     CHECK_EQUAL(face_info.length_scale, 1);
@@ -344,13 +344,13 @@ TEST(FaceInfo2D) {
     CHECK_EQUAL(face_info.normal, (Vec2<double>{0.0, 1.0}));
 }
 
-TEST(FaceInfo3D) {
+TEST(FacetInfo3D) {
     Facet<3> f{
         Vec3<double>{0.0, 0.0, 0.0},
         Vec3<double>{1.0, 0.0, 0.0},
         Vec3<double>{0.0, 1.0, 0.0}
     };
-    auto face_info = FaceInfo<3>::build(f);
+    auto face_info = FacetInfo<3>::build(f);
     CHECK_EQUAL(&face_info.face, &f);
     CHECK_EQUAL(face_info.area_scale, 0.5);
     CHECK_EQUAL(face_info.length_scale, std::sqrt(1.0 / 2.0));
@@ -360,7 +360,7 @@ TEST(FaceInfo3D) {
 
 TEST(ObsPtFromFace) {
     Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{1.0, 1.0}};
-    auto face_info = FaceInfo<2>::build(f);
+    auto face_info = FacetInfo<2>::build(f);
     auto obs = ObsPt<2>::from_face({0}, face_info);
     CHECK_EQUAL(obs.len_scale, std::sqrt(2));
     CHECK_EQUAL(obs.loc, (Vec2<double>{0.5, 0.5}));
