@@ -10,8 +10,6 @@ Longer term:
 TASKS:
 -- Vector direct_interact
 
--- Outer product in vec.h
-
 -- Some profiling on the functions inside an iterative matrix solve
 
 -- Link BEM to FMM

@@ -51,10 +51,10 @@ profile_flags = release_flags + ['-g']
 test_coverage_flags = ['--coverage']
 test_coverage_flags.extend(debug_flags)
 
-cpp_flags.extend(test_coverage_flags)
+# cpp_flags.extend(test_coverage_flags)
 # cpp_flags.extend(debug_flags)
 # cpp_flags.extend(release_flags)
-# cpp_flags.extend(profile_flags)
+cpp_flags.extend(profile_flags)
 
 lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)
@@ -117,15 +117,12 @@ def link():
 
 def run_test_set(test_names):
     for test_file in test_names:
-        # Calling after() forces fabricate.py to wait until the current command
-        # is done before beginning another command, preventing parallelism
-        # between commands. The tests themselves use parallelism so they should
-        # be run without other tests running concurrently.
-        try:
-            run(oname(test_file))
-        except e:
-            print e
-        after()
+        # I go outside fabricate's runner and use subprocess.call instead because
+        # I see no reason to track the running of tests. Running all of the tests
+        # each time is desirable. Using fabricate would only run the tests that
+        # had changed since the last run.
+        print("\nRunning test set: " + test_file)
+        subprocess.call(oname(test_file))
 
 def run_tests():
     run_test_set(tests)

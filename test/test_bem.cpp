@@ -65,13 +65,13 @@ TEST_FIXTURE(IntegrationProb, IntegralLaplaceDouble) {
 
 TEST(Richardson) {
     std::vector<double> input = {0.5, 0.3, 0.2, 0.15};
-    double result = richardson_step(input);
+    double result = richardson_limit(input);
     CHECK_CLOSE(result, 0.1, 1e-12);
 }
 
 TEST(RichardsonZeros) {
     std::vector<double> input = {0.0, 0.0, 0.0, 0.0};
-    double result = richardson_step(input);
+    double result = richardson_limit(input);
     CHECK_CLOSE(result, 0.0, 1e-12);
 }
 
@@ -87,7 +87,7 @@ TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
         vals.push_back(result);
         offset /= 2;
     }
-    double result = richardson_step(vals);
+    double result = richardson_limit(vals);
     CHECK_CLOSE(result, 0.0269063, 1e-6);
 }
 
