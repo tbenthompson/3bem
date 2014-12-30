@@ -22,8 +22,6 @@ TASKS:
 
 -- Be consistent about which files contain outwards facing API and which files contain implementation details.
 
--- Move docs to the headers.
-
 -- Add some of the tests from codim1_dev for add_vec_with_constraints to test_constraints
 
 -- Tests for inhomogeneous constraints

@@ -83,12 +83,12 @@ void operator/=(Vec2<T>& a, const Vec2<T>& b) {
     a[0] /= b[0]; a[1] /= b[1]; 
 }
 
-template <typename T>
-void operator*=(Vec3<T>& a, const T& s) {
+template <typename T, typename F>
+void operator*=(Vec3<T>& a, const F& s) {
     a[0] *= s; a[1] *= s; a[2] *= s;
 }
-template <typename T>
-void operator*=(Vec2<T>& a, const T& s) {
+template <typename T, typename F>
+void operator*=(Vec2<T>& a, const F& s) {
     a[0] *= s; a[1] *= s;
 }
 
@@ -118,13 +118,13 @@ Vec<T,dim> operator/(const Vec<T,dim>& a, const Vec<T,dim>& b) {
     Vec<T,dim> res = a; res /= b; return res;
 }
 
-template <typename T, unsigned long dim>
-Vec<T,dim> operator*(const Vec<T,dim>& a, const T& s) {
+template <typename T, typename F, unsigned long dim>
+Vec<T,dim> operator*(const Vec<T,dim>& a, const F& s) {
     Vec<T,dim> res = a; res *= s; return res;
 }
 
-template <typename T, unsigned long dim>
-Vec<T,dim> operator*(const T& s, const Vec<T,dim>& a) {
+template <typename T, typename F, unsigned long dim>
+Vec<T,dim> operator*(const F& s, const Vec<T,dim>& a) {
     Vec<T,dim> res = a; res *= s; return res;
 }
 
@@ -162,10 +162,10 @@ T sum(const Vec2<T>& a) {
     return a[0] + a[1];
 }
 
-template <unsigned long dim>
-Vec<Vec<double,dim>,dim> outer_product(Vec<double,dim> a,
-                                       Vec<double,dim> b) {
-    return {a[0] * b, a[1] * b};
+template <typename T, unsigned long dim>
+Vec<Vec<T,dim>,dim> outer_product(Vec<double,dim> a,
+                                       Vec<T,dim> b) {
+    return {b * a[0], b * a[1]};
 }
 
 template <typename T>
