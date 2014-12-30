@@ -162,9 +162,13 @@ T sum(const Vec2<T>& a) {
     return a[0] + a[1];
 }
 
-template <typename T, unsigned long dim>
-Vec<Vec<T,dim>,dim> outer_product(Vec<double,dim> a,
-                                       Vec<T,dim> b) {
+template <typename T>
+Vec<T,3> outer_product(const Vec<double,3>& a, const T& b) {
+    return {b * a[0], b * a[1], b * a[2]};
+}
+
+template <typename T>
+Vec<T,2> outer_product(const Vec<double,2>& a, const T& b) {
     return {b * a[0], b * a[1]};
 }
 

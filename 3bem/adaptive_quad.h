@@ -44,6 +44,7 @@ const double lobatto_x1 = .94288241569547971905635175843185720232;
 const double lobatto_x2 = .64185334234578130578123554132903188354;
 const double lobatto_x3 = .23638319966214988028222377349205292599;
 
+
 template <typename T>
 T adaptlobstp(const std::function<T(double)>& f, const double a, const double b, 
               const T& fa, const T& fb, const T& is )
@@ -172,6 +173,7 @@ T adaptive_integrate(const std::function<T(double)>& f, double a, double b, doub
 
     return adaptlobstp(f, a, b, fa, fb, err_is);
 }
+
 
 } //END NAMESPACE tbem
 #endif

@@ -80,9 +80,9 @@ struct ObsPt {
     const Vec<double,dim> richardson_dir;
 };
 
-template <int dim>
+template <int dim, typename K>
 Vec<double,dim> eval_quad_pt(const Vec<double,dim-1>& x_hat,
-                          const Kernel<dim>& kernel,
+                          const K& kernel,
                           const FacetInfo<dim>& face,
                           const Vec<double,dim>& obs_loc,
                           const Vec<double,dim>& obs_n) {
@@ -90,166 +90,115 @@ Vec<double,dim> eval_quad_pt(const Vec<double,dim-1>& x_hat,
     const auto d = src_pt - obs_loc;
     const auto r2 = dot(d, d);
     const auto kernel_val = kernel(r2, d, face.normal, obs_n);
-    return (kernel_val * face.jacobian) * linear_basis(x_hat);
+    return outer_product(linear_basis(x_hat), kernel_val * face.jacobian);
 }
-
-template <typename T>
-T adaptlobstp2(const double a, const double b, 
-              const T& fa, const T& fb, const T& is, double outer_x, 
-              const Kernel<3>& kernel, const FacetInfo<3>& face, const Vec3<double>& obs_loc,
-                const Vec3<double>& obs_n)
-{
-    // std::cout << a << " " << b << std::endl;
-    double m = (a + b) / 2.; 
-    double h = (b - a) / 2.;
-
-    double ah = lobatto_alpha * h;
-    double bh = lobatto_beta * h;
-    double mll = m - ah;
-    double ml = m - bh;
-    double mr = m + bh;
-    double mrr = m + ah;
-
-    T fmll = eval_quad_pt<3>(Vec2<double>{outer_x, mll}, kernel, face, obs_loc, obs_n);
-    T fml = eval_quad_pt<3>(Vec2<double>{outer_x, ml}, kernel, face, obs_loc, obs_n);
-    T fm = eval_quad_pt<3>(Vec2<double>{outer_x, m}, kernel, face, obs_loc, obs_n);
-    T fmr = eval_quad_pt<3>(Vec2<double>{outer_x, mr}, kernel, face, obs_loc, obs_n);
-    T fmrr = eval_quad_pt<3>(Vec2<double>{outer_x, mrr}, kernel, face, obs_loc, obs_n);
-
-    T i2 = (h / 6.) * (fa + fb + 5.0 * (fml + fmr));    
-    T i1 = (h / 1470.) * (
-            77.0 * (fa + fb) + 
-            432.0 * (fmll + fmrr) +
-            625.0 * (fml + fmr) +
-            672.0 * fm);
-
-    if (all(is + (i1 - i2) == is)) {
-        return i1;
-    } else if (mll <= a or b <= mrr) {
-        std::cout << "YIKES FROM ADAPTIVE!" << std::endl;
-        return i1;
-    } else {
-        return adaptlobstp2(a, mll, fa, fmll, is, outer_x, kernel, face, obs_loc, obs_n)
-             + adaptlobstp2(mll, ml, fmll, fml, is, outer_x, kernel, face, obs_loc, obs_n)
-             + adaptlobstp2(ml, m, fml, fm, is, outer_x, kernel, face, obs_loc, obs_n)
-             + adaptlobstp2(m, mr, fm, fmr, is, outer_x, kernel, face, obs_loc, obs_n)
-             + adaptlobstp2(mr, mrr, fmr, fmrr, is, outer_x, kernel, face, obs_loc, obs_n)
-             + adaptlobstp2(mrr, b, fmrr, fb, is, outer_x, kernel, face, obs_loc, obs_n);
-    }
-}
-
-template <typename T>
-T adaptive_integrate2(double a, double b, 
-                      double p_tol, double outer_x, const Kernel<3>& kernel,
-                          const FacetInfo<3>& face,
-                          const Vec3<double>& obs_loc,
-                          const Vec3<double>& obs_n)
-{
-    double m = (a + b) / 2.; 
-    double h = (b - a) / 2.;
-
-    const T y[13] = {
-        eval_quad_pt<3>(Vec2<double>{outer_x, a}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, m - lobatto_x1 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, m - lobatto_alpha * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, m - lobatto_x2 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, m - lobatto_beta * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, m - lobatto_x3 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, m}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, m + lobatto_x3 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, m + lobatto_beta * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, m + lobatto_x2 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, m + lobatto_alpha * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, m + lobatto_x1 * h}, kernel, face, obs_loc, obs_n),
-        eval_quad_pt<3>(Vec2<double>{outer_x, b}, kernel, face, obs_loc, obs_n)
-    };
-    
-    const T fa = y[0];
-    const T fb = y[12];
-    
-    const T i2 = (h / 6.0) * (y[0] + y[12] + 5.0 * (y[4] + y[8]));
-    const T i1 = (h / 1470.0) * (
-            77.0 * (y[0] + y[12]) +
-            432.0 * (y[2] + y[10]) +
-            625.0 * (y[4] + y[8]) +
-            672.0 * y[6]);
-    const T is = h * (
-        0.0158271919734802 * (y[0] + y[12]) + 
-        0.0942738402188500 * (y[1] + y[11]) + 
-        0.155071987336585  * (y[2] + y[10]) +
-        0.188821573960182  * (y[3] + y[9]) + 
-        0.199773405226859  * (y[4] + y[8]) +
-        0.224926465333340  * (y[5] + y[7]) + 
-        0.242611071901408  * y[6]);    
-   
-    const T erri1 = fabs(i1 - is);
-    const T erri2 = fabs(i2 - is);
-    
-    const T err_is = get_error_is(p_tol, erri1, erri2, is, a, b);
-
-    return adaptlobstp2(a, b, fa, fb, err_is, outer_x, kernel, face, obs_loc, obs_n);
-}
-
-
-template <typename T>
-T richardson_step(const std::vector<T>& values);
 
 std::vector<double> bem_mat_mult(const std::vector<double>& A, 
                                  int n_obs_dofs,
-                                 const std::vector<double>& x);
+                                 const std::vector<double>& x) {
+    assert(n_obs_dofs * x.size() == A.size());
+    std::vector<double> res(n_obs_dofs, 0.0);
+#pragma omp parallel for
+    for (int i = 0; i < n_obs_dofs; i++) {
+        for (std::size_t j = 0; j < x.size(); j++) {
+            res[i] += A[i * x.size() + j] * x[j]; 
+        }
+    }
+    return res;
+}
 
 /* Data transfer object for computing integral terms. 
  * Values are stored by reference for efficiency's sake.
  * This means that the responsibility for maintaining their lifetime is on the
  * user.
  */
-template <int dim>
+template <int dim, typename KT>
 struct IntegralTerm {
     const QuadStrategy<dim>& qs;
-    const Kernel<dim>& K;
+    const KT& k;
     const ObsPt<dim>& obs;
     const FacetInfo<dim>& src_face;
     const double appx_pt_face_dist_squared;
 };
 
-template <int dim> 
-Vec<double,dim> compute_adaptively(const IntegralTerm<dim>& term,
-                                   const Vec<double,dim>& nf_obs_pt);
-
-template <>
-Vec<double,3> compute_adaptively<3>(const IntegralTerm<3>& term,
-                                    const Vec<double,3>& nf_obs_pt) {
-    return adaptive_integrate<Vec<double,3>>(
-        [&] (double x_hat) {
-            if (x_hat == 1.0) {
-                return zeros<Vec<double,3>>();
-            }
-            return adaptive_integrate2<Vec<double,3>>(
-                        0.0, 1 - x_hat, term.qs.near_tol, x_hat, term.K,
-                        term.src_face, nf_obs_pt, term.obs.normal);
-        }, 0.0, 1.0, term.qs.near_tol);
-}
-
-template <>
-Vec<double,2> compute_adaptively<2>(const IntegralTerm<2>& term,
-                                    const Vec<double,2>& nf_obs_pt) {
-    return adaptive_integrate<Vec<double,2>>(
-        [&] (double x_hat) {
-            return eval_quad_pt<2>(Vec<double,1>{x_hat}, term.K, term.src_face,
-                                   nf_obs_pt, term.obs.normal);
-        }, -1.0, 1.0, term.qs.near_tol);
-}
-
+// TODO: This template specialization stuff is kind of ugly...
 template <int dim>
-Vec<double,dim> get_step_loc(const IntegralTerm<dim>& term, int step_idx) {
+struct UnitFacetAdaptiveIntegrator {
+    template <typename KT>
+    Vec<double,dim> operator()(const IntegralTerm<dim,KT>& term, 
+                 const Vec<double,dim>& nf_obs_pt);
+};
+
+template <>
+struct UnitFacetAdaptiveIntegrator<2> {
+    template <typename KT>
+    Vec<double,2> operator()(const IntegralTerm<2,KT>& term, 
+                 const Vec<double,2>& nf_obs_pt) {
+        return adaptive_integrate<Vec<double,2>>(
+            [&] (double x_hat) {
+                return eval_quad_pt<2>({x_hat}, term.k, term.src_face,
+                                         nf_obs_pt, term.obs.normal);
+            }, -1.0, 1.0, term.qs.near_tol);
+    }
+};
+
+template <>
+struct UnitFacetAdaptiveIntegrator<3> {
+    template <typename KT>
+    Vec<double,3> operator()(const IntegralTerm<3,KT>& term, 
+                 const Vec<double,3>& nf_obs_pt) {
+        return adaptive_integrate<Vec<double,3>>(
+            [&] (double x_hat) {
+                if (x_hat == 1.0) {
+                    return zeros<Vec<double,3>>();
+                }
+                return adaptive_integrate<Vec<double,3>>([&] (double y_hat) {
+                        return eval_quad_pt<3>({x_hat, y_hat}, term.k, term.src_face,
+                                                 nf_obs_pt, term.obs.normal);
+                    }, 0.0, 1 - x_hat, term.qs.near_tol);
+            }, 0.0, 1.0, term.qs.near_tol);
+    }
+};
+
+template <int dim, typename KT> 
+Vec<double,dim> compute_adaptively(const IntegralTerm<dim, KT>& term,
+                                   const Vec<double,dim>& nf_obs_pt) {
+    UnitFacetAdaptiveIntegrator<dim> integrator;
+    return integrator(term, nf_obs_pt);
+}
+
+template <int dim, typename KT>
+Vec<double,dim> get_step_loc(const IntegralTerm<dim, KT>& term, int step_idx) {
     const double safe_dist_ratio = 5.0;
     double step_distance = safe_dist_ratio * term.obs.len_scale * 
                            term.qs.singular_steps[step_idx];
     return term.obs.loc + step_distance * term.obs.richardson_dir;
 }
 
-template <int dim> 
-Vec<double,dim> compute_as_limit(const IntegralTerm<dim>& term) {
+template <typename T>
+T richardson_limit(const std::vector<T>& values) {
+    assert(values.size() > 1);
+
+    int n_steps = values.size();
+    std::vector<T> last_level = values;
+    std::vector<T> this_level;
+    for (int m = 1; m < n_steps; m++) {
+        this_level.resize(n_steps - m);
+        for (int i = 0; i < n_steps - m; i++) {
+            const double mult = pow(2, m);
+            const double factor = 1.0 / (mult - 1.0);
+            T low = last_level[i];
+            T high = last_level[i + 1];
+            T moreacc = factor * (mult * high - low);
+            this_level[i] = moreacc;
+        }
+        last_level = this_level;
+    }
+    return this_level[0];
+}
+
+template <int dim, typename KT> 
+Vec<double,dim> compute_as_limit(const IntegralTerm<dim, KT>& term) {
     std::vector<Vec<double,dim>> near_steps(term.qs.n_singular_steps);
 
     for (int step_idx = 0; step_idx < term.qs.n_singular_steps; step_idx++) {
@@ -257,12 +206,12 @@ Vec<double,dim> compute_as_limit(const IntegralTerm<dim>& term) {
         near_steps[step_idx] = compute_adaptively<dim>(term, step_loc);
     }
 
-    return richardson_step(near_steps);
+    return richardson_limit(near_steps);
 }
                                           
 
-template <int dim>
-Vec<double,dim> compute_near_term(const IntegralTerm<dim>& term) {
+template <int dim, typename KT>
+Vec<double,dim> compute_near_term(const IntegralTerm<dim, KT>& term) {
     const double singular_threshold = 3.0;
     if (term.appx_pt_face_dist_squared < 
             singular_threshold * term.src_face.area_scale) { 
@@ -272,22 +221,22 @@ Vec<double,dim> compute_near_term(const IntegralTerm<dim>& term) {
     }
 }
 
-template <int dim>
-Vec<double,dim> compute_far_term(const IntegralTerm<dim>& term) {
+template <int dim, typename KT>
+Vec<double,dim> compute_far_term(const IntegralTerm<dim, KT>& term) {
     auto integrals = zeros<Vec<double,dim>>();
     for (std::size_t i = 0; i < term.qs.src_far_quad.size(); i++) {
         integrals += term.qs.src_far_quad[i].w *
             eval_quad_pt<dim>(
                 term.qs.src_far_quad[i].x_hat,
-                term.K, term.src_face,
+                term.k, term.src_face,
                 term.obs.loc, term.obs.normal
             );
     }
     return integrals;
 }
 
-template <int dim>
-Vec<double,dim> compute_term(const IntegralTerm<dim>& term) {
+template <int dim, typename KT>
+Vec<double,dim> compute_term(const IntegralTerm<dim, KT>& term) {
     if (term.appx_pt_face_dist_squared < 
             pow(term.qs.far_threshold, 2) * term.src_face.area_scale) {
         return compute_near_term(term);
@@ -327,7 +276,7 @@ std::vector<double> integral_equation_vector(const Problem<dim>& p,
     for (std::size_t i = 0; i < p.src_mesh.facets.size(); i++) {
         auto src_face = FacetInfo<dim>::build(p.src_mesh.facets[i]);
         const double dist2 = appx_face_dist2<dim>(obs.loc, src_face.face.vertices);
-        IntegralTerm<dim> term{qs, p.K, obs, src_face, dist2};
+        IntegralTerm<dim,Kernel<dim>> term{qs, p.K, obs, src_face, dist2};
         auto integrals = compute_term<dim>(term);
         for (int b = 0; b < dim; b++) {
             result[dim * i + b] = integrals[b];
