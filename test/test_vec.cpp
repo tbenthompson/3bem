@@ -124,6 +124,33 @@ TEST(OuterProductTensorVector) {
     CHECK_EQUAL(result, correct);
 }
 
+TEST(InnerProductVecVec) {
+    Vec2<double> right{{3.0, 4.0}};
+    Vec2<double> left = {1.0, 1.0};
+    double correct = 7.0;
+    auto result = dot_product(left, right);
+    CHECK_EQUAL(result, correct);
+}
+
+TEST(InnerProductTensorVector) {
+    Vec2<Vec2<double>> right{{{3.0, 0.0}, {0.0,4.0}}};
+    Vec2<double> left = {1.0, 1.0};
+    Vec2<double> correct{{3.0, 4.0}};
+    auto result = dot_product(left, right);
+    CHECK_EQUAL(result, correct);
+}
+
+TEST(InnerProduct3TensorVector) {
+    Vec2<Vec2<Vec2<double>>> right{{
+        {{{3.0, 0.0}, {0.0, 4.0}}},
+        {{{3.0, 0.0}, {0.0, 4.0}}}
+    }};
+    Vec2<double> left = {1.0, 1.0};
+    Vec2<Vec2<double>> correct{{{6.0, 0.0}, {0.0,8.0}}};
+    auto result = dot_product(left, right);
+    CHECK_EQUAL(result, correct);
+}
+
 int main() {
     return UnitTest::RunAllTests();
 }

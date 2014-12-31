@@ -25,7 +25,7 @@ struct ThetaDudn {
         double y = loc[1];
         double dy = 1.0 / (x * (1 + (y * y / (x * x))));
         double dx = (-y / x) * dy;
-        return dot_product(n, {dx, dy});
+        return dot_product(n, Vec2<double>{dx, dy});
     }
 };
 
