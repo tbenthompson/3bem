@@ -3,7 +3,6 @@
 #include "mesh.h"
 #include "constraint.h"
 
-
 namespace tbem {
 
 template <int dim, typename Fnc> 
@@ -15,8 +14,7 @@ std::vector<double> constrained_interpolate(const Mesh<dim>& mesh,
     for (unsigned int i = 0; i < mesh.facets.size(); i++) {
         for (int d = 0; d < dim; d++) {
             int dof = dim * i + d;
-            auto dof_constraint = c_mat.c_map.find(dof);
-            if (dof_constraint != c_mat.c_map.end()) {
+            if(c_mat.is_constrained(dof)) {
                 continue;
             }
             res.push_back(fnc(mesh.facets[i].vertices[d]));

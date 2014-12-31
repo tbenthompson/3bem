@@ -25,7 +25,7 @@ int main() {
     std::size_t n_surface_dofs = 2 * surface.facets.size();
 
     double slip = 1;
-    std::vector<Vec2<double>> du(n_fault_dofs, slip * ones<Vec2<double>>::make());
+    std::vector<Vec2<double>> du(n_fault_dofs, constant<Vec2<double>>::make(slip));
 
     std::vector<Vec2<double>> all_dofs_rhs(n_surface_dofs, zeros<Vec2<double>>::make());
 

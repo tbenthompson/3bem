@@ -35,6 +35,12 @@ TEST(ConstraintMatrixIsAppendedTo) {
     CHECK(res.rhs_value == 0.0);
 }
 
+TEST(ConstraintMatrixIsConstrained) {
+    auto c = continuity_constraint(1, 2);
+    auto cm = ConstraintMatrix::from_constraints({c});
+    CHECK_EQUAL(cm.is_constrained(2), true);
+}
+
 TEST(ConstraintMatrixGetAll) {
     auto c0 = boundary_condition(1, 4.0);
     auto c1 = continuity_constraint(1, 2);

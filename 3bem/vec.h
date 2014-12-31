@@ -391,8 +391,7 @@ template <typename F>
 struct constant<Vec2<F>> {
     static Vec2<F> make(double val) { 
         return {
-            constant<F>::make(val),
-            constant<F>::make(val)
+            constant<F>::make(val), constant<F>::make(val)
         };
     }
 };
@@ -401,9 +400,7 @@ template <typename F>
 struct constant<Vec3<F>> {
     static Vec3<F> make(double val) { 
         return {
-            constant<F>::make(val),
-            constant<F>::make(val), 
-            constant<F>::make(val) 
+            constant<F>::make(val), constant<F>::make(val), constant<F>::make(val) 
         };
     }
 };

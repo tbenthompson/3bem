@@ -38,6 +38,14 @@ ConstraintMatrix ConstraintMatrix::add_constraints(
     return {new_map};
 }
 
+bool ConstraintMatrix::is_constrained(int dof) const {
+    auto dof_constraint = c_map.find(dof);
+    if (dof_constraint == c_map.end()) {
+        return false;
+    }
+    return true;
+}
+
 ConstraintMatrix ConstraintMatrix::from_constraints(
         const std::vector<Constraint>& constraints) {
     ConstraintMatrix c;
