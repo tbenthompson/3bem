@@ -380,60 +380,45 @@ inline bool all(Vec3<bool> v) {return v[0] && v[1] && v[2];}
 inline bool all(Vec2<bool> v) {return v[0] && v[1];}
 
 template <typename T, typename F = void>
-struct ones;
+struct constant;
 
 template <>
-struct ones<double> {
-    static double make() { return 1.0; }
+struct constant<double> {
+    static double make(double val) { return val; }
 };
 
 template <typename F>
-struct ones<Vec2<F>> {
-    static Vec2<F> make() { 
+struct constant<Vec2<F>> {
+    static Vec2<F> make(double val) { 
         return {
-            ones<F>::make(),
-            ones<F>::make()
+            constant<F>::make(val),
+            constant<F>::make(val)
         };
     }
 };
 
 template <typename F>
-struct ones<Vec3<F>> {
-    static Vec3<F> make() { 
+struct constant<Vec3<F>> {
+    static Vec3<F> make(double val) { 
         return {
-            ones<F>::make(),
-            ones<F>::make(), 
-            ones<F>::make() 
+            constant<F>::make(val),
+            constant<F>::make(val), 
+            constant<F>::make(val) 
         };
     }
 };
 
 template <typename T, typename F = void>
-struct zeros;
-
-template <>
-struct zeros<double> {
-    static double make() { return 0.0; }
-};
-
-template <typename F>
-struct zeros<Vec2<F>> {
-    static Vec2<F> make() { 
-        return {
-            zeros<F>::make(),
-            zeros<F>::make()
-        };
+struct ones {
+    static T make() {
+        return constant<T,F>::make(1.0);
     }
 };
 
-template <typename F>
-struct zeros<Vec3<F>> {
-    static Vec3<F> make() { 
-        return {
-            zeros<F>::make(),
-            zeros<F>::make(), 
-            zeros<F>::make() 
-        };
+template <typename T, typename F = void>
+struct zeros {
+    static T make() {
+        return constant<T,F>::make(0.0);
     }
 };
 
