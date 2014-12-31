@@ -38,39 +38,25 @@ FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet){
     return FacetInfo<2>{facet, area_scale, length, jacobian, normal};
 }
 
-template <int dim, typename K>
-Vec<double,dim> eval_quad_pt(const Vec<double,dim-1>& x_hat,
-                          const K& kernel,
-                          const FacetInfo<dim>& face,
-                          const Vec<double,dim>& obs_loc,
-                          const Vec<double,dim>& obs_n) {
+template <int dim, typename KT>
+Vec<typename KT::OperatorType,dim> eval_quad_pt(const Vec<double,dim-1>& x_hat,
+                                  const KT& kernel,
+                                  const FacetInfo<dim>& face,
+                                  const Vec<double,dim>& obs_loc,
+                                  const Vec<double,dim>& obs_n) {
     const auto src_pt = ref_to_real(x_hat, face.face.vertices);
     const auto d = src_pt - obs_loc;
-    const auto r2 = dot(d, d);
+    const auto r2 = dot_product(d, d);
     const auto kernel_val = kernel(r2, d, face.normal, obs_n);
     return outer_product(linear_basis(x_hat), kernel_val * face.jacobian);
-}
-
-std::vector<double> bem_mat_mult(const std::vector<double>& A, 
-                                 int n_obs_dofs,
-                                 const std::vector<double>& x) {
-    assert(n_obs_dofs * x.size() == A.size());
-    std::vector<double> res(n_obs_dofs, 0.0);
-#pragma omp parallel for
-    for (int i = 0; i < n_obs_dofs; i++) {
-        for (std::size_t j = 0; j < x.size(); j++) {
-            res[i] += A[i * x.size() + j] * x[j]; 
-        }
-    }
-    return res;
 }
 
 template <>
 struct UnitFacetAdaptiveIntegrator<2> {
     template <typename KT>
-    Vec<double,2> operator()(const IntegralTerm<2,KT>& term, 
+    Vec<typename KT::OperatorType,2> operator()(const IntegralTerm<2,KT>& term, 
                  const Vec<double,2>& nf_obs_pt) {
-        return adaptive_integrate<Vec<double,2>>(
+        return adaptive_integrate<Vec<typename KT::OperatorType,2>>(
             [&] (double x_hat) {
                 return eval_quad_pt<2>({x_hat}, term.k, term.src_face,
                                          nf_obs_pt, term.obs.normal);
@@ -81,14 +67,15 @@ struct UnitFacetAdaptiveIntegrator<2> {
 template <>
 struct UnitFacetAdaptiveIntegrator<3> {
     template <typename KT>
-    Vec<double,3> operator()(const IntegralTerm<3,KT>& term, 
+    Vec<typename KT::OperatorType,3> operator()(const IntegralTerm<3,KT>& term, 
                              const Vec<double,3>& nf_obs_pt) {
-        return adaptive_integrate<Vec<double,3>>(
+        return adaptive_integrate<Vec<typename KT::OperatorType,3>>(
             [&] (double x_hat) {
                 if (x_hat == 1.0) {
                     return zeros<Vec<double,3>>();
                 }
-                return adaptive_integrate<Vec<double,3>>([&] (double y_hat) {
+                return adaptive_integrate<Vec<typename KT::OperatorType,3>>(
+                    [&] (double y_hat) {
                         return eval_quad_pt<3>({x_hat, y_hat}, term.k, term.src_face,
                                                  nf_obs_pt, term.obs.normal);
                     }, 0.0, 1 - x_hat, term.qs.near_tol);
@@ -97,14 +84,15 @@ struct UnitFacetAdaptiveIntegrator<3> {
 };
 
 template <int dim, typename KT> 
-Vec<double,dim> compute_adaptively(const IntegralTerm<dim, KT>& term,
-                                   const Vec<double,dim>& nf_obs_pt) {
+Vec<typename KT::OperatorType,dim> 
+compute_adaptively(const IntegralTerm<dim, KT>& term,
+                   const Vec<double,dim>& nf_obs_pt) {
     UnitFacetAdaptiveIntegrator<dim> integrator;
     return integrator(term, nf_obs_pt);
 }
 
 template <int dim, typename KT>
-Vec<double,dim> get_step_loc(const IntegralTerm<dim, KT>& term, int step_idx) {
+Vec<double,dim> get_step_loc(const IntegralTerm<dim,KT>& term, int step_idx) {
     const double safe_dist_ratio = 5.0;
     double step_distance = safe_dist_ratio * term.obs.len_scale * 
                            term.qs.singular_steps[step_idx];
@@ -134,8 +122,9 @@ T richardson_limit(const std::vector<T>& values) {
 }
 
 template <int dim, typename KT> 
-Vec<double,dim> compute_as_limit(const IntegralTerm<dim, KT>& term) {
-    std::vector<Vec<double,dim>> near_steps(term.qs.n_singular_steps);
+Vec<typename KT::OperatorType,dim> compute_as_limit(const IntegralTerm<dim, KT>& term) {
+    std::vector<Vec<typename KT::OperatorType,dim>> 
+        near_steps(term.qs.n_singular_steps);
 
     for (int step_idx = 0; step_idx < term.qs.n_singular_steps; step_idx++) {
         auto step_loc = get_step_loc(term, step_idx);
@@ -147,7 +136,7 @@ Vec<double,dim> compute_as_limit(const IntegralTerm<dim, KT>& term) {
                                           
 
 template <int dim, typename KT>
-Vec<double,dim> compute_near_term(const IntegralTerm<dim, KT>& term) {
+Vec<typename KT::OperatorType,dim> compute_near_term(const IntegralTerm<dim, KT>& term) {
     const double singular_threshold = 3.0;
     if (term.appx_pt_face_dist_squared < 
             singular_threshold * term.src_face.area_scale) { 
@@ -158,21 +147,20 @@ Vec<double,dim> compute_near_term(const IntegralTerm<dim, KT>& term) {
 }
 
 template <int dim, typename KT>
-Vec<double,dim> compute_far_term(const IntegralTerm<dim, KT>& term) {
-    auto integrals = zeros<Vec<double,dim>>();
+Vec<typename KT::OperatorType,dim> compute_far_term(const IntegralTerm<dim, KT>& term) {
+    auto integrals = zeros<Vec<typename KT::OperatorType,dim>>();
     for (std::size_t i = 0; i < term.qs.src_far_quad.size(); i++) {
-        integrals += term.qs.src_far_quad[i].w *
-            eval_quad_pt<dim>(
-                term.qs.src_far_quad[i].x_hat,
-                term.k, term.src_face,
-                term.obs.loc, term.obs.normal
-            );
+        integrals += eval_quad_pt<dim>(
+                        term.qs.src_far_quad[i].x_hat,
+                        term.k, term.src_face,
+                        term.obs.loc, term.obs.normal
+                    ) * term.qs.src_far_quad[i].w;
     }
     return integrals;
 }
 
 template <int dim, typename KT>
-Vec<double,dim> compute_term(const IntegralTerm<dim, KT>& term) {
+Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term) {
     if (term.appx_pt_face_dist_squared < 
             pow(term.qs.far_threshold, 2) * term.src_face.area_scale) {
         return compute_near_term(term);
@@ -191,16 +179,16 @@ double appx_face_dist2(const Vec<double,dim>& pt,
     return res;
 }
 
-template <int dim>
-std::vector<double> integral_equation_vector(const Problem<dim>& p,
-                                             const QuadStrategy<dim>& qs,
-                                             const ObsPt<dim>& obs) {
+template <int dim, typename KT>
+std::vector<typename KT::OperatorType> 
+integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
+                         const ObsPt<dim>& obs) {
     int n_out_dofs = dim * p.src_mesh.facets.size();
-    std::vector<double> result(n_out_dofs);
+    std::vector<typename KT::OperatorType> result(n_out_dofs);
     for (std::size_t i = 0; i < p.src_mesh.facets.size(); i++) {
         auto src_face = FacetInfo<dim>::build(p.src_mesh.facets[i]);
         const double dist2 = appx_face_dist2<dim>(obs.loc, src_face.face.vertices);
-        IntegralTerm<dim,Kernel<dim>> term{qs, p.K, obs, src_face, dist2};
+        auto term = make_integral_term(qs, p.K, obs, src_face, dist2);
         auto integrals = compute_term<dim>(term);
         for (int b = 0; b < dim; b++) {
             result[dim * i + b] = integrals[b];
@@ -209,8 +197,8 @@ std::vector<double> integral_equation_vector(const Problem<dim>& p,
     return result;
 }
 
-template <int dim>
-double eval_integral_equation(const Problem<dim>& p, const QuadStrategy<dim>& qs,
+template <int dim, typename KT>
+double eval_integral_equation(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
                               const ObsPt<dim>& obs) {
     double result = 0.0;
     auto row = integral_equation_vector(p, qs, obs);
@@ -220,12 +208,13 @@ double eval_integral_equation(const Problem<dim>& p, const QuadStrategy<dim>& qs
     return result;
 }
 
-template <int dim>
-std::vector<double> interact_matrix(const Problem<dim>& p,
+template <int dim, typename KT>
+std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
                                     const QuadStrategy<dim>& qs) {
     std::size_t n_obs_dofs = dim * p.obs_mesh.facets.size();
     std::size_t n_src_dofs = dim * p.src_mesh.facets.size();
-    std::vector<double> matrix(n_obs_dofs * n_src_dofs, 0.0);
+    std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_src_dofs, 
+            zeros<typename KT::OperatorType>());
 #pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
@@ -239,8 +228,8 @@ std::vector<double> interact_matrix(const Problem<dim>& p,
             for (int v = 0; v < dim; v++) {
                 int b = dim * obs_idx + v;
                 for (std::size_t i = 0; i < n_src_dofs; i++) {
-                    double contribution = basis[v] * row[i] * qs.obs_quad[obs_q].w *
-                                      obs_face.jacobian;
+                    typename KT::OperatorType contribution =
+                        basis[v] * row[i] * qs.obs_quad[obs_q].w * obs_face.jacobian;
                     matrix[b * n_src_dofs + i] += contribution;
                 }
             }
@@ -249,18 +238,33 @@ std::vector<double> interact_matrix(const Problem<dim>& p,
     return matrix;
 }
 
-template <int dim>
-std::vector<double> direct_interact(const Problem<dim>& p,
-                                    const QuadStrategy<dim>& qs) {
-    auto matrix = interact_matrix(p, qs);
-    assert(p.obs_mesh.facets.size() * dim * p.src_strength.size() == matrix.size());
-    return bem_mat_mult(matrix, 
-                        p.obs_mesh.facets.size() * dim,
-                        p.src_strength);
+template <typename KT>
+std::vector<typename KT::OutType>
+bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
+             int n_obs_dofs, const std::vector<typename KT::InType>& x) {
+
+    assert(n_obs_dofs * x.size() == A.size());
+    std::vector<typename KT::OutType> res(n_obs_dofs, zeros<typename KT::OutType>());
+#pragma omp parallel for
+    for (int i = 0; i < n_obs_dofs; i++) {
+        for (std::size_t j = 0; j < x.size(); j++) {
+            res[i] += A[i * x.size() + j] * x[j]; 
+        }
+    }
+    return res;
 }
 
-template <int dim>
-std::vector<double> mass_term(const Problem<dim>& p,
+
+template <int dim, typename KT>
+std::vector<typename KT::OutType> direct_interact(const Problem<dim,KT>& p,
+                                                  const QuadStrategy<dim>& qs) {
+    auto matrix = interact_matrix(p, qs);
+    assert(p.obs_mesh.facets.size() * dim * p.src_strength.size() == matrix.size());
+    return bem_mat_mult(matrix, p.K, p.obs_mesh.facets.size() * dim, p.src_strength);
+}
+
+template <int dim, typename KT>
+std::vector<double> mass_term(const Problem<dim,KT>& p,
                               const QuadStrategy<dim>& qs) {
     int n_obs_dofs = dim * p.obs_mesh.facets.size();
     std::vector<double> integrals(n_obs_dofs, 0.0);

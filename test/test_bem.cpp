@@ -23,19 +23,19 @@ struct IntegrationProb {
         face({src_locs[0], src_locs[1], src_locs[2]})
     { }
     
-    void go() {
+    template <typename KT>
+    void go(const KT& k) {
         auto basis = integrate<Vec3<double>,2>(q, [&] (std::array<double,2> x_hat) {
-                return eval_quad_pt<3>(x_hat, kernel, FacetInfo<3>::build(face),
-                                       obs_loc, obs_n);
+                return eval_quad_pt<3>(x_hat, k, FacetInfo<3>::build(face),
+                                          obs_loc, obs_n);
             });
-        result = dot(basis, src_vals);
+        result = dot_product(basis, src_vals);
     }
 
     void check() {
         CHECK_CLOSE(result, exact, 1e-5);
     }
 
-    Kernel<3> kernel;
     double result;
     double exact;
     std::vector<Vec3<double>> src_locs;
@@ -49,18 +49,15 @@ struct IntegrationProb {
 TEST_FIXTURE(IntegrationProb, IntegralOne) {
     double abc = integrate<double,2>(q, [](std::array<double,2> x_hat){return 1.0;});
     CHECK_CLOSE(abc, 0.5, 1e-12);
-    kernel = one<3>;
-    exact = 1.0; go(); check();
+    exact = 1.0; go(One<3>()); check();
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceSingle) {
-    kernel = laplace_single<3>;
-    exact = 0.0269063; go(); check();
+    exact = 0.0269063; go(LaplaceSingle<3>()); check();
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceDouble) {
-    kernel = laplace_double<3>;
-    exact = -0.00621003; go(); check();
+    exact = -0.00621003; go(LaplaceDouble<3>()); check();
 }
 
 TEST(Richardson) {
@@ -77,13 +74,12 @@ TEST(RichardsonZeros) {
 
 TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
     q = tri_gauss(3);
-    kernel = laplace_single<3>;
     double offset = 0.5;
     std::vector<double> vals;
     obs_n = {1,0,0};
     for (int i = 0; i < 5; i++) {
         obs_loc = {2.0, 2.0, 2.0 + offset};
-        go();
+        go(LaplaceSingle<3>());
         vals.push_back(result);
         offset /= 2;
     }
@@ -92,26 +88,28 @@ TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
 }
 
 struct EvalProb {
-    EvalProb(int refine_level, int near_eval, int gauss_order, const Kernel<3>& k,
+    EvalProb(int refine_level, int near_eval, int gauss_order,
              Vec3<double> center = Vec3<double>{0,0,0},
              double r = 3.0):
         sphere(sphere_mesh(center,r).refine_repeatedly(refine_level)),
         qs(gauss_order, gauss_order, near_eval, 2.0, 1e-2),
-        kernel(k),
         obs_pt(random_pt()),
         obs_n(random_pt()),
         obs_length_scale(get_len_scale<3>(sphere, 0, gauss_order)),
         src_strength(std::vector<double>(3 * sphere.facets.size(), 1.0))
     {}
 
-    double go() {
-        Problem<3> p = {sphere, sphere, kernel, src_strength};
+    template <typename KT>
+    double go(const KT& k) {
+        auto p = make_problem<3>(sphere, sphere, k, src_strength);
 
         return eval_integral_equation(p, qs, 
             {obs_length_scale, obs_pt, obs_n, obs_n});
     }
-    double go_row() {
-        Problem<3> p = {sphere, sphere, kernel, src_strength};
+
+    template <typename KT>
+    double go_row(const KT& k) {
+        auto p = make_problem<3>(sphere, sphere, k, src_strength);
 
         auto row = integral_equation_vector(p, qs, 
             {obs_length_scale, obs_pt, obs_n, obs_n});
@@ -124,7 +122,6 @@ struct EvalProb {
 
     Mesh<3> sphere;
     QuadStrategy<3> qs;
-    Kernel<3> kernel;
     Vec3<double> obs_pt;
     Vec3<double> obs_n;
     double obs_length_scale;
@@ -132,30 +129,30 @@ struct EvalProb {
 }; 
 
 TEST(EvalIntegralEquationSphereSurfaceArea) {
-    EvalProb ep(5, 3, 2, one<3>);
-    double result = ep.go();
-    double result2 = ep.go_row();
+    EvalProb ep(5, 3, 2);
+    double result = ep.go(One<3>());
+    double result2 = ep.go_row(One<3>());
     double exact_surf_area = 4*M_PI*9;
     CHECK_CLOSE(result, exact_surf_area, 1e-1);
     CHECK_CLOSE(result2, exact_surf_area, 1e-1);
 }
 
 TEST(ConstantLaplace) {
-    EvalProb ep(5, 3, 2, laplace_double<3>);
-    double result = ep.go();
-    double result2 = ep.go_row();
+    EvalProb ep(5, 3, 2);
+    double result = ep.go(LaplaceDouble<3>());
+    double result2 = ep.go_row(LaplaceDouble<3>());
     CHECK_CLOSE(result, -1.0, 1e-3);
     CHECK_CLOSE(result2, -1.0, 1e-3);
 }
 
 TEST(ConstantLaplaceBoundary) {
-    EvalProb ep(2, 4, 4, laplace_double<3>);
+    EvalProb ep(2, 4, 4);
     for (auto f: ep.sphere.facets) {
         for (auto v: f.vertices) {
             ep.obs_pt = v;
             ep.obs_n = -normalized(ep.obs_pt);
-            double result = ep.go();
-            double result2 = ep.go();
+            double result = ep.go(LaplaceDouble<3>());
+            double result2 = ep.go(LaplaceDouble<3>());
             CHECK_CLOSE(result, -1.0, 1e-2);
             CHECK_CLOSE(result2, -1.0, 1e-2);
         }
@@ -163,9 +160,9 @@ TEST(ConstantLaplaceBoundary) {
 }
 
 TEST(MatrixRowVsEval) {
-    EvalProb ep(4, 3, 2, laplace_double<3>);
-    double result = ep.go();
-    double result2 = ep.go_row();
+    EvalProb ep(4, 3, 2);
+    double result = ep.go(LaplaceDouble<3>());
+    double result2 = ep.go_row(LaplaceDouble<3>());
     CHECK_CLOSE(result, -1.0, 1e-3);
     CHECK_CLOSE(result2, -1.0, 1e-3);
 }
@@ -180,7 +177,7 @@ TEST(MassTerm) {
             }
         }
     }
-    Problem<3> p = {sphere, sphere, one<3>, str};
+    auto p = make_problem<3>(sphere, sphere, One<3>(), str);
     QuadStrategy<3> qs(2);
     auto res = mass_term(p, qs);
     CHECK_EQUAL(res.size(), 3 * sphere.facets.size());
@@ -202,15 +199,15 @@ TEST(DirectInteractConstantLaplace) {
     std::vector<double> str(n_dofs, 1.0);
 
     QuadStrategy<3> qs(2, 2, 4, 3.0, 1e-3);
-    Problem<3> p_double = {sphere, sphere, laplace_double<3>, str};
-    Problem<3> p_single = {sphere, sphere, laplace_single<3>, str};
+    auto p_double = make_problem<3>(sphere, sphere, LaplaceDouble<3>(), str);
+    auto p_single = make_problem<3>(sphere, sphere, LaplaceSingle<3>(), str);
     auto res0 = direct_interact(p_double, qs);
     for (std::size_t i = 0; i < res0.size(); i++) {
         res0[i] = -res0[i];
     }
     auto res1 = direct_interact(p_single, qs);
 
-    Problem<3> p_mass = {sphere, sphere, one<3>, str};
+    auto p_mass = make_problem<3>(sphere, sphere, One<3>(), str);
     auto res2 = mass_term(p_mass, qs);
     CHECK_ARRAY_CLOSE(res0, res2, n_dofs, 3e-2);
     CHECK_ARRAY_CLOSE(res1, res2, n_dofs, 3e-2);
@@ -234,38 +231,39 @@ double exact_double(double x, double y) {
  * computed in 2D. Do this for many different observation points and two
  * different kernels (laplace_single, laplace_double)
  */
-TEST(OneSegment2D) {
+template <typename KT>
+void test_one_segment2d_integration(const KT& k,
+                                    std::function<double(double,double)> exact) {
+    auto quad = gauss(15);
     std::array<double, 2> v0 = {-1.0, 0.0};
     std::array<double, 2> v1 = {1.0, 0.0};
-
-    auto quad = gauss(15);
-    std::vector<std::function<double (double, double)>> exact =
-        {exact_single, exact_double};
-    std::vector<Kernel<2>> kernel = {laplace_single<2>, laplace_double<2>};
     Facet<2> facet{{v0, v1}};
     auto face = FacetInfo<2>::build(facet);
     CHECK_EQUAL(face.jacobian, 1.0);
     CHECK_EQUAL(face.area_scale, 4.0);
 
-    for (int k = 0; k < 2; k++) {
-        for (int i = 0; i < 20; i++) {
-            for (int j = 0; j < 20; j++) {
-                double obs_x = -5.0 + 10 * (i / 19.0);
-                double obs_y = -5.0 + 10 * (j / 19.0);
-                Vec2<double> obs_loc = {obs_x, obs_y};
-                Vec2<double> obs_normal = {0.0, 0.0};
-                double result = integrate<double,1>(quad, 
-                    [&](const Vec<double,1> x_hat) {
-                        auto eval = eval_quad_pt<2>(x_hat, kernel[k], face,
-                                                    obs_loc, obs_normal);
-                        return (eval[0] + eval[1]);
-                    });
-                        
-                double exact_val = exact[k](obs_x, obs_y);
-                CHECK_CLOSE(result, exact_val, 1e-4);
-            }
+    for (int i = 0; i < 20; i++) {
+        for (int j = 0; j < 20; j++) {
+            double obs_x = -5.0 + 10 * (i / 19.0);
+            double obs_y = -5.0 + 10 * (j / 19.0);
+            Vec2<double> obs_loc = {obs_x, obs_y};
+            Vec2<double> obs_normal = {0.0, 0.0};
+            double result = integrate<double,1>(quad, 
+                [&](const Vec<double,1> x_hat) {
+                    auto eval = eval_quad_pt<2>(x_hat, k, face,
+                                                obs_loc, obs_normal);
+                    return (eval[0] + eval[1]);
+                });
+                    
+            double exact_val = exact(obs_x, obs_y);
+            CHECK_CLOSE(result, exact_val, 1e-4);
         }
     }
+}
+
+TEST(OneSegment2D) {
+    test_one_segment2d_integration(LaplaceSingle<2>(), exact_single);
+    test_one_segment2d_integration(LaplaceDouble<2>(), exact_double);
 }
 
 TEST(ConstantLaplace2D) {
@@ -276,7 +274,7 @@ TEST(ConstantLaplace2D) {
     std::vector<double> u(2 * src_circle.facets.size(), 7.0);
     for (double i = 1.0; i < 19.0; i++) {
         Mesh<2> obs_circle = circle_mesh(center, i).refine_repeatedly(refine);
-        Problem<2> p{src_circle, obs_circle, laplace_double<2>, u};
+        auto p = make_problem<2>(src_circle, obs_circle, LaplaceDouble<2>(), u);
 
         // Do it via eval_integral_equation for each vertex.
         for (std::size_t i = 0; i < obs_circle.facets.size(); i++) {
@@ -304,11 +302,11 @@ void direct_interact_one_test(const Mesh<dim>& mesh,
     std::vector<double> str(n_dofs, 1.0);
 
     QuadStrategy<dim> qs(2, 2, 3, 3.0, 1e-2);
-    Problem<dim> p = {mesh, mesh, one<dim>, str};
-    auto res = direct_interact(p, qs);
+    auto p = make_problem<dim>(mesh, mesh, One<dim>(), str);
+    std::vector<double> res = direct_interact(p, qs);
     auto matrix = interact_matrix(p, qs);
 
-    auto res2 = bem_mat_mult(matrix, n_dofs, str);
+    std::vector<double> res2 = bem_mat_mult(matrix, One<dim>(), n_dofs, str);
     double total = 0.0;
     for (auto r: res) {
         total += r;
@@ -366,6 +364,18 @@ TEST(ObsPtFromFace) {
     CHECK_EQUAL(obs.loc, (Vec2<double>{0.5, 0.5}));
     CHECK_EQUAL(obs.normal, (Vec2<double>{-1.0 / std::sqrt(2), 1.0 / std::sqrt(2)}));
     CHECK_EQUAL(obs.richardson_dir, obs.normal);
+}
+
+TEST(TensorKernel) {
+    ElasticDisplacement<2> k(30e9, 0.25);
+    auto facet = Facet<2>{{{{-1.0, 0.0}, {1.0, 0.0}}}};
+    auto facet_info = FacetInfo<2>::build(facet);
+    auto result = eval_quad_pt({0.0}, k, facet_info, {0.0, 1.0}, {0.0, 1.0});
+    CHECK_CLOSE(result[0][1][1], 8.84194e-13, 1e-17);
+    CHECK_CLOSE(result[1][1][1], 8.84194e-13, 1e-17);
+    CHECK_EQUAL(result[0][0][0], 0.0); CHECK_EQUAL(result[0][0][1], 0.0);
+    CHECK_EQUAL(result[0][1][0], 0.0); CHECK_EQUAL(result[1][0][0], 0.0);
+    CHECK_EQUAL(result[1][0][1], 0.0); CHECK_EQUAL(result[1][1][0], 0.0);
 }
 
 int main(int, char const *[])

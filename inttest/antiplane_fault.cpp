@@ -35,7 +35,7 @@ void full_space() {
 
     // Interpolate the integral equation onto the y = -0.5 surface
     TIC
-    Problem<2> p_fullspace = {fault, surface1, laplace_double<2>, one_vec};
+    auto p_fullspace = make_problem<2>(fault, surface1, LaplaceDouble<2>(), one_vec);
     auto disp = constrained_interpolate<2>(surface1, [&] (Vec2<double> x) {
             ObsPt<2> obs = {0.001, x, {0, 1}, {0, -1}};
             double val = eval_integral_equation(p_fullspace, qs, obs);
@@ -64,8 +64,8 @@ void half_space() {
     
     TIC
     // The RHS is the effect of the fault on the surface.
-    Problem<2> p_rhs_halfspace =
-        {fault, surface2, laplace_hypersingular<2>, one_vec};
+    auto p_rhs_halfspace =
+        make_problem<2>(fault, surface2, LaplaceHypersingular<2>(), one_vec);
 
     auto rhs_all_dofs = direct_interact(p_rhs_halfspace, qs);
     for (std::size_t i = 0; i < rhs_all_dofs.size(); i++) {
@@ -74,7 +74,9 @@ void half_space() {
     auto rhs = constraints.get_reduced(rhs_all_dofs);
 
     // The LHS is the effect of the surface on the surface.
-    Problem<2> p_lhs_halfspace = {surface2, surface2, laplace_hypersingular<2>, one_vec};
+    auto hypersingular_kernel = LaplaceHypersingular<2>();
+    auto p_lhs_halfspace = make_problem<2>(surface2, surface2,
+                                           hypersingular_kernel, one_vec);
     auto lhs = interact_matrix(p_lhs_halfspace, qs);
 
     // Solve the linear system.
@@ -83,7 +85,7 @@ void half_space() {
     auto soln_reduced = solve_system(rhs, linear_solve_tol,
         [&] (std::vector<double>& x, std::vector<double>& y) {
             auto x_full = constraints.get_all(x, n_dofs);
-            auto y_mult = bem_mat_mult(lhs, n_dofs, x_full); 
+            auto y_mult = bem_mat_mult(lhs, hypersingular_kernel, n_dofs, x_full); 
             auto y_temp = constraints.get_reduced(y_mult);
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
         });
@@ -118,16 +120,20 @@ void half_space() {
                 {0.001, pt, {1, 0}, {0, -1}}
             };
 
-            Problem<2> p_disp_fault = {fault, surface2, laplace_double<2>, one_vec};
-            Problem<2> p_disp_surf = {surface2, surface2, laplace_double<2>, soln};
+            auto p_disp_fault = make_problem<2>(fault, surface2,
+                                             LaplaceDouble<2>(), one_vec);
+            auto p_disp_surf = make_problem<2>(surface2, surface2,
+                                            LaplaceDouble<2>(), soln);
             double eval_fault = eval_integral_equation(p_disp_fault, qs, obs[0]);
             double eval_surf = eval_integral_equation(p_disp_surf, qs, obs[0]);
             double eval = eval_surf + eval_fault;
             interior_disp[i * ny + j] = eval;
 
             for (int d = 0; d < 2; d++) {
-                Problem<2> p_trac_fault = {fault, surface2, laplace_hypersingular<2>, one_vec};
-                Problem<2> p_trac_surf = {surface2, surface2, laplace_hypersingular<2>, soln};
+                auto p_trac_fault = make_problem<2>(fault, surface2,
+                                                LaplaceHypersingular<2>(), one_vec);
+                auto p_trac_surf = make_problem<2>(surface2, surface2,
+                                                LaplaceHypersingular<2>(), soln);
                 eval_fault = eval_integral_equation(p_trac_fault, qs, obs[d]);
                 eval_surf = eval_integral_equation(p_trac_surf, qs, obs[d]);
                 eval = eval_surf + eval_fault;

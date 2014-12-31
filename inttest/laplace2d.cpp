@@ -14,7 +14,7 @@ double theta_u(Vec2<double> x) {
 struct LogDudn {
     double operator()(Vec2<double> loc) const {
         auto n = normalized(center - loc);
-        return dot(n, loc) / hypot2(loc);
+        return dot_product(n, loc) / hypot2(loc);
     }
 };
     
@@ -25,7 +25,7 @@ struct ThetaDudn {
         double y = loc[1];
         double dy = 1.0 / (x * (1 + (y * y / (x * x))));
         double dx = (-y / x) * dy;
-        return dot(n, {dx, dy});
+        return dot_product(n, {dx, dy});
     }
 };
 

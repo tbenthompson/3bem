@@ -51,7 +51,6 @@ struct MeshField {
 template <int dim>
 using Mesh = MeshField<Vec<double,dim>,dim>;
 
-
 } //END NAMESPACE tbem
 
 #endif
