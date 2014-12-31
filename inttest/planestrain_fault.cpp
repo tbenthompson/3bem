@@ -4,33 +4,33 @@ using namespace tbem;
 
 int main() {
     // HALF SPACE THRUST FAULT IN PLANE STRAIN
-// 
-//     // Fault mesh.
-//     auto fault = line_mesh({-1, -1}, {0, 0}).refine_repeatedly(0);
-// 
-//     // Simple low accuracy quadrature strategy.
-//     QuadStrategy<2> qs(2);
-// 
-//     // Earth's surface
-//     auto surface = line_mesh({-25, 0.0}, {25, 0.0}).refine_repeatedly(8);
-//     auto raw_constraints =
-//         ConstraintMatrix::from_constraints(mesh_continuity<2>(surface));
-//     auto constraints = apply_discontinuities<2>(surface, fault, raw_constraints);
-// 
-//     double shear_mod = 30e9;
-//     double poisson = 0.25;
-//     ElasticHypersingular<2> hyp(shear_mod, poisson);
-// 
-//     std::size_t n_fault_dofs = 2 * fault.facets.size();
-//     std::size_t n_surface_dofs = 2 * surface.facets.size();
-// 
-//     double slip = 1;
-//     std::vector<Vec2<double>> du(n_fault_dofs, {slip, slip});
-// 
-//     std::vector<Vec2<double>> all_dofs_rhs(n_surface_dofs, {0.0, 0.0});
-// 
-//     auto p = make_problem<2>(fault, surface, hyp, du);
-//     auto res = direct_interact(p, qs);
+
+    // Fault mesh.
+    // auto fault = line_mesh({-1, -1}, {0, 0}).refine_repeatedly(0);
+
+    // // Simple low accuracy quadrature strategy.
+    // QuadStrategy<2> qs(2);
+
+    // // Earth's surface
+    // auto surface = line_mesh({-25, 0.0}, {25, 0.0}).refine_repeatedly(8);
+    // auto raw_constraints =
+    //     ConstraintMatrix::from_constraints(mesh_continuity<2>(surface));
+    // auto constraints = apply_discontinuities<2>(surface, fault, raw_constraints);
+
+    // double shear_mod = 30e9;
+    // double poisson = 0.25;
+    // ElasticHypersingular<2> hyp(shear_mod, poisson);
+
+    // std::size_t n_fault_dofs = 2 * fault.facets.size();
+    // std::size_t n_surface_dofs = 2 * surface.facets.size();
+
+    // double slip = 1;
+    // std::vector<Vec2<double>> du(n_fault_dofs, {slip, slip});
+
+    // std::vector<Vec2<double>> all_dofs_rhs(n_surface_dofs, {0.0, 0.0});
+
+    // auto p = make_problem<2>(fault, surface, hyp, du);
+    // auto res = direct_interact(p, qs);
     // for (unsigned int i = 0; i < res.size(); i++) {
     //     all_dofs_rhs[i] += res[i];
     // }

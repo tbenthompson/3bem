@@ -6,6 +6,9 @@ Longer term:
 -- try the nearly singular tri rule = 
     http://www98.griffith.edu.au/dspace/bitstream/handle/10072
     /54329/86520_1.pdf?sequence=1
+** python (mako, titen, etc) templating based solution for code generation.
+-- http://szelei.me/code-generator/
+-- http://eli.thegreenplace.net/2011/07/03/parsing-c-in-python-with-clang/
 
 TASKS:
 -- KernelData object 
