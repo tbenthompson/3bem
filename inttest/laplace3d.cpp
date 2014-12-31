@@ -10,7 +10,7 @@ double harmonic_u(Vec3<double> loc) {
 struct InvDudn {
     double operator()(Vec3<double> loc) const {
         auto n = normalized(center - loc);
-        return dot(loc, n) / pow(hypot(loc), 3);
+        return dot_product(loc, n) / pow(hypot(loc), 3);
     }
 };
 

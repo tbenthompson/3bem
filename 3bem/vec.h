@@ -182,13 +182,13 @@ Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
 }
 
 template <typename T, unsigned long dim>
-T dot(const Vec<T,dim>& x, const Vec<T,dim>& y) {
+T dot_product(const Vec<T,dim>& x, const Vec<T,dim>& y) {
     return sum(x*y);
 }
 
 template <typename T, unsigned long dim>
 T hypot2(const Vec<T,dim>& v) {
-    return dot(v, v);
+    return dot_product(v, v);
 }
 
 template <typename T, unsigned long dim>
@@ -280,7 +280,7 @@ template <int dim>
 Side which_side_point(const std::array<Vec<double,dim>,dim>& face,
                 const Vec<double,dim>& pt) {
     auto normal = unscaled_normal(face);
-    double dot_val = dot(pt - face[0], normal);
+    double dot_val = dot_product(pt - face[0], normal);
     if (dot_val > 0) { return FRONT; }
     else if (dot_val < 0) { return BEHIND; }
     else { return INTERSECT; }

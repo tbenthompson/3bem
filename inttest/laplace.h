@@ -28,10 +28,10 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     // First, the double layer potential is evaluated (DoubleLayer(u))
     // This is added to the mass matrix term (u)
     TIC
-    Problem<dim> p_double = {mesh, mesh, laplace_double<dim>, u};
+    auto p_double = make_problem<dim>(mesh, mesh, LaplaceDouble<dim>(), u);
     auto rhs_double = direct_interact(p_double, qs);
 
-    Problem<dim> p_mass = {mesh, mesh, one<dim>, u};
+    auto p_mass = make_problem<dim>(mesh, mesh, One<dim>(), u);
     auto rhs_mass = mass_term(p_mass, qs);
     
     int n_dofs = dim * mesh.facets.size();
@@ -44,7 +44,8 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     // The LHS matrix for a Dirichlet Laplace problem.
     TIC2
-    Problem<dim> p_single = {mesh, mesh, laplace_single<dim>, dudn};
+    auto single_kernel = LaplaceSingle<dim>();
+    auto p_single = make_problem<dim>(mesh, mesh, single_kernel, dudn);
     auto matrix = interact_matrix(p_single, qs);
     TOC("Matrix construct on " + std::to_string(mesh.facets.size()) + " facets");
 
@@ -65,7 +66,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
             // each iteration of the linear solve so that the matrix can be 
             // left in its uncondensed form.
             auto x_full = constraints.get_all(x, n_dofs);
-            auto y_mult = bem_mat_mult(matrix, n_dofs, x_full); 
+            auto y_mult = bem_mat_mult(matrix, single_kernel, n_dofs, x_full); 
 
             // Reduce the result of the matrix vector product.
             auto y_temp = constraints.get_reduced(y_mult);

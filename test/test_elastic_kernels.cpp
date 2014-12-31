@@ -80,7 +80,6 @@ void test_elastic_kernel(std::string name) {
         auto obs_n = vec_from_indices<dim>(es, obs_n_indices);
         auto delta = (src_loc - obs_loc);
         double r2 = hypot2(delta);
-        ElasticKernels<dim> ek(shear_mod, poisson_ratio);
 
         double exact = std::stod(es[0]);
         double attempt = call_kernel<dim>(r2, delta, src_n, obs_n,

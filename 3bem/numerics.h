@@ -41,15 +41,15 @@ inline Vec3<double> linear_basis(const std::array<double,2>& x_hat) {
 template <int dim>
 inline double linear_interp(const std::array<double,dim-1>& x_hat,
                             const Vec<double,dim>& corner_vals) {
-    return dot(linear_basis(x_hat), corner_vals);
+    return dot_product(linear_basis(x_hat), corner_vals);
 }
 
 inline Vec2<double> ref_to_real(const std::array<double,1>& x_hat,
                                 const std::array<Vec2<double>,2>& locs) {
     auto basis = linear_basis(x_hat);
     return {
-        dot(basis, {locs[0][0], locs[1][0]}),
-        dot(basis, {locs[0][1], locs[1][1]}),
+        dot_product(basis, {locs[0][0], locs[1][0]}),
+        dot_product(basis, {locs[0][1], locs[1][1]}),
     };
 }
 
@@ -57,9 +57,9 @@ inline Vec3<double> ref_to_real(const std::array<double,2>& x_hat,
                                 const std::array<Vec3<double>,3>& locs) {
     auto basis = linear_basis(x_hat);
     return {
-        dot(basis, {locs[0][0], locs[1][0], locs[2][0]}),
-        dot(basis, {locs[0][1], locs[1][1], locs[2][1]}),
-        dot(basis, {locs[0][2], locs[1][2], locs[2][2]})
+        dot_product(basis, {locs[0][0], locs[1][0], locs[2][0]}),
+        dot_product(basis, {locs[0][1], locs[1][1], locs[2][1]}),
+        dot_product(basis, {locs[0][2], locs[1][2], locs[2][2]})
     };
 }
  
