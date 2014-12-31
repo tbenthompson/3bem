@@ -181,6 +181,10 @@ Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
     };
 }
 
+inline double dot_product(const double& x, const double& y) {
+    return x * y;
+}
+
 template <typename T>
 T dot_product(const Vec<double,3>& x, const Vec<T,3>& y) {
     return sum(Vec<T,3>{{x[0] * y[0], x[1] * y[1], x[2] * y[2]}});
@@ -240,13 +244,14 @@ inline Vec2<double> unit<double,2>(const int k) {
     return e_k;
 }
 
+using std::fabs;
 template <typename T>
 Vec3<T> fabs(const Vec3<T>& v) {
-    return {std::fabs(v[0]), std::fabs(v[1]), std::fabs(v[2])};
+    return {fabs(v[0]), fabs(v[1]), fabs(v[2])};
 }
 template <typename T>
 Vec2<T> fabs(const Vec2<T>& v) {
-    return {std::fabs(v[0]), std::fabs(v[1])};
+    return {fabs(v[0]), fabs(v[1])};
 }
 
 inline Vec3<double> 
@@ -383,14 +388,34 @@ inline Vec3<double> ones<Vec3<double>>() {return {1.0, 1.0, 1.0};}
 template <>
 inline Vec2<double> ones<Vec2<double>>() {return {1.0, 1.0};}
 
-template <typename T>
-inline T zeros();
+template <typename T, typename F = void>
+struct zeros;
+
 template <>
-inline double zeros<double>() {return 0.0;}
-template <>
-inline Vec3<double> zeros<Vec3<double>>() {return {0.0, 0.0, 0.0};}
-template <>
-inline Vec2<double> zeros<Vec2<double>>() {return {0.0, 0.0};}
+struct zeros<double> {
+    static double make() { return 0.0; }
+};
+
+template <typename F>
+struct zeros<Vec2<F>> {
+    static Vec2<F> make() { 
+        return {
+            zeros<F>::make(),
+            zeros<F>::make()
+        };
+    }
+};
+
+template <typename F>
+struct zeros<Vec3<F>> {
+    static Vec3<F> make() { 
+        return {
+            zeros<F>::make(),
+            zeros<F>::make(), 
+            zeros<F>::make() 
+        };
+    }
+};
 
 } // END namespace tbem
 

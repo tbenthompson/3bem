@@ -72,7 +72,7 @@ struct UnitFacetAdaptiveIntegrator<3> {
         return adaptive_integrate<Vec<typename KT::OperatorType,3>>(
             [&] (double x_hat) {
                 if (x_hat == 1.0) {
-                    return zeros<Vec<double,3>>();
+                    return zeros<Vec<double,3>>::make();
                 }
                 return adaptive_integrate<Vec<typename KT::OperatorType,3>>(
                     [&] (double y_hat) {
@@ -148,7 +148,7 @@ Vec<typename KT::OperatorType,dim> compute_near_term(const IntegralTerm<dim, KT>
 
 template <int dim, typename KT>
 Vec<typename KT::OperatorType,dim> compute_far_term(const IntegralTerm<dim, KT>& term) {
-    auto integrals = zeros<Vec<typename KT::OperatorType,dim>>();
+    auto integrals = zeros<Vec<typename KT::OperatorType,dim>>::make();
     for (std::size_t i = 0; i < term.qs.src_far_quad.size(); i++) {
         integrals += eval_quad_pt<dim>(
                         term.qs.src_far_quad[i].x_hat,
@@ -214,7 +214,7 @@ std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
     std::size_t n_obs_dofs = dim * p.obs_mesh.facets.size();
     std::size_t n_src_dofs = dim * p.src_mesh.facets.size();
     std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_src_dofs, 
-            zeros<typename KT::OperatorType>());
+            zeros<typename KT::OperatorType>::make());
 #pragma omp parallel for
     for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
@@ -244,11 +244,12 @@ bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
              int n_obs_dofs, const std::vector<typename KT::InType>& x) {
 
     assert(n_obs_dofs * x.size() == A.size());
-    std::vector<typename KT::OutType> res(n_obs_dofs, zeros<typename KT::OutType>());
+    std::vector<typename KT::OutType> res(n_obs_dofs, 
+                                          zeros<typename KT::OutType>::make());
 #pragma omp parallel for
     for (int i = 0; i < n_obs_dofs; i++) {
         for (std::size_t j = 0; j < x.size(); j++) {
-            res[i] += A[i * x.size() + j] * x[j]; 
+            res[i] += dot_product(x[j], A[i * x.size() + j]);
         }
     }
     return res;

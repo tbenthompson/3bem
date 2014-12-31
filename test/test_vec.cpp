@@ -151,6 +151,12 @@ TEST(InnerProduct3TensorVector) {
     CHECK_EQUAL(result, correct);
 }
 
+TEST(ZerosTensor) {
+    auto z = zeros<Vec2<Vec2<double>>>::make();
+    Vec2<Vec2<double>> c{{{0.0, 0.0}, {0.0, 0.0}}};
+    CHECK_EQUAL(z, c);
+}
+
 int main() {
     return UnitTest::RunAllTests();
 }
