@@ -58,8 +58,9 @@ struct UnitFacetAdaptiveIntegrator<2> {
                  const Vec<double,2>& nf_obs_pt) {
         return adaptive_integrate<Vec<typename KT::OperatorType,2>>(
             [&] (double x_hat) {
-                return eval_quad_pt<2>({x_hat}, term.k, term.src_face,
-                                         nf_obs_pt, term.obs.normal);
+                Vec<double,1> q_pt = {x_hat};
+                return eval_quad_pt<2>(q_pt, term.k, term.src_face,
+                                       nf_obs_pt, term.obs.normal);
             }, -1.0, 1.0, term.qs.near_tol);
     }
 };
@@ -76,7 +77,8 @@ struct UnitFacetAdaptiveIntegrator<3> {
                 }
                 return adaptive_integrate<Vec<typename KT::OperatorType,3>>(
                     [&] (double y_hat) {
-                        return eval_quad_pt<3>({x_hat, y_hat}, term.k, term.src_face,
+                        Vec<double,2> q_pt = {x_hat, y_hat};
+                        return eval_quad_pt<3>(q_pt, term.k, term.src_face,
                                                  nf_obs_pt, term.obs.normal);
                     }, 0.0, 1 - x_hat, term.qs.near_tol);
             }, 0.0, 1.0, term.qs.near_tol);

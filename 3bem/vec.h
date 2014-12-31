@@ -379,14 +379,34 @@ inline bool all(bool a) {return a;}
 inline bool all(Vec3<bool> v) {return v[0] && v[1] && v[2];}
 inline bool all(Vec2<bool> v) {return v[0] && v[1];}
 
-template <typename T>
-inline T ones();
+template <typename T, typename F = void>
+struct ones;
+
 template <>
-inline double ones<double>() {return 1.0;}
-template <>
-inline Vec3<double> ones<Vec3<double>>() {return {1.0, 1.0, 1.0};}
-template <>
-inline Vec2<double> ones<Vec2<double>>() {return {1.0, 1.0};}
+struct ones<double> {
+    static double make() { return 1.0; }
+};
+
+template <typename F>
+struct ones<Vec2<F>> {
+    static Vec2<F> make() { 
+        return {
+            ones<F>::make(),
+            ones<F>::make()
+        };
+    }
+};
+
+template <typename F>
+struct ones<Vec3<F>> {
+    static Vec3<F> make() { 
+        return {
+            ones<F>::make(),
+            ones<F>::make(), 
+            ones<F>::make() 
+        };
+    }
+};
 
 template <typename T, typename F = void>
 struct zeros;
