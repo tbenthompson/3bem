@@ -85,8 +85,8 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     for(int i = 0; i < test_interior_pts.size(); i++) {
         auto obs_pt = test_interior_pts[i]; 
-        ObsPt<dim> obs = {0.001, obs_pt, zeros<Vec<double,dim>>(),
-                          zeros<Vec<double,dim>>()};
+        ObsPt<dim> obs = {0.001, obs_pt, zeros<Vec<double,dim>>::make(),
+                          zeros<Vec<double,dim>>::make()};
        
         double double_layer = eval_integral_equation(p_double, qs, obs);
         double single_layer = eval_integral_equation(p_single, qs, obs);

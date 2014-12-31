@@ -106,16 +106,18 @@ double get_error_is(double p_tol, double erri1, double erri2, double is,
     return retval;
 }
 
-Vec2<double> get_error_is(double p_tol, Vec2<double> erri1, Vec2<double> erri2,
-                          Vec2<double> is, double a, double b) {
+template <typename T>
+Vec2<T> get_error_is(double p_tol, Vec2<T> erri1, Vec2<T> erri2,
+                          Vec2<T> is, double a, double b) {
     return {
         get_error_is(p_tol, erri1[0], erri2[0], is[0], a, b),
         get_error_is(p_tol, erri1[1], erri2[1], is[1], a, b)
     };
 }
 
-Vec3<double> get_error_is(double p_tol, Vec3<double> erri1, Vec3<double> erri2,
-                          Vec3<double> is, double a, double b) {
+template <typename T>
+Vec3<T> get_error_is(double p_tol, Vec3<T> erri1, Vec3<T> erri2,
+                          Vec3<T> is, double a, double b) {
     return {
         get_error_is(p_tol, erri1[0], erri2[0], is[0], a, b),
         get_error_is(p_tol, erri1[1], erri2[1], is[1], a, b),
@@ -124,7 +126,8 @@ Vec3<double> get_error_is(double p_tol, Vec3<double> erri1, Vec3<double> erri2,
 }
 
 template <typename T>
-T adaptive_integrate(const std::function<T(double)>& f, double a, double b, double p_tol)
+T adaptive_integrate(const std::function<T(double)>& f, double a,
+                     double b, double p_tol)
 {
     double m = (a + b) / 2.; 
     double h = (b - a) / 2.;
