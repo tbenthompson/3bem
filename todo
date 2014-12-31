@@ -1,6 +1,6 @@
 TESTS:
 -- Tests for the 2D and 3D adaptive_nearfield quadrature.
--- Reduce the time cost of test_bem. Can some decoupling be done so that individual pieces of direct_interact can be tested indepedently.
+-- Can some decoupling be done so that individual pieces of direct_interact can be tested indepedently in unit tests rather than integration tests.
 -- Reduce the time cost of test_fmm. Decoupling? Move the slow parts to an integration test.
 
 DESIGN DECISIONS:
@@ -11,6 +11,7 @@ DESIGN DECISIONS:
 
 NEW FUNCTIONALITY:
 -- Vector direct_interact
+-- Constraints applied to vector datatypes.
 -- Link BEM to FMM
 -- Consider a different way of handling constraints. precompute reduced matrix?
 -- A way of computing the condition number of a BEM matrix.
