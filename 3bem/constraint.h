@@ -48,6 +48,8 @@ struct ConstraintMatrix {
 
     ConstraintMatrix add_constraints(const std::vector<Constraint>& constraints);
 
+    bool is_constrained(int dof) const;
+
     /* Accepts a reduced DOF vector and returns a full DOF vector
      */
     std::vector<double> get_all(const std::vector<double>& in, int total_dofs) const; 
@@ -56,12 +58,14 @@ struct ConstraintMatrix {
      */
     std::vector<double> get_reduced(const std::vector<double>& all) const;
 
-    void add_vec_with_constraints(const DOFWeight& entry, std::vector<double>& rhs) const;
+    void add_vec_with_constraints(const DOFWeight& entry,
+                                  std::vector<double>& rhs) const;
     std::vector<double> condense(const std::vector<double>& all) const;
 
     friend std::ostream& operator<<(std::ostream& os, const ConstraintMatrix& cm);
 
-    static ConstraintMatrix from_constraints(const std::vector<Constraint>& constraints);
+    static 
+    ConstraintMatrix from_constraints(const std::vector<Constraint>& constraints);
 };
 
 /* Constrain two degrees of freedom to be identical. */
