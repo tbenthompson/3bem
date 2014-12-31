@@ -116,8 +116,8 @@ struct ElasticDisplacement<2> {
                        const Vec2<double>& nsrc, const Vec2<double>& nobs) const {
         OperatorType out;
         double r = std::sqrt(r2);
-        for (int k = 0; k < 3; k++) {
-            for (int j = 0; j < 3; j++) {
+        for (int k = 0; k < 2; k++) {
+            for (int j = 0; j < 2; j++) {
                 out[k][j] = disp_C1 * (-disp_C2 * kronecker[k][j] * std::log(r)  + 
                                        delta[k] * delta[j] / r2);
             }
@@ -144,8 +144,8 @@ struct ElasticTraction<2> {
         OperatorType out;
         double r = std::sqrt(r2);
         const auto drdn = dot_product(delta, nsrc) / r;
-        for (int k = 0; k < 3; k++) {
-            for (int j = 0; j < 3; j++) {
+        for (int k = 0; k < 2; k++) {
+            for (int j = 0; j < 2; j++) {
                 const auto term1 = (trac_C2 * kronecker[k][j] +
                                     2 * delta[k] * delta[j] / r2);
                 const auto term2 = trac_C2 * (nsrc[j] * delta[k] - 
@@ -175,8 +175,8 @@ struct ElasticAdjointTraction<2> {
         OperatorType out;
         double r = std::sqrt(r2);
         const auto drdm = dot_product(delta, nobs) / r;
-        for (int k = 0; k < 3; k++) {
-            for (int j = 0; j < 3; j++) {
+        for (int k = 0; k < 2; k++) {
+            for (int j = 0; j < 2; j++) {
                 const auto term1 = (trac_C2 * kronecker[k][j] +
                                     2 * delta[k] * delta[j] / r2);
                 const auto term2 = trac_C2 * (nobs[j] * delta[k] -
@@ -210,8 +210,8 @@ struct ElasticHypersingular<2> {
         const auto dr = delta / r;
         const auto drdn = dot_product(dr, nsrc);
         const auto drdm = dot_product(dr, nobs);
-        for (int k = 0; k < 3; k++) {
-            for (int j = 0; j < 3; j++) {
+        for (int k = 0; k < 2; k++) {
+            for (int j = 0; j < 2; j++) {
                 const auto line1 = 2 * drdn * (
                     trac_C2 * nobs[k] * dr[j] +
                     poisson_ratio * (nobs[j] * dr[k] + kronecker[k][j] * drdm) - 
