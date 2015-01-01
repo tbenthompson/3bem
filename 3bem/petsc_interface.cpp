@@ -81,28 +81,26 @@ void setup_ksp(MPI_Comm comm, KSP& ksp, Mat& mat, double tolerance) {
     CHKERRABORT(comm,ierr);
 }
 
-std::vector<double> solve_system(std::vector<double> rhs,
-                                 double tolerance,
-                                 MatVecFnc fnc) {
+std::vector<double> solve_system(const double* rhs, int n_dofs,
+                                 double tolerance, MatVecFnc fnc) {
     int argc = 0;
     char** args = new char*[0];
     PetscInitialize(&argc, &args, (char*)0, "bem code"); 
 
-    unsigned int n = rhs.size();
     PetscErrorCode ierr;
     MPI_Comm comm = PETSC_COMM_WORLD;
 
     Vec b;
-    VecCreateMPIWithArray(comm, n, n, PETSC_DECIDE, rhs.data(), &b);
+    VecCreateMPIWithArray(comm, n_dofs, n_dofs, PETSC_DECIDE, rhs, &b);
 
     // USE VecCreateMPIWithArray to set the data location in the PETSc vector
     // so that I don't need to copy.
-    std::vector<double> retval(n, 0.0);
+    std::vector<double> retval(n_dofs, 0.0);
     Vec xo;
-    VecCreateMPIWithArray(comm, 1, n, PETSC_DECIDE, retval.data(), &xo);
+    VecCreateMPIWithArray(comm, 1, n_dofs, PETSC_DECIDE, retval.data(), &xo);
 
     Mat mat;
-    MatCreateShell(comm, n, n, PETSC_DETERMINE, PETSC_DETERMINE, &fnc, &mat);
+    MatCreateShell(comm, n_dofs, n_dofs, PETSC_DETERMINE, PETSC_DETERMINE, &fnc, &mat);
     MatShellSetOperation(mat, MATOP_MULT, (void(*)(void))mult_wrapper);
 
     KSP ksp;
@@ -110,6 +108,11 @@ std::vector<double> solve_system(std::vector<double> rhs,
 
     ierr = KSPSolve(ksp, b, xo);CHKERRABORT(comm,ierr);
     return retval;
+}
+
+std::vector<double> solve_system(const std::vector<double>& rhs,
+                                 double tolerance, MatVecFnc fnc) {
+    return solve_system(rhs.data(), rhs.size(), tolerance, fnc);
 }
 
 } // END namespace tbem

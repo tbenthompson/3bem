@@ -23,7 +23,7 @@ struct IntegrationProb {
     template <typename KT>
     void go(const KT& k) {
         auto basis = integrate<Vec3<double>,2>(q, [&] (std::array<double,2> x_hat) {
-                return eval_quad_pt<3>(x_hat, k, FacetInfo<3>::build(face),
+                return eval_point_influence<3>(x_hat, k, FacetInfo<3>::build(face),
                                           obs_loc, obs_n);
             });
         result = dot_product(basis, src_vals);
@@ -228,7 +228,7 @@ TEST(TensorKernel) {
     ElasticDisplacement<2> k(30e9, 0.25);
     auto facet = Facet<2>{{{{-1.0, 0.0}, {1.0, 0.0}}}};
     auto facet_info = FacetInfo<2>::build(facet);
-    auto result = eval_quad_pt({0.0}, k, facet_info, {0.0, 1.0}, {0.0, 1.0});
+    auto result = eval_point_influence({0.0}, k, facet_info, {0.0, 1.0}, {0.0, 1.0});
     CHECK_CLOSE(result[0][1][1], 8.84194e-13, 1e-17);
     CHECK_CLOSE(result[1][1][1], 8.84194e-13, 1e-17);
     CHECK_EQUAL(result[0][0][0], 0.0); CHECK_EQUAL(result[0][0][1], 0.0);

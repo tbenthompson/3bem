@@ -86,7 +86,7 @@ void test_one_segment2d_integration(const KT& k,
             Vec2<double> obs_normal = {0.0, 0.0};
             double result = integrate<double,1>(quad, 
                 [&](const Vec<double,1> x_hat) {
-                    auto eval = eval_quad_pt<2>(x_hat, k, face,
+                    auto eval = eval_point_influence<2>(x_hat, k, face,
                                                 obs_loc, obs_normal);
                     return (eval[0] + eval[1]);
                 });

@@ -39,7 +39,7 @@ FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet){
 }
 
 template <int dim, typename KT>
-Vec<typename KT::OperatorType,dim> eval_quad_pt(const Vec<double,dim-1>& x_hat,
+Vec<typename KT::OperatorType,dim> eval_point_influence(const Vec<double,dim-1>& x_hat,
                                   const KT& kernel,
                                   const FacetInfo<dim>& face,
                                   const Vec<double,dim>& obs_loc,
@@ -59,7 +59,7 @@ struct UnitFacetAdaptiveIntegrator<2> {
         return adaptive_integrate<Vec<typename KT::OperatorType,2>>(
             [&] (double x_hat) {
                 Vec<double,1> q_pt = {x_hat};
-                return eval_quad_pt<2>(q_pt, term.k, term.src_face,
+                return eval_point_influence<2>(q_pt, term.k, term.src_face,
                                        nf_obs_pt, term.obs.normal);
             }, -1.0, 1.0, term.qs.near_tol);
     }
@@ -78,7 +78,7 @@ struct UnitFacetAdaptiveIntegrator<3> {
                 return adaptive_integrate<Vec<typename KT::OperatorType,3>>(
                     [&] (double y_hat) {
                         Vec<double,2> q_pt = {x_hat, y_hat};
-                        return eval_quad_pt<3>(q_pt, term.k, term.src_face,
+                        return eval_point_influence<3>(q_pt, term.k, term.src_face,
                                                  nf_obs_pt, term.obs.normal);
                     }, 0.0, 1 - x_hat, term.qs.near_tol);
             }, 0.0, 1.0, term.qs.near_tol);
@@ -152,7 +152,7 @@ template <int dim, typename KT>
 Vec<typename KT::OperatorType,dim> compute_far_term(const IntegralTerm<dim, KT>& term) {
     auto integrals = zeros<Vec<typename KT::OperatorType,dim>>::make();
     for (std::size_t i = 0; i < term.qs.src_far_quad.size(); i++) {
-        integrals += eval_quad_pt<dim>(
+        integrals += eval_point_influence<dim>(
                         term.qs.src_far_quad[i].x_hat,
                         term.k, term.src_face,
                         term.obs.loc, term.obs.normal
@@ -171,6 +171,12 @@ Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term
     }
 }
 
+
+/* It may be that the exact distance to an element is not required,
+ * but a low precision approximate distance is useful.
+ * This function simply approximates the distance by the distance from
+ * the given point to each vertex of the element.
+ */
 template <int dim>
 double appx_face_dist2(const Vec<double,dim>& pt,
                        const std::array<Vec<double,dim>,dim>& vs) {

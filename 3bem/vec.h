@@ -419,6 +419,12 @@ struct zeros {
     }
 };
 
+template <typename T, typename F>
+std::vector<T> reinterpret_vector(const std::vector<F>& A) {
+    std::vector<T> out((T*)A.data(), (T*)(A.data() + 100));
+    return out;
+}
+
 } // END namespace tbem
 
 #endif
