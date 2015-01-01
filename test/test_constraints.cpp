@@ -9,7 +9,7 @@ using namespace tbem;
 TEST(ConstraintsAreCreated) {
     auto c = continuity_constraint(1, 2);
     Constraint correct = {
-        {DOFWeight{1, 1.0f}, DOFWeight{2, -1.0f}},
+        {DOFWeight<double>{1, 1.0f}, DOFWeight<double>{2, -1.0f}},
         0.0
     };
     CHECK(c.dof_constraints == correct.dof_constraints);
@@ -17,7 +17,7 @@ TEST(ConstraintsAreCreated) {
 
     auto c2 = offset_constraint(3, 4, 5.0f);
     Constraint correct2 = {
-        {DOFWeight{3, 1.0f}, DOFWeight{4, -1.0f}},
+        {DOFWeight<double>{3, 1.0f}, DOFWeight<double>{4, -1.0f}},
         -5.0
     };
     CHECK(c2.dof_constraints == correct2.dof_constraints);
@@ -41,12 +41,17 @@ TEST(ConstraintMatrixIsConstrained) {
     CHECK_EQUAL(cm.is_constrained(2), true);
 }
 
-TEST(ConstraintMatrixGetAll) {
+ConstraintMatrix simple_constraints() {
     auto c0 = boundary_condition(1, 4.0);
     auto c1 = continuity_constraint(1, 2);
     auto c2 = continuity_constraint(2, 3);
     auto cm = ConstraintMatrix::from_constraints({c0, c1, c2});
-    auto in = cm.get_reduced({2.0, 4.0, 4.0, 4.0});
+    return cm;
+}
+
+TEST(ConstraintMatrixGetAll) {
+    auto cm = simple_constraints();
+    auto in = cm.get_reduced(std::vector<double>{2.0, 4.0, 4.0, 4.0});
     auto res = cm.get_all(in, 4);
     double res_exact[4] = {2.0, 4.0, 4.0, 4.0};
     CHECK_ARRAY_CLOSE(res, res_exact, 4, 1e-13);
@@ -119,6 +124,16 @@ TEST(ConstraintMatrixOutput) {
     output_buf << c_mat;
     CHECK_EQUAL(output_buf.str(), 
         "ConstraintMatrix[[(1, Constraint[[(RHS, 0), (0, 1), (1, 1), ]]), ]]");
+}
+
+TEST(ConstraintMatrixGetAllVec2) {
+    auto cm = simple_constraints();
+    auto in = cm.get_reduced(std::vector<Vec2<double>>{
+        {2.0,3.0}, {4.0,4.0}, {4.0,1.5}, {4.0,-1.5}
+    });
+    auto res = cm.get_all(in, 4);
+    Vec2<double> res_exact[4] = {{2.0,3.0}, {4.0,4.0}, {4.0,4.0}, {4.0,4.0}};
+    CHECK_ARRAY_CLOSE((&res[0][0]), (&res_exact[0][0]), 8, 1e-13);
 }
 
 int main(int, char const *[])

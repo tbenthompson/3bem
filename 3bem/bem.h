@@ -9,8 +9,57 @@
 #include "adaptive_quad.h"
 #include "quadrature.h"
 
-
 namespace tbem {
+
+template <int dim>
+struct ObsPt;
+template <int dim>
+struct FacetInfo;
+
+/* Data transfer object for computing integral terms. 
+ * Values are stored by reference for efficiency's sake.
+ * This means that the responsibility for maintaining their lifetime is on the
+ * user.
+ */
+template <int dim, typename KT>
+struct IntegralTerm {
+    const QuadStrategy<dim>& qs;
+    const KT& k;
+    const ObsPt<dim>& obs;
+    const FacetInfo<dim>& src_face;
+    const double appx_pt_face_dist_squared;
+};
+
+template <int dim, typename KT>
+IntegralTerm<dim,KT> make_integral_term(const QuadStrategy<dim>& qs,
+        const KT& k, const ObsPt<dim>& obs, const FacetInfo<dim>& src_face,
+        const double appx_pt_face_dist_squared) {
+    return IntegralTerm<dim,KT>{qs, k, obs, src_face, appx_pt_face_dist_squared};
+}
+
+/* Given observation point information and source face information, the
+ * fucntion evaluates the influence of a single source quadrature point
+ * on the observation point.
+ */
+template <int dim, typename KT>
+Vec<typename KT::OperatorType,dim> eval_point_influence(
+    const Vec<double,dim-1>& x_hat, const KT& kernel, const FacetInfo<dim>& face,
+    const Vec<double,dim>& obs_loc, const Vec<double,dim>& obs_n);
+
+template <int dim>
+struct UnitFacetAdaptiveIntegrator {
+    template <typename KT>
+    Vec<typename KT::OperatorType,dim> 
+    operator()(const IntegralTerm<dim,KT>& term, 
+               const Vec<double,dim>& nf_obs_pt);
+};
+
+
+/* Compute the full influence of a source facet on an observation point, given
+ * a kernel function/Green's function
+ */
+template <int dim, typename KT>
+Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term);
 
 template <int dim, typename KT>
 struct Problem {
@@ -56,55 +105,6 @@ struct ObsPt {
     const Vec<double,dim> richardson_dir;
 };
 
-template <int dim, typename KT>
-Vec<typename KT::OperatorType,dim> eval_quad_pt(const Vec<double,dim-1>& x_hat,
-                                  const KT& kernel,
-                                  const FacetInfo<dim>& face,
-                                  const Vec<double,dim>& obs_loc,
-                                  const Vec<double,dim>& obs_n);
-
-
-/* Data transfer object for computing integral terms. 
- * Values are stored by reference for efficiency's sake.
- * This means that the responsibility for maintaining their lifetime is on the
- * user.
- */
-template <int dim, typename KT>
-struct IntegralTerm {
-    const QuadStrategy<dim>& qs;
-    const KT& k;
-    const ObsPt<dim>& obs;
-    const FacetInfo<dim>& src_face;
-    const double appx_pt_face_dist_squared;
-};
-
-template <int dim, typename KT>
-IntegralTerm<dim,KT> make_integral_term(const QuadStrategy<dim>& qs,
-        const KT& k, const ObsPt<dim>& obs, const FacetInfo<dim>& src_face,
-        const double appx_pt_face_dist_squared) {
-    return IntegralTerm<dim,KT>{qs, k, obs, src_face, appx_pt_face_dist_squared};
-}
-
-template <int dim>
-struct UnitFacetAdaptiveIntegrator {
-    template <typename KT>
-    Vec<typename KT::OperatorType,dim> 
-    operator()(const IntegralTerm<dim,KT>& term, 
-               const Vec<double,dim>& nf_obs_pt);
-};
-
-
-template <int dim, typename KT>
-Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim, KT>& term);
-
-/* It may be that the exact distance to an element is not required,
- * but a low precision approximate distance is useful.
- * This function simply approximates the distance by the distance from
- * the given point to each vertex of the element.
- */
-template <int dim>
-double appx_face_dist2(const Vec<double,dim>& pt,
-                       const std::array<Vec<double,dim>,dim>& vs);
 
 /* Given an unknown function defined in terms of a polynomial basis:
  * u(x) = \sum_i U_i \phi_i(x)
@@ -138,14 +138,15 @@ template <int dim, typename KT>
 std::vector<typename KT::OperatorType> 
 interact_matrix(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs);
 
+template <int dim, typename KT>
+std::vector<typename KT::OutType> direct_interact(const Problem<dim,KT>& p,
+                                                  const QuadStrategy<dim>& qs);
+
+
 template <typename KT>
 std::vector<typename KT::OutType>
 bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
              int n_obs_dofs, const std::vector<typename KT::InType>& x);
-
-template <int dim, typename KT>
-std::vector<typename KT::OutType> direct_interact(const Problem<dim,KT>& p,
-                                                  const QuadStrategy<dim>& qs);
 
 /* In many integral equations, one of the functions of interest appears
  * outside of an integration, possibly as the result of integrating against

@@ -3,6 +3,7 @@
 #include <utility>
 #include <vector>
 #include <unordered_map>
+#include "vec.h"
 
 namespace tbem {
 
@@ -26,13 +27,14 @@ namespace tbem {
  * node at the boundary will simply be of the form [(e1_dof, 1), (e2_dof, -1)]
  * because the two boundary dofs are set equal.
  */ 
-typedef std::pair<int, double> DOFWeight;
+template <typename T>
+using DOFWeight = std::pair<int,T>;
 
 /* A constraint is stored as a list of DOFs and weights, where the
 * first dof is implicitly the constrained dof.
 */
 struct Constraint {
-    const std::vector<DOFWeight> dof_constraints;
+    const std::vector<DOFWeight<double>> dof_constraints;
     const double rhs_value;
     friend std::ostream& operator<<(std::ostream& os, const Constraint& c);
 };
@@ -50,17 +52,16 @@ struct ConstraintMatrix {
 
     bool is_constrained(int dof) const;
 
-    /* Accepts a reduced DOF vector and returns a full DOF vector
-     */
-    std::vector<double> get_all(const std::vector<double>& in, int total_dofs) const; 
-
+    template <typename T>
+    std::vector<T> get_all(const std::vector<T>& in, int total_dofs) const; 
     /* Accepts a full DOF vector and returns the reduced DOF vector.
      */
-    std::vector<double> get_reduced(const std::vector<double>& all) const;
+    template <typename T>
+    std::vector<T> get_reduced(const std::vector<T>& all) const;
 
-    void add_vec_with_constraints(const DOFWeight& entry,
-                                  std::vector<double>& rhs) const;
-    std::vector<double> condense(const std::vector<double>& all) const;
+    template <typename T>
+    void add_vec_with_constraints(const DOFWeight<T>& entry,
+                                  std::vector<T>& rhs) const;
 
     friend std::ostream& operator<<(std::ostream& os, const ConstraintMatrix& cm);
 
@@ -108,6 +109,70 @@ ConstraintMatrix apply_discontinuities(const Mesh<dim>& surface,
                                        const Mesh<dim>& disc,
                                        const ConstraintMatrix& c_mat,
                                        double eps = 1e-10);
+
+
+template <typename T>
+std::vector<T> ConstraintMatrix::get_all(const std::vector<T>& in,
+                                              int total_dofs) const {
+    std::vector<T> out(total_dofs); 
+    int next_in = 0;
+    for (int i = 0; i < total_dofs; i++) {
+        auto dof_and_constraint = c_map.find(i);
+        if (dof_and_constraint == c_map.end()) {
+            out[i] = in[next_in];
+            next_in++;
+            continue;
+        }
+
+        auto dof_constraint = dof_and_constraint->second.dof_constraints;
+        auto out_val = constant<T>::make(dof_and_constraint->second.rhs_value);
+        for (std::size_t j = 0; j < dof_constraint.size() - 1; j++) {
+            out_val -= dof_constraint[j].second * out[dof_constraint[j].first];
+        }
+        auto this_dof_weight = (dof_constraint.end() - 1)->second;
+        out[i] = out_val / this_dof_weight;
+    }
+    return out;
+}
+
+template <typename T>
+void ConstraintMatrix::add_vec_with_constraints(const DOFWeight<T>& entry,
+                                                std::vector<T>& vec) const {
+    auto dof_and_constraint = c_map.find(entry.first);
+    if (dof_and_constraint == c_map.end()) {
+        vec[entry.first] += entry.second;
+        return;
+    }
+
+    auto constraint = dof_and_constraint->second;
+    auto dof_weights = constraint.dof_constraints;
+    int n_dof_weights = dof_weights.size();
+    double this_weight = dof_weights[n_dof_weights - 1].second;
+    for (int i = 0; i < n_dof_weights - 1; i++) {
+        T recurse_weight = -dof_weights[i].second * entry.second / this_weight;
+        DOFWeight<T> new_entry{dof_weights[i].first, recurse_weight};
+        add_vec_with_constraints(new_entry, vec);
+    }
+}
+
+template <typename T>
+std::vector<T> ConstraintMatrix::get_reduced(const std::vector<T>& all) const {
+    std::vector<T> condensed_dofs(all.size(), zeros<T>::make());
+    for (std::size_t i = 0; i < all.size(); i++) {
+        add_vec_with_constraints(DOFWeight<T>{i, all[i]}, condensed_dofs);
+    }
+
+    std::vector<T> out;
+    for (std::size_t i = 0; i < all.size(); i++) {
+        auto dof_and_constraint = c_map.find(i);
+        if (dof_and_constraint == c_map.end()) {
+            out.push_back(condensed_dofs[i]);
+            continue;
+        }
+    }
+
+    return out;
+}
 
 } //END NAMESPACE tbem
 #endif

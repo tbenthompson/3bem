@@ -157,6 +157,19 @@ TEST(ZerosTensor) {
     CHECK_EQUAL(z, c);
 }
 
+TEST(VectorOfDoubleToVectorOfArraysOfDouble) {
+    std::vector<double> A = random_list(100); 
+    auto B = reinterpret_vector<Vec2<double>>(A);
+    CHECK_ARRAY_EQUAL(&A[0], &B[0][0], 100);
+}
+
+TEST(VectorOfDoubleToVectorOfArraysOfDoubleAndBack) {
+    std::vector<double> A = random_list(100); 
+    auto B = reinterpret_vector<Vec2<double>>(A);
+    auto A2 = reinterpret_vector<double>(B);
+    CHECK_ARRAY_EQUAL(&A[0], &A2[0], 100);
+}
+
 int main() {
     return UnitTest::RunAllTests();
 }
