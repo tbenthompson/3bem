@@ -11,7 +11,7 @@ x_index = [0, 3, 6]
 y_index = [1, 4, 7]
 z_index = [2, 5, 8]
 
-def compute_exact_okada(vertices):
+def compute_okada(vertices):
     n_pts = vertices.shape[0]
     disp = np.empty((n_pts, 3))
     for i in range(n_pts):
@@ -40,19 +40,20 @@ def main(filename, values_dim):
     n_v = vertices.shape[0]
     faces = np.arange(n_v).reshape((n_v / 3, 3))
 
-    exact_okada = compute_exact_okada(vertices)
+    # mlab.triangular_mesh(vertices[:, 0], vertices[:, 1], vertices[:, 2],
+    #                    faces[:,:], scalars = data)
+    # mlab.show()
+    okada_exact = compute_okada(vertices)
 
     vmax = 0.2
+
     opts = dict(shading = 'gouraud', vmin = -vmax, vmax = vmax)
     plt.figure()
-    plt.tricontour(vertices[:,0], vertices[:,1], data,
-                   colors = ['k'], linestyles = 'solid', shading = 'gouraud')
-    plt.tricontourf(vertices[:,0], vertices[:,1], data, shading = 'gouraud')
+    plt.tripcolor(vertices[:,0], vertices[:,1], faces, data, **opts)
     plt.colorbar()
     plt.figure()
-    plt.tricontour(vertices[:,0], vertices[:,1], exact_okada[:,0],
-                   colors = ['k'], linestyles = 'solid', shading = 'gouraud')
-    plt.tricontourf(vertices[:,0], vertices[:,1], exact_okada[:,0], shading = 'gouraud')
+    plt.tripcolor(vertices[:,0], vertices[:,1], faces, okada_exact[:,values_dim],
+                          **opts)
     plt.colorbar()
     plt.show()
 

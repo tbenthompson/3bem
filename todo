@@ -26,8 +26,10 @@ MODIFIED FUNCTIONALITY:
 -- Currently, add_vec_with_constraints requires recursing down the constraint matrix. I suspect there is an alternate formulation that does not require recursion. Maybe recursive constraints could be dealt with upfront
 -- Currently, add_vec_with_constraints is built around side effects on an input vector. This should be modified to be side effect free.
 -- Consider getting rid of refine_mod and friends in Mesh.
+-- Currently, do constraints overwrite each other? Say 1 == 3 and 2 == 3. Then only one constraint survives, right?
 
 STRUCTURAL:
+-- Immutable constraint data type.
 -- KernelData object 
 -- Be consistent about which files contain outwards facing API and which files contain implementation details.
 -- Pull some of vec.h out into a separate module "geometry.h"
