@@ -11,22 +11,7 @@ x_index = [0, 3, 6]
 y_index = [1, 4, 7]
 z_index = [2, 5, 8]
 
-def main(filename, values_dim):
-    f = h5py.File(filename)
-    facets = f['facets']
-    data = f['values'][:, values_dim]
-    vertices = np.array([
-        facets[:, x_index].flatten(),
-        facets[:, y_index].flatten(),
-        facets[:, z_index].flatten()
-    ]).T
-
-    n_v = vertices.shape[0]
-    faces = np.arange(n_v).reshape((n_v / 3, 3))
-
-    # mlab.triangular_mesh(vertices[:, 0], vertices[:, 1], vertices[:, 2],
-    #                    faces[:,:], scalars = data)
-    # mlab.show()
+def compute_exact_okada(vertices):
     n_pts = vertices.shape[0]
     disp = np.empty((n_pts, 3))
     for i in range(n_pts):
@@ -40,29 +25,35 @@ def main(filename, values_dim):
         if success != 0:
             print "WHOA"
         disp[i, :] = u
-    print disp[0,:]
+    return disp
+
+def main(filename, values_dim):
+    f = h5py.File(filename)
+    facets = f['locations']
+    data = f['values'][:, values_dim]
+    vertices = np.array([
+        facets[:, x_index].flatten(),
+        facets[:, y_index].flatten(),
+        facets[:, z_index].flatten()
+    ]).T
+
+    n_v = vertices.shape[0]
+    faces = np.arange(n_v).reshape((n_v / 3, 3))
+
+    exact_okada = compute_exact_okada(vertices)
+
     vmax = 0.2
     opts = dict(shading = 'gouraud', vmin = -vmax, vmax = vmax)
     plt.figure()
-    trip1 = plt.tripcolor(vertices[:,0], vertices[:,1], faces, data, **opts)
-    # plt.tricontourf(vertices[:,0], vertices[:,1], data, shading = 'gouraud')
-    # plt.tricontour(vertices[:,0], vertices[:,1], data,
-    #                colors = ['k'], linestyles = 'solid', shading = 'gouraud')
+    plt.tricontour(vertices[:,0], vertices[:,1], data,
+                   colors = ['k'], linestyles = 'solid', shading = 'gouraud')
+    plt.tricontourf(vertices[:,0], vertices[:,1], data, shading = 'gouraud')
     plt.colorbar()
     plt.figure()
-    trip2 = plt.tripcolor(vertices[:,0], vertices[:,1], faces, disp[:,0], **opts)
-    # plt.tricontourf(vertices[:,0], vertices[:,1], disp[:,0], shading = 'gouraud')
-    # plt.tricontour(vertices[:,0], vertices[:,1], disp[:,0],
-    #                colors = ['k'], linestyles = 'solid', shading = 'gouraud')
+    plt.tricontour(vertices[:,0], vertices[:,1], exact_okada[:,0],
+                   colors = ['k'], linestyles = 'solid', shading = 'gouraud')
+    plt.tricontourf(vertices[:,0], vertices[:,1], exact_okada[:,0], shading = 'gouraud')
     plt.colorbar()
-
-    # diff = disp[:,0] - data#np.log(np.abs((disp[:,0] - data) / 1)) / np.log(10)
-    # plt.figure()
-    # trip3 = plt.tripcolor(vertices[:,0], vertices[:,1], faces, diff, **opts)
-    # plt.colorbar()
-    # plt.figure()
-    # trip3 = plt.tripcolor(vertices[:,0], vertices[:,1], faces, diff, shading = 'gouraud')
-    # plt.colorbar()
     plt.show()
 
 

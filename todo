@@ -10,8 +10,6 @@ DESIGN DECISIONS:
 -- Alternately, think about the viability of a header-only library
 
 NEW FUNCTIONALITY:
--- Vector direct_interact
--- Constraints applied to vector datatypes.
 -- Link BEM to FMM
 -- Consider a different way of handling constraints. precompute reduced matrix?
 -- A way of computing the condition number of a BEM matrix.

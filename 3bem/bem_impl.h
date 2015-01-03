@@ -69,11 +69,11 @@ template <>
 struct UnitFacetAdaptiveIntegrator<3> {
     template <typename KT>
     Vec<typename KT::OperatorType,3> operator()(const IntegralTerm<3,KT>& term, 
-                             const Vec<double,3>& nf_obs_pt) {
+                                                const Vec<double,3>& nf_obs_pt) {
         return adaptive_integrate<Vec<typename KT::OperatorType,3>>(
             [&] (double x_hat) {
                 if (x_hat == 1.0) {
-                    return zeros<Vec<double,3>>::make();
+                    return zeros<Vec<typename KT::OperatorType,3>>::make();
                 }
                 return adaptive_integrate<Vec<typename KT::OperatorType,3>>(
                     [&] (double y_hat) {

@@ -6,7 +6,7 @@
 
 using namespace tbem;
 
-TEST(ConstraintsAreCreated) {
+TEST(ContinuityConstraintsAreCreated) {
     auto c = continuity_constraint(1, 2);
     Constraint correct = {
         {DOFWeight<double>{1, 1.0f}, DOFWeight<double>{2, -1.0f}},
@@ -14,7 +14,9 @@ TEST(ConstraintsAreCreated) {
     };
     CHECK(c.dof_constraints == correct.dof_constraints);
     CHECK(c.rhs_value == correct.rhs_value);
+}
 
+TEST(OffsetConstraintsAreCreated) {
     auto c2 = offset_constraint(3, 4, 5.0f);
     Constraint correct2 = {
         {DOFWeight<double>{3, 1.0f}, DOFWeight<double>{4, -1.0f}},
