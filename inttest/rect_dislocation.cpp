@@ -3,8 +3,8 @@
 using namespace tbem;
 
 int main() {
-    double surf_width = 4;
-    int refine_surf = 4;
+    double surf_width = 8;
+    int refine_surf = 5;
     double far_threshold = 3.0;
     int near_steps = 5;
     int src_quad_pts = 2;
@@ -53,8 +53,7 @@ int main() {
     TOC("Building LHS matrices");
 
     int count = 0;
-    auto disp_reduced = solve_system((double*)rhs.data(),
-                                     3 * rhs.size(), 1e-5,
+    auto disp_reduced = solve_system(reinterpret_vector<double>(rhs), 1e-5,
         [&] (std::vector<double>& x, std::vector<double>& y) {
             std::cout << "iteration " << count << std::endl;
             count++;
@@ -63,9 +62,9 @@ int main() {
             auto y_vec = bem_mat_mult(lhs, hyp, n_surface_dofs, x_vec);
             auto y_vec_reduced = constraints.get_reduced(y_vec);
             for (std::size_t i = 0; i < y_vec_reduced.size(); i++) {
-                y[3 * i] = y_vec_reduced[i][0];
-                y[3 * i + 1] = y_vec_reduced[i][1];
-                y[3 * i + 2] = y_vec_reduced[i][2];
+                y[3 * i] = -y_vec_reduced[i][0];
+                y[3 * i + 1] = -y_vec_reduced[i][1];
+                y[3 * i + 2] = -y_vec_reduced[i][2];
             }
         }
     );
