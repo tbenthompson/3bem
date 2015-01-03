@@ -17,25 +17,25 @@ std::ostream& operator<<(std::ostream& os, const Constraint& c) {
 
 ConstraintMatrix ConstraintMatrix::add_constraints(
                                  const std::vector<Constraint>& constraints) {
-    std::vector<std::pair<int, Constraint>> entries;
+    MapT new_map;
     for (auto it = c_map.begin(); it != c_map.end(); ++it) {
-        entries.push_back({it->first, it->second});
+        new_map[it->first] = it->second;
     }
 
     for (std::size_t i = 0; i < constraints.size(); ++i) {
         auto in_constraint = constraints[i];
-        auto new_dof_constraints = in_constraint.dof_constraints;
-        auto last = std::max_element(new_dof_constraints.begin(), 
-                                     new_dof_constraints.end(),
+        auto last = std::max_element(in_constraint.dof_constraints.begin(), 
+                                     in_constraint.dof_constraints.end(),
             [] (const DOFWeight<double>& a, const DOFWeight<double>& b) {
                 return a.first < b.first; 
             });
         auto last_dof = last->first;
-        std::iter_swap(last, new_dof_constraints.end() - 1);
-        entries.push_back({last_dof, {new_dof_constraints, in_constraint.rhs_value}});
+        //TODO: Make the constrained dof first, not last! simpler
+        std::iter_swap(last, in_constraint.dof_constraints.end() - 1);
+        new_map[last_dof] = in_constraint;
     }
-    MapT new_map(entries.begin(), entries.end());
     return {new_map};
+
 }
 
 bool ConstraintMatrix::is_constrained(int dof) const {
@@ -86,16 +86,16 @@ std::vector<Constraint> mesh_continuity(const Mesh<dim>& m, double eps) {
 
     std::vector<Constraint> constraints;
     for (std::size_t i = 0; i < m.facets.size(); i++) {
-        for (std::size_t d1 = 0; d1 < dim; d1++) {
-            auto i_pt = m.facets[i].vertices[d1];
+        for (std::size_t vertex1 = 0; vertex1 < dim; vertex1++) {
+            auto i_pt = m.facets[i].vertices[vertex1];
             for (std::size_t j = i + 1; j < m.facets.size(); j++) {
-                for (std::size_t d2 = 0; d2 < dim; d2++) {
-                    auto j_pt = m.facets[j].vertices[d2];
+                for (std::size_t vertex2 = 0; vertex2 < dim; vertex2++) {
+                    auto j_pt = m.facets[j].vertices[vertex2];
                     if (!all(fabs(i_pt - j_pt) < eps)) {
                         continue;
                     } 
-                    constraints.push_back(continuity_constraint(dim * i + d1,
-                                                                dim * j + d2));
+                    constraints.push_back(continuity_constraint(dim * i + vertex1,
+                                                                dim * j + vertex2));
                 }
             }
         }
@@ -110,11 +110,11 @@ ConstraintMatrix apply_discontinuities(const Mesh<dim>& surface,
                                        double eps = 1e-10) {
     auto out_c_map = c_matrix.c_map;
     for (std::size_t i = 0; i < disc.facets.size(); i++) {
-        for (std::size_t d1 = 0; d1 < dim; d1++) {
-            auto disc_pt = disc.facets[i].vertices[d1];
+        for (std::size_t vertex1 = 0; vertex1 < dim; vertex1++) {
+            auto disc_pt = disc.facets[i].vertices[vertex1];
             for (std::size_t j = 0; j < surface.facets.size(); j++) {
-                for (std::size_t d2 = 0; d2 < dim; d2++) {
-                    auto surf_pt = surface.facets[j].vertices[d2];
+                for (std::size_t vertex2 = 0; vertex2 < dim; vertex2++) {
+                    auto surf_pt = surface.facets[j].vertices[vertex2];
 
                     // If the vertices do not overlap, nothing is done.
                     if (!all(fabs(disc_pt - surf_pt) < eps)) {
@@ -122,7 +122,7 @@ ConstraintMatrix apply_discontinuities(const Mesh<dim>& surface,
                     } 
 
                     // Is this DOF constrained? If not, move on.
-                    int dof = dim * j + d2;
+                    int dof = dim * j + vertex2;
                     auto dof_and_constraint = out_c_map.find(dof);
                     if (dof_and_constraint == out_c_map.end()) {
                         continue;

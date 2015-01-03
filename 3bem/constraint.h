@@ -34,8 +34,8 @@ using DOFWeight = std::pair<int,T>;
 * first dof is implicitly the constrained dof.
 */
 struct Constraint {
-    const std::vector<DOFWeight<double>> dof_constraints;
-    const double rhs_value;
+    std::vector<DOFWeight<double>> dof_constraints;
+    double rhs_value;
     friend std::ostream& operator<<(std::ostream& os, const Constraint& c);
 };
 

@@ -18,7 +18,7 @@ HDFOutputter::HDFOutputter(const std::string& filename):
 {}
     
 HDFOutputter::~HDFOutputter() {
-    H5Fclose(file_id);
+    close_file(file_id);
 }
 
 void HDFOutputter::write_locations(int dim1, int dim2, const void* data_ptr) {

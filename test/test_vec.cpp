@@ -124,6 +124,20 @@ TEST(OuterProductTensorVector) {
     CHECK_EQUAL(result, correct);
 }
 
+TEST(OuterProductTensorVector3d) {
+    Vec3<Vec3<double>> right{{
+        {3.0, 0.0, 1.0}, {0.0, 4.0, -2.0}, {0.5, 7.0, -3.0}
+    }};
+    Vec3<double> left = {1.0, -1.0, 1.0};
+    Vec3<Vec3<Vec3<double>>> correct{{
+        {{{3.0, 0.0, 1.0}, {0.0, 4.0, -2.0}, {0.5, 7.0, -3.0}}},
+        {{{-3.0, 0.0, -1.0}, {0.0, -4.0, 2.0}, {-0.5, -7.0, 3.0}}},
+        {{{3.0, 0.0, 1.0}, {0.0, 4.0, -2.0}, {0.5, 7.0, -3.0}}}
+    }};
+    auto result = outer_product(left, right);
+    CHECK_EQUAL(result, correct);
+}
+
 TEST(InnerProductVecVec) {
     Vec2<double> right{{3.0, 4.0}};
     Vec2<double> left = {1.0, 1.0};
@@ -154,6 +168,18 @@ TEST(InnerProduct3TensorVector) {
 TEST(ZerosTensor) {
     auto z = zeros<Vec2<Vec2<double>>>::make();
     Vec2<Vec2<double>> c{{{0.0, 0.0}, {0.0, 0.0}}};
+    CHECK_EQUAL(z, c);
+}
+
+TEST(OnesTensor) {
+    auto z = ones<Vec2<Vec2<double>>>::make();
+    Vec2<Vec2<double>> c{{{1.0, 1.0}, {1.0, 1.0}}};
+    CHECK_EQUAL(z, c);
+}
+
+TEST(ConstantTensor) {
+    auto z = constant<Vec2<Vec2<double>>>::make(2.2);
+    Vec2<Vec2<double>> c{{{2.2, 2.2}, {2.2, 2.2}}};
     CHECK_EQUAL(z, c);
 }
 

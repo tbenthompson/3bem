@@ -127,8 +127,7 @@ Vec3<T> get_error_is(double p_tol, Vec3<T> erri1, Vec3<T> erri2,
 
 template <typename T>
 T adaptive_integrate(const std::function<T(double)>& f, double a,
-                     double b, double p_tol)
-{
+                     double b, double p_tol) {
     double m = (a + b) / 2.; 
     double h = (b - a) / 2.;
 
