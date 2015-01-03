@@ -113,5 +113,7 @@ public:
     static const int deepest = 1 << 18;
 };
 
+Octree random_pts_tree(int n, int cell_max);
+
 } // END namespace tbem
 #endif

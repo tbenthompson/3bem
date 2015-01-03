@@ -63,6 +63,10 @@ FacetField<T,dim> refine_modify(const FacetField<T,dim>& f,
 template <typename T, int dim>
 MeshField<T,dim> 
 MeshField<T,dim>::refine(const std::vector<int>& refine_these) const {
+    if (refine_these.empty()) {
+        return MeshField<T,dim>{facets, has_refine_mod, refine_mod};
+    }
+
     std::vector<FacetField<T,dim>> out_facets;
 
     // Sort the refined edges so that we only have to check the
