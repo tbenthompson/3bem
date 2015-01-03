@@ -4,12 +4,12 @@ TESTS:
 -- Reduce the time cost of test_fmm. Decoupling? Move the slow parts to an integration test.
 
 DESIGN DECISIONS:
--- Should I handle hanging nodes in finding mesh continuity constraints (WRITE A NOTE ON THE DECISION)
 -- Should I use CGAL or other comp-geom library (WRITE A NOTE ON THE DECISION)
 -- Think about decoupling the library into multiple .so files, so that individual pieces can be tested independently.-
 -- Alternately, think about the viability of a header-only library
 
 NEW FUNCTIONALITY:
+-- Hanging nodes
 -- Link BEM to FMM
 -- Consider a different way of handling constraints. precompute reduced matrix?
 -- A way of computing the condition number of a BEM matrix.

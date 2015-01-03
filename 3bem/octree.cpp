@@ -2,6 +2,7 @@
 #include "numerics.h"
 #include "algs.h"
 #include "vec.h"
+#include "util.h"
 #include <assert.h>
 
 namespace tbem {
@@ -184,6 +185,11 @@ OctreeCell& Octree::get_root() {
 
 int Octree::get_root_index() const {
     return cells.size() - 1;
+}
+
+Octree random_pts_tree(int n, int cell_max) {
+    auto pts = random_pts(n);
+    return Octree(pts, cell_max);
 }
 
 } // END namespace tbem
