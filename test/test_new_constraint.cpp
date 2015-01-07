@@ -2,6 +2,7 @@
 #include "new_constraint.h"
 #include <iostream>
 #include "shared.h"
+#include "mesh_gen.h"
 
 using namespace tbem;
 
@@ -151,11 +152,16 @@ TEST(ConstraintMatrixFromConstraints) {
     check_one_constraint_test(matrix);
 }
 
-void check_expands_to_all_ones(const ConstraintMatrix& cm, int n) {
-    std::vector<double> reduced{1.0};
+void check_get_all(const ConstraintMatrix& cm, 
+                   const std::vector<double>& reduced,
+                   const std::vector<double>& correct) {
+    size_t n = correct.size();
     auto all_vals = cm.get_all(reduced, n);
-    std::vector<double> correct(n, 1.0);
     CHECK_ARRAY_EQUAL(&all_vals[0], &correct[0], n);
+}
+
+void check_expands_to_all_ones(const ConstraintMatrix& cm, int n) {
+    check_get_all(cm, {1.0}, std::vector<double>(n, 1.0));
 }
 
 TEST(AEqualsB) {
@@ -182,8 +188,109 @@ TEST(AEqualsBEqualsCEqualsD) {
     check_expands_to_all_ones(cm, 4);
 }
 
+TEST(AEqualsBPlusC) {
+    auto cm = ConstraintMatrix::from_constraints({
+        ConstraintEQ{{LinearTerm{0, 1}, LinearTerm{1, -1}, LinearTerm{2, -1}}, 0}
+    });
+    check_get_all(cm, {1.0, 1.0}, {1.0, 1.0, 0.0});
+}
+
+TEST(AEqualsBPlusCAndCEqualsD) {
+    auto cm = ConstraintMatrix::from_constraints({
+        ConstraintEQ{{LinearTerm{0, 1}, LinearTerm{1, -1}, LinearTerm{2, -1}}, 0},
+        continuity_constraint(2, 3)
+    });
+    check_get_all(cm, {1.0, 0.5}, {1.0, 0.5, 0.5, 0.5});
+}
+
+TEST(CircularConstraints) {
+    auto cm = ConstraintMatrix::from_constraints({
+        continuity_constraint(0, 1),
+        continuity_constraint(1, 0)
+    });
+    CHECK_EQUAL(cm.map.size(), 1);
+}
+
+TEST(AddTermWithConstraintsUnconstrained) {
+    auto cm = ConstraintMatrix::from_constraints({
+        continuity_constraint(0, 2)
+    });
+    auto terms = cm.add_term_with_constraints(LinearTerm{1, -1.0});
+    LinearTerm correct{1, -1.0};
+    CHECK_EQUAL(terms.size(), 1);
+    CHECK_EQUAL(terms[0], correct);
+}
+
+TEST(AddTermWithConstraintsEmpty) {
+    auto cm = ConstraintMatrix::from_constraints({
+        boundary_condition(1, 4.0)
+    });
+    auto terms = cm.add_term_with_constraints(LinearTerm{1, 2.0});
+    CHECK(terms.empty());
+}
+
+TEST(AddTermWithConstraintsRecurse) {
+    auto cm = ConstraintMatrix::from_constraints({
+        boundary_condition(1, 4.0),
+        continuity_constraint(0, 2),
+        continuity_constraint(2, 3),
+        continuity_constraint(3, 4)
+    });
+    auto terms = cm.add_term_with_constraints(LinearTerm{4, 4.0});
+    LinearTerm correct{0, 4.0};
+    CHECK_EQUAL(terms.size(), 1);
+    CHECK_EQUAL(terms[0], correct);
+}
+
+TEST(ConstraintMatrixGetReducedThenGetAll) {
+    auto cm = ConstraintMatrix::from_constraints({
+        boundary_condition(1, 4.0),
+        continuity_constraint(0, 2),
+        continuity_constraint(2, 3),
+        continuity_constraint(3, 4)
+    });
+    auto in = cm.get_reduced(std::vector<double>{2.0, 4.0, 4.0, 4.0, 4.0});
+    CHECK_EQUAL(in[0], 14.0);
+    auto res = cm.get_all(in, 5);
+    double res_exact[5] = {in[0], 4.0, in[0], in[0], in[0]};
+    CHECK_ARRAY_CLOSE(res, res_exact, 5, 1e-13);
+}
+
+TEST(ConstraintMatrixGetAllVec2) {
+    auto c0 = boundary_condition(1, 4.0);
+    auto c1 = continuity_constraint(1, 2);
+    auto c2 = continuity_constraint(2, 3);
+    auto cm = ConstraintMatrix::from_constraints({c0, c1, c2});
+    auto in = cm.get_reduced(std::vector<Vec2<double>>{
+        {2.0,3.0}, {4.0,4.0}, {4.0,1.5}, {4.0,-1.5}
+    });
+    auto res = cm.get_all(in, 4);
+    Vec2<double> res_exact[4] = {{2.0,3.0}, {4.0,4.0}, {4.0,4.0}, {4.0,4.0}};
+    CHECK_ARRAY_CLOSE((&res[0][0]), (&res_exact[0][0]), 8, 1e-13);
+}
+
+TEST(ConstraintMesh) {
+    auto sphere = sphere_mesh({0, 0, 0}, 1).refine_repeatedly(2);
+    auto constraints = mesh_continuity<3>(sphere);
+    auto matrix = ConstraintMatrix::from_constraints(constraints);
+    CHECK_EQUAL(3 * sphere.facets.size(), 384);
+    CHECK_EQUAL(matrix.map.size(), 318);
+    auto my_c = matrix.map.begin()->second.terms;
+    CHECK_EQUAL(my_c[0].weight, 1);
+}
+
+TEST(GetReducedToCountTheNumberOfVerticesOnASphereApproximation) {
+    auto sphere = sphere_mesh({0, 0, 0}, 1).refine_repeatedly(0);
+    auto constraints = mesh_continuity<3>(sphere);
+    auto matrix = ConstraintMatrix::from_constraints(constraints);
+    std::vector<double> all(3 * sphere.facets.size(), 1.0);
+    auto reduced = matrix.get_reduced(all);
+    CHECK_EQUAL(reduced.size(), 6);
+    CHECK_ARRAY_EQUAL(reduced, (std::vector<double>(6, 4.0)), 6);
+}
+
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();
-    // return RunOneTest("AEqualsBEqualsCEqualsD");
+    // return RunOneTest("CircularConstraints");
 }
