@@ -8,19 +8,19 @@ namespace tbem {
 template <int dim, typename Fnc> 
 std::vector<double> constrained_interpolate(const Mesh<dim>& mesh,
                                             const Fnc& fnc,
-                                            const ConstraintMatrix& c_mat) {
+                                            const ConstraintMatrix& matrix) {
     int n_dofs = dim * mesh.facets.size();
     std::vector<double> res;
     for (unsigned int i = 0; i < mesh.facets.size(); i++) {
         for (int d = 0; d < dim; d++) {
             int dof = dim * i + d;
-            if(c_mat.is_constrained(dof)) {
+            if(is_constrained(matrix.map, dof)) {
                 continue;
             }
             res.push_back(fnc(mesh.facets[i].vertices[d]));
         }
     }
-    return c_mat.get_all(res, n_dofs);
+    return matrix.get_all(res, n_dofs);
 }
 
 /* Interpolates a function onto the linear basis defined by the specified
