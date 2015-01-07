@@ -36,7 +36,7 @@ petsc_arch = os.environ['PETSC_ARCH']
 includes = [
     './3bem',
     '../lib/',
-    '../lib/unittest-cpp/src',
+    '../lib/unittest-cpp/UnitTest++',
     '../lib/autocheck/include',
     petsc_dir + '/' + petsc_arch + '/include',
     petsc_dir + '/include'
@@ -52,9 +52,9 @@ test_coverage_flags = ['--coverage']
 test_coverage_flags.extend(debug_flags)
 
 # cpp_flags.extend(test_coverage_flags)
-# cpp_flags.extend(debug_flags)
+cpp_flags.extend(debug_flags)
 # cpp_flags.extend(release_flags)
-cpp_flags.extend(profile_flags)
+# cpp_flags.extend(profile_flags)
 
 lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)
@@ -69,7 +69,7 @@ lib_link_flags.extend(link_flags)
 
 lib_dep_flags = ['-Wl,-rpath=./build', '-L./build', '-l3bem']
 
-test_link_flags = ['-L../lib/unittest-cpp']
+test_link_flags = ['-L../lib/unittest-cpp/builds']
 test_link_flags.append('-lUnitTest++')
 test_link_flags.extend(lib_dep_flags)
 test_link_flags.extend(link_flags)

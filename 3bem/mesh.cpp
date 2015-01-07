@@ -96,7 +96,7 @@ MeshField<T,dim>::refine(const std::vector<int>& refine_these) const {
 template <typename T, int dim>
 MeshField<T,dim> 
 MeshField<T,dim>::refine() const {
-    return refine(naturals(facets.size()));
+    return refine(integers(facets.size()));
 }
 
 /* A helper function to refine all the facets multiple times. */

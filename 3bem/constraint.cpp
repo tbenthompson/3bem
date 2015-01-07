@@ -8,7 +8,7 @@ namespace tbem {
 
 std::ostream& operator<<(std::ostream& os, const Constraint& c) {
     os << "Constraint[[(RHS, " << c.rhs_value << "), ";
-    for (auto v: c.dof_constraints) {
+    for (auto v: c.dof_weights) {
         os << "(" << v.first << ", " << v.second << "), ";
     }
     os << "]]";
@@ -24,14 +24,14 @@ ConstraintMatrix ConstraintMatrix::add_constraints(
 
     for (std::size_t i = 0; i < constraints.size(); ++i) {
         auto in_constraint = constraints[i];
-        auto last = std::max_element(in_constraint.dof_constraints.begin(), 
-                                     in_constraint.dof_constraints.end(),
+        auto last = std::max_element(in_constraint.dof_weights.begin(), 
+                                     in_constraint.dof_weights.end(),
             [] (const DOFWeight<double>& a, const DOFWeight<double>& b) {
                 return a.first < b.first; 
             });
         auto last_dof = last->first;
         //TODO: Make the constrained dof first, not last! simpler
-        std::iter_swap(last, in_constraint.dof_constraints.end() - 1);
+        std::iter_swap(last, in_constraint.dof_weights.end() - 1);
         new_map[last_dof] = in_constraint;
     }
     return {new_map};
@@ -69,7 +69,7 @@ Constraint continuity_constraint(int dof1, int dof2) {
 
 Constraint offset_constraint(int dof1, int dof2, double offset) {
     return {
-        continuity_constraint(dof1, dof2).dof_constraints,
+        continuity_constraint(dof1, dof2).dof_weights,
         -offset
     };
 }
@@ -129,7 +129,7 @@ ConstraintMatrix apply_discontinuities(const Mesh<dim>& surface,
                     }
 
                     // Get the other dof for the constraint.
-                    int other_dof = dof_and_constraint->second.dof_constraints[0].first;
+                    int other_dof = dof_and_constraint->second.dof_weights[0].first;
                     int other_vert = other_dof % 3;
                     int other_face = (other_dof - other_vert) / 3;
                     
