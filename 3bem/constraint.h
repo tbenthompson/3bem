@@ -34,7 +34,7 @@ using DOFWeight = std::pair<int,T>;
 * first dof is implicitly the constrained dof.
 */
 struct Constraint {
-    std::vector<DOFWeight<double>> dof_constraints;
+    std::vector<DOFWeight<double>> dof_weights;
     double rhs_value;
     friend std::ostream& operator<<(std::ostream& os, const Constraint& c);
 };
@@ -48,20 +48,26 @@ struct ConstraintMatrix {
     typedef std::unordered_map<int,Constraint> MapT;
     const MapT c_map;
 
-    ConstraintMatrix add_constraints(const std::vector<Constraint>& constraints);
-
-    bool is_constrained(int dof) const;
-
+    /* Accepts a reduced DOF vector and returns the full DOF vector. */
     template <typename T>
     std::vector<T> get_all(const std::vector<T>& in, int total_dofs) const; 
+
     /* Accepts a full DOF vector and returns the reduced DOF vector.
      */
     template <typename T>
     std::vector<T> get_reduced(const std::vector<T>& all) const;
 
+    /* Adds to an entry in a vector according to the constraint matrix.
+     * For example, if DOF #2 is constrained and I add to DOF #2, the value is 
+     * applied to those DOFs that #2 is constrained to be equal to.
+     */
     template <typename T>
     void add_vec_with_constraints(const DOFWeight<T>& entry,
                                   std::vector<T>& rhs) const;
+
+    ConstraintMatrix add_constraints(const std::vector<Constraint>& constraints);
+
+    bool is_constrained(int dof) const;
 
     friend std::ostream& operator<<(std::ostream& os, const ConstraintMatrix& cm);
 
@@ -69,23 +75,19 @@ struct ConstraintMatrix {
     ConstraintMatrix from_constraints(const std::vector<Constraint>& constraints);
 };
 
+std::vector<DOFWeight<double>>::iterator find_unconstrained_dof(
+        const ConstraintMatrix::MapT& c_map, Constraint& constraint);
+
+bool is_constrained(const ConstraintMatrix::MapT& c_map, int dof);
+
 /* Constrain two degrees of freedom to be identical. */
 Constraint continuity_constraint(int dof1, int dof2);
-
-/* This creates a constraint representing the offset between the value
- * of two DOFs. Primarily useful for imposing a fault slip as the 
- * displacement jump when a fault intersects the surface.
- * The direction of offset is from dof1 to dof2. So,
- * value[dof1] - value[dof2] = -offset
- */
-Constraint offset_constraint(int dof1, int dof2, double offset);
 
 /* Set a boundary condition. A very simple constraint that looks like:
  * value[dof] = value
  */
 Constraint boundary_condition(int dof, double value);
 
-//Forward declaration of Vec and Mesh.
 template <typename T, unsigned long dim>
 using Vec = std::array<T,dim>;
 template <typename T, int dim>
@@ -124,7 +126,7 @@ std::vector<T> ConstraintMatrix::get_all(const std::vector<T>& in,
             continue;
         }
 
-        auto dof_constraint = dof_and_constraint->second.dof_constraints;
+        auto dof_constraint = dof_and_constraint->second.dof_weights;
         auto out_val = constant<T>::make(dof_and_constraint->second.rhs_value);
         for (std::size_t j = 0; j < dof_constraint.size() - 1; j++) {
             out_val -= dof_constraint[j].second * out[dof_constraint[j].first];
@@ -145,7 +147,7 @@ void ConstraintMatrix::add_vec_with_constraints(const DOFWeight<T>& entry,
     }
 
     auto constraint = dof_and_constraint->second;
-    auto dof_weights = constraint.dof_constraints;
+    auto dof_weights = constraint.dof_weights;
     int n_dof_weights = dof_weights.size();
     double this_weight = dof_weights[n_dof_weights - 1].second;
     for (int i = 0; i < n_dof_weights - 1; i++) {

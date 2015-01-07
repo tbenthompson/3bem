@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include "numbers.h"
 
 namespace tbem {
 
@@ -379,14 +380,6 @@ inline bool all(bool a) {return a;}
 inline bool all(Vec3<bool> v) {return v[0] && v[1] && v[2];}
 inline bool all(Vec2<bool> v) {return v[0] && v[1];}
 
-template <typename T, typename F = void>
-struct constant;
-
-template <>
-struct constant<double> {
-    static double make(double val) { return val; }
-};
-
 template <typename F>
 struct constant<Vec2<F>> {
     static Vec2<F> make(double val) { 
@@ -402,20 +395,6 @@ struct constant<Vec3<F>> {
         return {
             constant<F>::make(val), constant<F>::make(val), constant<F>::make(val) 
         };
-    }
-};
-
-template <typename T, typename F = void>
-struct ones {
-    static T make() {
-        return constant<T,F>::make(1.0);
-    }
-};
-
-template <typename T, typename F = void>
-struct zeros {
-    static T make() {
-        return constant<T,F>::make(0.0);
     }
 };
 

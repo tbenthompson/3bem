@@ -2,6 +2,7 @@
 #include "constraint.h"
 #include "mesh.h"
 #include "mesh_gen.h"
+#include "vec.h"
 #include <iostream>
 
 using namespace tbem;
@@ -12,28 +13,18 @@ TEST(ContinuityConstraintsAreCreated) {
         {DOFWeight<double>{1, 1.0f}, DOFWeight<double>{2, -1.0f}},
         0.0
     };
-    CHECK(c.dof_constraints == correct.dof_constraints);
+    CHECK(c.dof_weights == correct.dof_weights);
     CHECK(c.rhs_value == correct.rhs_value);
-}
-
-TEST(OffsetConstraintsAreCreated) {
-    auto c2 = offset_constraint(3, 4, 5.0f);
-    Constraint correct2 = {
-        {DOFWeight<double>{3, 1.0f}, DOFWeight<double>{4, -1.0f}},
-        -5.0
-    };
-    CHECK(c2.dof_constraints == correct2.dof_constraints);
-    CHECK(c2.rhs_value == correct2.rhs_value);
 }
 
 TEST(ConstraintMatrixIsAppendedTo) {
     auto c = continuity_constraint(1, 2);
     auto cm = ConstraintMatrix::from_constraints({c});
     auto res = cm.c_map.at(2);
-    CHECK(res.dof_constraints[0].first == 1);
-    CHECK(res.dof_constraints[0].second == 1);
-    CHECK(res.dof_constraints[1].first == 2);
-    CHECK(res.dof_constraints[1].second == -1);
+    CHECK(res.dof_weights[0].first == 1);
+    CHECK(res.dof_weights[0].second == 1);
+    CHECK(res.dof_weights[1].first == 2);
+    CHECK(res.dof_weights[1].second == -1);
     CHECK(res.rhs_value == 0.0);
 }
 
@@ -41,6 +32,26 @@ TEST(ConstraintMatrixIsConstrained) {
     auto c = continuity_constraint(1, 2);
     auto cm = ConstraintMatrix::from_constraints({c});
     CHECK_EQUAL(cm.is_constrained(2), true);
+}
+
+TEST(AEqualsB) {
+    auto c0 = continuity_constraint(0, 1);
+    auto cm = ConstraintMatrix::from_constraints({c0});
+    std::vector<double> reduced{1.0};
+    auto all_vals = cm.get_all(reduced, 2);
+    std::vector<double> correct{1.0, 1.0};
+    CHECK_ARRAY_EQUAL(&all_vals[0], &correct[0], 2);
+}
+
+TEST(AEqualsBEqualsC) {
+    auto c0 = continuity_constraint(0, 2);
+    auto c1 = continuity_constraint(1, 2);
+    auto cm = ConstraintMatrix::from_constraints({c0, c1});
+    std::vector<double> reduced{1.0};
+    auto all_vals = cm.get_all(reduced, 3);
+    std::cout << cm << std::endl;
+    std::vector<double> correct{1.0, 1.0, 1.0};
+    CHECK_ARRAY_EQUAL(&all_vals[0], &correct[0], 3);
 }
 
 ConstraintMatrix simple_constraints() {
@@ -65,7 +76,7 @@ TEST(ConstraintMesh) {
     auto cons_mat = ConstraintMatrix::from_constraints(constraints);
     CHECK_EQUAL(3 * sphere.facets.size(), 384);
     CHECK_EQUAL(cons_mat.c_map.size(), 318);
-    auto my_c = cons_mat.c_map.begin()->second.dof_constraints;
+    auto my_c = cons_mat.c_map.begin()->second.dof_weights;
     CHECK_EQUAL(my_c[0].second, 1);
     CHECK_EQUAL(my_c[1].second, -1);
 }
