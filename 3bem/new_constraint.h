@@ -6,6 +6,7 @@
 #include <cassert>
 #include <algorithm>
 #include "numbers.h"
+#include "mesh.h"
 
 namespace tbem {
 
@@ -20,19 +21,22 @@ namespace tbem {
  * displacement is zero is one of the simplest ways of solving this problem.
  */
 
-struct LinearTerm {
+template <typename T>
+struct GeneralLinearTerm {
     const int dof;
-    const double weight;
+    const T weight;
 
-    bool operator==(const LinearTerm& other) const {
+    bool operator==(const GeneralLinearTerm<T>& other) const {
         return dof == other.dof && weight == other.weight;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const LinearTerm& lt) {
+    friend std::ostream& operator<<(std::ostream& os, const GeneralLinearTerm<T>& lt) {
         os << "(" << lt.dof << ", " << lt.weight << ")";
         return os;
     }
 };
+
+typedef GeneralLinearTerm<double> LinearTerm;
 
 /* A constraint is composed of LinearTerms and a right hand side constant.
  * This structure represents one constraint equation, with each variable
@@ -56,6 +60,10 @@ struct ConstraintEQ {
         return os;
     }
 };
+
+ConstraintEQ boundary_condition(int dof, double value) {
+    return {{LinearTerm{dof, 1.0}}, value};
+}
 
 ConstraintEQ continuity_constraint(int dof1, int dof2) {
     return {
@@ -99,9 +107,9 @@ struct ConstraintMatrix {
     typedef std::map<int,RearrangedConstraintEQ> MapT;
     const MapT map;
 
-    ConstraintMatrix add_constraints(const std::vector<ConstraintEQ>& constraints);
-    static 
-    ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints);
+    ConstraintMatrix add_constraints(const std::vector<ConstraintEQ>& constraints) const;
+    static ConstraintMatrix from_constraints(
+            const std::vector<ConstraintEQ>& constraints);
 
     /* Accepts a reduced DOF vector and returns the full DOF vector. */
     template <typename T>
@@ -111,6 +119,10 @@ struct ConstraintMatrix {
      */
     template <typename T>
     std::vector<T> get_reduced(const std::vector<T>& all) const;
+
+    template <typename T>
+    std::vector<GeneralLinearTerm<T>>
+    add_term_with_constraints(const GeneralLinearTerm<T>& entry) const;
 };
 
 inline RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c, 
@@ -212,14 +224,30 @@ ConstraintEQ substitute(const ConstraintEQ& c,
     return {out_terms, out_rhs};
 }
 
+ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps = 1e-15) {
+    std::vector<LinearTerm> out_terms;
+    for(const auto& t: c.terms) {
+        if (std::fabs(t.weight) > eps) {
+            out_terms.push_back(t);
+        }
+    }
+    return {out_terms, c.rhs};
+}
+
 RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
                                              const ConstraintMatrix::MapT map) {
+    if (c.terms.size() == 0) {
+        std::string msg = "Function: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.";
+        throw std::invalid_argument(msg);
+    }
+
     int last_dof_index = find_last_dof_index(c);
     int last_dof = c.terms[last_dof_index].dof;
     if (is_constrained(map, last_dof)) {
         auto last_dof_constraint = map.find(last_dof)->second;
         ConstraintEQ c_subs = substitute(c, last_dof_index, last_dof_constraint);
-        return make_lower_triangular(c_subs, map);
+        ConstraintEQ c_subs_filtered = filter_zero_terms(c_subs);
+        return make_lower_triangular(c_subs_filtered, map);
     }
     return isolate_term_on_lhs(c, last_dof_index);
 }
@@ -231,14 +259,18 @@ ConstraintMatrix ConstraintMatrix::from_constraints(
 };
 
 ConstraintMatrix ConstraintMatrix::add_constraints(
-        const std::vector<ConstraintEQ>& constraints) {
+        const std::vector<ConstraintEQ>& constraints) const { 
     MapT new_map = map;
 
     for (size_t i = 0; i < constraints.size(); i++) {
         const auto& c = constraints[i];
-        auto lower_tri_constraint = make_lower_triangular(c, new_map);
-        new_map[lower_tri_constraint.constrained_dof] =
-            std::move(lower_tri_constraint);
+        try {
+            auto lower_tri_constraint = make_lower_triangular(c, new_map);
+            new_map[lower_tri_constraint.constrained_dof] =
+                std::move(lower_tri_constraint);
+        } catch (const std::invalid_argument& e) {
+            continue;
+        }
     }
 
     return ConstraintMatrix{new_map};
@@ -271,7 +303,117 @@ std::vector<T> ConstraintMatrix::get_all(const std::vector<T>& in, int total_dof
     }
     return out;
 }
+
+template <typename T>
+std::vector<GeneralLinearTerm<T>>
+ConstraintMatrix::add_term_with_constraints(const GeneralLinearTerm<T>& entry) const {
+    if (!is_constrained(map, entry.dof)) {
+        return {entry};
+    }
+
+    const auto& constraint = map.find(entry.dof)->second;
+    const auto& terms = constraint.terms;
+    std::vector<GeneralLinearTerm<T>> out_terms;
+    for (size_t i = 0; i < terms.size(); i++) {
+        T recurse_weight = terms[i].weight * entry.weight;
+        GeneralLinearTerm<T> new_entry{terms[i].dof, recurse_weight};
+        const auto& terms = add_term_with_constraints(new_entry);
+        for (const auto& t: terms) {
+            out_terms.push_back(std::move(t));
+        }
+    }
+    return out_terms;
+}
+
+template <typename T>
+std::vector<T> ConstraintMatrix::get_reduced(const std::vector<T>& all) const {
+    std::vector<T> condensed_dofs(all.size(), zeros<T>::make());
+    for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
+        GeneralLinearTerm<T> term_to_add{(int)dof_idx, all[dof_idx]};
+        auto expanded_term = add_term_with_constraints(term_to_add);
+        for (const auto& t: expanded_term) {
+            condensed_dofs[t.dof] += t.weight;
+        }
+    }
+
+    std::vector<T> out;
+    for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
+        if (is_constrained(map, dof_idx)) {
+            continue;
+        }
+        out.push_back(condensed_dofs[dof_idx]);
+    }
+
+    return out;
+}
     
+template <int dim>
+std::vector<ConstraintEQ> mesh_continuity(const Mesh<dim>& m,
+                                          double eps = 1e-10) {
+
+    std::vector<ConstraintEQ> constraints;
+    for (std::size_t i = 0; i < m.facets.size(); i++) {
+        for (std::size_t vertex1 = 0; vertex1 < dim; vertex1++) {
+            auto i_pt = m.facets[i].vertices[vertex1];
+            for (std::size_t j = i + 1; j < m.facets.size(); j++) {
+                for (std::size_t vertex2 = 0; vertex2 < dim; vertex2++) {
+                    auto j_pt = m.facets[j].vertices[vertex2];
+                    if (!all(fabs(i_pt - j_pt) < eps)) {
+                        continue;
+                    } 
+                    constraints.push_back(continuity_constraint(dim * i + vertex1,
+                                                                dim * j + vertex2));
+                }
+            }
+        }
+    }
+    return constraints;
+}
+
+template <int dim> 
+ConstraintMatrix apply_discontinuities(const Mesh<dim>& surface,
+                                       const Mesh<dim>& disc,
+                                       const ConstraintMatrix& c_matrix,
+                                       double eps = 1e-10) {
+    auto out_map = c_matrix.map;
+    for (std::size_t i = 0; i < disc.facets.size(); i++) {
+        for (std::size_t vertex1 = 0; vertex1 < dim; vertex1++) {
+            auto disc_pt = disc.facets[i].vertices[vertex1];
+            for (std::size_t j = 0; j < surface.facets.size(); j++) {
+                for (std::size_t vertex2 = 0; vertex2 < dim; vertex2++) {
+                    auto surf_pt = surface.facets[j].vertices[vertex2];
+
+                    // If the vertices do not overlap, nothing is done.
+                    if (!all(fabs(disc_pt - surf_pt) < eps)) {
+                        continue;
+                    } 
+
+                    // Is this DOF constrained? If not, move on.
+                    int dof = dim * j + vertex2;
+                    if (!is_constrained(out_map, dof)) {
+                        continue;
+                    }
+
+                    // Get the other dof for the constraint.
+                    int other_dof = out_map.find(dof)->second.terms[0].dof;
+                    int other_vert = other_dof % 3;
+                    int other_face = (other_dof - other_vert) / 3;
+                    
+                    // Calculate which side of the disc face the other vertex is on.
+                    auto my_side = which_side_facet<dim>(disc.facets[i].vertices, 
+                                                surface.facets[j].vertices);
+                    auto other_side = which_side_facet<dim>(disc.facets[i].vertices, 
+                                                surface.facets[other_face].vertices);
+                    if (my_side == other_side) {
+                        continue;
+                    }
+                    out_map.erase(dof);
+                }
+            }
+        }
+    }
+    return ConstraintMatrix{out_map};
+}
 
 } // END namespace tbem
 
