@@ -51,8 +51,8 @@ profile_flags = release_flags + ['-g']
 test_coverage_flags = ['--coverage']
 test_coverage_flags.extend(debug_flags)
 
-cpp_flags.extend(test_coverage_flags)
-# cpp_flags.extend(debug_flags)
+# cpp_flags.extend(test_coverage_flags)
+cpp_flags.extend(debug_flags)
 # cpp_flags.extend(release_flags)
 # cpp_flags.extend(profile_flags)
 
