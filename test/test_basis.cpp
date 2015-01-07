@@ -7,7 +7,7 @@
 using namespace tbem;
 
 TEST(Interpolate) {
-    auto m = sphere_mesh({0,0,0}, 1).refine_repeatedly(4);
+    auto m = sphere_mesh({0,0,0}, 1).refine_repeatedly(2);
     auto res = interpolate<3>(m, [](const Vec<double,3>& x) {return x[0];});
     for (unsigned int i = 0; i < m.facets.size(); i++) {
         for (int d = 0; d < 3; d++) {
@@ -17,19 +17,14 @@ TEST(Interpolate) {
 }
 
 TEST(ConstrainedInterpolate) {
-    auto mesh = sphere_mesh({0,0,0}, 1).refine_repeatedly(4);
+    auto mesh = sphere_mesh({0,0,0}, 1).refine_repeatedly(2);
     auto raw_constraints = mesh_continuity<3>(mesh);
-    std::cout << "Number of raw constraints: " << raw_constraints.size() << std::endl;
-    TIC
     auto constraint_matrix = ConstraintMatrix::from_constraints(raw_constraints);
-    TOC("Create constraint matrix")
-    TIC2
     auto res = constrained_interpolate<3>(
         mesh, 
         [](const Vec<double,3>& x) {return x[0];},
         constraint_matrix
     );
-    TOC("Perform constrained interpolation")
     for (unsigned int i = 0; i < mesh.facets.size(); i++) {
         for (int d = 0; d < 3; d++) {
             CHECK_CLOSE(res[3 * i + d], mesh.facets[i].vertices[d][0], 1e-14);

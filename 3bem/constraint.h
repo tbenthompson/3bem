@@ -150,7 +150,7 @@ inline RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c,
 
 inline bool is_constrained(const ConstraintMatrix::MapT& dof_constraint_map,
                            int dof) {
-    auto it = dof_constraint_map.find(dof);
+    const auto& it = dof_constraint_map.find(dof);
     if (it == dof_constraint_map.end()) {
         return false;
     }
@@ -234,35 +234,22 @@ ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps = 1e-15) {
     return {out_terms, c.rhs};
 }
 
-static int N_calls = 0;
 RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
-                                             const ConstraintMatrix::MapT map) {
-    N_calls++;
+                                             const ConstraintMatrix::MapT& map) {
     if (c.terms.size() == 0) {
         std::string msg = "Function: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.";
         throw std::invalid_argument(msg);
     }
 
-    for (size_t i = 0; i < c.terms.size(); i++) {
-        int dof = c.terms[i].dof;
-        if (is_constrained(map, dof)) {
-            auto constraint = map.find(dof)->second;
-            ConstraintEQ c_subs = substitute(c, i, constraint);
-            ConstraintEQ c_subs_filtered = filter_zero_terms(c_subs);
-            return make_lower_triangular(c_subs_filtered, map); 
-        }
-    }
     int last_dof_index = find_last_dof_index(c);
+    int last_dof = c.terms[last_dof_index].dof;
+    if (is_constrained(map, last_dof)) {
+        const auto& last_dof_constraint = map.find(last_dof)->second;
+        ConstraintEQ c_subs = substitute(c, last_dof_index, last_dof_constraint);
+        ConstraintEQ c_subs_filtered = filter_zero_terms(c_subs);
+        return make_lower_triangular(c_subs_filtered, map);
+    }
     return isolate_term_on_lhs(c, last_dof_index);
-    // int last_dof_index = find_last_dof_index(c);
-    // int last_dof = c.terms[last_dof_index].dof;
-    // if (is_constrained(map, last_dof)) {
-    //     auto last_dof_constraint = map.find(last_dof)->second;
-    //     ConstraintEQ c_subs = substitute(c, last_dof_index, last_dof_constraint);
-    //     ConstraintEQ c_subs_filtered = filter_zero_terms(c_subs);
-    //     return make_lower_triangular(c_subs_filtered, map);
-    // }
-    // return isolate_term_on_lhs(c, last_dof_index);
 }
 
 ConstraintMatrix ConstraintMatrix::from_constraints(
@@ -285,7 +272,6 @@ ConstraintMatrix ConstraintMatrix::add_constraints(
             continue;
         }
     }
-    std::cout << N_calls << std::endl;
 
     return ConstraintMatrix{new_map};
 }

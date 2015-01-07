@@ -51,9 +51,11 @@ def main(filename, values_dim):
     plt.figure()
     plt.tripcolor(vertices[:,0], vertices[:,1], faces, data, **opts)
     plt.colorbar()
+    plt.title('Output')
     plt.figure()
     plt.tripcolor(vertices[:,0], vertices[:,1], faces, okada_exact[:,values_dim],
                           **opts)
+    plt.title('Exact')
     plt.colorbar()
     plt.show()
 
