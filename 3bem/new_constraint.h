@@ -202,7 +202,8 @@ ConstraintEQ substitute(const ConstraintEQ& c,
         } 
     }
 
-    for (const auto& subs_term: subs_in.terms) {
+    for (int subs_term_index: which_subs_terms_unused) {
+        const auto& subs_term = subs_in.terms[subs_term_index];
         double additive_weight = subs_term.weight * multiplicative_factor;
         out_terms.push_back(LinearTerm{subs_term.dof, additive_weight});
     }

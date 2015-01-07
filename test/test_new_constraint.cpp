@@ -79,6 +79,13 @@ TEST(SubstituteWithTermsNegation) {
     subs_test(eqtn0, eqtn1, correct);
 }
 
+TEST(SubstituteWithTermsAddToPreexistingTerm) {
+    ConstraintEQ eqtn0{{LinearTerm{1,1}, LinearTerm{3,1}}, 4.0};
+    ConstraintEQ eqtn1{{LinearTerm{1,1}, LinearTerm{3,-3}}, 0.0};
+    ConstraintEQ correct{{LinearTerm{3,4}}, 4.0};
+    subs_test(eqtn0, eqtn1, correct);
+}
+
 ConstraintMatrix::MapT two_bcs_constraint_map() {
     ConstraintEQ eqtn0{{LinearTerm{3,1}}, 4.0};
     ConstraintEQ eqtn1{{LinearTerm{1,1}}, 2.0};
@@ -90,10 +97,10 @@ ConstraintMatrix::MapT two_bcs_constraint_map() {
 
 TEST(IsConstrained) {
     auto constraint_set = two_bcs_constraint_map();
-    CHECK(!is_constrained(constraint_set, 0));
-    CHECK( is_constrained(constraint_set, 1));
-    CHECK(!is_constrained(constraint_set, 2));
-    CHECK( is_constrained(constraint_set, 3));
+    CHECK(is_constrained(constraint_set, 0) == false);
+    CHECK(is_constrained(constraint_set, 1) == true);
+    CHECK(is_constrained(constraint_set, 2) == false);
+    CHECK(is_constrained(constraint_set, 3) == true);
 }
 
 TEST(MakeLowerTriangular) {
