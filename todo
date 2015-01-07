@@ -9,13 +9,13 @@ DESIGN DECISIONS:
 -- Think about decoupling the library into multiple .so files, so that individual pieces can be tested independently. (WRITE A NOTE ON THE DECISION)
 
 -- Alternately, think about the viability of a header-only library. (WRITE A NOTE ON THE DECISION)
-
 ----http://stackoverflow.com/questions/12671383/benefits-of-header-only-libraries 
 ----http://stackoverflow.com/questions/12290639/quantifiable-metrics-benchmarks-on-the-usage-of-header-only-c-libraries/13593041#13593041
 ----http://stackoverflow.com/questions/6200752/c-header-only-template-library/6200793#6200793
 ----http://stackoverflow.com/questions/1783849/what-are-the-advantages-and-disadvantages-of-implementing-classes-in-header-file/1783905#1783905
 
 -- Revamp the build system so that individual tests can be run without recompiling the whole system. (WRITE A NOTE ON THE BUILD SYSTEM DESIGN)
+---- I could do this by compiling only to .o files. Then, I c
 
 -- Consider a different way of handling constraints. precompute reduced matrix?
 
