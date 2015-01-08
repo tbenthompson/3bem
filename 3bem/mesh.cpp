@@ -1,8 +1,19 @@
 #include "mesh.h"
 #include "util.h"
-
+#include "vertex_iterator.h"
 
 namespace tbem {
+
+
+template <typename T, int dim>
+VertexIterator<T,dim> MeshField<T,dim>::begin() const {
+    return VertexIterator<T,dim>(*this, 0, 0);
+}
+
+template <typename T, int dim>
+VertexIterator<T,dim> MeshField<T,dim>::end() const {
+    return VertexIterator<T,dim>(*this, facets.size(), 0);
+}
 
 /* Produces 2 new segments by splitting the current segment 
  * in half. 

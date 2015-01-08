@@ -2,6 +2,7 @@ TOP PRIORITY (tasks until next merge with stable):
 T: Get rect_dislocation working! 
 -- is the problem from cyclic constraints in apply_discontinuities?
 -- compare with matrices produced by 3bem_stable
+-- Consider getting rid of refine_mod and friends in Mesh. Rewrite sphere_mesh and circle_mesh to account for this.
 DD: 
 "ConstraintBuilder"
 "find_overlapping_vertices" returns std::pair<VertexIdx, VertexIdx> VertexIdx
@@ -14,11 +15,6 @@ TESTS(T):
 DESIGN DECISIONS(DD):
 -- Should I use CGAL or other comp-geom library (WRITE A NOTE ON THE DECISION)
 -- Think about decoupling the library into multiple .so files, so that individual pieces can be tested independently. (WRITE A NOTE ON THE DECISION)
--- Alternately, think about the viability of a header-only library. (WRITE A NOTE ON THE DECISION)
-----http://stackoverflow.com/questions/12671383/benefits-of-header-only-libraries 
-----http://stackoverflow.com/questions/12290639/quantifiable-metrics-benchmarks-on-the-usage-of-header-only-c-libraries/13593041#13593041
-----http://stackoverflow.com/questions/6200752/c-header-only-template-library/6200793#6200793
-----http://stackoverflow.com/questions/1783849/what-are-the-advantages-and-disadvantages-of-implementing-classes-in-header-file/1783905#1783905
 -- Revamp the build system so that individual tests can be run without recompiling the whole system. (WRITE A NOTE ON THE BUILD SYSTEM DESIGN)
 ---- I could do this by compiling only to .o files. Then, I c
 -- Consider a different way of handling constraints. precompute reduced matrix?
@@ -37,12 +33,12 @@ NEW FUNCTIONALITY(NF):
 -- To parallelize octree construction, don't build the tree top-down. Build it from the bottom-up. Every element knows its position in the tree already, I just need to compute the morton code on each level to determine that.  The problem becomes adaptivity. To achieve adaptivity, I could temporarily build a hash table mapping cells to a list of elements and then statically convert that into a top-down tree. But, because the lower nodes are already constructed, constructing the upper nodes is not dependent on them -- in other words, this construction is completely parallelizable.
 
 MODIFIED FUNCTIONALITY(MF):
--- Consider getting rid of refine_mod and friends in Mesh. Rewrite sphere_mesh and circle_mesh to account for this.
 
 STRUCTURAL(S):
+-- Immutable RearrangedConstraintEQ
+-- Restrict the main .h files to outward facing interfaces. Use _impl.h files for inward facing header files. Do this with constraints.h
 -- compute_galerkin_integrals function in bem.h -- accepts a "Strategy" for computing integrand.
 -- KernelData object 
--- Be consistent about which files contain outwards facing API and which files contain implementation details.
 -- Pull some of vec.h out into a separate module "geometry.h"
 -- Consider getting rid of autocheck as a dependency.
 -- Make Box an immutable data type.

@@ -1,5 +1,5 @@
-#ifndef __MESH_3D_H
-#define __MESH_3D_H
+#ifndef __GGggGGggTTFDSSDf_MESH_H
+#define __GGggGGggTTFDSSDf_MESH_H
 #include <vector>
 #include <array>
 #include <unordered_map>
@@ -26,11 +26,17 @@ template <int dim>
 using Facet = FacetField<Vec<double,dim>,dim>;
 
 template <typename T, int dim>
+struct VertexIterator;
+
+template <typename T, int dim>
 struct MeshField {
     typedef std::function<T(T)> RefineFnc;
     const std::vector<FacetField<T,dim>> facets;
     const bool has_refine_mod;
     const RefineFnc refine_mod;
+
+    VertexIterator<T,dim> begin() const;
+    VertexIterator<T,dim> end() const;
 
     MeshField<T,dim> refine(const std::vector<int>& refine_these) const;
     MeshField<T,dim> refine() const;
