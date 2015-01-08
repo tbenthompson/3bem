@@ -1,5 +1,4 @@
 #include "UnitTest++.h"
-#include "kernels.h"
 #include "bem.h"
 #include "numerics.h"
 #include "quadrature.h"
@@ -7,6 +6,8 @@
 #include "mesh_gen.h"
 #include "util.h"
 #include "shared.h"
+#include "laplace_kernels.h"
+#include "elastic_kernels.h"
 
 using namespace tbem;
 
@@ -46,7 +47,7 @@ struct IntegrationProb {
 TEST_FIXTURE(IntegrationProb, IntegralOne) {
     double abc = integrate<double,2>(q, [](std::array<double,2> x_hat){return 1.0;});
     CHECK_CLOSE(abc, 0.5, 1e-12);
-    exact = 1.0; go(One<3>()); check();
+    exact = 1.0; go(OneKernel<3>()); check();
 }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceSingle) {
@@ -127,8 +128,8 @@ struct EvalProb {
 
 TEST(EvalIntegralEquationSphereSurfaceArea) {
     EvalProb ep(5, 3, 2);
-    double result = ep.go(One<3>());
-    double result2 = ep.go_row(One<3>());
+    double result = ep.go(OneKernel<3>());
+    double result2 = ep.go_row(OneKernel<3>());
     double exact_surf_area = 4*M_PI*9;
     CHECK_CLOSE(result, exact_surf_area, 1e-1);
     CHECK_CLOSE(result2, exact_surf_area, 1e-1);
@@ -175,7 +176,7 @@ TEST(MassTerm) {
             }
         }
     }
-    auto p = make_problem<3>(sphere, sphere, One<3>(), str);
+    auto p = make_problem<3>(sphere, sphere, OneKernel<3>(), str);
     QuadStrategy<3> qs(2);
     auto res = mass_term(p, qs);
     CHECK_EQUAL(res.size(), 3 * sphere.facets.size());

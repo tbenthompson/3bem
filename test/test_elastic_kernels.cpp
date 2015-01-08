@@ -1,5 +1,5 @@
 #include "UnitTest++.h"
-#include "kernels.h"
+#include "elastic_kernels.h"
 
 #include <iostream>
 #include <fstream>
@@ -33,7 +33,6 @@ Vec<Vec<double,dim>,dim> call_kernel(const double r2,
     } else if (name == "trac") {
          return ElasticTraction<dim>(shear_modulus, poisson_ratio)
                                     (r2, delta, src_n, obs_n);
-
     } else if (name == "adj_trac") {
          return ElasticAdjointTraction<dim>(shear_modulus, poisson_ratio)
                                            (r2, delta, src_n, obs_n);
@@ -94,17 +93,35 @@ void test_elastic_kernel(std::string name) {
     test_data.close();
 }
 
-TEST(TestElasticTensorKernels2D) {
+TEST(TestElasticTensorKernels2DDisplacement) {
     test_elastic_kernel<2>("disp");
+}
+
+TEST(TestElasticTensorKernels2DTraction) {
     test_elastic_kernel<2>("trac");
+}
+
+TEST(TestElasticTensorKernels2DAdjointTraction) {
     test_elastic_kernel<2>("adj_trac");
+}
+
+TEST(TestElasticTensorKernels2DHypersingular) {
     test_elastic_kernel<2>("hyp");
 }
 
-TEST(TestElasticTensorKernels3D) {
+TEST(TestElasticTensorKernels3DDisplacement) {
     test_elastic_kernel<3>("disp");
+}
+
+TEST(TestElasticTensorKernels3DTraction) {
     test_elastic_kernel<3>("trac");
+}
+
+TEST(TestElasticTensorKernels3DAdjointTraction) {
     test_elastic_kernel<3>("adj_trac");
+}
+
+TEST(TestElasticTensorKernels3DHypersingular) {
     test_elastic_kernel<3>("hyp");
 }
 

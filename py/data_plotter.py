@@ -25,9 +25,9 @@ def plot2d(facets, data):
 
     # Antiplane
     x = vertices[:, 0]
-    # s = 1
-    # uz = s * np.arctan(1.0 / x) / np.pi
-    # plt.plot(x, uz, 'r.-')
+    s = 1
+    uz = s * np.arctan(1.0 / x) / np.pi
+    plt.plot(x, uz, 'r.-')
     plt.plot(x, data, 'b.-')
 
     # Plane strain
@@ -72,6 +72,8 @@ def main(filename, values_dim):
         plot3d(facets, data)
     elif (facets.shape[1] == 4):
         plot2d(facets, data)
+    else:
+        raise Exception("Facets are not 2D or 3D! Corrupt file.")
 
 
 if __name__ == "__main__":

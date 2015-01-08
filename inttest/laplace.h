@@ -1,6 +1,7 @@
 #ifndef __HJKHSDFLJSLLHA_LAPLACE_H
 #define __HJKHSDFLJSLLHA_LAPLACE_H
 #include "3bem.h"
+#include "laplace_kernels.h"
 
 using namespace tbem;
 
@@ -31,7 +32,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     auto p_double = make_problem<dim>(mesh, mesh, LaplaceDouble<dim>(), u);
     auto rhs_double = direct_interact(p_double, qs);
 
-    auto p_mass = make_problem<dim>(mesh, mesh, One<dim>(), u);
+    auto p_mass = make_problem<dim>(mesh, mesh, OneKernel<dim>(), u);
     auto rhs_mass = mass_term(p_mass, qs);
     
     int n_dofs = dim * mesh.facets.size();

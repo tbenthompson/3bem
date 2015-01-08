@@ -1,4 +1,5 @@
 #include "3bem.h"
+#include "elastic_kernels.h"
 
 using namespace tbem;
 

@@ -129,7 +129,7 @@ TEST(RearrangedConstraintEQOutput) {
     std::stringstream output_buf;
     output_buf << rearranged_c;
     CHECK_EQUAL(output_buf.str(), 
-                "RearrangedConstraintEQ[[(constrained_dof, 0), (rhs, 0), (1, -1), ]]");
+                "RearrangedConstraintEQ[[(constrained_dof=0, 1), (rhs, 0), (1, -1), ]]");
 }
 
 void check_one_constraint_test(const ConstraintMatrix& matrix) {
