@@ -4,12 +4,22 @@
 #include <cassert>
 #include "vec.h"
 #include "numerics.h"
-#include "kernels.h"
 #include "mesh.h"
 #include "adaptive_quad.h"
 #include "quadrature.h"
 
 namespace tbem {
+
+template <int dim>
+struct OneKernel {
+    typedef double OutType;
+    typedef double InType;
+    typedef double OperatorType;
+    double operator()(const double& r2, const Vec<double,dim>& delta,
+                 const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs) const {
+        return 1.0;
+    }
+};
 
 template <int dim>
 struct ObsPt;

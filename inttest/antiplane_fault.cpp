@@ -1,4 +1,5 @@
 #include "3bem.h"
+#include "laplace_kernels.h"
 using namespace tbem;
 
 /* This code:

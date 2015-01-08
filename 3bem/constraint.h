@@ -93,7 +93,7 @@ struct RearrangedConstraintEQ {
 
     friend std::ostream& operator<<(std::ostream& os, const RearrangedConstraintEQ& c) {
         os << "RearrangedConstraintEQ[[";
-        os << "(constrained_dof, " << c.constrained_dof << "), ";
+        os << "(constrained_dof=" << c.constrained_dof << ", 1), ";
         os << "(rhs, " << c.rhs << "), ";
         for (auto t: c.terms) {
             os << t << ", ";

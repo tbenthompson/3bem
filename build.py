@@ -10,7 +10,7 @@ domain specific language like "make".
 More info:
 http://code.google.com/p/fabricate/
 """
-from build_tools.fabricate import *
+from tools.fabricate import *
 
 import os
 import subprocess
