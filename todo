@@ -3,9 +3,7 @@ T: Get rect_dislocation working!
 -- is the problem from cyclic constraints in apply_discontinuities?
 -- compare with matrices produced by 3bem_stable
 DD: 
-move stuff out of kernels.h and rename to elastic_kernels.h, laplace_kernels.h
-"ConstraintBuilder" -- don't stick constructed constraints into a ConstraintMatrix
-until they are done
+"ConstraintBuilder"
 "find_overlapping_vertices" returns std::pair<VertexIdx, VertexIdx> VertexIdx
 
 TESTS(T):

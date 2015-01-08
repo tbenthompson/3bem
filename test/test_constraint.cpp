@@ -132,24 +132,13 @@ TEST(RearrangedConstraintEQOutput) {
                 "RearrangedConstraintEQ[[(constrained_dof=0, 1), (rhs, 0), (1, -1), ]]");
 }
 
-void check_one_constraint_test(const ConstraintMatrix& matrix) {
+TEST(ConstraintMatrixFromConstraints) {
+    ConstraintEQ eqtn{{LinearTerm{3,1}}, 4.0};
+    auto matrix = ConstraintMatrix::from_constraints({eqtn});
     CHECK_EQUAL(matrix.map.size(), 1);
     const auto rearranged_constraint = matrix.map.find(3);
     CHECK(rearranged_constraint != matrix.map.end());
     CHECK_EQUAL(rearranged_constraint->second.rhs, 4.0);
-}
-
-TEST(ConstraintMatrixFromOneConstraint) {
-    ConstraintEQ eqtn{{LinearTerm{3,1}}, 4.0};
-    ConstraintMatrix matrix;
-    auto appended_matrix = matrix.add_constraints({eqtn});
-    check_one_constraint_test(appended_matrix);
-}
-
-TEST(ConstraintMatrixFromConstraints) {
-    ConstraintEQ eqtn{{LinearTerm{3,1}}, 4.0};
-    auto matrix = ConstraintMatrix::from_constraints({eqtn});
-    check_one_constraint_test(matrix);
 }
 
 void check_get_all(const ConstraintMatrix& cm, 
