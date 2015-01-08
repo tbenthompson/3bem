@@ -9,6 +9,7 @@
 #include "quadrature.h"
 
 #include "constraint.h"
+#include "continuity_builder.h"
 #include "petsc_interface.h"
 
 #include "vec.h"

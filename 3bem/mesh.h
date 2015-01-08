@@ -49,7 +49,7 @@ struct MeshField {
 
     static
     MeshField<T,dim> from_vertices_faces(const std::vector<T>& vertices,
-                         const std::vector<std::array<int,dim>>& facets,
+                         const std::vector<std::array<int,dim>>& facets_by_vert_idx,
                          bool has_refine_mod,
                          const typename MeshField<T,dim>::RefineFnc& refine_mod);
 };

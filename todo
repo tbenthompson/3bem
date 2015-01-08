@@ -18,6 +18,8 @@ DESIGN DECISIONS(DD):
 -- Revamp the build system so that individual tests can be run without recompiling the whole system. (WRITE A NOTE ON THE BUILD SYSTEM DESIGN)
 ---- I could do this by compiling only to .o files. Then, I c
 -- Consider a different way of handling constraints. precompute reduced matrix?
+-- Redesign integration tests and "elastic" executor tests to be "Gold Master" tests. (Write a note on the design decision)
+---- http://blog.codeclimate.com/blog/2014/02/20/gold-master-testing/
 
 NEW FUNCTIONALITY(NF):
 -- Allow separating out individual rows or components of the tensor kernels.
