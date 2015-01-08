@@ -107,7 +107,6 @@ struct ConstraintMatrix {
     typedef std::map<int,RearrangedConstraintEQ> MapT;
     const MapT map;
 
-    ConstraintMatrix add_constraints(const std::vector<ConstraintEQ>& constraints) const;
     static ConstraintMatrix from_constraints(
             const std::vector<ConstraintEQ>& constraints);
 
@@ -254,13 +253,7 @@ RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
 
 ConstraintMatrix ConstraintMatrix::from_constraints(
         const std::vector<ConstraintEQ>& constraints) {
-    ConstraintMatrix c;
-    return c.add_constraints(constraints);
-};
-
-ConstraintMatrix ConstraintMatrix::add_constraints(
-        const std::vector<ConstraintEQ>& constraints) const { 
-    MapT new_map = map;
+    MapT new_map;
 
     for (size_t i = 0; i < constraints.size(); i++) {
         const auto& c = constraints[i];
@@ -274,7 +267,7 @@ ConstraintMatrix ConstraintMatrix::add_constraints(
     }
 
     return ConstraintMatrix{new_map};
-}
+};
 
 template <typename T>
 std::vector<T> ConstraintMatrix::get_all(const std::vector<T>& in, int total_dofs) const {
