@@ -40,6 +40,17 @@ TEST(FindLastDOFIndex) {
     CHECK_EQUAL(index, 1);
 }
 
+TEST(FilterZeroTerms) {
+    auto term0 = LinearTerm{1,1};
+    auto term1 = LinearTerm{0,0};
+    auto term2 = LinearTerm{2,2};
+    ConstraintEQ c{{term0, term1, term2}, 2.0};
+    auto result = filter_zero_terms(c);
+    CHECK_EQUAL(result.terms.size(), 2);
+    CHECK_EQUAL(result.terms[0], term0);
+    CHECK_EQUAL(result.terms[1], term2);
+}
+
 void subs_test(const ConstraintEQ& subs_victim,
                const ConstraintEQ& subs_in,
                const ConstraintEQ& correct) {
@@ -87,10 +98,10 @@ TEST(SubstituteWithTermsAddToPreexistingTerm) {
     subs_test(eqtn0, eqtn1, correct);
 }
 
-ConstraintMatrix::MapT two_bcs_constraint_map() {
+ConstraintMapT two_bcs_constraint_map() {
     ConstraintEQ eqtn0{{LinearTerm{3,1}}, 4.0};
     ConstraintEQ eqtn1{{LinearTerm{1,1}}, 2.0};
-    ConstraintMatrix::MapT constraint_set;
+    ConstraintMapT constraint_set;
     constraint_set[1] = isolate_term_on_lhs(eqtn1, 0);
     constraint_set[3] = isolate_term_on_lhs(eqtn0, 0);
     return constraint_set;

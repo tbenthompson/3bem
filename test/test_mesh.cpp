@@ -81,6 +81,5 @@ TEST(CallRefineWithNoFacetsToRefine) {
 
 int main(int, char const *[])
 {
-    int retval = UnitTest::RunAllTests();
-    return retval;
+    return UnitTest::RunAllTests();
 }
