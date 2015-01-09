@@ -1,5 +1,6 @@
 #ifndef __QWEQASDKJVNS_VERTEX_ITERATOR_H
 #define __QWEQASDKJVNS_VERTEX_ITERATOR_H
+#include "mesh.h"
 
 namespace tbem {
 

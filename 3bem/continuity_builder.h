@@ -1,9 +1,8 @@
-#ifndef __ASKDJAWERWFJS_CONTINUITY_BUILDER
-#define __ASKDJAWERWFJS_CONTINUITY_BUILDER
+#ifndef __ASKDJAWERWFJS_CONTINUITY_BUILDER_H
+#define __ASKDJAWERWFJS_CONTINUITY_BUILDER_H
 #include <unordered_map>
 
 #include "constraint.h"
-#include "mesh.h"
 #include "vertex_iterator.h"
     
 namespace tbem {

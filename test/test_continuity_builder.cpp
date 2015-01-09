@@ -5,7 +5,6 @@
 
 using namespace tbem;
 
-
 Mesh<2> disjoint_mesh() {
     std::vector<Facet<2>> facets;
     for (int i = 0; i < 10; i++) {
