@@ -1,11 +1,12 @@
 TOP PRIORITY (tasks until next merge with stable):
-T: Get rect_dislocation working! 
--- is the problem from cyclic constraints in apply_discontinuities?
--- compare with matrices produced by 3bem_stable
--- Consider getting rid of refine_mod and friends in Mesh. Rewrite sphere_mesh and circle_mesh to account for this.
-DD: 
-"ConstraintBuilder"
-"find_overlapping_vertices" returns std::pair<VertexIdx, VertexIdx> VertexIdx
+MF: Consider deleting refine_mod and friends in Mesh. Rewrite sphere_mesh and circle_mesh to account for this.
+
+NEXT:
+NF: Hanging nodes?
+NF: Handle the general case when fault-surface intersection does not occur at a vertex.
+---- Linked to hanging nodes in that lots of geometry code needs to be used/written.
+---- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
+NF: Link BEM to FMM
 
 TESTS(T):
 -- Tests for the 2D and 3D adaptive_nearfield quadrature.
@@ -13,27 +14,24 @@ TESTS(T):
 -- Decoupling to allow testing individual pieces of the FMM algorithm.
 
 DESIGN DECISIONS(DD):
--- Should I use CGAL or other comp-geom library (WRITE A NOTE ON THE DECISION)
--- Think about decoupling the library into multiple .so files, so that individual pieces can be tested independently. (WRITE A NOTE ON THE DECISION)
--- Revamp the build system so that individual tests can be run without recompiling the whole system. (WRITE A NOTE ON THE BUILD SYSTEM DESIGN)
----- I could do this by compiling only to .o files. Then, I c
--- Consider a different way of handling constraints. precompute reduced matrix?
+-- Think about decoupling the library into multiple .so files, so that individual pieces can be compiled and tested independently. (write a note on the decision)
+-- Revamp the build system so that individual tests can be run without recompiling the whole system. (write a note on the build system design)
+---- I could do this by compiling only to .o files. Then, I can just link them into the various executables. Why is this better than a bunch of libraray .so's?
+-- Consider a different way of handling constraints. Precomputing a reduced matrix and RHS? This would be useful for imposing boundary conditions.
 -- Redesign integration tests and "elastic" executor tests to be "Gold Master" tests. (Write a note on the design decision)
+---- Gold master testing is worthwhile for a scientific computing application because often the "correct" answer is unknown and its valuable to know when the answer produced is changed. Then, a smart human can determine whether that change is "good" or "bad".
 ---- http://blog.codeclimate.com/blog/2014/02/20/gold-master-testing/
+---- http://blog.thecodewhisperer.com/2014/09/28/surviving-legacy-code-with-golden-master-and-sampling/#fnref:out-of-your-head
 -- Think about whether the "elastic" layer should be written in something besides c++
+-- Decide whether to allow separating out individual rows or components of the tensor kernels. Adds complexity and a little bit of value, but the same thing can be achieved using the full tensor kernels and constraints. Is this true? If a different integral equation (traction vs. displacement) were used for the various rows, then constraints would not suffice. Interesting. Is there a way to easily build a tensor kernel out of a variety of components?
 
 NEW FUNCTIONALITY(NF):
--- Allow separating out individual rows or components of the tensor kernels.
--- Link BEM to FMM
--- Hanging nodes
 -- A way of computing the condition number of a BEM matrix.
 -- Imagine some kind of general purpose "nearfield" structure that can allow a simple O(N) solution to the near neighbors problems in mesh_continuity, apply_discontinuities as well as the FMM tree structure.
 -- DOF handling should be more systematic with a face_id and vertex_id for each dof_id. This needs a bidirectional mapping, especially for some of the constraints code. I should also account for the tensor/vector nature of certain fields
 -- A better approximation to the distance to a face might include the centroid (see appx_face_dist2)
 -- Once FMM-BEM integration is completed, a sparse matrix storage format should be used for the nearfield entries.
--- Handle the general case when fault-surface intersection does not occur at a vertex.
 -- Slight encapsulation of the std::vector storage with useful things like negation, element-wise multiplication, etc. This might be useful to combine with a MeshField style field-over-mesh sitution.
--- To parallelize octree construction, don't build the tree top-down. Build it from the bottom-up. Every element knows its position in the tree already, I just need to compute the morton code on each level to determine that.  The problem becomes adaptivity. To achieve adaptivity, I could temporarily build a hash table mapping cells to a list of elements and then statically convert that into a top-down tree. But, because the lower nodes are already constructed, constructing the upper nodes is not dependent on them -- in other words, this construction is completely parallelizable.
 
 MODIFIED FUNCTIONALITY(MF):
 
@@ -57,13 +55,13 @@ OPTIMIZATION(O):
 -- Some profiling on the functions inside an iterative matrix solve. I think a couple hours would get a factor of 5-10 here. Lots of inefficiencies. Low priority though.
 
 LONG TERM:
-** stokes flow example
-** higher order bases
-** simple adaptive meshing
-** faster near-field matrix construction
--- try the nearly singular tri rule = 
-    http://www98.griffith.edu.au/dspace/bitstream/handle/10072
-    /54329/86520_1.pdf?sequence=1
-** python (mako, titen, etc) templating based solution for code generation.
+** simple adaptive meshing! probably relatively low cost to implement, very high value!
+** stokes flow example.
+** higher order bases? is this worth the effort? medium-high cost, what is the value? be realistic.
+** faster near-field matrix construction?
+-- adaptive quadrature on a GPU or vectorized? is it possible?
+-- try the nearly singular tri rule = http://www98.griffith.edu.au/dspace/bitstream/handle/10072/54329/86520_1.pdf?sequence=1
+** python (mako, titen, etc) templating based solution for code generation? 
+-- think about this more, write a note, positives? negatives? cost?
 -- http://szelei.me/code-generator/
 -- http://eli.thegreenplace.net/2011/07/03/parsing-c-in-python-with-clang/
