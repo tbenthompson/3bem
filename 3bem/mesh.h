@@ -25,8 +25,8 @@ struct FacetField {
 template <int dim>
 using Facet = FacetField<Vec<double,dim>,dim>;
 
-template <typename T, int dim>
-struct VertexIterator;
+template <typename T, size_t dim>
+struct FacetCornerIterator;
 
 template <typename T, int dim>
 struct MeshField {
@@ -35,8 +35,8 @@ struct MeshField {
     const bool has_refine_mod;
     const RefineFnc refine_mod;
 
-    VertexIterator<T,dim> begin() const;
-    VertexIterator<T,dim> end() const;
+    FacetCornerIterator<T,dim> begin() const;
+    FacetCornerIterator<T,dim> end() const;
 
     MeshField<T,dim> refine(const std::vector<int>& refine_these) const;
     MeshField<T,dim> refine() const;

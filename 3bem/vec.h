@@ -287,7 +287,7 @@ enum Side {FRONT, INTERSECT, BEHIND};
 /* Determine which side of the plane/line defined by triangle/segment 
  * the provided point is on.
  */
-template <int dim>
+template <size_t dim>
 Side which_side_point(const std::array<Vec<double,dim>,dim>& face,
                 const Vec<double,dim>& pt) {
     auto normal = unscaled_normal(face);
@@ -298,7 +298,7 @@ Side which_side_point(const std::array<Vec<double,dim>,dim>& face,
 }
 
 /* Returns the side of a plane that a triangle/segment is on. */
-template <int dim>
+template <size_t dim>
 Side facet_side(std::array<Side,dim> s);
 
 template <>
@@ -330,9 +330,10 @@ inline Side facet_side<3>(std::array<Side,3> s) {
 /* Determine the side of the plane/line defined by triangle/segment
  * that the given triangle/segment is on
  */
-template <int dim>
+template <size_t dim>
 Side which_side_facet(const std::array<Vec<double,dim>,dim>& plane,
-                const std::array<Vec<double,dim>,dim>& face) {
+    const std::array<Vec<double,dim>,dim>& face) {
+
     std::array<Side,dim> sides;
     for (int d = 0; d < dim; d++) {
         sides[d] = which_side_point<dim>(plane, face[d]);

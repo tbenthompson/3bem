@@ -8,19 +8,26 @@ namespace tbem {
  * iterator design patterns in c++
  * http://stackoverflow.com/questions/8054273/how-to-implement-an-stl-style-iterator-and-avoid-common-pitfalls
  */
-template <typename T, int dim>
-struct VertexIterator {
+template <typename T, size_t dim>
+struct FacetCornerIterator {
+    typedef FacetCornerIterator<T,dim> iterator;
+
     const MeshField<T,dim>& mesh;
     size_t facet_idx;    
     size_t vertex_idx;
 
-    VertexIterator(const MeshField<T,dim>& mesh, int facet_idx, int vertex_idx):
+    FacetCornerIterator(const MeshField<T,dim>& mesh, int facet_idx, int vertex_idx):
         mesh(mesh),
         facet_idx(facet_idx),
         vertex_idx(vertex_idx)
     {} 
 
-    VertexIterator<T,dim>& operator++() {
+    friend std::ostream& operator<<(std::ostream& os, const iterator& it) {
+        os << "(" << it.facet_idx << ", " << it.vertex_idx << ")";
+        return os;
+    }
+
+    iterator& operator++() {
         vertex_idx++;
         if (vertex_idx == dim) {
             vertex_idx = 0;
@@ -29,18 +36,73 @@ struct VertexIterator {
         return *this;
     }
 
+    iterator& operator+=(size_t step) {
+        int vertex_idx_too_far = vertex_idx + step; 
+        facet_idx += vertex_idx_too_far / dim;
+        vertex_idx = vertex_idx_too_far % dim;
+        return *this;
+    }
+
+    friend iterator operator+(const iterator& it, size_t step) {
+        auto out_it = it;
+        out_it += step;
+        return out_it;
+    }
+
+    bool is_end() const {
+        return *this == mesh.end();
+    }
+
+    int absolute_index() const {
+        return facet_idx * dim + vertex_idx; 
+    }
+
     const T& operator*() const {
+        return get_vertex();
+    }
+
+    const FacetField<T,dim>& get_facet() const {
+        return mesh.facets[facet_idx];
+    }
+
+    const T& get_vertex() const {
         return mesh.facets[facet_idx].vertices[vertex_idx];
     }
     
-    friend bool operator==(const VertexIterator<T,dim>& a,
-                           const VertexIterator<T,dim>& b) {
-        return (a.facet_idx == b.facet_idx) && (a.vertex_idx == b.vertex_idx);
+    friend bool operator==(const iterator& a, const iterator& b) {
+        return a.absolute_index() == b.absolute_index();
     }
 
-    friend bool operator!=(const VertexIterator<T,dim>& a,
-                           const VertexIterator<T,dim>& b) {
+    friend bool operator<(const iterator& a, const iterator& b) {
+        return a.absolute_index() < b.absolute_index();
+    }
+
+    friend bool operator>(const iterator& a, const iterator& b) {
+        return a.absolute_index() > b.absolute_index();
+    }
+
+    friend bool operator<=(const iterator& a, const iterator& b) {
+        return !(a > b);
+    }
+
+    friend bool operator>=(const iterator& a, const iterator& b) {
+        return !(a < b);
+    }
+
+    friend bool operator!=(const iterator& a, const iterator& b) {
         return !(a == b);
+    }
+};
+
+template <int dim>
+using VertexIterator = FacetCornerIterator<Vec<double,dim>,dim>;
+
+/* This is useful to put VertexIterator as the key in an unordered_map
+ */
+template <int dim>
+struct HashVertexIterator {
+    size_t operator()(const VertexIterator<dim>& it) const {
+        return std::hash<size_t>()(it.absolute_index());
     }
 };
 

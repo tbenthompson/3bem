@@ -3,21 +3,6 @@
 
 using namespace tbem;
 
-Mesh<3> rect_mesh(const Vec3<double>& lower_left,
-               const Vec3<double>& upper_left, 
-               const Vec3<double>& upper_right, 
-               const Vec3<double>& lower_right) {
-    std::vector<Vec3<double>> vertices = {
-        lower_left, upper_left, upper_right, lower_right
-    };
-
-    std::vector<std::array<int,3>> faces = {
-        {0, 3, 2}, {0, 2, 1}
-    };
-
-    return Mesh<3>::from_vertices_faces(vertices, faces, false, nullptr);
-}
-
 int main() {
     double surf_width = 4;
     int refine_surf = 5;

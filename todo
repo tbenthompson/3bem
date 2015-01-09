@@ -20,6 +20,7 @@ DESIGN DECISIONS(DD):
 -- Consider a different way of handling constraints. precompute reduced matrix?
 -- Redesign integration tests and "elastic" executor tests to be "Gold Master" tests. (Write a note on the design decision)
 ---- http://blog.codeclimate.com/blog/2014/02/20/gold-master-testing/
+-- Think about whether the "elastic" layer should be written in something besides c++
 
 NEW FUNCTIONALITY(NF):
 -- Allow separating out individual rows or components of the tensor kernels.
