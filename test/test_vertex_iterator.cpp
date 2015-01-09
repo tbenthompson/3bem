@@ -5,55 +5,72 @@
 
 using namespace tbem;
 
-struct PremadeMesh {
+struct PremadeMesh3D {
     const Mesh<3> m;
-    PremadeMesh():
+    PremadeMesh3D():
         m(sphere_mesh({0, 0, 0}, 1.0))
     { }
 };
 
-TEST_FIXTURE(PremadeMesh, VertexIteratorBegin) {
+struct PremadeMesh2D {
+    const Mesh<2> m;
+    PremadeMesh2D():
+        m(circle_mesh({0, 0}, 1.0))
+    { }
+};
+
+TEST_FIXTURE(PremadeMesh3D, VertexIteratorBegin) {
     auto iter = m.begin();
     CHECK_EQUAL(iter.facet_idx, 0);
     CHECK_EQUAL(iter.vertex_idx, 0);
 }
 
-TEST_FIXTURE(PremadeMesh, VertexIteratorEnd) {
+TEST_FIXTURE(PremadeMesh3D, VertexIteratorEnd) {
     auto iter = m.end();
     CHECK_EQUAL(iter.facet_idx, m.facets.size());
     CHECK_EQUAL(iter.vertex_idx, 0);
 }
 
-TEST_FIXTURE(PremadeMesh, NextVert) {
+TEST_FIXTURE(PremadeMesh3D, VertexIteratorIsEnd) {
+    auto iter = m.end();
+    CHECK(iter.is_end());
+}
+
+TEST_FIXTURE(PremadeMesh3D, VertexIteratorIsNotEnd) {
+    auto iter = m.begin();
+    CHECK(!iter.is_end());
+}
+
+TEST_FIXTURE(PremadeMesh3D, NextVert) {
     auto iter = m.begin();
     ++iter;
     CHECK_EQUAL(iter.facet_idx, 0);
     CHECK_EQUAL(iter.vertex_idx, 1);
 }
 
-TEST_FIXTURE(PremadeMesh, NextVertNextFacet) {
+TEST_FIXTURE(PremadeMesh3D, NextVertNextFacet) {
     auto iter = m.begin();
     ++iter; ++iter; ++iter;
     CHECK_EQUAL(iter.facet_idx, 1);
     CHECK_EQUAL(iter.vertex_idx, 0);
 }
 
-TEST_FIXTURE(PremadeMesh, Equality) {
+TEST_FIXTURE(PremadeMesh3D, Equality) {
     CHECK(m.begin() == m.begin());
 }
 
-TEST_FIXTURE(PremadeMesh, Inequality) {
+TEST_FIXTURE(PremadeMesh3D, Inequality) {
     auto iter = m.begin();
     auto iter2 = m.begin();
     ++iter2;
     CHECK(iter != iter2);
 }
 
-TEST_FIXTURE(PremadeMesh, InequalityEnd) {
+TEST_FIXTURE(PremadeMesh3D, InequalityEnd) {
     CHECK(m.begin() != m.end());
 }
 
-TEST_FIXTURE(PremadeMesh, CountVerticesInMesh) {
+TEST_FIXTURE(PremadeMesh3D, CountVerticesInMesh) {
     int n_verts = 0;
     for (auto iter = m.begin(); iter != m.end(); ++iter) {
         n_verts++;
@@ -61,18 +78,79 @@ TEST_FIXTURE(PremadeMesh, CountVerticesInMesh) {
     CHECK_EQUAL(n_verts, m.facets.size() * 3);
 }
 
-TEST_FIXTURE(PremadeMesh, Dereference) {
+TEST_FIXTURE(PremadeMesh3D, Dereference) {
     auto iter = m.begin(); 
     auto vert = *iter;
     CHECK_EQUAL(vert, m.facets[0].vertices[0]);
 }
 
-TEST_FIXTURE(PremadeMesh, DereferenceNonInitial) {
+TEST_FIXTURE(PremadeMesh2D, DereferenceNonInitial) {
     auto iter = m.begin(); 
     iter.facet_idx = 2;
-    iter.vertex_idx = 2;
+    iter.vertex_idx = 1;
     auto vert = *iter;
-    CHECK_EQUAL(vert, m.facets[2].vertices[2]);
+    CHECK_EQUAL(vert, m.facets[2].vertices[1]);
+}
+
+TEST_FIXTURE(PremadeMesh3D, AbsoluteIndex3D) {
+    VertexIterator<3> iter(m, 1, 1);
+    CHECK_EQUAL(iter.absolute_index(), 4);
+}
+
+TEST_FIXTURE(PremadeMesh3D, HashEquality) {
+    VertexIterator<3> iter(m, 1, 1);
+    VertexIterator<3> iter2(m, 1, 1);
+    HashVertexIterator<3> hash;
+    CHECK(hash(iter) == hash(iter2));
+}
+
+TEST_FIXTURE(PremadeMesh2D, HashInequality) {
+    VertexIterator<2> iter(m, 1, 1);
+    VertexIterator<2> iter2(m, 0, 1);
+    HashVertexIterator<2> hash;
+    CHECK(hash(iter) != hash(iter2));
+}
+
+TEST_FIXTURE(PremadeMesh3D, StepForward) {
+    auto iter = m.begin();
+    iter += 4;
+    CHECK_EQUAL(iter.facet_idx, 1);
+    CHECK_EQUAL(iter.vertex_idx, 1);
+    iter += 1;
+    CHECK_EQUAL(iter.facet_idx, 1);
+    CHECK_EQUAL(iter.vertex_idx, 2);
+}
+
+TEST_FIXTURE(PremadeMesh3D, PlusOperator) {
+    auto iter = m.begin() + 4;
+    CHECK_EQUAL(iter.facet_idx, 1);
+    CHECK_EQUAL(iter.vertex_idx, 1);
+}
+
+TEST_FIXTURE(PremadeMesh2D, PlusOperator2D) {
+    auto iter = m.begin() + 4;
+    CHECK_EQUAL(iter.facet_idx, 2);
+    CHECK_EQUAL(iter.vertex_idx, 0);
+}
+
+TEST_FIXTURE(PremadeMesh3D, Print) {
+    auto iter = m.begin() + 4;
+    std::stringstream output_buf;
+    output_buf << iter;
+    CHECK_EQUAL(output_buf.str(), "(1, 1)");
+}
+
+TEST_FIXTURE(PremadeMesh2D, Ordering) {
+    CHECK(m.begin() < (m.begin() + 1));
+    CHECK(m.begin() <= (m.begin() + 1));
+    CHECK(m.begin() <= m.begin());
+    CHECK(m.begin() + 2 > (m.begin() + 1));
+    CHECK(m.begin() + 2 >= (m.begin() + 1));
+    CHECK(m.begin() >= m.begin());
+}
+
+TEST_FIXTURE(PremadeMesh2D, GetFacet) {
+    CHECK_EQUAL(m.begin().get_facet().vertices, m.facets[0].vertices);
 }
 
 int main(int, char const *[])

@@ -12,10 +12,6 @@ TEST(CreateLinearTerm) {
     CHECK_EQUAL(dw.weight, 2.0);
 }
 
-TEST(CreateConstraintEQ) {
-    ConstraintEQ eqtn{{LinearTerm{0,3}, LinearTerm{1,-1}, LinearTerm{2,4}}, 13.7};
-}
-
 TEST(ContinuityConstraintsAreCreated) {
     auto c = continuity_constraint(1, 2);
     ConstraintEQ correct = {
@@ -34,6 +30,7 @@ TEST(RearrangeConstraintEQ) {
     CHECK_EQUAL(rearranged.terms[0], (LinearTerm{0, -3.0 / 4}));
     CHECK_EQUAL(rearranged.terms[1], (LinearTerm{1, 1.0 / 4}));
 }
+
 TEST(FindLastDOFIndex) {
     ConstraintEQ eqtn{{LinearTerm{0,3}, LinearTerm{2,4}, LinearTerm{1,-1}}, 13.7};
     int index = find_last_dof_index(eqtn);
