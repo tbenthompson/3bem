@@ -18,11 +18,12 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     QuadStrategy<dim> qs(obs_quad_pts, src_quad_pts,
                          near_steps, far_threshold, tol);
 
-    auto constraints =
-        ConstraintMatrix::from_constraints(mesh_continuity<dim>(mesh));
+    ContinuityBuilder<dim> cb(mesh.begin());
+    auto constraints = cb.build();
+    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
 
-    auto u = constrained_interpolate<dim>(mesh, fnc, constraints);
-    auto dudn = constrained_interpolate<dim>(mesh, deriv, constraints);
+    auto u = constrained_interpolate<dim>(mesh, fnc, constraint_matrix);
+    auto dudn = constrained_interpolate<dim>(mesh, deriv, constraint_matrix);
 
     // Construct and evaluate the RHS for a Dirichlet Laplace problem:
     // The integral equation is: DoubleLayer(u) + u = SingleLayer(dudn)
@@ -52,7 +53,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
 
     // Apply the constraints to the RHS vector to get a condensed vector.
-    auto rhs = constraints.get_reduced(rhs_full);
+    auto rhs = constraint_matrix.get_reduced(rhs_full);
     
     // Actually solve the linear system by providing a function to evaluate
     // matrix vector products.
@@ -66,18 +67,18 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
             // Expand the condensed vector to get all the DOFs. This is done
             // each iteration of the linear solve so that the matrix can be 
             // left in its uncondensed form.
-            auto x_full = constraints.get_all(x, n_dofs);
+            auto x_full = constraint_matrix.get_all(x, n_dofs);
             auto y_mult = bem_mat_mult(matrix, single_kernel, n_dofs, x_full); 
 
             // Reduce the result of the matrix vector product.
-            auto y_temp = constraints.get_reduced(y_mult);
+            auto y_temp = constraint_matrix.get_reduced(y_mult);
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
             TOC("Matrix multiply on " + 
                 std::to_string(mesh.facets.size()) +
                 " faces");
         });
     // Get all the constrained DOFs from the reduced DOF vector.
-    auto dudn_solved = constraints.get_all(dudn_solved_subset, n_dofs);
+    auto dudn_solved = constraint_matrix.get_all(dudn_solved_subset, n_dofs);
 
     // Output the error and the solution 
     std::cout << error_inf(dudn_solved, dudn) << std::endl;

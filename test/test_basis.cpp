@@ -19,8 +19,11 @@ TEST(Interpolate) {
 
 TEST(ConstrainedInterpolate) {
     auto mesh = sphere_mesh({0,0,0}, 1).refine_repeatedly(2);
-    auto raw_constraints = mesh_continuity<3>(mesh);
-    auto constraint_matrix = ConstraintMatrix::from_constraints(raw_constraints);
+
+    ContinuityBuilder<3> cb(mesh.begin());
+    auto constraints = cb.build();
+    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
+
     auto res = constrained_interpolate<3>(
         mesh, 
         [](const Vec<double,3>& x) {return x[0];},

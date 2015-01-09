@@ -21,9 +21,11 @@ void full_space() {
 
     // Surface mesh at y = -0.5
     auto surface1 = line_mesh({-10, -0.5}, {10, -0.5}).refine_repeatedly(14);
-    auto raw_constraints =
-        ConstraintMatrix::from_constraints(mesh_continuity<2>(surface1));
-    auto constraints = apply_discontinuities<2>(surface1, fault, raw_constraints);
+
+    ContinuityBuilder<2> cb(surface1.begin());
+    cb.apply_discontinuities(fault.begin());
+    auto constraints = cb.build();
+    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
 
     // Quadrature details -- these parameters basically achieve machine precision
     double far_threshold = 4.0;
@@ -45,7 +47,7 @@ void full_space() {
                 std::cout << "FAILED Antiplane for x = " << x << std::endl;
             }
             return val;
-        }, constraints);
+        }, constraint_matrix);
     TOC("Solve fullspace antiplane strike slip motion")
 
     auto file = HDFOutputter("antiplane_full_space.hdf5");
@@ -60,9 +62,11 @@ void half_space() {
 
     // Earth's surface
     auto surface2 = line_mesh({-50, 0.0}, {50, 0.0}).refine_repeatedly(9);
-    auto raw_constraints =
-        ConstraintMatrix::from_constraints(mesh_continuity<2>(surface2));
-    auto constraints = apply_discontinuities<2>(surface2, fault, raw_constraints);
+    
+    ContinuityBuilder<2> cb(surface2.begin());
+    cb.apply_discontinuities(fault.begin());
+    auto constraints = cb.build();
+    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
     
     TIC
     // The RHS is the effect of the fault on the surface.
@@ -73,7 +77,7 @@ void half_space() {
     for (std::size_t i = 0; i < rhs_all_dofs.size(); i++) {
         rhs_all_dofs[i] = -rhs_all_dofs[i];
     }
-    auto rhs = constraints.get_reduced(rhs_all_dofs);
+    auto rhs = constraint_matrix.get_reduced(rhs_all_dofs);
 
     // The LHS is the effect of the surface on the surface.
     auto hypersingular_kernel = LaplaceHypersingular<2>();
@@ -86,13 +90,13 @@ void half_space() {
     int n_dofs = 2 * surface2.facets.size();
     auto soln_reduced = solve_system(rhs, linear_solve_tol,
         [&] (std::vector<double>& x, std::vector<double>& y) {
-            auto x_full = constraints.get_all(x, n_dofs);
+            auto x_full = constraint_matrix.get_all(x, n_dofs);
             auto y_mult = bem_mat_mult(lhs, hypersingular_kernel, n_dofs, x_full); 
-            auto y_temp = constraints.get_reduced(y_mult);
+            auto y_temp = constraint_matrix.get_reduced(y_mult);
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
         });
     TOC("Solve antiplane half space.");
-    auto soln = constraints.get_all(soln_reduced, n_dofs);
+    auto soln = constraint_matrix.get_all(soln_reduced, n_dofs);
 
     auto filesurface = HDFOutputter("antiplane_half_space.hdf5");
     out_surface<2>(filesurface, surface2, soln, 1);

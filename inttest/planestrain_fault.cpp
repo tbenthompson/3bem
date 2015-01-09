@@ -14,9 +14,11 @@ int main() {
 
     // Earth's surface
     auto surface = line_mesh({-25, 0.0}, {25, 0.0}).refine_repeatedly(8);
-    auto raw_constraints =
-        ConstraintMatrix::from_constraints(mesh_continuity<2>(surface));
-    auto constraints = apply_discontinuities<2>(surface, fault, raw_constraints);
+
+    ContinuityBuilder<2> cb(surface.begin());
+    cb.apply_discontinuities(fault.begin());
+    auto constraints = cb.build();
+    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
 
     double shear_mod = 30e9;
     double poisson = 0.25;
@@ -36,7 +38,7 @@ int main() {
     for (unsigned int i = 0; i < res.size(); i++) {
         all_dofs_rhs[i] += res[i];
     }
-    auto rhs = constraints.get_reduced(all_dofs_rhs);
+    auto rhs = constraint_matrix.get_reduced(all_dofs_rhs);
     TOC("Building RHS");
 
     int n_reduced_surface_dofs = 2 * rhs.size();
@@ -53,9 +55,9 @@ int main() {
             std::cout << "iteration " << count << std::endl;
             count++;
             auto x_vec_reduced = reinterpret_vector<Vec2<double>>(x);
-            auto x_vec = constraints.get_all(x_vec_reduced, n_surface_dofs);
+            auto x_vec = constraint_matrix.get_all(x_vec_reduced, n_surface_dofs);
             auto y_vec = bem_mat_mult(lhs, hyp, n_surface_dofs, x_vec);
-            auto y_vec_reduced = constraints.get_reduced(y_vec);
+            auto y_vec_reduced = constraint_matrix.get_reduced(y_vec);
             for (std::size_t i = 0; i < y_vec_reduced.size(); i++) {
                 y[2 * i] = y_vec_reduced[i][0];
                 y[2 * i + 1] = y_vec_reduced[i][1];
@@ -64,7 +66,7 @@ int main() {
     );
 
     auto disp_reduced_vec = reinterpret_vector<Vec2<double>>(disp_reduced);
-    auto disp_vec = constraints.get_all(disp_reduced_vec, n_surface_dofs);
+    auto disp_vec = constraint_matrix.get_all(disp_reduced_vec, n_surface_dofs);
 
     auto file = HDFOutputter("planestrain_thrust.hdf5");
     out_surface<2>(file, surface, disp_vec, 2);
