@@ -22,9 +22,10 @@ int main() {
         {surf_width, surf_width, 0}, {surf_width, -surf_width, 0}
     ).refine_repeatedly(refine_surf);
 
-    auto raw_constraints =
-        ConstraintMatrix::from_constraints(mesh_continuity<3>(surface));
-    auto constraints = apply_discontinuities<3>(surface, fault, raw_constraints);
+    ContinuityBuilder<3> cb(surface.begin());
+    cb.apply_discontinuities(fault.begin());
+    auto constraints = cb.build();
+    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
 
     QuadStrategy<3> qs(obs_quad_pts, src_quad_pts,
                     near_steps, far_threshold, near_tol);
@@ -45,7 +46,7 @@ int main() {
     for (unsigned int i = 0; i < res.size(); i++) {
         all_dofs_rhs[i] += res[i];
     }
-    auto rhs = constraints.get_reduced(all_dofs_rhs);
+    auto rhs = constraint_matrix.get_reduced(all_dofs_rhs);
     TOC("Building RHS");
 
     TIC2
@@ -59,9 +60,9 @@ int main() {
             std::cout << "iteration " << count << std::endl;
             count++;
             auto x_vec_reduced = reinterpret_vector<Vec3<double>>(x);
-            auto x_vec = constraints.get_all(x_vec_reduced, n_surface_dofs);
+            auto x_vec = constraint_matrix.get_all(x_vec_reduced, n_surface_dofs);
             auto y_vec = bem_mat_mult(lhs, hyp, n_surface_dofs, x_vec);
-            auto y_vec_reduced = constraints.get_reduced(y_vec);
+            auto y_vec_reduced = constraint_matrix.get_reduced(y_vec);
             for (std::size_t i = 0; i < y_vec_reduced.size(); i++) {
                 y[3 * i] = -y_vec_reduced[i][0];
                 y[3 * i + 1] = -y_vec_reduced[i][1];
@@ -71,7 +72,7 @@ int main() {
     );
 
     auto disp_reduced_vec = reinterpret_vector<Vec3<double>>(disp_reduced);
-    auto disp_vec = constraints.get_all(disp_reduced_vec, n_surface_dofs);
+    auto disp_vec = constraint_matrix.get_all(disp_reduced_vec, n_surface_dofs);
 
     auto file = HDFOutputter("rect_dislocation.hdf5");
     out_surface<3>(file, surface, disp_vec, 3);
