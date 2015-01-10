@@ -40,15 +40,3 @@ STRUCTURAL(S):
 
 OPTIMIZATION(O):
 -- Some profiling on the functions inside an iterative matrix solve. I think a couple hours would get a factor of 5-10 here. Lots of inefficiencies. Low priority though.
-
-LONG TERM:
-** simple adaptive meshing! probably relatively low cost to implement, very high value!
-** stokes flow example.
-** higher order bases? is this worth the effort? medium-high cost, what is the value? be realistic.
-** faster near-field matrix construction?
--- adaptive quadrature on a GPU or vectorized? is it possible?
--- try the nearly singular tri rule = http://www98.griffith.edu.au/dspace/bitstream/handle/10072/54329/86520_1.pdf?sequence=1
-** python (mako, titen, etc) templating based solution for code generation? 
--- think about this more, write a note, positives? negatives? cost?
--- http://szelei.me/code-generator/
--- http://eli.thegreenplace.net/2011/07/03/parsing-c-in-python-with-clang/

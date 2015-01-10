@@ -5,7 +5,7 @@
 
 namespace tbem {
 
-template <int dim, typename Fnc> 
+template <size_t dim, typename Fnc> 
 std::vector<double> constrained_interpolate(const Mesh<dim>& mesh,
                                             const Fnc& fnc,
                                             const ConstraintMatrix& matrix) {
@@ -26,7 +26,7 @@ std::vector<double> constrained_interpolate(const Mesh<dim>& mesh,
 /* Interpolates a function onto the linear basis defined by the specified
  * mesh.
  */
-template <int dim, typename Fnc>
+template <size_t dim, typename Fnc>
 std::vector<double> interpolate(const Mesh<dim>& mesh,
                                 const Fnc& fnc) {
     return constrained_interpolate<dim,Fnc>(mesh, fnc, ConstraintMatrix{});

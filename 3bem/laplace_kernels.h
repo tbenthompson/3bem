@@ -6,11 +6,11 @@
 namespace tbem {
 
 /* Laplace/Poisson equation kernels. */
-template <int dim>
+template <size_t dim>
 struct LaplaceSingle;
-template <int dim>
+template <size_t dim>
 struct LaplaceDouble;
-template <int dim>
+template <size_t dim>
 struct LaplaceHypersingular;
 
 template <>

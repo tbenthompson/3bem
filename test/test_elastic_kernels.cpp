@@ -9,7 +9,7 @@
 using namespace tbem;
 
 
-template <int dim>
+template <size_t dim>
 Vec<double,dim> vec_from_indices(std::vector<std::string> row_entries,
                                  const int indices[]) {
     Vec<double,dim> out;
@@ -19,7 +19,7 @@ Vec<double,dim> vec_from_indices(std::vector<std::string> row_entries,
     return out;
 }
 
-template <int dim>
+template <size_t dim>
 Vec<Vec<double,dim>,dim> call_kernel(const double r2,
                    const Vec<double,dim>& delta, 
                    const Vec<double,dim>& src_n,
@@ -44,7 +44,7 @@ Vec<Vec<double,dim>,dim> call_kernel(const double r2,
                                 ['disp', 'trac', 'adj_trac', 'hyp']");
 }
 
-template <int dim>
+template <size_t dim>
 void test_elastic_kernel(std::string name) {
     const int src_loc_indices[3] = {6, 7, 8};
     const int obs_loc_indices[3] = {9, 10, 11};

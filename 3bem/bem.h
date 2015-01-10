@@ -10,20 +10,33 @@
 
 namespace tbem {
 
-template <int dim>
-struct OneKernel {
+template <size_t dim>
+struct OneScalar {
     typedef double OutType;
     typedef double InType;
     typedef double OperatorType;
-    double operator()(const double& r2, const Vec<double,dim>& delta,
-                 const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs) const {
-        return 1.0;
+    OperatorType operator()(const double& r2, const Vec<double,dim>& delta,
+        const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs) const 
+    {
+        return ones<OperatorType>::make();
     }
 };
 
-template <int dim>
+template <size_t dim, size_t n_rows, size_t n_cols>
+struct OneTensor {
+    typedef Vec<double,n_rows> OutType;
+    typedef Vec<double,n_cols> InType;
+    typedef Vec<Vec<double,n_cols>,n_rows> OperatorType;
+    OperatorType operator()(const double& r2, const Vec<double,dim>& delta,
+        const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs) const 
+    {
+        return ones<OperatorType>::make();
+    }
+};
+
+template <size_t dim>
 struct ObsPt;
-template <int dim>
+template <size_t dim>
 struct FacetInfo;
 
 /* Data transfer object for computing integral terms. 
@@ -31,7 +44,7 @@ struct FacetInfo;
  * This means that the responsibility for maintaining their lifetime is on the
  * user.
  */
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 struct IntegralTerm {
     const QuadStrategy<dim>& qs;
     const KT& k;
@@ -40,7 +53,7 @@ struct IntegralTerm {
     const double appx_pt_face_dist_squared;
 };
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 IntegralTerm<dim,KT> make_integral_term(const QuadStrategy<dim>& qs,
         const KT& k, const ObsPt<dim>& obs, const FacetInfo<dim>& src_face,
         const double appx_pt_face_dist_squared) {
@@ -51,12 +64,12 @@ IntegralTerm<dim,KT> make_integral_term(const QuadStrategy<dim>& qs,
  * fucntion evaluates the influence of a single source quadrature point
  * on the observation point.
  */
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 Vec<typename KT::OperatorType,dim> eval_point_influence(
     const Vec<double,dim-1>& x_hat, const KT& kernel, const FacetInfo<dim>& face,
     const Vec<double,dim>& obs_loc, const Vec<double,dim>& obs_n);
 
-template <int dim>
+template <size_t dim>
 struct UnitFacetAdaptiveIntegrator {
     template <typename KT>
     Vec<typename KT::OperatorType,dim> 
@@ -68,10 +81,10 @@ struct UnitFacetAdaptiveIntegrator {
 /* Compute the full influence of a source facet on an observation point, given
  * a kernel function/Green's function
  */
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term);
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 struct Problem {
     const Mesh<dim>& src_mesh;
     const Mesh<dim>& obs_mesh;
@@ -79,14 +92,14 @@ struct Problem {
     const std::vector<typename KT::InType>& src_strength;
 };
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 Problem<dim,KT> make_problem(const Mesh<dim>& src_mesh,
                              const Mesh<dim>& obs_mesh, const KT& k,
                              const std::vector<typename KT::InType>& src_strength) {
     return {src_mesh, obs_mesh, k, src_strength};
 }
 
-template <int dim>
+template <size_t dim>
 class FacetInfo {
 public:
     //The responsibility is on the user to maintain the lifetime of the facet.
@@ -104,7 +117,7 @@ public:
 template <> const double FacetInfo<3>::inv_ref_facet_area = 2.0;
 template <> const double FacetInfo<2>::inv_ref_facet_area = 0.5;
 
-template <int dim>
+template <size_t dim>
 struct ObsPt {
     static ObsPt<dim> from_face(const Vec<double,dim-1>& ref_loc,
                                 const FacetInfo<dim>& obs_face);
@@ -123,7 +136,7 @@ struct ObsPt {
  * In other words, this function calculates the vector Q_i where
  * Q_i = \int_{S_{src}} K(x,y) \phi_i(y) dy
  */
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 std::vector<typename KT::OperatorType> 
 integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
                          const ObsPt<dim>& obs);
@@ -134,7 +147,7 @@ integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
  * The caller provides a quadrature strategy that specifies the order and 
  * tolerance for evaluating the integral equation.
  */
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 double eval_integral_equation(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
                               const ObsPt<dim>& obs);
 
@@ -144,11 +157,11 @@ double eval_integral_equation(const Problem<dim,KT>& p, const QuadStrategy<dim>&
  * where S_{obs} is the observation mesh, S_{src} is the source mesh,
  * K(x,y) is the kernel function and \phi_i(x) is a basis function.
  */
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 std::vector<typename KT::OperatorType> 
 interact_matrix(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs);
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 std::vector<typename KT::OutType> direct_interact(const Problem<dim,KT>& p,
                                                   const QuadStrategy<dim>& qs);
 
@@ -165,11 +178,11 @@ bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
  * \int_S \phi_i(x) u(x) dx.
  * This function calculates such integrals using gaussian quadrature.
  */
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 std::vector<double> mass_term(const Problem<dim,KT>& p,
                               const QuadStrategy<dim>& qs);
 
-template <int dim>
+template <size_t dim>
 double get_len_scale(Mesh<dim>& mesh, int which_face, int q);
 
 #include "bem_impl.h"

@@ -4,12 +4,12 @@
 namespace tbem {
 
 
-template <typename T, int dim>
+template <typename T, size_t dim>
 FacetCornerIterator<T,dim> MeshField<T,dim>::begin() const {
     return FacetCornerIterator<T,dim>(*this, 0, 0);
 }
 
-template <typename T, int dim>
+template <typename T, size_t dim>
 FacetCornerIterator<T,dim> MeshField<T,dim>::end() const {
     return FacetCornerIterator<T,dim>(*this, facets.size(), 0);
 }
@@ -53,7 +53,7 @@ std::array<FacetField<T,3>,4> refine_facet(const FacetField<T,3>& f) {
     };
 }
 
-template <typename T, int dim>
+template <typename T, size_t dim>
 MeshField<T,dim> 
 MeshField<T,dim>::refine(const std::vector<int>& refine_these) const {
     if (refine_these.empty()) {
@@ -85,14 +85,14 @@ MeshField<T,dim>::refine(const std::vector<int>& refine_these) const {
 }
 
 /* A helper function to refine all the facets. */
-template <typename T, int dim>
+template <typename T, size_t dim>
 MeshField<T,dim> 
 MeshField<T,dim>::refine() const {
     return refine(integers(facets.size()));
 }
 
 /* A helper function to refine all the facets multiple times. */
-template <typename T, int dim>
+template <typename T, size_t dim>
 MeshField<T,dim> 
 MeshField<T,dim>::refine_repeatedly(unsigned int times) const {
     if (times == 0) {
@@ -101,7 +101,7 @@ MeshField<T,dim>::refine_repeatedly(unsigned int times) const {
     return refine_repeatedly(times - 1).refine();
 }
 
-template <typename T, int dim>
+template <typename T, size_t dim>
 MeshField<T,dim> 
 MeshField<T,dim>::form_union(const std::vector<MeshField<T,dim>>& meshes) {
 
@@ -118,7 +118,7 @@ MeshField<T,dim>::form_union(const std::vector<MeshField<T,dim>>& meshes) {
 /* Given a list of vertices and a list of faces that references the vertex
  * list, this will construct a mesh object.
  */
-template <typename T, int dim>
+template <typename T, size_t dim>
 MeshField<T,dim>
 MeshField<T,dim>::from_vertices_faces(const std::vector<T>& vertices,
                          const std::vector<std::array<int,dim>>& facets_by_vert_idx) {

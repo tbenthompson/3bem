@@ -6,7 +6,7 @@
  * in a header file
  */
 
-template <int dim>
+template <size_t dim>
 ObsPt<dim> ObsPt<dim>::from_face(const Vec<double,dim-1>& ref_loc,
                                  const FacetInfo<dim>& obs_face) {
     const int basis_order = 1;
@@ -38,7 +38,7 @@ FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet){
     return FacetInfo<2>{facet, area_scale, length, jacobian, normal};
 }
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 Vec<typename KT::OperatorType,dim> eval_point_influence(const Vec<double,dim-1>& x_hat,
                                   const KT& kernel,
                                   const FacetInfo<dim>& face,
@@ -85,7 +85,7 @@ struct UnitFacetAdaptiveIntegrator<3> {
     }
 };
 
-template <int dim, typename KT> 
+template <size_t dim, typename KT> 
 Vec<typename KT::OperatorType,dim> 
 compute_adaptively(const IntegralTerm<dim, KT>& term,
                    const Vec<double,dim>& nf_obs_pt) {
@@ -93,7 +93,7 @@ compute_adaptively(const IntegralTerm<dim, KT>& term,
     return integrator(term, nf_obs_pt);
 }
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 Vec<double,dim> get_step_loc(const IntegralTerm<dim,KT>& term, int step_idx) {
     const double safe_dist_ratio = 5.0;
     double step_distance = safe_dist_ratio * term.obs.len_scale * 
@@ -123,7 +123,7 @@ T richardson_limit(const std::vector<T>& values) {
     return this_level[0];
 }
 
-template <int dim, typename KT> 
+template <size_t dim, typename KT> 
 Vec<typename KT::OperatorType,dim> compute_as_limit(const IntegralTerm<dim, KT>& term) {
     std::vector<Vec<typename KT::OperatorType,dim>> 
         near_steps(term.qs.n_singular_steps);
@@ -137,7 +137,7 @@ Vec<typename KT::OperatorType,dim> compute_as_limit(const IntegralTerm<dim, KT>&
 }
                                           
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 Vec<typename KT::OperatorType,dim> compute_near_term(const IntegralTerm<dim, KT>& term) {
     const double singular_threshold = 3.0;
     if (term.appx_pt_face_dist_squared < 
@@ -148,7 +148,7 @@ Vec<typename KT::OperatorType,dim> compute_near_term(const IntegralTerm<dim, KT>
     }
 }
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 Vec<typename KT::OperatorType,dim> compute_far_term(const IntegralTerm<dim, KT>& term) {
     auto integrals = zeros<Vec<typename KT::OperatorType,dim>>::make();
     for (std::size_t i = 0; i < term.qs.src_far_quad.size(); i++) {
@@ -161,7 +161,7 @@ Vec<typename KT::OperatorType,dim> compute_far_term(const IntegralTerm<dim, KT>&
     return integrals;
 }
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term) {
     if (term.appx_pt_face_dist_squared < 
             pow(term.qs.far_threshold, 2) * term.src_face.area_scale) {
@@ -179,7 +179,7 @@ Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term
  * A better approximation to the distance to a face might include
  * the centroid (see appx_face_dist2)
  */
-template <int dim>
+template <size_t dim>
 double appx_face_dist2(const Vec<double,dim>& pt,
                        const std::array<Vec<double,dim>,dim>& vs) {
     double res = dist2(pt, vs[0]);
@@ -189,7 +189,7 @@ double appx_face_dist2(const Vec<double,dim>& pt,
     return res;
 }
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 std::vector<typename KT::OperatorType> 
 integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
                          const ObsPt<dim>& obs) {
@@ -207,7 +207,7 @@ integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
     return result;
 }
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 double eval_integral_equation(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
                               const ObsPt<dim>& obs) {
     double result = 0.0;
@@ -218,7 +218,7 @@ double eval_integral_equation(const Problem<dim,KT>& p, const QuadStrategy<dim>&
     return result;
 }
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
                                     const QuadStrategy<dim>& qs) 
 {
@@ -249,7 +249,7 @@ std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
     return matrix;
 }
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 std::vector<double> mass_term(const Problem<dim,KT>& p,
                               const QuadStrategy<dim>& qs) {
     int n_obs_dofs = dim * p.obs_mesh.facets.size();
@@ -294,7 +294,7 @@ bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
 }
 
 
-template <int dim, typename KT>
+template <size_t dim, typename KT>
 std::vector<typename KT::OutType> direct_interact(const Problem<dim,KT>& p,
                                                   const QuadStrategy<dim>& qs) {
     auto matrix = interact_matrix(p, qs);

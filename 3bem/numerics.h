@@ -38,7 +38,7 @@ inline Vec3<double> linear_basis(const std::array<double,2>& x_hat) {
     return {1 - x_hat[0] - x_hat[1], x_hat[0], x_hat[1]};
 }
 
-template <int dim>
+template <size_t dim>
 inline double linear_interp(const std::array<double,dim-1>& x_hat,
                             const Vec<double,dim>& corner_vals) {
     return dot_product(linear_basis(x_hat), corner_vals);
