@@ -89,7 +89,7 @@ struct EvalProb {
     EvalProb(int refine_level, int near_eval, int gauss_order,
              Vec3<double> center = Vec3<double>{0,0,0},
              double r = 3.0):
-        sphere(sphere_mesh(center,r).refine_repeatedly(refine_level)),
+        sphere(sphere_mesh(center, r, refine_level)),
         qs(gauss_order, gauss_order, near_eval, 2.0, 1e-2),
         obs_pt(random_pt()),
         obs_n(random_pt()),
@@ -167,7 +167,7 @@ TEST(MatrixRowVsEval) {
 }
 
 TEST(MassTerm) {
-    auto sphere = sphere_mesh({0,0,0}, 1.0);
+    auto sphere = sphere_mesh({0,0,0}, 1.0, 0);
     std::vector<double> str(3 * sphere.facets.size(), 1.0);
     for (std::size_t i = 0; i < sphere.facets.size(); i++) {
         for (int d = 0; d < 3; d++) {

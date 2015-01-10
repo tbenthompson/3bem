@@ -33,7 +33,7 @@ int main() {
     double obs_radius = 2.9;
     int refine_level = 4;
     int n_test_pts = 100;
-    auto circle = circle_mesh(center, r).refine_repeatedly(refine_level);
+    auto circle = circle_mesh(center, r, refine_level);
     std::vector<Vec2<double>> test_pts(n_test_pts);
     for (int i = 0; i < n_test_pts; i++) {
         test_pts[i] = random_pt_sphere<2>(center, random_val() * obs_radius);

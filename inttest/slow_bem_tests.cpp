@@ -12,7 +12,7 @@ TEST(ConstantLaplaceBoundary) {
     int refine_level = 2;
     int near_eval = 4;
     int gauss_order = 4;
-    Mesh<3> sphere(sphere_mesh(center,r).refine_repeatedly(refine_level));
+    auto sphere = sphere_mesh(center, r, refine_level);
     QuadStrategy<3> qs(gauss_order, gauss_order, near_eval, 2.0, 1e-3);
     std::vector<double> src_strength(3 * sphere.facets.size(), 1.0);
     double obs_length_scale = get_len_scale<3>(sphere, 0, gauss_order);
@@ -30,7 +30,7 @@ TEST(ConstantLaplaceBoundary) {
 }
 
 TEST(DirectInteractConstantLaplace) {
-    auto sphere = sphere_mesh({0,0,0}, 1.0).refine_repeatedly(2);
+    auto sphere = sphere_mesh({0,0,0}, 1.0, 2);
     int n_dofs = 3 * sphere.facets.size();
     std::vector<double> str(n_dofs, 1.0);
 
@@ -106,11 +106,11 @@ TEST(OneSegment2D) {
 TEST(ConstantLaplace2D) {
     int refine = 6;
     Vec2<double> center = {20.0, 0.0};
-    Mesh<2> src_circle = circle_mesh(center, 19.0).refine_repeatedly(refine);
+    Mesh<2> src_circle = circle_mesh(center, 19.0, refine);
     QuadStrategy<2> qs(3, 3, 5, 3.0, 1e-3);
     std::vector<double> u(2 * src_circle.facets.size(), 7.0);
     for (double i = 1.0; i < 19.0; i++) {
-        Mesh<2> obs_circle = circle_mesh(center, i).refine_repeatedly(refine);
+        Mesh<2> obs_circle = circle_mesh(center, i, refine);
         auto p = make_problem<2>(src_circle, obs_circle, LaplaceDouble<2>(), u);
 
         // Do it via eval_integral_equation for each vertex.
@@ -160,12 +160,12 @@ void direct_interact_one_test(const Mesh<dim>& mesh,
 }
 
 TEST(DirectInteractOne2d) {
-    auto circle = circle_mesh({0,0}, 1.0).refine_repeatedly(4);
+    auto circle = circle_mesh({0,0}, 1.0, 4);
     direct_interact_one_test<2>(circle, 2 * M_PI);
 }
 
 TEST(DirectInteractOne3d) {
-    auto sphere = sphere_mesh({0,0,0}, 1.0).refine_repeatedly(3);
+    auto sphere = sphere_mesh({0,0,0}, 1.0, 3);
     direct_interact_one_test<3>(sphere, 4 * M_PI);
 }
 
