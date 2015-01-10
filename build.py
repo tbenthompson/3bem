@@ -13,6 +13,7 @@ http://code.google.com/p/fabricate/
 from tools.fabricate import *
 
 import os
+import sys
 import subprocess
 
 def files_in_dir(directory, ext):
@@ -52,8 +53,8 @@ test_coverage_flags = ['--coverage']
 test_coverage_flags.extend(debug_flags)
 
 # cpp_flags.extend(test_coverage_flags)
-cpp_flags.extend(debug_flags)
-# cpp_flags.extend(release_flags)
+# cpp_flags.extend(debug_flags)
+cpp_flags.extend(release_flags)
 # cpp_flags.extend(profile_flags)
 
 lib_cpp_flags = ['-fPIC']
@@ -80,55 +81,110 @@ example_link_flags.extend('-lglut -lGL -lGLU -lGLEW'.split())
 
 build_dir = 'build'
 
+command_params = []
+
+def entrypoint():
+    save_parameters()
+    main(parallel_ok = True, jobs = 12)
+
+def save_parameters():
+    if len(sys.argv) > 2:
+        command_params.extend(sys.argv[2:])
+        del sys.argv[2:]
+
+def just_test():
+    test_filename = command_params[0]
+    test_rootname, _ = os.path.splitext(test_filename)
+    setup_tree()
+    compile_lib()
+    compile_runner(test_rootname, cpp_flags)
+    link_lib()
+    link_runner(test_rootname, test_link_flags)
+    run(oname(test_rootname))
+
+
+def build():
+    setup_tree()
+    compile()
+    link()
+
 def setup_dir(dirname):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
 
-def build():
+def setup_tree():
     for d in dirs:
         setup_dir(os.path.join(build_dir, d))
-    compile()
-    link()
+
+def compile():
+    compile_lib()
+    compile_examples()
+    compile_tests()
+    compile_inttests()
+
+def compile_lib():
+    for source in lib_srces:
+        compile_runner(source, lib_cpp_flags)
+
+def compile_examples():
+    for source in examples:
+        compile_runner(source, cpp_flags)
+
+def compile_tests():
+    for source in tests:
+        compile_runner(source, cpp_flags)
+
+def compile_inttests():
+    for source in inttests:
+        compile_runner(source, cpp_flags)
+
+def compile_runner(source, flags):
+    run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), flags)
 
 def oname(filename):
     return os.path.join(build_dir, filename)
 
-def compile():
-    for source in lib_srces:
-        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), lib_cpp_flags)
-    for source in examples:
-        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
-    for source in tests:
-        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
-    for source in inttests:
-        run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), cpp_flags)
-
 def link():
+    link_lib()
+    link_examples()
+    link_tests()
+    link_inttests()
+
+def link_lib():
     lib_objs = [oname(s + '.o') for s in lib_srces]
     after()
     run(compiler, '-o', oname('lib3bem.so'), lib_objs, lib_link_flags)
     after()
-    for source in examples:
-        run(compiler, '-o', oname(source), oname(source + '.o'), example_link_flags)
-    for source in tests:
-        run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
-    for source in inttests:
-        run(compiler, '-o', oname(source), oname(source + '.o'), test_link_flags)
 
-def run_test_set(test_names):
-    for test_file in test_names:
-        # I go outside fabricate's runner and use subprocess.call instead because
-        # I see no reason to track the running of tests. Running all of the tests
-        # each time is desirable. Using fabricate would only run the tests that
-        # had changed since the last run.
-        print("\nRunning test set: " + test_file)
-        subprocess.call(oname(test_file))
+def link_examples():
+    for source in examples:
+        link_runner(source, example_link_flags)
+
+def link_tests():
+    for source in tests:
+        link_runner(source, test_link_flags)
+
+def link_inttests():
+    for source in inttests:
+        link_runner(source, test_link_flags)
+
+def link_runner(source, flags):
+    run(compiler, '-o', oname(source), oname(source + '.o'), flags)
 
 def run_tests():
     run_test_set(tests)
 
 def run_integration_tests():
     run_test_set(inttests)
+
+def run_test_set(test_names):
+    for test_file in test_names:
+        # I go outside fabricate's executor and use subprocess.call instead because
+        # I see no reason to track the running of tests. Running all of the tests
+        # each time is desirable. Using fabricate would only run the tests that
+        # had changed since the last run.
+        print("\nRunning test set: " + test_file)
+        subprocess.call(oname(test_file))
 
 def lcov():
     coverage_file = oname('coverage.info')
@@ -145,4 +201,5 @@ def rebuild():
     clean()
     build()
 
-main(parallel_ok = True, jobs = 12)
+if __name__ == "__main__":
+    entrypoint()

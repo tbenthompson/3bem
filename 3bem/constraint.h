@@ -1,7 +1,7 @@
 #ifndef __AAABBBEEEEDDD_CONSTRAINT_H
 #define __AAABBBEEEEDDD_CONSTRAINT_H
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <iostream>
 #include <cassert>
 #include <algorithm>
@@ -84,12 +84,16 @@ ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps = 1e-15);
  */
 struct RearrangedConstraintEQ {
     // Q: Why aren't these variables marked const? 
-    // A: It isn't possible to include this class as a member of a standard
-    // library map (std::map or std::unordered_map) if there isn't a valid
-    // assignment operator. A valid assignment operator requires mutable state.
-    // Try to avoid taking advantage of this mutable state.
-    // Since RearrangedConstraintEQ is only used internally, this isn't a big
-    // deal.
+    // A: Constructing a standard library map object 
+    // (std::map or std::unordered_map) can be done either by adding in
+    // items one by one or building a list of pairs and then inserting those
+    // all at once. An immutable type can only be inserted as as list
+    // of pairs because the map preallocates (and preconstructs) all of its
+    // space and an immutable type has no assignment operator (you can't change
+    // it!). But, the algorithm for ensuring the constraints are lower triangular
+    // requires building the map item by item, so immutability is difficult for
+    // this data type. Since this is only used internally, it's not too big
+    // of a deal. Just don't change its member!
     int constrained_dof;
     std::vector<LinearTerm> terms;
     double rhs;
@@ -113,7 +117,7 @@ RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c,
 ConstraintEQ substitute(const ConstraintEQ& c, int constrained_dof_index,
                         const RearrangedConstraintEQ& subs_in);
 
-typedef std::map<int,RearrangedConstraintEQ> ConstraintMapT;
+typedef std::unordered_map<int,RearrangedConstraintEQ> ConstraintMapT;
 
 bool is_constrained(const ConstraintMapT& dof_constraint_map, int dof);
 

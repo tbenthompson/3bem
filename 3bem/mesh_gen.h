@@ -4,13 +4,12 @@
 
 namespace tbem {
 
-Mesh<3> sphere_mesh(const Vec3<double>& center, double radius, bool interior = true);
+Mesh<3> sphere_mesh(const Vec3<double>& center, double radius, int refinements);
 Mesh<3> rect_mesh(const Vec3<double>& lower_left, const Vec3<double>& upper_left,
     const Vec3<double>& upper_right, const Vec3<double>& lower_right);
 
 Mesh<2> line_mesh(const Vec2<double>& a, const Vec2<double>& b);
-Mesh<2> square_mesh();
-Mesh<2> circle_mesh(std::array<double,2> center, double r);
+Mesh<2> circle_mesh(std::array<double,2> center, double r, int refinements);
 
 } //END NAMESPACE tbem
 

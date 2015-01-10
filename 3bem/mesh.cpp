@@ -53,28 +53,11 @@ std::array<FacetField<T,3>,4> refine_facet(const FacetField<T,3>& f) {
     };
 }
 
-/* Applies the Mesh modification function to a refined facet. This
- * can be used to, for example, enforce that all refined vertices in
- * a sphere mesh lie a certain distance from the sphere's center.
- */
-template <typename T,int dim>
-FacetField<T,dim> refine_modify(const FacetField<T,dim>& f,
-                                const MeshField<T,dim>& m) {
-    if (!m.has_refine_mod) {
-        return f;
-    }
-    Vec<T,dim> vertices;
-    for (int d = 0; d < dim; d++) {
-        vertices[d] = m.refine_mod(f.vertices[d]);
-    }
-    return FacetField<T,dim>{vertices};
-}
-
 template <typename T, int dim>
 MeshField<T,dim> 
 MeshField<T,dim>::refine(const std::vector<int>& refine_these) const {
     if (refine_these.empty()) {
-        return MeshField<T,dim>{facets, has_refine_mod, refine_mod};
+        return *this;
     }
 
     std::vector<FacetField<T,dim>> out_facets;
@@ -91,15 +74,14 @@ MeshField<T,dim>::refine(const std::vector<int>& refine_these) const {
         if (i == refine_these[current]) {
             auto refined = refine_facet(facets[i]);
             for (const auto& r: refined) {
-                auto mod_r = refine_modify<T,dim>(r, *this);
-                out_facets.push_back(mod_r);
+                out_facets.push_back(r);
             }
             current++;
         } else {
             out_facets.push_back(facets[i]);
         }
     }
-    return MeshField<T,dim>{out_facets, has_refine_mod, refine_mod};
+    return MeshField<T,dim>{out_facets};
 }
 
 /* A helper function to refine all the facets. */
@@ -125,16 +107,12 @@ MeshField<T,dim>::form_union(const std::vector<MeshField<T,dim>>& meshes) {
 
     std::vector<FacetField<T,dim>> new_facets;
     for (int i = 0; i < meshes.size(); i++) {
-        if (meshes[i].has_refine_mod == true) {
-            throw std::domain_error("Mesh unions can only be formed from meshes\
-                                     with has_refine_mod == false");
-        }
         for (const auto& f: meshes[i].facets) {
             new_facets.push_back(f);
         }
     }
 
-    return MeshField<T,dim>{new_facets, false, nullptr};
+    return MeshField<T,dim>{new_facets};
 }
 
 /* Given a list of vertices and a list of faces that references the vertex
@@ -143,9 +121,7 @@ MeshField<T,dim>::form_union(const std::vector<MeshField<T,dim>>& meshes) {
 template <typename T, int dim>
 MeshField<T,dim>
 MeshField<T,dim>::from_vertices_faces(const std::vector<T>& vertices,
-                         const std::vector<std::array<int,dim>>& facets_by_vert_idx,
-                         bool has_refine_mod,
-                         const typename MeshField<T,dim>::RefineFnc& refine_mod) {
+                         const std::vector<std::array<int,dim>>& facets_by_vert_idx) {
     std::vector<FacetField<T,dim>> facets;
     for (const auto& in_facet: facets_by_vert_idx) { 
         Vec<T,dim> out_verts;
@@ -155,7 +131,7 @@ MeshField<T,dim>::from_vertices_faces(const std::vector<T>& vertices,
         auto out_facet = FacetField<T,dim>{out_verts};
         facets.push_back(out_facet);
     }
-    return MeshField<T,dim>{facets, has_refine_mod, refine_mod};
+    return MeshField<T,dim>{facets};
 }
 
 template class MeshField<double,2>;
