@@ -8,14 +8,10 @@ NF: Handle the general case when fault-surface intersection does not occur at a 
 NF: Link BEM to FMM
 
 TESTS(T):
--- Tests for the 2D and 3D adaptive_nearfield quadrature.
--- Can some decoupling be done so that individual pieces of direct_interact can be tested indepedently in unit tests rather than integration tests.
+-- Can some decoupling be done so that individual pieces of direct_interact can be tested indepedently in unit tests rather than integration tests. Adaptive quadrature.
 -- Decoupling to allow testing individual pieces of the FMM algorithm.
 
 DESIGN DECISIONS(DD):
--- Think about decoupling the library into multiple .so files, so that individual pieces can be compiled and tested independently. (write a note on the decision)
--- Revamp the build system so that individual tests can be run without recompiling the whole system. (write a note on the build system design)
----- I could do this by compiling only to .o files. Then, I can just link them into the various executables. Why is this better than a bunch of libraray .so's?
 -- Consider a different way of handling constraints. Precomputing a reduced matrix and RHS? This would be useful for imposing boundary conditions.
 -- Redesign integration tests and "elastic" executor tests to be "Gold Master" tests. (Write a note on the design decision)
 ---- Gold master testing is worthwhile for a scientific computing application because often the "correct" answer is unknown and its valuable to know when the answer that the code produces is changed. Then, a smart human can determine whether that change is "good" or "bad".

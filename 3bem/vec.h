@@ -8,6 +8,7 @@
 
 namespace tbem {
 
+
 /* Some methods for efficient indexing of std::vector by a std::array<int,n>
  */
 template <typename T>
