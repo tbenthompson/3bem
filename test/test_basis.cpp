@@ -20,8 +20,8 @@ TEST(Interpolate) {
 TEST(ConstrainedInterpolate) {
     auto mesh = sphere_mesh({0,0,0}, 1).refine_repeatedly(2);
 
-    ContinuityBuilder<3> cb(mesh.begin());
-    auto constraints = cb.build();
+    auto continuity = mesh_continuity(mesh.begin());
+    auto constraints = convert_to_constraints(continuity);
     auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
 
     auto res = constrained_interpolate<3>(

@@ -57,17 +57,10 @@ TEST(FindOverlappingVerticesSameMeshConnected) {
     }
 }
 
-TEST(ContinuityBuilderBuild) {
-    auto m = connected_mesh();    
-    ContinuityBuilder<2> cb(m.begin());
-    auto constraints = cb.build();
-    CHECK_EQUAL(constraints.size(), m.facets.size() - 1);
-}
-
 TEST(ConstraintMesh) {
     auto sphere = sphere_mesh({0, 0, 0}, 1).refine_repeatedly(2);
-    ContinuityBuilder<3> cb(sphere.begin());
-    auto constraints = cb.build();
+    auto continuity = mesh_continuity(sphere.begin());
+    auto constraints = convert_to_constraints(continuity);
     auto matrix = ConstraintMatrix::from_constraints(constraints);
     CHECK_EQUAL(3 * sphere.facets.size(), 384);
     CHECK_EQUAL(matrix.map.size(), 318);
@@ -78,8 +71,8 @@ TEST(ConstraintMesh) {
 TEST(RectMeshContinuity) {
     auto zplane = rect_mesh({-1, -1, 0}, {1, -1, 0}, {1, 1, 0}, {-1, 1, 0})
         .refine_repeatedly(1);
-    ContinuityBuilder<3> cb(zplane.begin());
-    auto constraints = cb.build();
+    auto continuity = mesh_continuity(zplane.begin());
+    auto constraints = convert_to_constraints(continuity);
     CHECK_EQUAL(constraints.size(), 29);
 }
 
@@ -88,16 +81,16 @@ TEST(CutWithDiscontinuity) {
         .refine_repeatedly(1);
     auto xplane = rect_mesh({0, -1, -1}, {0, 1, -1}, {0, 1, 1}, {0, -1, 1})
         .refine_repeatedly(1);
-    ContinuityBuilder<3> cb(zplane.begin());
-    cb.apply_discontinuities(xplane.begin());
-    auto constraints = cb.build();
+    auto continuity = mesh_continuity(zplane.begin());
+    auto cut_cont = cut_at_intersection(continuity, zplane.begin(), xplane.begin());
+    auto constraints = convert_to_constraints(cut_cont);
     CHECK_EQUAL(constraints.size(), 16);
 }
 
 TEST(GetReducedToCountTheNumberOfVerticesOnASphereApproximation) {
     auto sphere = sphere_mesh({0, 0, 0}, 1).refine_repeatedly(0);
-    ContinuityBuilder<3> cb(sphere.begin());
-    auto constraints = cb.build();
+    auto continuity = mesh_continuity(sphere.begin());
+    auto constraints = convert_to_constraints(continuity);
     auto matrix = ConstraintMatrix::from_constraints(constraints);
     std::vector<double> all(3 * sphere.facets.size(), 1.0);
     auto reduced = matrix.get_reduced(all);

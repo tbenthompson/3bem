@@ -15,9 +15,11 @@ int main() {
     // Earth's surface
     auto surface = line_mesh({-25, 0.0}, {25, 0.0}).refine_repeatedly(8);
 
-    ContinuityBuilder<2> cb(surface.begin());
-    cb.apply_discontinuities(fault.begin());
-    auto constraints = cb.build();
+    auto continuity = mesh_continuity(surface.begin());
+    auto cut_continuity = cut_at_intersection(
+        continuity, surface.begin(), fault.begin()
+    );
+    auto constraints = convert_to_constraints(cut_continuity);
     auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
 
     double shear_mod = 30e9;
@@ -30,7 +32,8 @@ int main() {
     double slip = 1;
     std::vector<Vec2<double>> du(n_fault_dofs, constant<Vec2<double>>::make(slip));
 
-    std::vector<Vec2<double>> all_dofs_rhs(n_surface_dofs, zeros<Vec2<double>>::make());
+    std::vector<Vec2<double>> all_dofs_rhs(n_surface_dofs, 
+        zeros<Vec2<double>>::make());
 
     TIC
     auto p_rhs = make_problem<2>(fault, surface, hyp, du);

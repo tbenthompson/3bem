@@ -19,7 +19,7 @@ DESIGN DECISIONS(DD):
 ---- I could do this by compiling only to .o files. Then, I can just link them into the various executables. Why is this better than a bunch of libraray .so's?
 -- Consider a different way of handling constraints. Precomputing a reduced matrix and RHS? This would be useful for imposing boundary conditions.
 -- Redesign integration tests and "elastic" executor tests to be "Gold Master" tests. (Write a note on the design decision)
----- Gold master testing is worthwhile for a scientific computing application because often the "correct" answer is unknown and its valuable to know when the answer produced is changed. Then, a smart human can determine whether that change is "good" or "bad".
+---- Gold master testing is worthwhile for a scientific computing application because often the "correct" answer is unknown and its valuable to know when the answer that the code produces is changed. Then, a smart human can determine whether that change is "good" or "bad".
 ---- http://blog.codeclimate.com/blog/2014/02/20/gold-master-testing/
 ---- http://blog.thecodewhisperer.com/2014/09/28/surviving-legacy-code-with-golden-master-and-sampling/#fnref:out-of-your-head
 -- Think about whether the "elastic" layer should be written in something besides c++

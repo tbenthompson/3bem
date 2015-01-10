@@ -5,7 +5,7 @@ using namespace tbem;
 
 int main() {
     double surf_width = 4;
-    int refine_surf = 5;
+    int refine_surf = 6;
     double far_threshold = 3.0;
     int near_steps = 5;
     int src_quad_pts = 2;
@@ -22,9 +22,9 @@ int main() {
         {surf_width, surf_width, 0}, {surf_width, -surf_width, 0}
     ).refine_repeatedly(refine_surf);
 
-    ContinuityBuilder<3> cb(surface.begin());
-    cb.apply_discontinuities(fault.begin());
-    auto constraints = cb.build();
+    auto continuity = mesh_continuity(surface.begin());
+    auto cut_cont = cut_at_intersection(continuity, surface.begin(), fault.begin());
+    auto constraints = convert_to_constraints(cut_cont);
     auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
 
     QuadStrategy<3> qs(obs_quad_pts, src_quad_pts,

@@ -6,22 +6,6 @@
 
 using namespace tbem;
 
-TEST(CreateLinearTerm) {
-    LinearTerm dw{1, 2.0};
-    CHECK_EQUAL(dw.dof, 1);
-    CHECK_EQUAL(dw.weight, 2.0);
-}
-
-TEST(ContinuityConstraintsAreCreated) {
-    auto c = continuity_constraint(1, 2);
-    ConstraintEQ correct = {
-        {LinearTerm{1, 1.0f}, LinearTerm{2, -1.0f}},
-        0.0
-    };
-    CHECK(c.terms == correct.terms);
-    CHECK(c.rhs == correct.rhs);
-}
-
 TEST(RearrangeConstraintEQ) {
     ConstraintEQ eqtn{{LinearTerm{0,3}, LinearTerm{1,-1}, LinearTerm{2,4}}, 13.7};
     auto rearranged = isolate_term_on_lhs(eqtn, 2);
@@ -122,31 +106,6 @@ TEST(MakeLowerTriangular) {
     CHECK_EQUAL(c_lower_tri.constrained_dof, 2);
     CHECK_EQUAL(c_lower_tri.terms.size(), 0);
     CHECK_EQUAL(c_lower_tri.rhs, 1);
-}
-
-TEST(ConstraintEQOutput) {
-    ConstraintEQ c{{{0, 1}, {1, 1}}, 0.0};
-    std::stringstream output_buf;
-    output_buf << c;
-    CHECK_EQUAL(output_buf.str(),
-                "ConstraintEQ[[(rhs, 0), (0, 1), (1, 1), ]]");
-}
-
-TEST(RearrangedConstraintEQOutput) {
-    auto rearranged_c = isolate_term_on_lhs(ConstraintEQ{{{0, 1}, {1, 1}}, 0.0}, 0);
-    std::stringstream output_buf;
-    output_buf << rearranged_c;
-    CHECK_EQUAL(output_buf.str(), 
-                "RearrangedConstraintEQ[[(constrained_dof=0, 1), (rhs, 0), (1, -1), ]]");
-}
-
-TEST(ConstraintMatrixFromConstraints) {
-    ConstraintEQ eqtn{{LinearTerm{3,1}}, 4.0};
-    auto matrix = ConstraintMatrix::from_constraints({eqtn});
-    CHECK_EQUAL(matrix.map.size(), 1);
-    const auto rearranged_constraint = matrix.map.find(3);
-    CHECK(rearranged_constraint != matrix.map.end());
-    CHECK_EQUAL(rearranged_constraint->second.rhs, 4.0);
 }
 
 void check_get_all(const ConstraintMatrix& cm, 
