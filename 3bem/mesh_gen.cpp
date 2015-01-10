@@ -3,7 +3,16 @@
 
 namespace tbem {
 
-Mesh<3> sphere_mesh(const Vec3<double>& center, double r, bool interior) {
+Vec3<double> spherify(const Vec3<double>& center, double r, const Vec3<double>& x) {
+    double dist = std::sqrt(dist2(x, center));
+    return {
+        (r / dist) * (x[0] - center[0]) + center[0],
+        (r / dist) * (x[1] - center[1]) + center[1],
+        (r / dist) * (x[2] - center[2]) + center[2]
+    };
+}
+
+Mesh<3> sphere_mesh(const Vec3<double>& center, double r, int refinements) {
     std::vector<Vec3<double>> vertices =
     {
         {0.0, -r, 0.0}, {r, 0.0, 0.0}, {0.0, 0.0, r},
@@ -18,22 +27,21 @@ Mesh<3> sphere_mesh(const Vec3<double>& center, double r, bool interior) {
         {1, 0, 2}, {2, 0, 3}, {3, 0, 4}, {4, 0, 1},
         {5, 1, 2}, {5, 2, 3}, {5, 3, 4}, {5, 4, 1}
     };
-    if (!interior) {
-        for (unsigned int f = 0; f < faces.size(); f++) {
-            std::swap(faces[f][0], faces[f][1]);
-        }
-    }
 
-    return Mesh<3>::from_vertices_faces(vertices, faces, true,
-        [=](std::array<double,3> x) {
-            double dist = std::sqrt(dist2(x, center));
-            x[0] = (r / dist) * (x[0] - center[0]) + center[0];
-            x[1] = (r / dist) * (x[1] - center[1]) + center[1];
-            x[2] = (r / dist) * (x[2] - center[2]) + center[2];
-            return x;
+    auto prototype = Mesh<3>::from_vertices_faces(vertices, faces)
+        .refine_repeatedly(refinements);
+
+    std::vector<Facet<3>> spherified_facets;
+    for (const auto& f: prototype.facets) {
+        spherified_facets.push_back({
+            spherify(center, r, f.vertices[0]),
+            spherify(center, r, f.vertices[1]),
+            spherify(center, r, f.vertices[2])
         });
+    }
+    return {spherified_facets};
 }
-
+        
 Mesh<3> rect_mesh(const Vec3<double>& lower_left, const Vec3<double>& upper_left,
     const Vec3<double>& upper_right, const Vec3<double>& lower_right) {
 
@@ -43,30 +51,44 @@ Mesh<3> rect_mesh(const Vec3<double>& lower_left, const Vec3<double>& upper_left
     std::vector<std::array<int,3>> faces = {
         {0, 3, 2}, {0, 2, 1}
     };
-    return Mesh<3>::from_vertices_faces(vertices, faces, false, nullptr);
+    return Mesh<3>::from_vertices_faces(vertices, faces);
 }
 
 Mesh<2> line_mesh(const Vec2<double>& a, const Vec2<double>& b) {
     std::vector<Vec<double,2>> vertices = {a, b};
-    std::vector<std::array<int, 2>> segs = { {0, 1} };
-    return Mesh<2>::from_vertices_faces(vertices, segs, false, nullptr);
+    std::vector<std::array<int,2>> segs = {{0, 1}};
+    return Mesh<2>::from_vertices_faces(vertices, segs);
 }
 
-Mesh<2> circle_mesh(std::array<double,2> c, double r) {
+
+Vec2<double> circlify(const Vec2<double>& center, double r, const Vec2<double>& x) {
+    double dist = std::sqrt(dist2(x, center));
+    return {
+        (r / dist) * (x[0] - center[0]) + center[0],
+        (r / dist) * (x[1] - center[1]) + center[1]
+    };
+}
+
+Mesh<2> circle_mesh(std::array<double,2> c, double r, int refinements) {
     std::vector<std::array<double,2>> vertices = {
         {c[0] + r, c[1]}, {c[0], c[1] + r}, {c[0] - r, c[1]}, {c[0], c[1] - r},
     };
     std::vector<std::array<int, 2>> segs = {
         {0, 1}, {1, 2}, {2, 3}, {3, 0}
     };
-    return Mesh<2>::from_vertices_faces(vertices, segs, true, 
-        [=](const Vec2<double>& x) {
-            double dist = std::sqrt(dist2(x, c));
-            return Vec2<double>{
-                (r / dist) * (x[0] - c[0]) + c[0],
-                (r / dist) * (x[1] - c[1]) + c[1]
-            };
+
+    auto prototype = Mesh<2>::from_vertices_faces(vertices, segs)
+        .refine_repeatedly(refinements);
+
+    std::vector<Facet<2>> circlified_facets;
+    for (const auto& f: prototype.facets) {
+        circlified_facets.push_back({
+            circlify(c, r, f.vertices[0]),
+            circlify(c, r, f.vertices[1])
         });
+    }
+
+    return {circlified_facets};
 }
 
 } //END namespace tbem

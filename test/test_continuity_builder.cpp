@@ -13,7 +13,7 @@ Mesh<2> disjoint_mesh() {
             {val, -val}, {val + 1, -val - 1}
         }}});
     }
-    return {facets, false, nullptr};
+    return {facets};
 }
 
 Mesh<2> connected_mesh() {
@@ -58,7 +58,7 @@ TEST(FindOverlappingVerticesSameMeshConnected) {
 }
 
 TEST(ConstraintMesh) {
-    auto sphere = sphere_mesh({0, 0, 0}, 1).refine_repeatedly(2);
+    auto sphere = sphere_mesh({0, 0, 0}, 1, 2);
     auto continuity = mesh_continuity(sphere.begin());
     auto constraints = convert_to_constraints(continuity);
     auto matrix = ConstraintMatrix::from_constraints(constraints);
@@ -88,7 +88,7 @@ TEST(CutWithDiscontinuity) {
 }
 
 TEST(GetReducedToCountTheNumberOfVerticesOnASphereApproximation) {
-    auto sphere = sphere_mesh({0, 0, 0}, 1).refine_repeatedly(0);
+    auto sphere = sphere_mesh({0, 0, 0}, 1, 0);
     auto continuity = mesh_continuity(sphere.begin());
     auto constraints = convert_to_constraints(continuity);
     auto matrix = ConstraintMatrix::from_constraints(constraints);

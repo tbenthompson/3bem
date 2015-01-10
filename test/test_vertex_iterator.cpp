@@ -8,14 +8,14 @@ using namespace tbem;
 struct PremadeMesh3D {
     const Mesh<3> m;
     PremadeMesh3D():
-        m(sphere_mesh({0, 0, 0}, 1.0))
+        m(sphere_mesh({0, 0, 0}, 1.0, 0))
     { }
 };
 
 struct PremadeMesh2D {
     const Mesh<2> m;
     PremadeMesh2D():
-        m(circle_mesh({0, 0}, 1.0))
+        m(circle_mesh({0, 0}, 1.0, 0))
     { }
 };
 
@@ -38,11 +38,18 @@ TEST_FIXTURE(PremadeMesh3D, NextVertNextFacet) {
     CHECK_EQUAL(iter.vertex_idx, 1);
 }
 
-TEST_FIXTURE(PremadeMesh3D, Inequality) {
+TEST_FIXTURE(PremadeMesh3D, EqualityInequality) {
     auto iter = m.begin();
     auto iter2 = m.begin();
     CHECK(iter == iter2);
     ++iter2;
+    CHECK(iter != iter2);
+}
+
+TEST_FIXTURE(PremadeMesh3D, InequalityDifferentMeshes) {
+    auto m2 = sphere_mesh({0, 0, 0}, 1.0, 0);
+    auto iter = m.begin();
+    auto iter2 = m2.begin();
     CHECK(iter != iter2);
 }
 

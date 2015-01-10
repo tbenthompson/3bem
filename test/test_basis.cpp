@@ -8,7 +8,7 @@
 using namespace tbem;
 
 TEST(Interpolate) {
-    auto m = sphere_mesh({0,0,0}, 1).refine_repeatedly(2);
+    auto m = sphere_mesh({0,0,0}, 1, 2);
     auto res = interpolate<3>(m, [](const Vec<double,3>& x) {return x[0];});
     for (unsigned int i = 0; i < m.facets.size(); i++) {
         for (int d = 0; d < 3; d++) {
@@ -18,7 +18,7 @@ TEST(Interpolate) {
 }
 
 TEST(ConstrainedInterpolate) {
-    auto mesh = sphere_mesh({0,0,0}, 1).refine_repeatedly(2);
+    auto mesh = sphere_mesh({0,0,0}, 1, 2);
 
     auto continuity = mesh_continuity(mesh.begin());
     auto constraints = convert_to_constraints(continuity);

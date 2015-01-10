@@ -176,6 +176,8 @@ Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term
  * but a low precision approximate distance is useful.
  * This function simply approximates the distance by the distance from
  * the given point to each vertex of the element.
+ * A better approximation to the distance to a face might include
+ * the centroid (see appx_face_dist2)
  */
 template <int dim>
 double appx_face_dist2(const Vec<double,dim>& pt,
@@ -218,7 +220,8 @@ double eval_integral_equation(const Problem<dim,KT>& p, const QuadStrategy<dim>&
 
 template <int dim, typename KT>
 std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
-                                    const QuadStrategy<dim>& qs) {
+                                    const QuadStrategy<dim>& qs) 
+{
     std::size_t n_obs_dofs = dim * p.obs_mesh.facets.size();
     std::size_t n_src_dofs = dim * p.src_mesh.facets.size();
     std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_src_dofs, 
@@ -246,32 +249,6 @@ std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
     return matrix;
 }
 
-template <typename KT>
-std::vector<typename KT::OutType>
-bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
-             int n_obs_dofs, const std::vector<typename KT::InType>& x) {
-
-    assert(n_obs_dofs * x.size() == A.size());
-    std::vector<typename KT::OutType> res(n_obs_dofs, 
-                                          zeros<typename KT::OutType>::make());
-#pragma omp parallel for
-    for (int i = 0; i < n_obs_dofs; i++) {
-        for (std::size_t j = 0; j < x.size(); j++) {
-            res[i] += dot_product(x[j], A[i * x.size() + j]);
-        }
-    }
-    return res;
-}
-
-
-template <int dim, typename KT>
-std::vector<typename KT::OutType> direct_interact(const Problem<dim,KT>& p,
-                                                  const QuadStrategy<dim>& qs) {
-    auto matrix = interact_matrix(p, qs);
-    assert(p.obs_mesh.facets.size() * dim * p.src_strength.size() == matrix.size());
-    return bem_mat_mult(matrix, p.K, p.obs_mesh.facets.size() * dim, p.src_strength);
-}
-
 template <int dim, typename KT>
 std::vector<double> mass_term(const Problem<dim,KT>& p,
                               const QuadStrategy<dim>& qs) {
@@ -297,6 +274,32 @@ std::vector<double> mass_term(const Problem<dim,KT>& p,
         }
     }
     return integrals;
+}
+
+template <typename KT>
+std::vector<typename KT::OutType>
+bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
+             int n_obs_dofs, const std::vector<typename KT::InType>& x) {
+
+    assert(n_obs_dofs * x.size() == A.size());
+    std::vector<typename KT::OutType> res(n_obs_dofs, 
+                                          zeros<typename KT::OutType>::make());
+#pragma omp parallel for
+    for (int i = 0; i < n_obs_dofs; i++) {
+        for (std::size_t j = 0; j < x.size(); j++) {
+            res[i] += dot_product(x[j], A[i * x.size() + j]);
+        }
+    }
+    return res;
+}
+
+
+template <int dim, typename KT>
+std::vector<typename KT::OutType> direct_interact(const Problem<dim,KT>& p,
+                                                  const QuadStrategy<dim>& qs) {
+    auto matrix = interact_matrix(p, qs);
+    assert(p.obs_mesh.facets.size() * dim * p.src_strength.size() == matrix.size());
+    return bem_mat_mult(matrix, p.K, p.obs_mesh.facets.size() * dim, p.src_strength);
 }
 
 template <>
