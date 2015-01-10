@@ -8,7 +8,7 @@ namespace tbem {
 /* A helper function for integrating a given function using a quadrature rule.
  * Via templating, can be used with 1D, 2D, double, Vec3<double> quadrature.
  */
-template <typename T, int dim>
+template <typename T, size_t dim>
 T integrate(const std::vector<QuadPt<dim>>& qr, 
             const std::function<T(std::array<double,dim>)>& fnc) {
     T integral_val = qr[0].w * fnc(qr[0].x_hat);;
@@ -154,7 +154,7 @@ std::vector<double> get_singular_steps(int n_steps) {
     return dist;
 }
 
-template <int dim>
+template <size_t dim>
 QuadStrategy<dim>::QuadStrategy(int obs_order):
     QuadStrategy(obs_order, obs_order, 8, 3.0, 1e-4)
 {}

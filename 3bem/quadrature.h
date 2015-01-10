@@ -6,16 +6,16 @@
 
 namespace tbem {
 
-template <int dim>
+template <size_t dim>
 struct QuadPt {
     const std::array<double,dim> x_hat;
     const double w;
 };
 
-template <int dim>
+template <size_t dim>
 using QuadRule = std::vector<QuadPt<dim>>;
 
-template <typename T, int dim>
+template <typename T, size_t dim>
 T integrate(const QuadRule<dim>& qr,
             const std::function<T(std::array<double,dim>)>& fnc);
 
@@ -28,7 +28,7 @@ QuadRule<2> tensor_gauss(int n_pts);
 QuadRule<2> tri_gauss(int n_pts);
 QuadRule<2> square_to_tri(QuadRule<2> square_quad);
 
-template <int dim>
+template <size_t dim>
 struct QuadStrategy {
     QuadStrategy(int obs_order);
     QuadStrategy(int obs_order, int src_far_order, int n_singular_steps,

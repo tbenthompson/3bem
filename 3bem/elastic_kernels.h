@@ -7,13 +7,13 @@
 namespace tbem { 
 const double kronecker[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
-template <int dim>
+template <size_t dim>
 struct ElasticDisplacement;
-template <int dim>
+template <size_t dim>
 struct ElasticTraction;
-template <int dim>
+template <size_t dim>
 struct ElasticAdjointTraction;
-template <int dim>
+template <size_t dim>
 struct ElasticHypersingular;
 
 template <>
