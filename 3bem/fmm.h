@@ -13,6 +13,7 @@ class Box;
     
 typedef std::function<double (double, double, double, double, double, double)> Kernel;
 
+
 class FMMInfo {
 public:
     FMMInfo(Kernel kernel, const Octree& src, std::vector<double>& values,
@@ -97,11 +98,6 @@ public:
                               const OctreeCell& l_cell, int l_cell_idx);
     void fmm();
 };
-
-//TODO: Make the functions for the different operations more uniform 
-// -- global operation (P2M, treecode, FMM)
-// -- cell-wise operations
-// -- node-wise operations
 
 //Particle to multipole
 double interp_operator(const OctreeCell& cell,

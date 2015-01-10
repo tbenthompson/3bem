@@ -1,4 +1,5 @@
 #include "3bem.h"
+#include "laplace_kernels.h"
 using namespace tbem;
 
 /* This code:
@@ -20,9 +21,11 @@ void full_space() {
 
     // Surface mesh at y = -0.5
     auto surface1 = line_mesh({-10, -0.5}, {10, -0.5}).refine_repeatedly(14);
-    auto raw_constraints =
-        ConstraintMatrix::from_constraints(mesh_continuity<2>(surface1));
-    auto constraints = apply_discontinuities<2>(surface1, fault, raw_constraints);
+
+    auto continuity = mesh_continuity(surface1.begin());
+    auto cut_cont = cut_at_intersection(continuity, surface1.begin(), fault.begin());
+    auto constraints = convert_to_constraints(cut_cont);
+    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
 
     // Quadrature details -- these parameters basically achieve machine precision
     double far_threshold = 4.0;
@@ -35,7 +38,7 @@ void full_space() {
 
     // Interpolate the integral equation onto the y = -0.5 surface
     TIC
-    Problem<2> p_fullspace = {fault, surface1, laplace_double<2>, one_vec};
+    auto p_fullspace = make_problem<2>(fault, surface1, LaplaceDouble<2>(), one_vec);
     auto disp = constrained_interpolate<2>(surface1, [&] (Vec2<double> x) {
             ObsPt<2> obs = {0.001, x, {0, 1}, {0, -1}};
             double val = eval_integral_equation(p_fullspace, qs, obs);
@@ -44,10 +47,11 @@ void full_space() {
                 std::cout << "FAILED Antiplane for x = " << x << std::endl;
             }
             return val;
-        }, constraints);
+        }, constraint_matrix);
     TOC("Solve fullspace antiplane strike slip motion")
 
-    hdf_out_surface<2>("antiplane_full_space.hdf5", surface1, {disp});
+    auto file = HDFOutputter("antiplane_full_space.hdf5");
+    out_surface<2>(file, surface1, disp, 1);
 }
     
 void half_space() {
@@ -58,23 +62,27 @@ void half_space() {
 
     // Earth's surface
     auto surface2 = line_mesh({-50, 0.0}, {50, 0.0}).refine_repeatedly(9);
-    auto raw_constraints =
-        ConstraintMatrix::from_constraints(mesh_continuity<2>(surface2));
-    auto constraints = apply_discontinuities<2>(surface2, fault, raw_constraints);
+    
+    auto continuity = mesh_continuity(surface2.begin());
+    auto cut_cont = cut_at_intersection(continuity, surface2.begin(), fault.begin());
+    auto constraints = convert_to_constraints(cut_cont);
+    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
     
     TIC
     // The RHS is the effect of the fault on the surface.
-    Problem<2> p_rhs_halfspace =
-        {fault, surface2, laplace_hypersingular<2>, one_vec};
+    auto p_rhs_halfspace =
+        make_problem<2>(fault, surface2, LaplaceHypersingular<2>(), one_vec);
 
     auto rhs_all_dofs = direct_interact(p_rhs_halfspace, qs);
     for (std::size_t i = 0; i < rhs_all_dofs.size(); i++) {
         rhs_all_dofs[i] = -rhs_all_dofs[i];
     }
-    auto rhs = constraints.get_reduced(rhs_all_dofs);
+    auto rhs = constraint_matrix.get_reduced(rhs_all_dofs);
 
     // The LHS is the effect of the surface on the surface.
-    Problem<2> p_lhs_halfspace = {surface2, surface2, laplace_hypersingular<2>, one_vec};
+    auto hypersingular_kernel = LaplaceHypersingular<2>();
+    auto p_lhs_halfspace = make_problem<2>(surface2, surface2,
+                                           hypersingular_kernel, one_vec);
     auto lhs = interact_matrix(p_lhs_halfspace, qs);
 
     // Solve the linear system.
@@ -82,15 +90,16 @@ void half_space() {
     int n_dofs = 2 * surface2.facets.size();
     auto soln_reduced = solve_system(rhs, linear_solve_tol,
         [&] (std::vector<double>& x, std::vector<double>& y) {
-            auto x_full = constraints.get_all(x, n_dofs);
-            auto y_mult = bem_mat_mult(lhs, n_dofs, x_full); 
-            auto y_temp = constraints.get_reduced(y_mult);
+            auto x_full = constraint_matrix.get_all(x, n_dofs);
+            auto y_mult = bem_mat_mult(lhs, hypersingular_kernel, n_dofs, x_full); 
+            auto y_temp = constraint_matrix.get_reduced(y_mult);
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
         });
     TOC("Solve antiplane half space.");
-    auto soln = constraints.get_all(soln_reduced, n_dofs);
+    auto soln = constraint_matrix.get_all(soln_reduced, n_dofs);
 
-    hdf_out_surface<2>("antiplane_half_space.hdf5", surface2, {soln});
+    auto filesurface = HDFOutputter("antiplane_half_space.hdf5");
+    out_surface<2>(filesurface, surface2, soln, 1);
 
 
     // Loop over a bunch of interior points and evaluate the displacement
@@ -118,16 +127,20 @@ void half_space() {
                 {0.001, pt, {1, 0}, {0, -1}}
             };
 
-            Problem<2> p_disp_fault = {fault, surface2, laplace_double<2>, one_vec};
-            Problem<2> p_disp_surf = {surface2, surface2, laplace_double<2>, soln};
+            auto p_disp_fault = make_problem<2>(fault, surface2,
+                                             LaplaceDouble<2>(), one_vec);
+            auto p_disp_surf = make_problem<2>(surface2, surface2,
+                                            LaplaceDouble<2>(), soln);
             double eval_fault = eval_integral_equation(p_disp_fault, qs, obs[0]);
             double eval_surf = eval_integral_equation(p_disp_surf, qs, obs[0]);
             double eval = eval_surf + eval_fault;
             interior_disp[i * ny + j] = eval;
 
             for (int d = 0; d < 2; d++) {
-                Problem<2> p_trac_fault = {fault, surface2, laplace_hypersingular<2>, one_vec};
-                Problem<2> p_trac_surf = {surface2, surface2, laplace_hypersingular<2>, soln};
+                auto p_trac_fault = make_problem<2>(fault, surface2,
+                                                LaplaceHypersingular<2>(), one_vec);
+                auto p_trac_surf = make_problem<2>(surface2, surface2,
+                                                LaplaceHypersingular<2>(), soln);
                 eval_fault = eval_integral_equation(p_trac_fault, qs, obs[d]);
                 eval_surf = eval_integral_equation(p_trac_surf, qs, obs[d]);
                 eval = eval_surf + eval_fault;
@@ -136,8 +149,12 @@ void half_space() {
 
         }
     }
-    hdf_out_volume<2>("antiplane_half_space_volu.hdf5", interior_pts, {interior_disp});
-    hdf_out_volume<2>("antiplane_half_space_volt.hdf5", interior_pts, {interior_trac[0], interior_trac[1]});
+    auto fileu = HDFOutputter("antiplane_half_space_volu.hdf5");
+    out_volume<2>(fileu, interior_pts, interior_disp, 1);
+    auto filetx = HDFOutputter("antiplane_half_space_voltx.hdf5");
+    out_volume<2>(filetx, interior_pts, interior_trac[0], 1);
+    auto filety = HDFOutputter("antiplane_half_space_volty.hdf5");
+    out_volume<2>(filety, interior_pts, interior_trac[1], 1);
     TOC("Interior eval.")
 }
 

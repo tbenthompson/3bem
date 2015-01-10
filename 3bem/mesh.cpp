@@ -1,8 +1,18 @@
 #include "mesh.h"
-#include "util.h"
-
+#include "vertex_iterator.h"
 
 namespace tbem {
+
+
+template <typename T, int dim>
+FacetCornerIterator<T,dim> MeshField<T,dim>::begin() const {
+    return FacetCornerIterator<T,dim>(*this, 0, 0);
+}
+
+template <typename T, int dim>
+FacetCornerIterator<T,dim> MeshField<T,dim>::end() const {
+    return FacetCornerIterator<T,dim>(*this, facets.size(), 0);
+}
 
 /* Produces 2 new segments by splitting the current segment 
  * in half. 
@@ -63,6 +73,10 @@ FacetField<T,dim> refine_modify(const FacetField<T,dim>& f,
 template <typename T, int dim>
 MeshField<T,dim> 
 MeshField<T,dim>::refine(const std::vector<int>& refine_these) const {
+    if (refine_these.empty()) {
+        return MeshField<T,dim>{facets, has_refine_mod, refine_mod};
+    }
+
     std::vector<FacetField<T,dim>> out_facets;
 
     // Sort the refined edges so that we only have to check the
@@ -76,7 +90,7 @@ MeshField<T,dim>::refine(const std::vector<int>& refine_these) const {
     for (unsigned int i = 0; i < facets.size(); i++) {
         if (i == refine_these[current]) {
             auto refined = refine_facet(facets[i]);
-            for (auto r: refined) {
+            for (const auto& r: refined) {
                 auto mod_r = refine_modify<T,dim>(r, *this);
                 out_facets.push_back(mod_r);
             }
@@ -92,7 +106,7 @@ MeshField<T,dim>::refine(const std::vector<int>& refine_these) const {
 template <typename T, int dim>
 MeshField<T,dim> 
 MeshField<T,dim>::refine() const {
-    return refine(naturals(facets.size()));
+    return refine(integers(facets.size()));
 }
 
 /* A helper function to refine all the facets multiple times. */
@@ -115,7 +129,7 @@ MeshField<T,dim>::form_union(const std::vector<MeshField<T,dim>>& meshes) {
             throw std::domain_error("Mesh unions can only be formed from meshes\
                                      with has_refine_mod == false");
         }
-        for (auto f: meshes[i].facets) {
+        for (const auto& f: meshes[i].facets) {
             new_facets.push_back(f);
         }
     }
@@ -129,19 +143,19 @@ MeshField<T,dim>::form_union(const std::vector<MeshField<T,dim>>& meshes) {
 template <typename T, int dim>
 MeshField<T,dim>
 MeshField<T,dim>::from_vertices_faces(const std::vector<T>& vertices,
-                         const std::vector<std::array<int,dim>>& facets,
+                         const std::vector<std::array<int,dim>>& facets_by_vert_idx,
                          bool has_refine_mod,
                          const typename MeshField<T,dim>::RefineFnc& refine_mod) {
-    std::vector<FacetField<T,dim>> new_facets;
-    for (auto in_facet: facets) { 
+    std::vector<FacetField<T,dim>> facets;
+    for (const auto& in_facet: facets_by_vert_idx) { 
         Vec<T,dim> out_verts;
         for (int d = 0; d < dim; d++) {
             out_verts[d] = vertices[in_facet[d]];
         }
         auto out_facet = FacetField<T,dim>{out_verts};
-        new_facets.push_back(out_facet);
+        facets.push_back(out_facet);
     }
-    return MeshField<T,dim>{new_facets, has_refine_mod, refine_mod};
+    return MeshField<T,dim>{facets, has_refine_mod, refine_mod};
 }
 
 template class MeshField<double,2>;

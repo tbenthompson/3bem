@@ -1,0 +1,67 @@
+TOP PRIORITY (tasks until next merge with stable):
+MF: Consider deleting refine_mod and friends in Mesh. Rewrite sphere_mesh and circle_mesh to account for this.
+
+NEXT:
+NF: Hanging nodes?
+NF: Handle the general case when fault-surface intersection does not occur at a vertex.
+---- Linked to hanging nodes in that lots of geometry code needs to be used/written.
+---- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
+NF: Link BEM to FMM
+
+TESTS(T):
+-- Tests for the 2D and 3D adaptive_nearfield quadrature.
+-- Can some decoupling be done so that individual pieces of direct_interact can be tested indepedently in unit tests rather than integration tests.
+-- Decoupling to allow testing individual pieces of the FMM algorithm.
+
+DESIGN DECISIONS(DD):
+-- Think about decoupling the library into multiple .so files, so that individual pieces can be compiled and tested independently. (write a note on the decision)
+-- Revamp the build system so that individual tests can be run without recompiling the whole system. (write a note on the build system design)
+---- I could do this by compiling only to .o files. Then, I can just link them into the various executables. Why is this better than a bunch of libraray .so's?
+-- Consider a different way of handling constraints. Precomputing a reduced matrix and RHS? This would be useful for imposing boundary conditions.
+-- Redesign integration tests and "elastic" executor tests to be "Gold Master" tests. (Write a note on the design decision)
+---- Gold master testing is worthwhile for a scientific computing application because often the "correct" answer is unknown and its valuable to know when the answer that the code produces is changed. Then, a smart human can determine whether that change is "good" or "bad".
+---- http://blog.codeclimate.com/blog/2014/02/20/gold-master-testing/
+---- http://blog.thecodewhisperer.com/2014/09/28/surviving-legacy-code-with-golden-master-and-sampling/#fnref:out-of-your-head
+-- Think about whether the "elastic" layer should be written in something besides c++
+-- Decide whether to allow separating out individual rows or components of the tensor kernels. Adds complexity and a little bit of value, but the same thing can be achieved using the full tensor kernels and constraints. Is this true? If a different integral equation (traction vs. displacement) were used for the various rows, then constraints would not suffice. Interesting. Is there a way to easily build a tensor kernel out of a variety of components?
+
+NEW FUNCTIONALITY(NF):
+-- A way of computing the condition number of a BEM matrix.
+-- Imagine some kind of general purpose "nearfield" structure that can allow a simple O(N) solution to the near neighbors problems in mesh_continuity, apply_discontinuities as well as the FMM tree structure.
+-- DOF handling should be more systematic with a face_id and vertex_id for each dof_id. This needs a bidirectional mapping, especially for some of the constraints code. I should also account for the tensor/vector nature of certain fields
+-- A better approximation to the distance to a face might include the centroid (see appx_face_dist2)
+-- Once FMM-BEM integration is completed, a sparse matrix storage format should be used for the nearfield entries.
+-- Slight encapsulation of the std::vector storage with useful things like negation, element-wise multiplication, etc. This might be useful to combine with a MeshField style field-over-mesh sitution.
+
+MODIFIED FUNCTIONALITY(MF):
+
+STRUCTURAL(S):
+-- Immutable RearrangedConstraintEQ
+-- Restrict the main .h files to outward facing interfaces. Use _impl.h files for inward facing header files. Do this with constraints.h
+-- compute_galerkin_integrals function in bem.h -- accepts a "Strategy" for computing integrand.
+-- KernelData object 
+-- Pull some of vec.h out into a separate module "geometry.h"
+-- Consider getting rid of autocheck as a dependency.
+-- Make Box an immutable data type.
+-- Make OctreeCell an immutable data type.
+-- Within FMMInfo::P2M_helper: Extract P2M_cell_cell.
+-- Within FMMInfo::L2P_helper: Extract this function as L2P_cell_cell.
+-- The FMM code requires significant refactoring:(immutable data types, use a recurse and coalesce strategy for accumulating the jobs, get rid of the float_ variables, use a recurse and coalesce strategy for accumulating the multipoles and locals, make sure these modifications don't damage the efficiency, more uniform naming for global, cell-wise, node-wise operations in the FMM application)
+-- Extract a get_box or get_single_pt_box function or both from the Octree::build_child function. In general, make that function more testable.
+-- The min_code and max_code may not be necessary in OctreeCell except for construction.
+-- Make Octree an immutable data type. 
+
+OPTIMIZATION(O):
+-- Some profiling on the functions inside an iterative matrix solve. I think a couple hours would get a factor of 5-10 here. Lots of inefficiencies. Low priority though.
+
+LONG TERM:
+** simple adaptive meshing! probably relatively low cost to implement, very high value!
+** stokes flow example.
+** higher order bases? is this worth the effort? medium-high cost, what is the value? be realistic.
+** faster near-field matrix construction?
+-- adaptive quadrature on a GPU or vectorized? is it possible?
+-- try the nearly singular tri rule = http://www98.griffith.edu.au/dspace/bitstream/handle/10072/54329/86520_1.pdf?sequence=1
+** python (mako, titen, etc) templating based solution for code generation? 
+-- think about this more, write a note, positives? negatives? cost?
+-- http://szelei.me/code-generator/
+-- http://eli.thegreenplace.net/2011/07/03/parsing-c-in-python-with-clang/

@@ -59,7 +59,9 @@ TEST_FIXTURE(Data, VecCross) {
 
 TEST(VecPrint) {
     Vec3<double> a = {1.0, 2.0, 3.0};
-    std::cout << a << std::endl;
+    std::stringstream output_buf;
+    output_buf << a;
+    CHECK_EQUAL(output_buf.str(), "(1, 2, 3)");
 }
 
 TEST(WhichSidePT3D) {
@@ -91,6 +93,107 @@ TEST(TriSide) {
     CHECK_EQUAL(facet_side<3>({INTERSECT, FRONT, FRONT}), FRONT);
     CHECK_EQUAL(facet_side<3>({INTERSECT, INTERSECT, FRONT}), FRONT);
     CHECK_EQUAL(facet_side<3>({BEHIND, INTERSECT, BEHIND}), BEHIND);
+}
+
+TEST(OuterProductVectorVal) {
+    CHECK_EQUAL((outer_product<double>(Vec<double,2>{1.0, 1.0}, 0.5)), 
+                (Vec2<double>{0.5, 0.5}));
+}
+
+TEST(OuterProductVectorVal3D) {
+    CHECK_EQUAL((outer_product<double>(Vec<double,3>{1.0, 1.0, -2.0}, 0.5)), 
+                (Vec3<double>{0.5, 0.5, -1.0}));
+}
+
+TEST(OuterProductVectorVector) {
+    Vec2<double> K = {1.0, 1.0};
+    Vec2<double> x = {3.0, 4.0};
+    auto result = outer_product(K, x);
+    Vec2<Vec2<double>> correct{{{3.0, 4.0}, {3.0, 4.0}}};
+    CHECK_EQUAL(result, correct);
+}
+
+TEST(OuterProductTensorVector) {
+    Vec2<Vec2<double>> right{{{3.0, 0.0}, {0.0,4.0}}};
+    Vec2<double> left = {1.0, 1.0};
+    Vec2<Vec2<Vec2<double>>> correct{{
+        {{{3.0, 0.0}, {0.0, 4.0}}},
+        {{{3.0, 0.0}, {0.0, 4.0}}}
+    }};
+    auto result = outer_product(left, right);
+    CHECK_EQUAL(result, correct);
+}
+
+TEST(OuterProductTensorVector3d) {
+    Vec3<Vec3<double>> right{{
+        {3.0, 0.0, 1.0}, {0.0, 4.0, -2.0}, {0.5, 7.0, -3.0}
+    }};
+    Vec3<double> left = {1.0, -1.0, 1.0};
+    Vec3<Vec3<Vec3<double>>> correct{{
+        {{{3.0, 0.0, 1.0}, {0.0, 4.0, -2.0}, {0.5, 7.0, -3.0}}},
+        {{{-3.0, 0.0, -1.0}, {0.0, -4.0, 2.0}, {-0.5, -7.0, 3.0}}},
+        {{{3.0, 0.0, 1.0}, {0.0, 4.0, -2.0}, {0.5, 7.0, -3.0}}}
+    }};
+    auto result = outer_product(left, right);
+    CHECK_EQUAL(result, correct);
+}
+
+TEST(InnerProductVecVec) {
+    Vec2<double> right{{3.0, 4.0}};
+    Vec2<double> left = {1.0, 1.0};
+    double correct = 7.0;
+    auto result = dot_product(left, right);
+    CHECK_EQUAL(result, correct);
+}
+
+TEST(InnerProductTensorVector) {
+    Vec2<Vec2<double>> right{{{3.0, 0.0}, {0.0,4.0}}};
+    Vec2<double> left = {1.0, 1.0};
+    Vec2<double> correct{{3.0, 4.0}};
+    auto result = dot_product(left, right);
+    CHECK_EQUAL(result, correct);
+}
+
+TEST(InnerProduct3TensorVector) {
+    Vec2<Vec2<Vec2<double>>> right{{
+        {{{3.0, 0.0}, {0.0, 4.0}}},
+        {{{3.0, 0.0}, {0.0, 4.0}}}
+    }};
+    Vec2<double> left = {1.0, 1.0};
+    Vec2<Vec2<double>> correct{{{6.0, 0.0}, {0.0,8.0}}};
+    auto result = dot_product(left, right);
+    CHECK_EQUAL(result, correct);
+}
+
+TEST(ZerosTensor) {
+    auto z = zeros<Vec2<Vec2<double>>>::make();
+    Vec2<Vec2<double>> c{{{0.0, 0.0}, {0.0, 0.0}}};
+    CHECK_EQUAL(z, c);
+}
+
+TEST(OnesTensor) {
+    auto z = ones<Vec2<Vec2<double>>>::make();
+    Vec2<Vec2<double>> c{{{1.0, 1.0}, {1.0, 1.0}}};
+    CHECK_EQUAL(z, c);
+}
+
+TEST(ConstantTensor) {
+    auto z = constant<Vec2<Vec2<double>>>::make(2.2);
+    Vec2<Vec2<double>> c{{{2.2, 2.2}, {2.2, 2.2}}};
+    CHECK_EQUAL(z, c);
+}
+
+TEST(VectorOfDoubleToVectorOfArraysOfDouble) {
+    std::vector<double> A = random_list(100); 
+    auto B = reinterpret_vector<Vec2<double>>(A);
+    CHECK_ARRAY_EQUAL(&A[0], &B[0][0], 100);
+}
+
+TEST(VectorOfDoubleToVectorOfArraysOfDoubleAndBack) {
+    std::vector<double> A = random_list(100); 
+    auto B = reinterpret_vector<Vec2<double>>(A);
+    auto A2 = reinterpret_vector<double>(B);
+    CHECK_ARRAY_EQUAL(&A[0], &A2[0], 100);
 }
 
 int main() {
