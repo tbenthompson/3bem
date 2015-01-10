@@ -19,55 +19,31 @@ struct PremadeMesh2D {
     { }
 };
 
-TEST_FIXTURE(PremadeMesh3D, VertexIteratorBegin) {
-    auto iter = m.begin();
-    CHECK_EQUAL(iter.facet_idx, 0);
-    CHECK_EQUAL(iter.vertex_idx, 0);
-}
-
 TEST_FIXTURE(PremadeMesh3D, VertexIteratorEnd) {
     auto iter = m.end();
     CHECK_EQUAL(iter.facet_idx, m.facets.size());
     CHECK_EQUAL(iter.vertex_idx, 0);
 }
 
-TEST_FIXTURE(PremadeMesh3D, VertexIteratorIsEnd) {
-    auto iter = m.end();
-    CHECK(iter.is_end());
-}
-
 TEST_FIXTURE(PremadeMesh3D, VertexIteratorIsNotEnd) {
     auto iter = m.begin();
     CHECK(!iter.is_end());
+    CHECK((iter + 3 * m.facets.size()).is_end());
 }
 
-TEST_FIXTURE(PremadeMesh3D, NextVert) {
+TEST_FIXTURE(PremadeMesh3D, NextVertNextFacet) {
     auto iter = m.begin();
     ++iter;
     CHECK_EQUAL(iter.facet_idx, 0);
     CHECK_EQUAL(iter.vertex_idx, 1);
 }
 
-TEST_FIXTURE(PremadeMesh3D, NextVertNextFacet) {
-    auto iter = m.begin();
-    ++iter; ++iter; ++iter;
-    CHECK_EQUAL(iter.facet_idx, 1);
-    CHECK_EQUAL(iter.vertex_idx, 0);
-}
-
-TEST_FIXTURE(PremadeMesh3D, Equality) {
-    CHECK(m.begin() == m.begin());
-}
-
 TEST_FIXTURE(PremadeMesh3D, Inequality) {
     auto iter = m.begin();
     auto iter2 = m.begin();
+    CHECK(iter == iter2);
     ++iter2;
     CHECK(iter != iter2);
-}
-
-TEST_FIXTURE(PremadeMesh3D, InequalityEnd) {
-    CHECK(m.begin() != m.end());
 }
 
 TEST_FIXTURE(PremadeMesh3D, CountVerticesInMesh) {
@@ -76,12 +52,6 @@ TEST_FIXTURE(PremadeMesh3D, CountVerticesInMesh) {
         n_verts++;
     }
     CHECK_EQUAL(n_verts, m.facets.size() * 3);
-}
-
-TEST_FIXTURE(PremadeMesh3D, Dereference) {
-    auto iter = m.begin(); 
-    auto vert = *iter;
-    CHECK_EQUAL(vert, m.facets[0].vertices[0]);
 }
 
 TEST_FIXTURE(PremadeMesh2D, DereferenceNonInitial) {
@@ -125,32 +95,6 @@ TEST_FIXTURE(PremadeMesh3D, PlusOperator) {
     auto iter = m.begin() + 4;
     CHECK_EQUAL(iter.facet_idx, 1);
     CHECK_EQUAL(iter.vertex_idx, 1);
-}
-
-TEST_FIXTURE(PremadeMesh2D, PlusOperator2D) {
-    auto iter = m.begin() + 4;
-    CHECK_EQUAL(iter.facet_idx, 2);
-    CHECK_EQUAL(iter.vertex_idx, 0);
-}
-
-TEST_FIXTURE(PremadeMesh3D, Print) {
-    auto iter = m.begin() + 4;
-    std::stringstream output_buf;
-    output_buf << iter;
-    CHECK_EQUAL(output_buf.str(), "(1, 1)");
-}
-
-TEST_FIXTURE(PremadeMesh2D, Ordering) {
-    CHECK(m.begin() < (m.begin() + 1));
-    CHECK(m.begin() <= (m.begin() + 1));
-    CHECK(m.begin() <= m.begin());
-    CHECK(m.begin() + 2 > (m.begin() + 1));
-    CHECK(m.begin() + 2 >= (m.begin() + 1));
-    CHECK(m.begin() >= m.begin());
-}
-
-TEST_FIXTURE(PremadeMesh2D, GetFacet) {
-    CHECK_EQUAL(m.begin().get_facet().vertices, m.facets[0].vertices);
 }
 
 int main(int, char const *[])

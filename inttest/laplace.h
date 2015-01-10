@@ -18,8 +18,8 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     QuadStrategy<dim> qs(obs_quad_pts, src_quad_pts,
                          near_steps, far_threshold, tol);
 
-    ContinuityBuilder<dim> cb(mesh.begin());
-    auto constraints = cb.build();
+    auto continuity = mesh_continuity(mesh.begin());
+    auto constraints = convert_to_constraints(continuity);
     auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
 
     auto u = constrained_interpolate<dim>(mesh, fnc, constraint_matrix);

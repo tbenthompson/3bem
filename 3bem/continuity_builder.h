@@ -54,7 +54,7 @@ find_overlapping_vertices_same_mesh(const VertexIterator<dim>& A_begin,
     auto overlap_map = find_overlapping_vertices(A_begin, A_begin);
     std::vector<OverlapPair<dim>> filtered_overlaps;
     for (const auto& o: overlap_map) {
-        if (o.first < o.second) {
+        if (o.first.absolute_index() < o.second.absolute_index()) {
             filtered_overlaps.push_back({o.first, o.second});
         }
     }
@@ -79,46 +79,50 @@ bool continuity_pair_crosses_cut(const VertexIterator<dim>& facet0_it,
 }
 
 template <size_t dim>
-struct ContinuityBuilder {
-    const VertexIterator<dim> mesh_iter;
-    OverlapMap<dim> continuity_map;
+OverlapMap<dim> mesh_continuity(const VertexIterator<dim>& begin_iter) 
+{
+    return find_overlapping_vertices_same_mesh(begin_iter);
+}
 
-    ContinuityBuilder(const VertexIterator<dim>& begin_iter):
-        mesh_iter(begin_iter)
-    {
-        continuity_map = find_overlapping_vertices_same_mesh(begin_iter);
-    }
+template <size_t dim>
+OverlapMap<dim> cut_at_intersection(const OverlapMap<dim>& continuity,
+    const VertexIterator<dim>& mesh_begin_iter,
+    const VertexIterator<dim>& cut_begin_iter) 
+{
+    auto out_continuity = continuity;
 
-    void apply_discontinuities(const VertexIterator<dim>& cut_begin_iter) {
-        auto cut_pairs = find_overlapping_vertices(mesh_iter, cut_begin_iter);
-        for (const auto& p: cut_pairs) {
-            const auto& continuity_it = p.first; 
-            const auto& discontinuity_it = p.second;
+    auto cut_pairs = find_overlapping_vertices(mesh_begin_iter, cut_begin_iter);
+    for (const auto& p: cut_pairs) {
+        const auto& continuity_it = p.first; 
+        const auto& discontinuity_it = p.second;
 
-            auto range = continuity_map.equal_range(continuity_it);
-            for (auto potential_cut = range.first; potential_cut != range.second;) 
+        auto range = out_continuity.equal_range(continuity_it);
+        for (auto potential_cut = range.first;
+            potential_cut != range.second;) 
+        {
+            if (continuity_pair_crosses_cut(potential_cut->first,
+                potential_cut->second, discontinuity_it)) 
             {
-                if (continuity_pair_crosses_cut(potential_cut->first,
-                    potential_cut->second, discontinuity_it)) 
-                {
-                    continuity_map.erase(potential_cut++);
-                } else {
-                    ++potential_cut;
-                }
+                out_continuity.erase(potential_cut++);
+            } else {
+                ++potential_cut;
             }
         }
     }
 
-    std::vector<ConstraintEQ> build() {
-        std::vector<ConstraintEQ> constraints;
-        for (const auto& p: continuity_map) {
-            auto c = continuity_constraint(p.first.absolute_index(),
-                p.second.absolute_index());
-            constraints.push_back(c);
-        }
-        return constraints;
+    return out_continuity;
+}
+
+template <size_t dim>
+std::vector<ConstraintEQ> convert_to_constraints(const OverlapMap<dim>& continuity) {
+    std::vector<ConstraintEQ> constraints;
+    for (const auto& p: continuity) {
+        auto c = continuity_constraint(p.first.absolute_index(),
+            p.second.absolute_index());
+        constraints.push_back(c);
     }
-};
+    return constraints;
+}
 
 } //END namespace tbem
 

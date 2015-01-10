@@ -22,9 +22,9 @@ void full_space() {
     // Surface mesh at y = -0.5
     auto surface1 = line_mesh({-10, -0.5}, {10, -0.5}).refine_repeatedly(14);
 
-    ContinuityBuilder<2> cb(surface1.begin());
-    cb.apply_discontinuities(fault.begin());
-    auto constraints = cb.build();
+    auto continuity = mesh_continuity(surface1.begin());
+    auto cut_cont = cut_at_intersection(continuity, surface1.begin(), fault.begin());
+    auto constraints = convert_to_constraints(cut_cont);
     auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
 
     // Quadrature details -- these parameters basically achieve machine precision
@@ -63,9 +63,9 @@ void half_space() {
     // Earth's surface
     auto surface2 = line_mesh({-50, 0.0}, {50, 0.0}).refine_repeatedly(9);
     
-    ContinuityBuilder<2> cb(surface2.begin());
-    cb.apply_discontinuities(fault.begin());
-    auto constraints = cb.build();
+    auto continuity = mesh_continuity(surface2.begin());
+    auto cut_cont = cut_at_intersection(continuity, surface2.begin(), fault.begin());
+    auto constraints = convert_to_constraints(cut_cont);
     auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
     
     TIC

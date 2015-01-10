@@ -29,11 +29,7 @@ struct FacetCornerIterator {
     }
 
     iterator& operator++() {
-        vertex_idx++;
-        if (vertex_idx == dim) {
-            vertex_idx = 0;
-            facet_idx++;
-        }
+        *this += 1;
         return *this;
     }
 
@@ -72,22 +68,6 @@ struct FacetCornerIterator {
     
     friend bool operator==(const iterator& a, const iterator& b) {
         return a.absolute_index() == b.absolute_index();
-    }
-
-    friend bool operator<(const iterator& a, const iterator& b) {
-        return a.absolute_index() < b.absolute_index();
-    }
-
-    friend bool operator>(const iterator& a, const iterator& b) {
-        return a.absolute_index() > b.absolute_index();
-    }
-
-    friend bool operator<=(const iterator& a, const iterator& b) {
-        return !(a > b);
-    }
-
-    friend bool operator>=(const iterator& a, const iterator& b) {
-        return !(a < b);
     }
 
     friend bool operator!=(const iterator& a, const iterator& b) {
