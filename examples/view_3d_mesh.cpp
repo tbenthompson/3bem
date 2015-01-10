@@ -16,7 +16,7 @@ void draw_mesh(Mesh<3> msh) {
     glEnd();
 }
 
-const Mesh<3> sphere = sphere_mesh({0.0, 1.0, 1.0}, 1.0).refine_repeatedly(3);
+const Mesh<3> sphere = sphere_mesh({0.0, 1.0, 1.0}, 1.0, 3);
 double rotate_y = 0; 
 double rotate_x = 0;
 void specialKeys( int key, int x, int y ) 

@@ -8,14 +8,14 @@ using namespace tbem;
 struct PremadeMesh3D {
     const Mesh<3> m;
     PremadeMesh3D():
-        m(sphere_mesh({0, 0, 0}, 1.0))
+        m(sphere_mesh({0, 0, 0}, 1.0, 0))
     { }
 };
 
 struct PremadeMesh2D {
     const Mesh<2> m;
     PremadeMesh2D():
-        m(circle_mesh({0, 0}, 1.0))
+        m(circle_mesh({0, 0}, 1.0, 0))
     { }
 };
 

@@ -1,5 +1,4 @@
 TOP PRIORITY (tasks until next merge with stable):
-MF: Consider deleting refine_mod and friends in Mesh. Rewrite sphere_mesh and circle_mesh to account for this.
 
 NEXT:
 NF: Hanging nodes?
