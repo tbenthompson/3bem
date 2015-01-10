@@ -30,7 +30,7 @@ std::array<std::vector<double>,3> random_pts(int N);
 double random_val();
 Vec3<double> random_pt();
 Vec3<double> spherify_pt(Vec3<double> pt, Vec3<double> c, double r);
-template <int dim>
+template <size_t dim>
 Vec<double,dim> random_pt_sphere(Vec<double,dim> c, double r);
 
 double error_inf(const std::vector<double>& a, const std::vector<double>& b);

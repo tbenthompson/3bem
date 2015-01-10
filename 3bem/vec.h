@@ -41,7 +41,7 @@ std::array<T, 3> index3(const std::vector<T>& x, const std::array<int, 3>& indic
  */
 
 // Cool! C++11 templated typedef
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 using Vec = std::array<T,dim>;
 template <typename T>
 using Vec3 = Vec<T,3>;
@@ -93,48 +93,48 @@ void operator*=(Vec2<T>& a, const F& s) {
     a[0] *= s; a[1] *= s;
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 void operator/=(Vec<T,dim>& a, const T& s) {
     double inv_s = 1 / s;
     a *= inv_s;
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 Vec<T,dim> operator+(const Vec<T,dim>& a, const Vec<T,dim>& b) {
     Vec<T,dim> res = a; res += b; return res;
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 Vec<T,dim> operator-(const Vec<T,dim>& a, const Vec<T,dim>& b) {
     Vec<T,dim> res = a; res -= b; return res;
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 Vec<T,dim> operator*(const Vec<T,dim>& a, const Vec<T,dim>& b) {
     Vec<T,dim> res = a; res *= b; return res;
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 Vec<T,dim> operator/(const Vec<T,dim>& a, const Vec<T,dim>& b) {
     Vec<T,dim> res = a; res /= b; return res;
 }
 
-template <typename T, typename F, unsigned long dim>
+template <typename T, typename F, size_t dim>
 Vec<T,dim> operator*(const Vec<T,dim>& a, const F& s) {
     Vec<T,dim> res = a; res *= s; return res;
 }
 
-template <typename T, typename F, unsigned long dim>
+template <typename T, typename F, size_t dim>
 Vec<T,dim> operator*(const F& s, const Vec<T,dim>& a) {
     Vec<T,dim> res = a; res *= s; return res;
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 Vec<T,dim> operator/(const Vec<T,dim>& a, const T& s) {
     Vec<T,dim> res = a; res /= s; return res;
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 std::ostream& operator<<(std::ostream& os, const Vec<T,dim>& a) {
     os << "(";
     if (dim > 0) {
@@ -196,39 +196,39 @@ T dot_product(const Vec<double,2>& x, const Vec<T,2>& y) {
     return sum(Vec<T,2>{{x[0] * y[0], x[1] * y[1]}});
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 T hypot2(const Vec<T,dim>& v) {
     return dot_product(v, v);
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 T hypot(const Vec<T,dim>& v) {
     return std::sqrt(hypot2(v));
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 void normalize(Vec<T,dim>& v) {
     v /= hypot(v);
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 Vec<T,dim> normalized(const Vec<T,dim>& v) {
     Vec<T,dim> res = v;
     normalize(res);
     return res;
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 inline T dist2(const Vec<T,dim>& v0, const Vec<T,dim>& v1) {
     return hypot2(v1 - v0);
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 inline T dist(const Vec<T,dim>& v0, const Vec<T,dim>& v1) {
     return hypot(v1 - v0);
 }
 
-template <typename T, unsigned long dim>
+template <typename T, size_t dim>
 inline Vec<T,dim> unit(const int k);
 
 template <>

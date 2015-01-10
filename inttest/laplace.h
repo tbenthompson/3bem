@@ -5,7 +5,7 @@
 
 using namespace tbem;
 
-template <int dim, typename Fnc, typename Deriv>
+template <size_t dim, typename Fnc, typename Deriv>
 void dirichlet_laplace_test(const Mesh<dim>& mesh,
                       std::vector<Vec<double,dim>> test_interior_pts,
                       const Fnc& fnc,
@@ -33,7 +33,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     auto p_double = make_problem<dim>(mesh, mesh, LaplaceDouble<dim>(), u);
     auto rhs_double = direct_interact(p_double, qs);
 
-    auto p_mass = make_problem<dim>(mesh, mesh, OneKernel<dim>(), u);
+    auto p_mass = make_problem<dim>(mesh, mesh, OneScalar<dim>(), u);
     auto rhs_mass = mass_term(p_mass, qs);
     
     int n_dofs = dim * mesh.facets.size();
