@@ -23,8 +23,6 @@ namespace tbem {
               << time_ms\
               << "ms.\n";
 
-std::vector<int> naturals(int min, int max);
-std::vector<int> naturals(int max);
 std::array<std::vector<double>,3> three_pts();
 
 std::vector<double> random_list(int N);

@@ -7,7 +7,6 @@ using namespace tbem;
 
 TEST(MortonEncode) {
     int split = 2;
-    //TODO: This could be a property based test. Use autocheck.
     uint64_t center = morton_encode(0, 0, split);
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {

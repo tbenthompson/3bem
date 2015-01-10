@@ -3,13 +3,14 @@
 namespace ac = autocheck;
 
 #include "numerics.h"
+#include "numbers.h"
 #include <iostream>
 #include "util.h"
 
 using namespace tbem;
 
-TEST(Naturals) {
-    auto nats5 = naturals(3, 8);
+TEST(Integers) {
+    auto nats5 = integers(3, 8);
     double correct[] = {3, 4, 5, 6, 7};
     CHECK_ARRAY_EQUAL(nats5, correct, 5);
 }

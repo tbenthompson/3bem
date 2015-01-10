@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include "numbers.h"
 
 namespace tbem {
 
@@ -83,12 +84,12 @@ void operator/=(Vec2<T>& a, const Vec2<T>& b) {
     a[0] /= b[0]; a[1] /= b[1]; 
 }
 
-template <typename T>
-void operator*=(Vec3<T>& a, const T& s) {
+template <typename T, typename F>
+void operator*=(Vec3<T>& a, const F& s) {
     a[0] *= s; a[1] *= s; a[2] *= s;
 }
-template <typename T>
-void operator*=(Vec2<T>& a, const T& s) {
+template <typename T, typename F>
+void operator*=(Vec2<T>& a, const F& s) {
     a[0] *= s; a[1] *= s;
 }
 
@@ -118,13 +119,13 @@ Vec<T,dim> operator/(const Vec<T,dim>& a, const Vec<T,dim>& b) {
     Vec<T,dim> res = a; res /= b; return res;
 }
 
-template <typename T, unsigned long dim>
-Vec<T,dim> operator*(const Vec<T,dim>& a, const T& s) {
+template <typename T, typename F, unsigned long dim>
+Vec<T,dim> operator*(const Vec<T,dim>& a, const F& s) {
     Vec<T,dim> res = a; res *= s; return res;
 }
 
-template <typename T, unsigned long dim>
-Vec<T,dim> operator*(const T& s, const Vec<T,dim>& a) {
+template <typename T, typename F, unsigned long dim>
+Vec<T,dim> operator*(const F& s, const Vec<T,dim>& a) {
     Vec<T,dim> res = a; res *= s; return res;
 }
 
@@ -163,6 +164,16 @@ T sum(const Vec2<T>& a) {
 }
 
 template <typename T>
+Vec<T,3> outer_product(const Vec<double,3>& a, const T& b) {
+    return {b * a[0], b * a[1], b * a[2]};
+}
+
+template <typename T>
+Vec<T,2> outer_product(const Vec<double,2>& a, const T& b) {
+    return {b * a[0], b * a[1]};
+}
+
+template <typename T>
 Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
     return {
         x[1] * y[2] - x[2] * y[1],
@@ -171,14 +182,23 @@ Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
     };
 }
 
-template <typename T, unsigned long dim>
-T dot(const Vec<T,dim>& x, const Vec<T,dim>& y) {
-    return sum(x*y);
+inline double dot_product(const double& x, const double& y) {
+    return x * y;
+}
+
+template <typename T>
+T dot_product(const Vec<double,3>& x, const Vec<T,3>& y) {
+    return sum(Vec<T,3>{{x[0] * y[0], x[1] * y[1], x[2] * y[2]}});
+}
+
+template <typename T>
+T dot_product(const Vec<double,2>& x, const Vec<T,2>& y) {
+    return sum(Vec<T,2>{{x[0] * y[0], x[1] * y[1]}});
 }
 
 template <typename T, unsigned long dim>
 T hypot2(const Vec<T,dim>& v) {
-    return dot(v, v);
+    return dot_product(v, v);
 }
 
 template <typename T, unsigned long dim>
@@ -225,13 +245,14 @@ inline Vec2<double> unit<double,2>(const int k) {
     return e_k;
 }
 
+using std::fabs;
 template <typename T>
 Vec3<T> fabs(const Vec3<T>& v) {
-    return {std::fabs(v[0]), std::fabs(v[1]), std::fabs(v[2])};
+    return {fabs(v[0]), fabs(v[1]), fabs(v[2])};
 }
 template <typename T>
 Vec2<T> fabs(const Vec2<T>& v) {
-    return {std::fabs(v[0]), std::fabs(v[1])};
+    return {fabs(v[0]), fabs(v[1])};
 }
 
 inline Vec3<double> 
@@ -261,25 +282,23 @@ inline double tri_area(const std::array<Vec3<double>,3>& corners) {
     return tri_area(unscaled_normal(corners));
 }
 
-//TODO: Pull some of this out into a separate module "geometry.h"
-//TODO: Consider using CGAL or other big fancy libraries
 enum Side {FRONT, INTERSECT, BEHIND};
 
 /* Determine which side of the plane/line defined by triangle/segment 
  * the provided point is on.
  */
-template <int dim>
+template <size_t dim>
 Side which_side_point(const std::array<Vec<double,dim>,dim>& face,
                 const Vec<double,dim>& pt) {
     auto normal = unscaled_normal(face);
-    double dot_val = dot(pt - face[0], normal);
+    double dot_val = dot_product(pt - face[0], normal);
     if (dot_val > 0) { return FRONT; }
     else if (dot_val < 0) { return BEHIND; }
     else { return INTERSECT; }
 }
 
 /* Returns the side of a plane that a triangle/segment is on. */
-template <int dim>
+template <size_t dim>
 Side facet_side(std::array<Side,dim> s);
 
 template <>
@@ -311,9 +330,10 @@ inline Side facet_side<3>(std::array<Side,3> s) {
 /* Determine the side of the plane/line defined by triangle/segment
  * that the given triangle/segment is on
  */
-template <int dim>
+template <size_t dim>
 Side which_side_facet(const std::array<Vec<double,dim>,dim>& plane,
-                const std::array<Vec<double,dim>,dim>& face) {
+    const std::array<Vec<double,dim>,dim>& face) {
+
     std::array<Side,dim> sides;
     for (int d = 0; d < dim; d++) {
         sides[d] = which_side_point<dim>(plane, face[d]);
@@ -348,6 +368,12 @@ inline Vec2<bool> operator<(const Vec2<T>& t, const T& rhs) {
     return {t[0] < rhs, t[1] < rhs};
 }
 
+inline double max(double x) {return x;}
+inline double max(Vec3<double> x) {return std::max(x[0], std::max(x[1], x[2]));}
+
+inline double min(double x) {return x;}
+inline double min(Vec3<double> x) {return std::min(x[0], std::min(x[1], x[2]));}
+
 inline bool any(bool a) {return a;}
 inline bool any(Vec3<bool> v) {return v[0] || v[1] || v[2];}
 
@@ -355,23 +381,29 @@ inline bool all(bool a) {return a;}
 inline bool all(Vec3<bool> v) {return v[0] && v[1] && v[2];}
 inline bool all(Vec2<bool> v) {return v[0] && v[1];}
 
-template <typename T>
-inline T ones();
-template <>
-inline double ones<double>() {return 1.0;}
-template <>
-inline Vec3<double> ones<Vec3<double>>() {return {1.0, 1.0, 1.0};}
-template <>
-inline Vec2<double> ones<Vec2<double>>() {return {1.0, 1.0};}
+template <typename F>
+struct constant<Vec2<F>> {
+    static Vec2<F> make(double val) { 
+        return {
+            constant<F>::make(val), constant<F>::make(val)
+        };
+    }
+};
 
-template <typename T>
-inline T zeros();
-template <>
-inline double zeros<double>() {return 0.0;}
-template <>
-inline Vec3<double> zeros<Vec3<double>>() {return {0.0, 0.0, 0.0};}
-template <>
-inline Vec2<double> zeros<Vec2<double>>() {return {0.0, 0.0};}
+template <typename F>
+struct constant<Vec3<F>> {
+    static Vec3<F> make(double val) { 
+        return {
+            constant<F>::make(val), constant<F>::make(val), constant<F>::make(val) 
+        };
+    }
+};
+
+template <typename T, typename F>
+std::vector<T> reinterpret_vector(const std::vector<F>& A) {
+    std::vector<T> out((T*)A.data(), (T*)(A.data() + A.size()));
+    return out;
+}
 
 } // END namespace tbem
 

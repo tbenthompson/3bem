@@ -1,0 +1,26 @@
+ * The set of all constraints can be thought of as a matrix, where row i
+ * represents the constraint on DOF i. Many rows will be the identity
+ * (x_i = x_i). These can obviously be ignored in the data structure 
+ * representing the constraints.
+
+Constraints can be represented by a sparse matrix with whatever data structure is appropriate. Maybe a hash table? Things not in the hashtable are unconstrained? Alternatively, if a majority of DOFs are constrained, then a more traditional sparse matrix format might be appropriate. The choice is not yet important.
+
+The get_all operation will retrieve all the DOFs from the subset of reduced DOFs. To perform this in linear time without complications, the constraint matrix should be ordered so that it is lower triangular. To do this,
+For each constraint:
+-- choose the DOF with the highest index as the "constrained" dof. This is the index of the row that the constraint is put into the sparse matrix.
+-- If that DOF is already constrained, then it substitute its constraint into the constraint currently under consideration. This should strictly reduce the value of the highest index. If the highest index dof is still constrained, repeat. 
+
+Two approaches to applying constraints:
+
+1. Within an iterative method, each iteration
+-- starting with the reduced DOF vector.
+-- expand to the full DOF vector using the constraints
+-- Compute MVP
+-- compress using constraints to the reduced DOF vector
+
+2. Within a direct method, collapse the matrix and RHS according to the method laid out in "Imposing linear constraints in finite-element analysis" by Webb 1990
+
+Another algorithm for directly eliminating the constrained variables: "Direct application of constraints to symmetric algebraic systems" by Schreyer and Parsons, 1995
+
+
+Some of the algorithms depend strongly on the size of a constraint. This is OKAY because almost all constraints will be <= 2 terms. However, an occasional constraint (like average displacement = 0) may be thousands of terms. Processing should proceeed in an order that makes sure these constraints don't take up tons of time.

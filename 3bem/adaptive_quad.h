@@ -35,14 +35,12 @@
 namespace tbem {
 using std::fabs;
 
-inline double max(double x) {return x;}
-inline double max(Vec3<double> x) {return std::max(x[0], std::max(x[1], x[2]));}
-
 const double lobatto_alpha = std::sqrt(2./3.);
 const double lobatto_beta = 1./std::sqrt(5.);
 const double lobatto_x1 = .94288241569547971905635175843185720232;
 const double lobatto_x2 = .64185334234578130578123554132903188354;
 const double lobatto_x3 = .23638319966214988028222377349205292599;
+
 
 template <typename T>
 T adaptlobstp(const std::function<T(double)>& f, const double a, const double b, 
@@ -108,16 +106,18 @@ double get_error_is(double p_tol, double erri1, double erri2, double is,
     return retval;
 }
 
-Vec2<double> get_error_is(double p_tol, Vec2<double> erri1, Vec2<double> erri2,
-                          Vec2<double> is, double a, double b) {
+template <typename T>
+Vec2<T> get_error_is(double p_tol, Vec2<T> erri1, Vec2<T> erri2,
+                          Vec2<T> is, double a, double b) {
     return {
         get_error_is(p_tol, erri1[0], erri2[0], is[0], a, b),
         get_error_is(p_tol, erri1[1], erri2[1], is[1], a, b)
     };
 }
 
-Vec3<double> get_error_is(double p_tol, Vec3<double> erri1, Vec3<double> erri2,
-                          Vec3<double> is, double a, double b) {
+template <typename T>
+Vec3<T> get_error_is(double p_tol, Vec3<T> erri1, Vec3<T> erri2,
+                          Vec3<T> is, double a, double b) {
     return {
         get_error_is(p_tol, erri1[0], erri2[0], is[0], a, b),
         get_error_is(p_tol, erri1[1], erri2[1], is[1], a, b),
@@ -125,10 +125,9 @@ Vec3<double> get_error_is(double p_tol, Vec3<double> erri1, Vec3<double> erri2,
     };
 }
 
-//TODO: Refactor the shit out of this! Super ugly.
 template <typename T>
-T adaptive_integrate(const std::function<T(double)>& f, double a, double b, double p_tol)
-{
+T adaptive_integrate(const std::function<T(double)>& f, double a,
+                     double b, double p_tol) {
     double m = (a + b) / 2.; 
     double h = (b - a) / 2.;
 
@@ -173,6 +172,7 @@ T adaptive_integrate(const std::function<T(double)>& f, double a, double b, doub
 
     return adaptlobstp(f, a, b, fa, fb, err_is);
 }
+
 
 } //END NAMESPACE tbem
 #endif

@@ -1,6 +1,7 @@
 #ifndef __HJKHSDFLJSLLHA_LAPLACE_H
 #define __HJKHSDFLJSLLHA_LAPLACE_H
 #include "3bem.h"
+#include "laplace_kernels.h"
 
 using namespace tbem;
 
@@ -17,21 +18,22 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     QuadStrategy<dim> qs(obs_quad_pts, src_quad_pts,
                          near_steps, far_threshold, tol);
 
-    auto constraints =
-        ConstraintMatrix::from_constraints(mesh_continuity<dim>(mesh));
+    auto continuity = mesh_continuity(mesh.begin());
+    auto constraints = convert_to_constraints(continuity);
+    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
 
-    auto u = constrained_interpolate<dim>(mesh, fnc, constraints);
-    auto dudn = constrained_interpolate<dim>(mesh, deriv, constraints);
+    auto u = constrained_interpolate<dim>(mesh, fnc, constraint_matrix);
+    auto dudn = constrained_interpolate<dim>(mesh, deriv, constraint_matrix);
 
     // Construct and evaluate the RHS for a Dirichlet Laplace problem:
     // The integral equation is: DoubleLayer(u) + u = SingleLayer(dudn)
     // First, the double layer potential is evaluated (DoubleLayer(u))
     // This is added to the mass matrix term (u)
     TIC
-    Problem<dim> p_double = {mesh, mesh, laplace_double<dim>, u};
+    auto p_double = make_problem<dim>(mesh, mesh, LaplaceDouble<dim>(), u);
     auto rhs_double = direct_interact(p_double, qs);
 
-    Problem<dim> p_mass = {mesh, mesh, one<dim>, u};
+    auto p_mass = make_problem<dim>(mesh, mesh, OneKernel<dim>(), u);
     auto rhs_mass = mass_term(p_mass, qs);
     
     int n_dofs = dim * mesh.facets.size();
@@ -44,13 +46,14 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     // The LHS matrix for a Dirichlet Laplace problem.
     TIC2
-    Problem<dim> p_single = {mesh, mesh, laplace_single<dim>, dudn};
+    auto single_kernel = LaplaceSingle<dim>();
+    auto p_single = make_problem<dim>(mesh, mesh, single_kernel, dudn);
     auto matrix = interact_matrix(p_single, qs);
     TOC("Matrix construct on " + std::to_string(mesh.facets.size()) + " facets");
 
 
     // Apply the constraints to the RHS vector to get a condensed vector.
-    auto rhs = constraints.get_reduced(rhs_full);
+    auto rhs = constraint_matrix.get_reduced(rhs_full);
     
     // Actually solve the linear system by providing a function to evaluate
     // matrix vector products.
@@ -64,28 +67,28 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
             // Expand the condensed vector to get all the DOFs. This is done
             // each iteration of the linear solve so that the matrix can be 
             // left in its uncondensed form.
-            auto x_full = constraints.get_all(x, n_dofs);
-            auto y_mult = bem_mat_mult(matrix, n_dofs, x_full); 
+            auto x_full = constraint_matrix.get_all(x, n_dofs);
+            auto y_mult = bem_mat_mult(matrix, single_kernel, n_dofs, x_full); 
 
             // Reduce the result of the matrix vector product.
-            auto y_temp = constraints.get_reduced(y_mult);
+            auto y_temp = constraint_matrix.get_reduced(y_mult);
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
             TOC("Matrix multiply on " + 
                 std::to_string(mesh.facets.size()) +
                 " faces");
         });
     // Get all the constrained DOFs from the reduced DOF vector.
-    auto dudn_solved = constraints.get_all(dudn_solved_subset, n_dofs);
+    auto dudn_solved = constraint_matrix.get_all(dudn_solved_subset, n_dofs);
 
     // Output the error and the solution 
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
-    hdf_out_surface<dim>("laplace" + std::to_string(dim) + "d.hdf5", 
-            mesh, {dudn_solved});
+    auto file = HDFOutputter("laplace" + std::to_string(dim) + "d.hdf5");
+    out_surface<dim>(file, mesh, dudn_solved, 1);
 
     for(int i = 0; i < test_interior_pts.size(); i++) {
         auto obs_pt = test_interior_pts[i]; 
-        ObsPt<dim> obs = {0.001, obs_pt, zeros<Vec<double,dim>>(),
-                          zeros<Vec<double,dim>>()};
+        ObsPt<dim> obs = {0.001, obs_pt, zeros<Vec<double,dim>>::make(),
+                          zeros<Vec<double,dim>>::make()};
        
         double double_layer = eval_integral_equation(p_double, qs, obs);
         double single_layer = eval_integral_equation(p_single, qs, obs);

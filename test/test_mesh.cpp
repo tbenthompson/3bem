@@ -73,8 +73,13 @@ TEST(MeshFieldUnion) {
     CHECK_EQUAL(mf_combined.facets[1].vertices[2], 4.0);
 }
 
+TEST(CallRefineWithNoFacetsToRefine) {
+    MeshField<double,3> mf1{ { {0.0, 1.0, 2.0} }, false, nullptr };
+    mf1.refine({});
+}
+
+
 int main(int, char const *[])
 {
-    int retval = UnitTest::RunAllTests();
-    return retval;
+    return UnitTest::RunAllTests();
 }

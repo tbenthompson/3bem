@@ -9,3 +9,4 @@ lib/*
 *.s
 *.pyc
 *.hdf5
+coverage.info

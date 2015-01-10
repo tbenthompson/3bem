@@ -1,0 +1,23 @@
+This is a work in progress on some coding standards for 3bem.
+
+Variables and functions are written in underscore notation:
+a_variable, do_something()
+
+Classes are CamelCase.
+
+Test first, implement second.
+
+Some things can only really be tested in a large-scale "integration test" that
+solves a full problem. This is okay, but try to avoid it.
+
+Use nouns for variable names and class names
+
+verbs for function names
+
+Names should be descriptive
+
+Functions should be short -- <20 lines
+
+Documentation should be in header files.
+
+Read "Clean Code"
