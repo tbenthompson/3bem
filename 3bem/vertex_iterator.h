@@ -1,5 +1,7 @@
 #ifndef __QWEQASDKJVNS_VERTEX_ITERATOR_H
 #define __QWEQASDKJVNS_VERTEX_ITERATOR_H
+#include <cassert>
+
 #include "mesh.h"
 
 namespace tbem {
@@ -37,6 +39,7 @@ struct FacetCornerIterator {
         int vertex_idx_too_far = vertex_idx + step; 
         facet_idx += vertex_idx_too_far / dim;
         vertex_idx = vertex_idx_too_far % dim;
+        assert(vertex_idx < dim);
         return *this;
     }
 
@@ -67,7 +70,8 @@ struct FacetCornerIterator {
     }
     
     friend bool operator==(const iterator& a, const iterator& b) {
-        return a.absolute_index() == b.absolute_index();
+        return (a.absolute_index() == b.absolute_index()) && 
+            ((&a.mesh) == (&b.mesh));
     }
 
     friend bool operator!=(const iterator& a, const iterator& b) {

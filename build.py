@@ -53,8 +53,8 @@ test_coverage_flags = ['--coverage']
 test_coverage_flags.extend(debug_flags)
 
 # cpp_flags.extend(test_coverage_flags)
-cpp_flags.extend(debug_flags)
-# cpp_flags.extend(release_flags)
+# cpp_flags.extend(debug_flags)
+cpp_flags.extend(release_flags)
 # cpp_flags.extend(profile_flags)
 
 lib_cpp_flags = ['-fPIC']
@@ -100,10 +100,12 @@ def just_test():
     compile_runner(test_rootname, cpp_flags)
     link_lib()
     link_runner(test_rootname, test_link_flags)
+    run(oname(test_rootname))
 
 
 def build():
     setup_tree()
+    compile()
     link()
 
 def setup_dir(dirname):
