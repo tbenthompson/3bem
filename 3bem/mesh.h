@@ -17,18 +17,18 @@ namespace tbem {
  * something like a InterpolatedField structure (or MeshField!).
  */
 
-template <typename T, int dim>
+template <typename T, size_t dim>
 struct FacetField {
     const Vec<T,dim> vertices;
 };
 
-template <int dim>
+template <size_t dim>
 using Facet = FacetField<Vec<double,dim>,dim>;
 
 template <typename T, size_t dim>
 struct FacetCornerIterator;
 
-template <typename T, int dim>
+template <typename T, size_t dim>
 struct MeshField {
     typedef std::function<T(T)> RefineFnc;
     const std::vector<FacetField<T,dim>> facets;
@@ -46,7 +46,7 @@ struct MeshField {
         const std::vector<std::array<int,dim>>& facets_by_vert_idx);
 };
 
-template <int dim>
+template <size_t dim>
 using Mesh = MeshField<Vec<double,dim>,dim>;
 
 } //END NAMESPACE tbem

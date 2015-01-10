@@ -79,12 +79,12 @@ struct FacetCornerIterator {
     }
 };
 
-template <int dim>
+template <size_t dim>
 using VertexIterator = FacetCornerIterator<Vec<double,dim>,dim>;
 
 /* This is useful to put VertexIterator as the key in an unordered_map
  */
-template <int dim>
+template <size_t dim>
 struct HashVertexIterator {
     size_t operator()(const VertexIterator<dim>& it) const {
         return std::hash<size_t>()(it.absolute_index());

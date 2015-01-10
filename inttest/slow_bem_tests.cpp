@@ -43,7 +43,7 @@ TEST(DirectInteractConstantLaplace) {
     }
     auto res1 = direct_interact(p_single, qs);
 
-    auto p_mass = make_problem<3>(sphere, sphere, OneKernel<3>(), str);
+    auto p_mass = make_problem<3>(sphere, sphere, OneScalar<3>(), str);
     auto res2 = mass_term(p_mass, qs);
     CHECK_ARRAY_CLOSE(res0, res2, n_dofs, 3e-2);
     CHECK_ARRAY_CLOSE(res1, res2, n_dofs, 3e-2);
@@ -132,18 +132,18 @@ TEST(ConstantLaplace2D) {
     }
 }
 
-template <int dim>
+template <size_t dim>
 void direct_interact_one_test(const Mesh<dim>& mesh,
                               double correct) {
     int n_dofs = dim * mesh.facets.size();
     std::vector<double> str(n_dofs, 1.0);
 
     QuadStrategy<dim> qs(2, 2, 3, 3.0, 1e-2);
-    auto p = make_problem<dim>(mesh, mesh, OneKernel<dim>(), str);
+    auto p = make_problem<dim>(mesh, mesh, OneScalar<dim>(), str);
     std::vector<double> res = direct_interact(p, qs);
     auto matrix = interact_matrix(p, qs);
 
-    std::vector<double> res2 = bem_mat_mult(matrix, OneKernel<dim>(), n_dofs, str);
+    std::vector<double> res2 = bem_mat_mult(matrix, OneScalar<dim>(), n_dofs, str);
     double total = 0.0;
     for (auto r: res) {
         total += r;
