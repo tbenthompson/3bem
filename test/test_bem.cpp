@@ -242,6 +242,15 @@ TEST(TensorKernel) {
     CHECK_EQUAL(result[1][0][1], 0.0); CHECK_EQUAL(result[1][1][0], 0.0);
 }
 
+TEST(TensorMassTerm) {
+    auto sphere = sphere_mesh({0,0,0}, 1.0, 1);
+    std::vector<Vec3<double>> str(sphere.n_dofs(), {1.0, 1.0, 1.0});
+    auto p = make_problem<3>(sphere, sphere, IdentityTensor<3,3,3>(), str);
+    QuadStrategy<3> qs(2);
+    auto res = mass_term(p, qs);
+    CHECK_EQUAL(res[0].size(), 3);
+}
+
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();
