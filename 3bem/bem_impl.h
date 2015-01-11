@@ -151,7 +151,7 @@ Vec<typename KT::OperatorType,dim> compute_near_term(const IntegralTerm<dim, KT>
 template <size_t dim, typename KT>
 Vec<typename KT::OperatorType,dim> compute_far_term(const IntegralTerm<dim, KT>& term) {
     auto integrals = zeros<Vec<typename KT::OperatorType,dim>>::make();
-    for (std::size_t i = 0; i < term.qs.src_far_quad.size(); i++) {
+    for (size_t i = 0; i < term.qs.src_far_quad.size(); i++) {
         integrals += eval_point_influence<dim>(
                         term.qs.src_far_quad[i].x_hat,
                         term.k, term.src_face,
@@ -195,7 +195,7 @@ integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
                          const ObsPt<dim>& obs) {
     int n_out_dofs = dim * p.src_mesh.facets.size();
     std::vector<typename KT::OperatorType> result(n_out_dofs);
-    for (std::size_t i = 0; i < p.src_mesh.facets.size(); i++) {
+    for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
         auto src_face = FacetInfo<dim>::build(p.src_mesh.facets[i]);
         const double dist2 = appx_face_dist2<dim>(obs.loc, src_face.face.vertices);
         auto term = make_integral_term(qs, p.K, obs, src_face, dist2);
@@ -212,7 +212,7 @@ double eval_integral_equation(const Problem<dim,KT>& p, const QuadStrategy<dim>&
                               const ObsPt<dim>& obs) {
     double result = 0.0;
     auto row = integral_equation_vector(p, qs, obs);
-    for (std::size_t i = 0; i < row.size(); i++) {
+    for (size_t i = 0; i < row.size(); i++) {
         result += row[i] * p.src_strength[i];
     }
     return result;
@@ -222,14 +222,14 @@ template <size_t dim, typename KT>
 std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
                                     const QuadStrategy<dim>& qs) 
 {
-    std::size_t n_obs_dofs = dim * p.obs_mesh.facets.size();
-    std::size_t n_src_dofs = dim * p.src_mesh.facets.size();
+    size_t n_obs_dofs = dim * p.obs_mesh.facets.size();
+    size_t n_src_dofs = dim * p.src_mesh.facets.size();
     std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_src_dofs, 
             zeros<typename KT::OperatorType>::make());
 #pragma omp parallel for
-    for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
+    for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
-        for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
+        for (size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
             auto pt = ObsPt<dim>::from_face(qs.obs_quad[obs_q].x_hat, obs_face);
 
             const auto row = integral_equation_vector(p, qs, pt);
@@ -238,10 +238,12 @@ std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
 
             for (int v = 0; v < dim; v++) {
                 int b = dim * obs_idx + v;
-                for (std::size_t i = 0; i < n_src_dofs; i++) {
-                    typename KT::OperatorType contribution =
-                        basis[v] * row[i] * qs.obs_quad[obs_q].w * obs_face.jacobian;
-                    matrix[b * n_src_dofs + i] += contribution;
+                for (size_t i = 0; i < n_src_dofs; i++) {
+                    matrix[b * n_src_dofs + i] +=
+                        basis[v] *
+                        row[i] *
+                        qs.obs_quad[obs_q].w *
+                        obs_face.jacobian;
                 }
             }
         }
@@ -250,26 +252,34 @@ std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
 }
 
 template <size_t dim, typename KT>
-std::vector<double> mass_term(const Problem<dim,KT>& p,
-                              const QuadStrategy<dim>& qs) {
+std::vector<typename KT::OutType> mass_term(const Problem<dim,KT>& p,
+    const QuadStrategy<dim>& qs) 
+{
     int n_obs_dofs = dim * p.obs_mesh.facets.size();
-    std::vector<double> integrals(n_obs_dofs, 0.0);
-    for (std::size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
+    std::vector<typename KT::OutType> integrals(
+        n_obs_dofs, 
+        zeros<typename KT::OutType>::make()
+    );
+
+    for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
-        for (std::size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
+        for (size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
             auto qpt = qs.obs_quad[obs_q];
+
             int dof = dim * obs_idx;
-            Vec<double,dim> face_vals;
+            Vec<typename KT::InType,dim> face_vals;
             for (int d = 0; d < dim; d++) {
                 face_vals[d] = p.src_strength[dof + d];
             }
-            double interp_val = linear_interp<dim>(qpt.x_hat, face_vals);
+
+            auto interp_val = dot_product(linear_basis(qpt.x_hat), face_vals);
+            auto kernel_val = p.K.call_with_no_params();
+            auto out_val = dot_product(interp_val, kernel_val);
 
             auto basis = linear_basis(qpt.x_hat);
-
             for(int v = 0; v < dim; v++) {
                 integrals[dof + v] += obs_face.jacobian * basis[v] * 
-                                      interp_val * qpt.w;
+                                      out_val * qpt.w;
             }
         }
     }
@@ -286,7 +296,7 @@ bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
                                           zeros<typename KT::OutType>::make());
 #pragma omp parallel for
     for (int i = 0; i < n_obs_dofs; i++) {
-        for (std::size_t j = 0; j < x.size(); j++) {
+        for (size_t j = 0; j < x.size(); j++) {
             res[i] += dot_product(x[j], A[i * x.size() + j]);
         }
     }

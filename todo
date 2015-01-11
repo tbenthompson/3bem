@@ -21,6 +21,7 @@ NEW FUNCTIONALITY(NF):
 -- Slight encapsulation of the std::vector storage with useful things like negation, element-wise multiplication, etc. This might be useful to combine with a MeshField style field-over-mesh sitution.
 
 MODIFIED FUNCTIONALITY(MF):
+-- Replace std::vector with a MeshField in Problem and the BEM code?
 
 STRUCTURAL(S):
 -- Restrict the main .h files to outward facing interfaces. Use _impl.h files for inward facing header files. Do this with constraints.h
