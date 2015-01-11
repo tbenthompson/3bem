@@ -21,14 +21,14 @@ struct PremadeMesh2D {
 
 TEST_FIXTURE(PremadeMesh3D, VertexIteratorEnd) {
     auto iter = m.end();
-    CHECK_EQUAL(iter.facet_idx, m.facets.size());
+    CHECK_EQUAL(iter.facet_idx, m.n_facets());
     CHECK_EQUAL(iter.vertex_idx, 0);
 }
 
 TEST_FIXTURE(PremadeMesh3D, VertexIteratorIsNotEnd) {
     auto iter = m.begin();
     CHECK(!iter.is_end());
-    CHECK((iter + 3 * m.facets.size()).is_end());
+    CHECK((iter + m.n_dofs()).is_end());
 }
 
 TEST_FIXTURE(PremadeMesh3D, NextVertNextFacet) {
@@ -58,7 +58,7 @@ TEST_FIXTURE(PremadeMesh3D, CountVerticesInMesh) {
     for (auto iter = m.begin(); iter != m.end(); ++iter) {
         n_verts++;
     }
-    CHECK_EQUAL(n_verts, m.facets.size() * 3);
+    CHECK_EQUAL(n_verts, m.n_dofs());
 }
 
 TEST_FIXTURE(PremadeMesh2D, DereferenceNonInitial) {

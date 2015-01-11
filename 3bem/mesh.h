@@ -33,6 +33,9 @@ struct MeshField {
     typedef std::function<T(T)> RefineFnc;
     const std::vector<FacetField<T,dim>> facets;
 
+    size_t n_facets() const;
+    size_t n_dofs() const;
+
     FacetCornerIterator<T,dim> begin() const;
     FacetCornerIterator<T,dim> end() const;
 

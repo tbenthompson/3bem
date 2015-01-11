@@ -13,7 +13,7 @@ using namespace tbem;
 auto fault = line_mesh({0, -1}, {0, 0}).refine_repeatedly(0);
 
 // Unit slip on the fault plane.
-std::vector<double> one_vec(2 * fault.facets.size(), 1.0);
+std::vector<double> one_vec(fault.n_dofs(), 1.0);
 
 
 void full_space() {
@@ -87,16 +87,15 @@ void half_space() {
 
     // Solve the linear system.
     double linear_solve_tol = 1e-5;
-    int n_dofs = 2 * surface2.facets.size();
     auto soln_reduced = solve_system(rhs, linear_solve_tol,
         [&] (std::vector<double>& x, std::vector<double>& y) {
-            auto x_full = constraint_matrix.get_all(x, n_dofs);
-            auto y_mult = bem_mat_mult(lhs, hypersingular_kernel, n_dofs, x_full); 
+            auto x_full = constraint_matrix.get_all(x, surface2.n_dofs());
+            auto y_mult = bem_mat_mult(lhs, hypersingular_kernel, surface2.n_dofs(), x_full); 
             auto y_temp = constraint_matrix.get_reduced(y_mult);
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
         });
     TOC("Solve antiplane half space.");
-    auto soln = constraint_matrix.get_all(soln_reduced, n_dofs);
+    auto soln = constraint_matrix.get_all(soln_reduced, surface2.n_dofs());
 
     auto filesurface = HDFOutputter("antiplane_half_space.hdf5");
     out_surface<2>(filesurface, surface2, soln, 1);

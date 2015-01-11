@@ -5,6 +5,16 @@ namespace tbem {
 
 
 template <typename T, size_t dim>
+size_t MeshField<T,dim>::n_facets() const {
+    return facets.size();
+}
+
+template <typename T, size_t dim>
+size_t MeshField<T,dim>::n_dofs() const {
+    return dim * n_facets();
+}
+
+template <typename T, size_t dim>
 FacetCornerIterator<T,dim> MeshField<T,dim>::begin() const {
     return FacetCornerIterator<T,dim>(*this, 0, 0);
 }

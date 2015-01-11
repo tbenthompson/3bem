@@ -36,8 +36,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     auto p_mass = make_problem<dim>(mesh, mesh, OneScalar<dim>(), u);
     auto rhs_mass = mass_term(p_mass, qs);
     
-    int n_dofs = dim * mesh.facets.size();
-    std::vector<double> rhs_full(n_dofs);
+    std::vector<double> rhs_full(mesh.n_dofs());
     double mass_factor[2] = {1.0, 1.0};
     for (unsigned int i = 0; i < rhs_full.size(); i++){
         rhs_full[i] = rhs_double[i] + mass_factor[dim - 2] * rhs_mass[i];
@@ -49,7 +48,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     auto single_kernel = LaplaceSingle<dim>();
     auto p_single = make_problem<dim>(mesh, mesh, single_kernel, dudn);
     auto matrix = interact_matrix(p_single, qs);
-    TOC("Matrix construct on " + std::to_string(mesh.facets.size()) + " facets");
+    TOC("Matrix construct on " + std::to_string(mesh.n_facets()) + " facets");
 
 
     // Apply the constraints to the RHS vector to get a condensed vector.
@@ -67,18 +66,16 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
             // Expand the condensed vector to get all the DOFs. This is done
             // each iteration of the linear solve so that the matrix can be 
             // left in its uncondensed form.
-            auto x_full = constraint_matrix.get_all(x, n_dofs);
-            auto y_mult = bem_mat_mult(matrix, single_kernel, n_dofs, x_full); 
+            auto x_full = constraint_matrix.get_all(x, mesh.n_dofs());
+            auto y_mult = bem_mat_mult(matrix, single_kernel, mesh.n_dofs(), x_full); 
 
             // Reduce the result of the matrix vector product.
             auto y_temp = constraint_matrix.get_reduced(y_mult);
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
-            TOC("Matrix multiply on " + 
-                std::to_string(mesh.facets.size()) +
-                " faces");
+            TOC("Matrix multiply on " + std::to_string(mesh.n_facets()) + " faces");
         });
     // Get all the constrained DOFs from the reduced DOF vector.
-    auto dudn_solved = constraint_matrix.get_all(dudn_solved_subset, n_dofs);
+    auto dudn_solved = constraint_matrix.get_all(dudn_solved_subset, mesh.n_dofs());
 
     // Output the error and the solution 
     std::cout << error_inf(dudn_solved, dudn) << std::endl;

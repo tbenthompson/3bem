@@ -31,7 +31,7 @@ TEST(FindOverlappingVerticesDifferentMeshes) {
 TEST(FindOverlappingVertices) {
     auto m = disjoint_mesh();
     auto overlaps = find_overlapping_vertices(m.begin(), m.begin());
-    int n_verts = 2 * m.facets.size();
+    int n_verts = m.n_dofs();
     CHECK_EQUAL(overlaps.size(), n_verts);
     for (int i = 0; i < n_verts; i++) {
         auto v_it = m.begin() + i;
@@ -48,9 +48,9 @@ TEST(FindOverlappingVerticesSameMeshDisjoint) {
 TEST(FindOverlappingVerticesSameMeshConnected) {
     auto m = connected_mesh();
     auto overlaps = find_overlapping_vertices_same_mesh(m.begin());
-    CHECK_EQUAL(overlaps.size(), m.facets.size() - 1);
+    CHECK_EQUAL(overlaps.size(), m.n_facets() - 1);
 
-    int n_verts = 2 * m.facets.size();
+    int n_verts = m.n_dofs();
     for (int i = 1; i < n_verts - 2; i += 2) {
         auto v_it = m.begin() + i;
         CHECK(overlaps.find(v_it)->second == v_it + 1);

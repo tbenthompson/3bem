@@ -26,13 +26,10 @@ int main() {
     double poisson = 0.25;
     ElasticHypersingular<2> hyp(shear_mod, poisson);
 
-    std::size_t n_fault_dofs = 2 * fault.facets.size();
-    std::size_t n_surface_dofs = 2 * surface.facets.size();
-
     double slip = 1;
-    std::vector<Vec2<double>> du(n_fault_dofs, constant<Vec2<double>>::make(slip));
+    std::vector<Vec2<double>> du(fault.n_dofs(), constant<Vec2<double>>::make(slip));
 
-    std::vector<Vec2<double>> all_dofs_rhs(n_surface_dofs, 
+    std::vector<Vec2<double>> all_dofs_rhs(surface.n_dofs(), 
         zeros<Vec2<double>>::make());
 
     TIC
@@ -58,8 +55,8 @@ int main() {
             std::cout << "iteration " << count << std::endl;
             count++;
             auto x_vec_reduced = reinterpret_vector<Vec2<double>>(x);
-            auto x_vec = constraint_matrix.get_all(x_vec_reduced, n_surface_dofs);
-            auto y_vec = bem_mat_mult(lhs, hyp, n_surface_dofs, x_vec);
+            auto x_vec = constraint_matrix.get_all(x_vec_reduced, surface.n_dofs());
+            auto y_vec = bem_mat_mult(lhs, hyp, surface.n_dofs(), x_vec);
             auto y_vec_reduced = constraint_matrix.get_reduced(y_vec);
             for (std::size_t i = 0; i < y_vec_reduced.size(); i++) {
                 y[2 * i] = y_vec_reduced[i][0];
@@ -69,7 +66,7 @@ int main() {
     );
 
     auto disp_reduced_vec = reinterpret_vector<Vec2<double>>(disp_reduced);
-    auto disp_vec = constraint_matrix.get_all(disp_reduced_vec, n_surface_dofs);
+    auto disp_vec = constraint_matrix.get_all(disp_reduced_vec, surface.n_dofs());
 
     auto file = HDFOutputter("planestrain_thrust.hdf5");
     out_surface<2>(file, surface, disp_vec, 2);
