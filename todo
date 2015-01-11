@@ -1,4 +1,5 @@
 TOP PRIORITY (tasks until next merge with stable):
+DD: Define much much clearer interfaces with the outside world.
 NF: Hanging nodes?
 NF: Handle the general case when fault-surface intersection does not occur at a vertex.
 ---- Linked to hanging nodes in that lots of geometry code needs to be used/written.

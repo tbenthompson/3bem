@@ -104,10 +104,10 @@ Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term
 
 template <size_t dim, typename KT>
 struct Problem {
-    const Mesh<dim>& src_mesh;
-    const Mesh<dim>& obs_mesh;
-    const KT& K;
-    const std::vector<typename KT::InType>& src_strength;
+    const Mesh<dim> src_mesh;
+    const Mesh<dim> obs_mesh;
+    const KT K;
+    const std::vector<typename KT::InType> src_strength;
 };
 
 template <size_t dim, typename KT>
