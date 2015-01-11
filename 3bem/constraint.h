@@ -60,11 +60,11 @@ struct ConstraintEQ {
     }
 };
 
-ConstraintEQ boundary_condition(int dof, double value) {
+inline ConstraintEQ boundary_condition(int dof, double value) {
     return {{LinearTerm{dof, 1.0}}, value};
 }
 
-ConstraintEQ continuity_constraint(int dof1, int dof2) {
+inline ConstraintEQ continuity_constraint(int dof1, int dof2) {
     return {
         {LinearTerm{dof1, 1.0}, LinearTerm{dof2, -1.0}},
         0.0
