@@ -40,7 +40,7 @@ TEST(P2M_M2P_OneCell) {
     }
 }
 
-TEST(TreecodeOneScalar) {
+TEST(TreecodeIdentityScalar) {
     int n = 6;
     auto oct = random_pts_tree(n, 5);
     std::vector<double> strength(n, 1.0);

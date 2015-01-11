@@ -33,7 +33,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     auto p_double = make_problem<dim>(mesh, mesh, LaplaceDouble<dim>(), u);
     auto rhs_double = direct_interact(p_double, qs);
 
-    auto p_mass = make_problem<dim>(mesh, mesh, OneScalar<dim>(), u);
+    auto p_mass = make_problem<dim>(mesh, mesh, IdentityScalar<dim>(), u);
     auto rhs_mass = mass_term(p_mass, qs);
     
     std::vector<double> rhs_full(mesh.n_dofs());
