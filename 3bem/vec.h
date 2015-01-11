@@ -147,9 +147,9 @@ std::ostream& operator<<(std::ostream& os, const Vec<T,dim>& a) {
     return os;
 }
 
-template <typename T>
-Vec3<T> operator-(const Vec3<T>& v) {
-    return {-v[0], -v[1], -v[2]};
+template <typename T, size_t dim>
+Vec<T,dim> operator-(const Vec<T,dim>& v) {
+    return zeros<Vec<T,dim>>::make() - v;
 }
 
 
