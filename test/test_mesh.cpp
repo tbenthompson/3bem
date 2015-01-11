@@ -17,7 +17,7 @@ double perimeter(Mesh<2> m) {
 TEST(Refine2DMesh) {
     auto m2 = circle_mesh({0,0}, 1.0, 3);
     double length = perimeter(m2);
-    CHECK_EQUAL(m2.facets.size(), 32);
+    CHECK_EQUAL(m2.n_facets(), 32);
     CHECK_CLOSE(length, 2 * M_PI, 1e-1);
 }
 
@@ -63,7 +63,7 @@ TEST(MeshFieldUnion) {
     MeshField<double,3> mf1{{{0.0, 1.0, 2.0}}};
     MeshField<double,3> mf2{{{2.0, 3.0, 4.0}, {4.0, 5.0, 6.0}}};
     auto mf_combined = MeshField<double,3>::form_union({mf1, mf2});
-    CHECK_EQUAL(mf_combined.facets.size(), 3);
+    CHECK_EQUAL(mf_combined.n_facets(), 3);
     CHECK_EQUAL(mf_combined.facets[1].vertices[2], 4.0);
 }
 

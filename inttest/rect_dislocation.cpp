@@ -33,12 +33,10 @@ int main() {
 
     ElasticHypersingular<3> hyp(30e9, 0.25);
     
-    std::size_t n_fault_dofs = 3 * fault.facets.size();
-    std::size_t n_surface_dofs = 3 * surface.facets.size();
-    std::cout << "Number of surface DOFs: " << n_surface_dofs << std::endl;
+    std::cout << "Number of surface DOFs: " << surface.n_dofs() << std::endl;
 
-    std::vector<Vec3<double>> du(n_fault_dofs, {1.0, 0.0, 0.0});
-    std::vector<Vec3<double>> all_dofs_rhs(n_surface_dofs, 
+    std::vector<Vec3<double>> du(fault.n_dofs(), {1.0, 0.0, 0.0});
+    std::vector<Vec3<double>> all_dofs_rhs(surface.n_dofs(), 
                                            zeros<Vec3<double>>::make());
 
     TIC
@@ -61,8 +59,8 @@ int main() {
             std::cout << "iteration " << count << std::endl;
             count++;
             auto x_vec_reduced = reinterpret_vector<Vec3<double>>(x);
-            auto x_vec = constraint_matrix.get_all(x_vec_reduced, n_surface_dofs);
-            auto y_vec = bem_mat_mult(lhs, hyp, n_surface_dofs, x_vec);
+            auto x_vec = constraint_matrix.get_all(x_vec_reduced, surface.n_dofs());
+            auto y_vec = bem_mat_mult(lhs, hyp, surface.n_dofs(), x_vec);
             auto y_vec_reduced = constraint_matrix.get_reduced(y_vec);
             for (std::size_t i = 0; i < y_vec_reduced.size(); i++) {
                 y[3 * i] = -y_vec_reduced[i][0];
@@ -73,7 +71,7 @@ int main() {
     );
 
     auto disp_reduced_vec = reinterpret_vector<Vec3<double>>(disp_reduced);
-    auto disp_vec = constraint_matrix.get_all(disp_reduced_vec, n_surface_dofs);
+    auto disp_vec = constraint_matrix.get_all(disp_reduced_vec, surface.n_dofs());
 
     auto file = HDFOutputter("rect_dislocation.hdf5");
     out_surface<3>(file, surface, disp_vec, 3);

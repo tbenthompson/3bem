@@ -99,7 +99,7 @@ struct EvalProb {
         obs_pt(random_pt()),
         obs_n(random_pt()),
         obs_length_scale(get_len_scale<3>(sphere, 0, gauss_order)),
-        src_strength(std::vector<double>(3 * sphere.facets.size(), 1.0))
+        src_strength(std::vector<double>(sphere.n_dofs(), 1.0))
     {}
 
     template <typename KT>
@@ -173,8 +173,8 @@ TEST(MatrixRowVsEval) {
 
 TEST(MassTerm) {
     auto sphere = sphere_mesh({0,0,0}, 1.0, 0);
-    std::vector<double> str(3 * sphere.facets.size(), 1.0);
-    for (std::size_t i = 0; i < sphere.facets.size(); i++) {
+    std::vector<double> str(sphere.n_dofs(), 1.0);
+    for (std::size_t i = 0; i < sphere.n_facets(); i++) {
         for (int d = 0; d < 3; d++) {
             if (sphere.facets[i].vertices[d][0] > 0.5) {
                 str[3 * i + d] = 0.0;
@@ -184,7 +184,7 @@ TEST(MassTerm) {
     auto p = make_problem<3>(sphere, sphere, OneScalar<3>(), str);
     QuadStrategy<3> qs(2);
     auto res = mass_term(p, qs);
-    CHECK_EQUAL(res.size(), 3 * sphere.facets.size());
+    CHECK_EQUAL(res.size(), sphere.n_dofs());
     double true_area = 0.0;
     for (auto f: sphere.facets) {
         true_area += tri_area(f.vertices);
