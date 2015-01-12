@@ -123,11 +123,19 @@ TEST(ConstantLaplace2D) {
         // Now, do all of the observation quadrature points using direct_interact
         // But, we need to scale by the length of the element of the observation
         // mesh, because the new values are for element interactions, not pt
-        // interactions.
+        // interactions. For example, Integral(1)_{0 to 0.2} == 0.2
         double scaling_factor = 0.5 * dist(obs_circle.facets[0].vertices[0],
                                            obs_circle.facets[0].vertices[1]);
         auto results = direct_interact(p, qs);
-        std::vector<double> all_ones(results.size(), -7.0 * scaling_factor);
+        std::vector<double> all_ones(results.size());
+        const double integral_of_basis_fnc = 0.5;
+        for (size_t j = 0; j < obs_circle.facets.size(); j++) {
+            double val = -7.0 * integral_of_basis_fnc * 
+                dist(obs_circle.facets[j].vertices[0],
+                     obs_circle.facets[j].vertices[1]);
+            all_ones[2 * j] = val;
+            all_ones[2 * j + 1] = val;
+        }
         CHECK_ARRAY_CLOSE(results, all_ones, results.size(), 1e-3);
     }
 }

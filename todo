@@ -1,4 +1,5 @@
 TOP PRIORITY (tasks until next merge with stable):
+T: Set up a simple automatic way to confirm that each of the integration tests with a known analytic solution is checked against that solution
 DD: Define much much clearer interfaces with the outside world.
 NF: Hanging nodes?
 NF: Handle the general case when fault-surface intersection does not occur at a vertex.
@@ -7,7 +8,6 @@ NF: Handle the general case when fault-surface intersection does not occur at a 
 NF: Link BEM to FMM
 
 TESTS(T):
--- Set up a simple automatic way to confirm that each of the integration tests with a known analytic solution is checked against that solution
 
 DESIGN DECISIONS(DD):
 -- Consider a different way of handling constraints. Precomputing a reduced matrix and RHS? This would be useful for imposing boundary conditions.

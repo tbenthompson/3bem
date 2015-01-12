@@ -4,12 +4,7 @@
 namespace tbem {
 
 Vec3<double> spherify(const Vec3<double>& center, double r, const Vec3<double>& x) {
-    double dist = std::sqrt(dist2(x, center));
-    return {
-        (r / dist) * (x[0] - center[0]) + center[0],
-        (r / dist) * (x[1] - center[1]) + center[1],
-        (r / dist) * (x[2] - center[2]) + center[2]
-    };
+    return (r / dist(x, center)) * (x - center) + center;
 }
 
 Mesh<3> sphere_mesh(const Vec3<double>& center, double r, int refinements) {
@@ -62,11 +57,7 @@ Mesh<2> line_mesh(const Vec2<double>& a, const Vec2<double>& b) {
 
 
 Vec2<double> circlify(const Vec2<double>& center, double r, const Vec2<double>& x) {
-    double dist = std::sqrt(dist2(x, center));
-    return {
-        (r / dist) * (x[0] - center[0]) + center[0],
-        (r / dist) * (x[1] - center[1]) + center[1]
-    };
+    return (r / dist(x, center)) * (x - center) + center;
 }
 
 Mesh<2> circle_mesh(std::array<double,2> c, double r, int refinements) {
