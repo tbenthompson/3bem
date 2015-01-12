@@ -10,10 +10,10 @@ int main() {
     auto fault = line_mesh({-1, -1}, {0, 0}).refine_repeatedly(0);
 
     // Simple low accuracy quadrature strategy.
-    QuadStrategy<2> qs(2);
+    QuadStrategy<2> qs(3);
 
     // Earth's surface
-    auto surface = line_mesh({-25, 0.0}, {25, 0.0}).refine_repeatedly(8);
+    auto surface = line_mesh({-100, 0.0}, {100, 0.0}).refine_repeatedly(11);
 
     auto continuity = mesh_continuity(surface.begin());
     auto cut_continuity = cut_at_intersection(

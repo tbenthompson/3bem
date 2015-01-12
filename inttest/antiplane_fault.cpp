@@ -20,7 +20,7 @@ void full_space() {
     // FULL SPACE STRIKE SLIP FAULT IN ANTIPLANE STRAIN
 
     // Surface mesh at y = -0.5
-    auto surface1 = line_mesh({-10, -0.5}, {10, -0.5}).refine_repeatedly(14);
+    auto surface1 = line_mesh({-10, -0.5}, {10, -0.5}).refine_repeatedly(12);
 
     auto continuity = mesh_continuity(surface1.begin());
     auto cut_cont = cut_at_intersection(continuity, surface1.begin(), fault.begin());
@@ -58,10 +58,10 @@ void half_space() {
     // HALF SPACE STRIKE SLIP FAULT IN ANTIPLANE STRAIN
 
     // Simple low accuracy quadrature strategy.
-    QuadStrategy<2> qs(2);
+    QuadStrategy<2> qs(3);
 
     // Earth's surface
-    auto surface2 = line_mesh({-50, 0.0}, {50, 0.0}).refine_repeatedly(9);
+    auto surface2 = line_mesh({-50, 0.0}, {50, 0.0}).refine_repeatedly(8);
     
     auto continuity = mesh_continuity(surface2.begin());
     auto cut_cont = cut_at_intersection(continuity, surface2.begin(), fault.begin());
@@ -102,6 +102,7 @@ void half_space() {
 
 
     // Loop over a bunch of interior points and evaluate the displacement
+    const double shear_modulus = 30e9;
     int nx = 200; int ny = 200;
     int n_tot = nx * ny;
     std::vector<Vec2<double>> interior_pts(n_tot);
@@ -122,8 +123,8 @@ void half_space() {
             interior_pts[i * ny + j] = pt;
 
             ObsPt<2> obs[] = {
-                {0.001, pt, {0, 1}, {0, -1}},
-                {0.001, pt, {1, 0}, {0, -1}}
+                {0.001, pt, {1, 0}, {0, -1}},
+                {0.001, pt, {0, 1}, {0, -1}}
             };
 
             auto p_disp_fault = make_problem<2>(fault, surface2,
@@ -143,7 +144,7 @@ void half_space() {
                 eval_fault = eval_integral_equation(p_trac_fault, qs, obs[d]);
                 eval_surf = eval_integral_equation(p_trac_surf, qs, obs[d]);
                 eval = eval_surf + eval_fault;
-                interior_trac[d][i * ny + j] = eval;
+                interior_trac[d][i * ny + j] = shear_modulus * eval;
             }
 
         }
