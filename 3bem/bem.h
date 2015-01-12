@@ -166,8 +166,8 @@ integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
  * tolerance for evaluating the integral equation.
  */
 template <size_t dim, typename KT>
-double eval_integral_equation(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
-                              const ObsPt<dim>& obs);
+typename KT::OutType eval_integral_equation(const Problem<dim,KT>& p,
+    const QuadStrategy<dim>& qs, const ObsPt<dim>& obs);
 
 /* Given a kernel function and two meshes this function calculates the
  * Galerkin boundary element matrix representing the operator 
