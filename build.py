@@ -171,11 +171,19 @@ def link_inttests():
 def link_runner(source, flags):
     run(compiler, '-o', oname(source), oname(source + '.o'), flags)
 
-def run_tests():
+def fast_tests():
     run_test_set(tests)
 
-def run_integration_tests():
+def slow_tests():
     run_test_set(inttests)
+    check_slow_tests()
+
+def check_slow_tests():
+    subprocess.call('\
+        py.test -s \
+        tools/check_planestrain.py \
+        tools/check_antiplane.py\
+    ', shell = True)
 
 def run_test_set(test_names):
     for test_file in test_names:
