@@ -208,12 +208,13 @@ integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
 }
 
 template <size_t dim, typename KT>
-double eval_integral_equation(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
-                              const ObsPt<dim>& obs) {
-    double result = 0.0;
+typename KT::OutType eval_integral_equation(const Problem<dim,KT>& p,
+    const QuadStrategy<dim>& qs, const ObsPt<dim>& obs) 
+{
+    auto result = zeros<typename KT::OutType>::make();
     auto row = integral_equation_vector(p, qs, obs);
     for (size_t i = 0; i < row.size(); i++) {
-        result += row[i] * p.src_strength[i];
+        result += dot_product(p.src_strength[i], row[i]);
     }
     return result;
 }

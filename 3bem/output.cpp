@@ -21,7 +21,7 @@ HDFOutputter::~HDFOutputter() {
     close_file(file_id);
 }
 
-void HDFOutputter::write_locations(int dim1, int dim2, const void* data_ptr) {
+void HDFOutputter::write_locations(int dim1, int dim2, const void* data_ptr) const {
     // Create the data space for the vertices dataset.
     hsize_t data_dims[2];
     data_dims[0] = dim1;
@@ -43,7 +43,7 @@ void HDFOutputter::write_locations(int dim1, int dim2, const void* data_ptr) {
     H5Sclose(locs_dataspace_id);
 }
 
-void HDFOutputter::write_values(int n_vars, const std::vector<double>& data) {
+void HDFOutputter::write_values(int n_vars, const std::vector<double>& data) const {
     assert(data.size() % n_vars == 0);
 
     int n_dofs = data.size() / n_vars;
