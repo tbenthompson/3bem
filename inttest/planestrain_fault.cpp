@@ -68,6 +68,6 @@ int main() {
     auto disp_reduced_vec = reinterpret_vector<Vec2<double>>(disp_reduced);
     auto disp_vec = constraint_matrix.get_all(disp_reduced_vec, surface.n_dofs());
 
-    auto file = HDFOutputter("planestrain_thrust.hdf5");
+    auto file = HDFOutputter("test_out/planestrain_thrust.hdf5");
     out_surface<2>(file, surface, disp_vec, 2);
 }

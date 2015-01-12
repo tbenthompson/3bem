@@ -50,7 +50,7 @@ void full_space() {
         }, constraint_matrix);
     TOC("Solve fullspace antiplane strike slip motion")
 
-    auto file = HDFOutputter("antiplane_full_space.hdf5");
+    auto file = HDFOutputter("test_out/antiplane_full_space.hdf5");
     out_surface<2>(file, surface1, disp, 1);
 }
     
@@ -97,7 +97,7 @@ void half_space() {
     TOC("Solve antiplane half space.");
     auto soln = constraint_matrix.get_all(soln_reduced, surface2.n_dofs());
 
-    auto filesurface = HDFOutputter("antiplane_half_space.hdf5");
+    auto filesurface = HDFOutputter("test_out/antiplane_half_space.hdf5");
     out_surface<2>(filesurface, surface2, soln, 1);
 
 
@@ -148,11 +148,11 @@ void half_space() {
 
         }
     }
-    auto fileu = HDFOutputter("antiplane_half_space_volu.hdf5");
+    auto fileu = HDFOutputter("test_out/antiplane_half_space_volu.hdf5");
     out_volume<2>(fileu, interior_pts, interior_disp, 1);
-    auto filetx = HDFOutputter("antiplane_half_space_voltx.hdf5");
+    auto filetx = HDFOutputter("test_out/antiplane_half_space_voltx.hdf5");
     out_volume<2>(filetx, interior_pts, interior_trac[0], 1);
-    auto filety = HDFOutputter("antiplane_half_space_volty.hdf5");
+    auto filety = HDFOutputter("test_out/antiplane_half_space_volty.hdf5");
     out_volume<2>(filety, interior_pts, interior_trac[1], 1);
     TOC("Interior eval.")
 }

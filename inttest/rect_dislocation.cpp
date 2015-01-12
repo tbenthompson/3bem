@@ -6,7 +6,7 @@ using namespace tbem;
 
 int main() {
     double surf_width = 4;
-    int refine_surf = 6;
+    int refine_surf = 4;
     double far_threshold = 3.0;
     int near_steps = 5;
     int src_quad_pts = 2;
@@ -73,6 +73,6 @@ int main() {
     auto disp_reduced_vec = reinterpret_vector<Vec3<double>>(disp_reduced);
     auto disp_vec = constraint_matrix.get_all(disp_reduced_vec, surface.n_dofs());
 
-    auto file = HDFOutputter("rect_dislocation.hdf5");
+    auto file = HDFOutputter("test_out/rect_dislocation.hdf5");
     out_surface<3>(file, surface, disp_vec, 3);
 }

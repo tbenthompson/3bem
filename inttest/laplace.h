@@ -79,7 +79,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     // Output the error and the solution 
     std::cout << error_inf(dudn_solved, dudn) << std::endl;
-    auto file = HDFOutputter("laplace" + std::to_string(dim) + "d.hdf5");
+    auto file = HDFOutputter("test_out/laplace" + std::to_string(dim) + "d.hdf5");
     out_surface<dim>(file, mesh, dudn_solved, 1);
 
     for(int i = 0; i < test_interior_pts.size(); i++) {

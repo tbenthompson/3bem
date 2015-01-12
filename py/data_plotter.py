@@ -12,6 +12,9 @@ def plot2d(facets, data):
         facets[:, y_index].flatten()
     ]).T
 
+    print vertices.shape
+    print data.shape
+
     # Harmonic laplace test
     # theta = np.linspace(0, 2 * np.pi, 1000)
     # x = 5 + 3 * np.cos(theta)
@@ -24,7 +27,7 @@ def plot2d(facets, data):
     # plt.plot(x, exact, 'r')
 
     # Antiplane
-    x = vertices[:, 1]
+    x = vertices[:, 0]
     # s = 1
     # uz = s * np.arctan(1.0 / x) / np.pi
     # plt.plot(x, uz, 'r.-')
