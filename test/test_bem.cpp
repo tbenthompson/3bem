@@ -151,7 +151,8 @@ TEST(MassTerm) {
     IdentityScalar<3> identity;
     auto p = make_problem<3>(sphere, sphere, identity);
     QuadStrategy<3> qs(2);
-    auto res = mass_term(p, qs, str);
+    auto mass_op = mass_operator(p, qs);
+    auto res = apply_operator(mass_op, str);
     CHECK_EQUAL(res.size(), sphere.n_dofs());
     double true_area = 0.0;
     for (auto f: sphere.facets) {
@@ -216,7 +217,8 @@ TEST(TensorMassTerm) {
     IdentityTensor<3,3,3> identity;
     auto p = make_problem<3>(sphere, sphere, identity);
     QuadStrategy<3> qs(2);
-    auto res = mass_term(p, qs, str);
+    auto mass_op = mass_operator(p, qs);
+    auto res = apply_operator(mass_op, str);
     CHECK_EQUAL(res[0].size(), 3);
 }
 

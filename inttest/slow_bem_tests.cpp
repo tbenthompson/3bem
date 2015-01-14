@@ -50,7 +50,8 @@ TEST(GalerkinMatrixConstantLaplace) {
 
     IdentityScalar<3> identity;
     auto p_mass = make_problem<3>(sphere, sphere, identity);
-    auto res2 = mass_term(p_mass, qs, str);
+    auto mass_op = mass_operator(p_mass, qs);
+    auto res2 = apply_operator(mass_op, str);
     CHECK_ARRAY_CLOSE(res0, res2, n_dofs, 3e-2);
     CHECK_ARRAY_CLOSE(res1, res2, n_dofs, 3e-2);
     CHECK_ARRAY_CLOSE(res0, res1, n_dofs, 3e-2);
