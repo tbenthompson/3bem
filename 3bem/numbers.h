@@ -1,11 +1,19 @@
 #ifndef __RRRRJJJJJJZZZZZZEEEAKSDJLKJ_CONSTANTS_H
 #define __RRRRJJJJJJZZZZZZEEEAKSDJLKJ_CONSTANTS_H
 #include <vector>
+#include <cstddef>
 
 namespace tbem {
 
-std::vector<int> integers(int min, int max);
-std::vector<int> integers(int max);
+/* Equivalent of python's range, returns all n for which min <= n < max
+ */
+std::vector<int> range(int min, int max);
+
+/* range(0, max)
+ */
+std::vector<int> range(int max);
+
+std::vector<double> linspace(const double& a, const double& b, size_t count);
 
 template <typename T, typename F = void>
 struct constant;

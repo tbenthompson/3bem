@@ -14,6 +14,7 @@ from tools.fabricate import *
 
 import os
 import sys
+import shutil
 import subprocess
 
 def files_in_dir(directory, ext):
@@ -179,6 +180,8 @@ def slow_tests():
     check_slow_tests()
 
 def check_slow_tests():
+    if os.path.exists('tools/__pycache__'):
+        shutil.rmtree('tools/__pycache__')
     subprocess.call('\
         py.test -s \
         tools/check_planestrain.py \

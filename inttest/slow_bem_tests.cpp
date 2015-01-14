@@ -102,7 +102,6 @@ TEST(OneSegment2D) {
     test_one_segment2d_integration(LaplaceDouble<2>(), exact_double);
 }
 
-//TODO: slow test
 TEST(ConstantLaplace2D) {
     int refine = 6;
     Vec2<double> center = {20.0, 0.0};
@@ -124,15 +123,13 @@ TEST(ConstantLaplace2D) {
         // But, we need to scale by the length of the element of the observation
         // mesh, because the new values are for element interactions, not pt
         // interactions. For example, Integral(1)_{0 to 0.2} == 0.2
-        double scaling_factor = 0.5 * dist(obs_circle.facets[0].vertices[0],
-                                           obs_circle.facets[0].vertices[1]);
         auto results = direct_interact(p, qs);
         std::vector<double> all_ones(results.size());
         const double integral_of_basis_fnc = 0.5;
         for (size_t j = 0; j < obs_circle.facets.size(); j++) {
-            double val = -7.0 * integral_of_basis_fnc * 
-                dist(obs_circle.facets[j].vertices[0],
-                     obs_circle.facets[j].vertices[1]);
+            double integral_of_one = integral_of_basis_fnc * 
+                dist(obs_circle.facets[j].vertices[0], obs_circle.facets[j].vertices[1]);
+            double val = -7.0 * integral_of_one;
             all_ones[2 * j] = val;
             all_ones[2 * j + 1] = val;
         }

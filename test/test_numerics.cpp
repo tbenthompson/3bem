@@ -9,11 +9,6 @@ namespace ac = autocheck;
 
 using namespace tbem;
 
-TEST(Integers) {
-    auto nats5 = integers(3, 8);
-    double correct[] = {3, 4, 5, 6, 7};
-    CHECK_ARRAY_EQUAL(nats5, correct, 5);
-}
 
 TEST(LinearMapping) {
     auto gen100 = ac::fix(100, ac::generator<double>());
