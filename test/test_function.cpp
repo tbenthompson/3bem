@@ -1,5 +1,6 @@
 #include "UnitTest++.h"
 #include "function.h"
+#include "vec_ops.h"
 
 using namespace tbem;
 

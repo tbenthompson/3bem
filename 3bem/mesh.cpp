@@ -1,5 +1,6 @@
 #include "mesh.h"
 #include "vertex_iterator.h"
+#include "vec_ops.h"
 #include <algorithm>
 
 namespace tbem {

@@ -33,8 +33,9 @@ int main() {
         zeros<Vec2<double>>::make());
 
     TIC
-    auto p_rhs = make_problem<2>(fault, surface, hyp, du);
-    auto res = direct_interact(p_rhs, qs);
+    auto p_rhs = make_problem<2>(fault, surface, hyp);
+    auto rhs_op = interact_matrix(p_rhs, qs);
+    auto res = bem_mat_mult(rhs_op, p_rhs.K, surface.n_dofs(), du);
     for (unsigned int i = 0; i < res.size(); i++) {
         all_dofs_rhs[i] += res[i];
     }
@@ -44,7 +45,7 @@ int main() {
     int n_reduced_surface_dofs = 2 * rhs.size();
 
     TIC2
-    auto p_lhs = make_problem<2>(surface, surface, hyp, {});
+    auto p_lhs = make_problem<2>(surface, surface, hyp);
     auto lhs = interact_matrix(p_lhs, qs);
     TOC("Building LHS matrices");
 
