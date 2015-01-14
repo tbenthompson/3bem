@@ -143,10 +143,10 @@ void half_space() {
 
             for (int d = 0; d < 2; d++) {
                 auto p_trac_fault = make_problem<2>(
-                    fault, surface2, LaplaceHypersingular<2>()
+                    fault, surface2, hypersingular_kernel
                 );
                 auto p_trac_surf = make_problem<2>(
-                    surface2, surface2, LaplaceHypersingular<2>()
+                    surface2, surface2, hypersingular_kernel
                 );
                 auto trac_fault_op = mesh_to_point_operator(p_trac_fault, qs, obs[d]);
                 auto trac_surf_op = mesh_to_point_operator(p_trac_surf, qs, obs[d]);

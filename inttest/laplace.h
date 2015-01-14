@@ -37,7 +37,8 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     IdentityScalar<dim> identity;
     auto p_mass = make_problem<dim>(mesh, mesh, identity);
-    auto rhs_mass = mass_term(p_mass, qs, u);
+    auto mass_op = mass_operator(p_mass, qs);
+    auto rhs_mass = apply_operator(mass_op, u);
     
     std::vector<double> rhs_full(mesh.n_dofs());
     double mass_factor[2] = {1.0, 1.0};

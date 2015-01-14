@@ -121,7 +121,7 @@ std::vector<OutType>
 apply_operator(const MatrixOperator<InType,OutType,OperatorType>& A,
     const std::vector<InType>& x) 
 {
-    assert(A.cols * x.size() == A.data.size());
+    assert(A.rows * x.size() == A.data.size());
     std::vector<OutType> res(A.rows, zeros<OutType>::make());
 #pragma omp parallel for
     for (int i = 0; i < A.rows; i++) {
@@ -168,8 +168,8 @@ template <size_t dim, typename KT>
 MatrixOperator<typename KT::InType, typename KT::OutType, typename KT::OperatorType>
 mesh_to_mesh_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs) 
 {
-    size_t n_obs_dofs = dim * p.obs_mesh.facets.size();
-    size_t n_src_dofs = dim * p.src_mesh.facets.size();
+    size_t n_obs_dofs = p.obs_mesh.n_dofs();
+    size_t n_src_dofs = p.src_mesh.n_dofs();
     std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_src_dofs, 
             zeros<typename KT::OperatorType>::make());
 #pragma omp parallel for
@@ -183,12 +183,12 @@ mesh_to_mesh_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
 
             const auto basis = linear_basis(qs.obs_quad[obs_q].x_hat);
 
-            for (int v = 0; v < dim; v++) {
-                int b = dim * obs_idx + v;
-                for (size_t i = 0; i < n_src_dofs; i++) {
-                    matrix[b * n_src_dofs + i] +=
-                        basis[v] *
-                        row.data[i] *
+            for (int obs_basis_idx = 0; obs_basis_idx < dim; obs_basis_idx++) {
+                int obs_dof = dim * obs_idx + obs_basis_idx;
+                for (size_t src_dof = 0; src_dof < n_src_dofs; src_dof++) {
+                    matrix[obs_dof * n_src_dofs + src_dof] +=
+                        basis[obs_basis_idx] *
+                        row.data[src_dof] *
                         qs.obs_quad[obs_q].w *
                         obs_face.jacobian;
                 }
@@ -198,7 +198,6 @@ mesh_to_mesh_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
     return {n_obs_dofs, n_src_dofs, matrix};
 }
 
-
 /* In many integral equations, one of the functions of interest appears
  * outside of an integration, possibly as the result of integrating against
  * a delta function. 
@@ -207,38 +206,38 @@ mesh_to_mesh_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
  * This function calculates such integrals using gaussian quadrature.
  */
 template <size_t dim, typename KT>
-std::vector<typename KT::OutType> mass_term(const Problem<dim,KT>& p,
-    const QuadStrategy<dim>& qs, const std::vector<typename KT::InType> function) 
+MatrixOperator<typename KT::InType, typename KT::OutType, typename KT::OperatorType>
+mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
 {
-    int n_obs_dofs = dim * p.obs_mesh.facets.size();
-    std::vector<typename KT::OutType> integrals(
-        n_obs_dofs, 
-        zeros<typename KT::OutType>::make()
-    );
+    auto n_obs_dofs = p.obs_mesh.n_dofs();
+    std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_obs_dofs,
+        zeros<typename KT::OperatorType>::make());    
 
-    for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
+    auto kernel_val = p.K.call_with_no_params();
+    for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) 
+    {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
-        for (size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
+        for (size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) 
+        {
             auto qpt = qs.obs_quad[obs_q];
-
-            int dof = dim * obs_idx;
-            Vec<typename KT::InType,dim> face_vals;
-            for (int d = 0; d < dim; d++) {
-                face_vals[d] = function[dof + d];
-            }
-
-            auto interp_val = dot_product(linear_basis(qpt.x_hat), face_vals);
-            auto kernel_val = p.K.call_with_no_params();
-            auto out_val = dot_product(interp_val, kernel_val);
-
             auto basis = linear_basis(qpt.x_hat);
-            for(int v = 0; v < dim; v++) {
-                integrals[dof + v] += obs_face.jacobian * basis[v] * 
-                                      out_val * qpt.w;
+            auto weight = obs_face.jacobian * qpt.w;
+
+            for (size_t obs_basis_idx = 0; obs_basis_idx < dim; obs_basis_idx++) 
+            {
+                int obs_dof = dim * obs_idx + obs_basis_idx;
+                for (size_t src_basis_idx = 0; src_basis_idx < dim; src_basis_idx++) 
+                {
+                    int src_dof = dim * obs_idx + src_basis_idx;
+                    auto basis_product = basis[obs_basis_idx] * basis[src_basis_idx];
+                    auto entry_value = kernel_val * basis_product * weight;
+                    matrix[obs_dof * n_obs_dofs + src_dof] += entry_value;
+                }
             }
         }
     }
-    return integrals;
+
+    return {n_obs_dofs, n_obs_dofs, matrix};
 }
 
 template <size_t dim>
