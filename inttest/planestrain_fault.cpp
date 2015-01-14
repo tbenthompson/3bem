@@ -34,8 +34,8 @@ int main() {
 
     TIC
     auto p_rhs = make_problem<2>(fault, surface, hyp);
-    auto rhs_op = interact_matrix(p_rhs, qs);
-    auto res = bem_mat_mult(rhs_op, du);
+    auto rhs_op = mesh_to_mesh_operator(p_rhs, qs);
+    auto res = apply_operator(rhs_op, du);
     for (unsigned int i = 0; i < res.size(); i++) {
         all_dofs_rhs[i] += res[i];
     }
@@ -46,7 +46,7 @@ int main() {
 
     TIC2
     auto p_lhs = make_problem<2>(surface, surface, hyp);
-    auto lhs = interact_matrix(p_lhs, qs);
+    auto lhs = mesh_to_mesh_operator(p_lhs, qs);
     TOC("Building LHS matrices");
 
     int count = 0;
@@ -57,7 +57,7 @@ int main() {
             count++;
             auto x_vec_reduced = reinterpret_vector<Vec2<double>>(x);
             auto x_vec = constraint_matrix.get_all(x_vec_reduced, surface.n_dofs());
-            auto y_vec = bem_mat_mult(lhs, x_vec);
+            auto y_vec = apply_operator(lhs, x_vec);
             auto y_vec_reduced = constraint_matrix.get_reduced(y_vec);
             for (std::size_t i = 0; i < y_vec_reduced.size(); i++) {
                 y[2 * i] = y_vec_reduced[i][0];
