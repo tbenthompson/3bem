@@ -30,11 +30,13 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     // First, the double layer potential is evaluated (DoubleLayer(u))
     // This is added to the mass matrix term (u)
     TIC
-    auto p_double = make_problem<dim>(mesh, mesh, LaplaceDouble<dim>());
+    LaplaceDouble<dim> double_kernel;
+    auto p_double = make_problem<dim>(mesh, mesh, double_kernel);
     auto rhs_double_op = interact_matrix(p_double, qs);
-    auto rhs_double = bem_mat_mult(rhs_double_op, p_double.K, mesh.n_dofs(), u);
+    auto rhs_double = bem_mat_mult(rhs_double_op, u);
 
-    auto p_mass = make_problem<dim>(mesh, mesh, IdentityScalar<dim>());
+    IdentityScalar<dim> identity;
+    auto p_mass = make_problem<dim>(mesh, mesh, identity);
     auto rhs_mass = mass_term(p_mass, qs, u);
     
     std::vector<double> rhs_full(mesh.n_dofs());
@@ -46,7 +48,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     // The LHS matrix for a Dirichlet Laplace problem.
     TIC2
-    auto single_kernel = LaplaceSingle<dim>();
+    LaplaceSingle<dim> single_kernel;
     auto p_single = make_problem<dim>(mesh, mesh, single_kernel);
     auto matrix = interact_matrix(p_single, qs);
     TOC("Matrix construct on " + std::to_string(mesh.n_facets()) + " facets");
@@ -68,7 +70,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
             // each iteration of the linear solve so that the matrix can be 
             // left in its uncondensed form.
             auto x_full = constraint_matrix.get_all(x, mesh.n_dofs());
-            auto y_mult = bem_mat_mult(matrix, single_kernel, mesh.n_dofs(), x_full); 
+            auto y_mult = bem_mat_mult(matrix, x_full); 
 
             // Reduce the result of the matrix vector product.
             auto y_temp = constraint_matrix.get_reduced(y_mult);
@@ -90,9 +92,9 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
                           zeros<Vec<double,dim>>::make()};
        
         auto double_layer_op = integral_equation_vector(p_double, qs, obs);
-        double double_layer = bem_mat_mult(double_layer_op, p_double.K, 1, u)[0];
+        double double_layer = bem_mat_mult(double_layer_op, u)[0];
         auto single_layer_op = integral_equation_vector(p_single, qs, obs);
-        double single_layer = bem_mat_mult(single_layer_op, p_single.K, 1, dudn)[0];
+        double single_layer = bem_mat_mult(single_layer_op, dudn)[0];
         double result = single_layer - double_layer;
         double exact = fnc(obs_pt);
         double error = std::fabs(exact - result);

@@ -42,7 +42,7 @@ int main() {
     TIC
     auto p_rhs = make_problem<3>(fault, surface, hyp);
     auto rhs_op = interact_matrix(p_rhs, qs);
-    auto res = bem_mat_mult(rhs_op, p_rhs.K, surface.n_dofs(), du);
+    auto res = bem_mat_mult(rhs_op, du);
     for (unsigned int i = 0; i < res.size(); i++) {
         all_dofs_rhs[i] += res[i];
     }
@@ -61,7 +61,7 @@ int main() {
             count++;
             auto x_vec_reduced = reinterpret_vector<Vec3<double>>(x);
             auto x_vec = constraint_matrix.get_all(x_vec_reduced, surface.n_dofs());
-            auto y_vec = bem_mat_mult(lhs, hyp, surface.n_dofs(), x_vec);
+            auto y_vec = bem_mat_mult(lhs, x_vec);
             auto y_vec_reduced = constraint_matrix.get_reduced(y_vec);
             for (std::size_t i = 0; i < y_vec_reduced.size(); i++) {
                 y[3 * i] = -y_vec_reduced[i][0];

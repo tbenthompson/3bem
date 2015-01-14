@@ -38,12 +38,13 @@ void full_space() {
 
     // Interpolate the integral equation onto the y = -0.5 surface
     TIC
-    auto p_fullspace = make_problem<2>(fault, surface1, LaplaceDouble<2>());
+    LaplaceDouble<2> double_kernel;
+    auto p_fullspace = make_problem<2>(fault, surface1, double_kernel);
     auto disp = constrained_interpolate<2>(surface1, [&] (Vec2<double> x) {
             ObsPt<2> obs = {0.001, x, {0, 1}, {0, -1}};
 
             auto op = integral_equation_vector(p_fullspace, qs, obs);
-            double val = bem_mat_mult(op, p_fullspace.K, 1, slip)[0];
+            double val = bem_mat_mult(op, slip)[0];
             double exact = std::atan(0.5 / x[0]) / M_PI;
             if (std::fabs(exact - val) > 1e-13 && x[0] != 0) {
                 std::cout << "FAILED Antiplane for x = " << x << std::endl;
@@ -72,17 +73,17 @@ void half_space() {
     
     TIC
     // The RHS is the effect of the fault on the surface.
-    auto p_rhs_halfspace = make_problem<2>(fault, surface2, LaplaceHypersingular<2>());
+    LaplaceHypersingular<2> hypersingular_kernel;
+    auto p_rhs_halfspace = make_problem<2>(fault, surface2, hypersingular_kernel);
 
     auto rhs_op = interact_matrix(p_rhs_halfspace, qs);
-    auto rhs_all_dofs = bem_mat_mult(rhs_op, p_rhs_halfspace.K, surface2.n_dofs(), slip);
+    auto rhs_all_dofs = bem_mat_mult(rhs_op, slip);
     for (std::size_t i = 0; i < rhs_all_dofs.size(); i++) {
         rhs_all_dofs[i] = -rhs_all_dofs[i];
     }
     auto rhs = constraint_matrix.get_reduced(rhs_all_dofs);
 
     // The LHS is the effect of the surface on the surface.
-    auto hypersingular_kernel = LaplaceHypersingular<2>();
     auto p_lhs_halfspace = make_problem<2>(surface2, surface2, hypersingular_kernel);
     auto lhs = interact_matrix(p_lhs_halfspace, qs);
 
@@ -91,7 +92,7 @@ void half_space() {
     auto soln_reduced = solve_system(rhs, linear_solve_tol,
         [&] (std::vector<double>& x, std::vector<double>& y) {
             auto x_full = constraint_matrix.get_all(x, surface2.n_dofs());
-            auto y_mult = bem_mat_mult(lhs, hypersingular_kernel, surface2.n_dofs(), x_full); 
+            auto y_mult = bem_mat_mult(lhs, x_full); 
             auto y_temp = constraint_matrix.get_reduced(y_mult);
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
         });
@@ -127,15 +128,15 @@ void half_space() {
                 {0.001, pt, {1, 0}, {0, -1}},
                 {0.001, pt, {0, 1}, {0, -1}}
             };
-
-            auto p_disp_fault = make_problem<2>(fault, surface2, LaplaceDouble<2>());
-            auto p_disp_surf = make_problem<2>(surface2, surface2, LaplaceDouble<2>());
+            LaplaceDouble<2> double_kernel;
+            auto p_disp_fault = make_problem<2>(fault, surface2, double_kernel);
+            auto p_disp_surf = make_problem<2>(surface2, surface2, double_kernel);
 
             auto eval_fault_op = integral_equation_vector(p_disp_fault, qs, obs[0]);
             auto eval_surf_op = integral_equation_vector(p_disp_surf, qs, obs[0]);
 
-            double eval_fault = bem_mat_mult(eval_fault_op, p_disp_fault.K, 1, slip)[0];
-            double eval_surf = bem_mat_mult(eval_surf_op, p_disp_surf.K, 1, soln)[0];
+            double eval_fault = bem_mat_mult(eval_fault_op, slip)[0];
+            double eval_surf = bem_mat_mult(eval_surf_op, soln)[0];
 
             double eval = eval_surf + eval_fault;
             interior_disp[i * ny + j] = eval;
@@ -150,8 +151,8 @@ void half_space() {
                 auto trac_fault_op = integral_equation_vector(p_trac_fault, qs, obs[d]);
                 auto trac_surf_op = integral_equation_vector(p_trac_surf, qs, obs[d]);
 
-                eval_fault = bem_mat_mult(trac_fault_op, p_trac_fault.K, 1, slip)[0];
-                eval_surf = bem_mat_mult(trac_surf_op, p_trac_surf.K, 1, soln)[0];
+                eval_fault = bem_mat_mult(trac_fault_op, slip)[0];
+                eval_surf = bem_mat_mult(trac_surf_op, soln)[0];
                 eval = eval_surf + eval_fault;
                 interior_trac[d][i * ny + j] = shear_modulus * eval;
             }
