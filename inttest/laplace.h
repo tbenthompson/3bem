@@ -32,8 +32,8 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     TIC
     LaplaceDouble<dim> double_kernel;
     auto p_double = make_problem<dim>(mesh, mesh, double_kernel);
-    auto rhs_double_op = interact_matrix(p_double, qs);
-    auto rhs_double = bem_mat_mult(rhs_double_op, u);
+    auto rhs_double_op = mesh_to_mesh_operator(p_double, qs);
+    auto rhs_double = apply_operator(rhs_double_op, u);
 
     IdentityScalar<dim> identity;
     auto p_mass = make_problem<dim>(mesh, mesh, identity);
@@ -50,7 +50,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     TIC2
     LaplaceSingle<dim> single_kernel;
     auto p_single = make_problem<dim>(mesh, mesh, single_kernel);
-    auto matrix = interact_matrix(p_single, qs);
+    auto matrix = mesh_to_mesh_operator(p_single, qs);
     TOC("Matrix construct on " + std::to_string(mesh.n_facets()) + " facets");
 
 
@@ -70,7 +70,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
             // each iteration of the linear solve so that the matrix can be 
             // left in its uncondensed form.
             auto x_full = constraint_matrix.get_all(x, mesh.n_dofs());
-            auto y_mult = bem_mat_mult(matrix, x_full); 
+            auto y_mult = apply_operator(matrix, x_full); 
 
             // Reduce the result of the matrix vector product.
             auto y_temp = constraint_matrix.get_reduced(y_mult);
@@ -91,10 +91,10 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
         ObsPt<dim> obs = {0.001, obs_pt, zeros<Vec<double,dim>>::make(),
                           zeros<Vec<double,dim>>::make()};
        
-        auto double_layer_op = integral_equation_vector(p_double, qs, obs);
-        double double_layer = bem_mat_mult(double_layer_op, u)[0];
-        auto single_layer_op = integral_equation_vector(p_single, qs, obs);
-        double single_layer = bem_mat_mult(single_layer_op, dudn)[0];
+        auto double_layer_op = mesh_to_point_operator(p_double, qs, obs);
+        double double_layer = apply_operator(double_layer_op, u)[0];
+        auto single_layer_op = mesh_to_point_operator(p_single, qs, obs);
+        double single_layer = apply_operator(single_layer_op, dudn)[0];
         double result = single_layer - double_layer;
         double exact = fnc(obs_pt);
         double error = std::fabs(exact - result);

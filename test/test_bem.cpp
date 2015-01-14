@@ -105,8 +105,8 @@ struct EvalProb {
     double go(const Kernel<3,double,double,double>& k) {
         auto p = make_problem<3>(sphere, sphere, k);
         ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
-        auto op = integral_equation_vector(p, qs, obs);
-        return bem_mat_mult(op, src_strength)[0];
+        auto op = mesh_to_point_operator(p, qs, obs);
+        return apply_operator(op, src_strength)[0];
     }
 
     Mesh<3> sphere;

@@ -23,8 +23,8 @@ TEST(ConstantLaplaceBoundary) {
             LaplaceDouble<3> double_kernel;
             auto p = make_problem<3>(sphere, sphere, double_kernel);
             ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
-            auto op = integral_equation_vector(p, qs, obs);
-            auto result = bem_mat_mult(op, src_strength);
+            auto op = mesh_to_point_operator(p, qs, obs);
+            auto result = apply_operator(op, src_strength);
             CHECK_CLOSE(result[0], -1.0, 1e-2);
         }
     }
@@ -40,13 +40,13 @@ TEST(GalerkinMatrixConstantLaplace) {
     auto p_double = make_problem<3>(sphere, sphere, double_kernel);
     LaplaceSingle<3> single_kernel;
     auto p_single = make_problem<3>(sphere, sphere, single_kernel);
-    auto mat0 = interact_matrix(p_double, qs);
-    auto res0 = bem_mat_mult(mat0, str);
+    auto mat0 = mesh_to_mesh_operator(p_double, qs);
+    auto res0 = apply_operator(mat0, str);
     for (std::size_t i = 0; i < res0.size(); i++) {
         res0[i] = -res0[i];
     }
-    auto mat1 = interact_matrix(p_single, qs);
-    auto res1 = bem_mat_mult(mat1, str);
+    auto mat1 = mesh_to_mesh_operator(p_single, qs);
+    auto res1 = apply_operator(mat1, str);
 
     IdentityScalar<3> identity;
     auto p_mass = make_problem<3>(sphere, sphere, identity);
@@ -124,17 +124,17 @@ TEST(ConstantLaplace2D) {
         // Do it via eval_integral_equation for each vertex.
         for (std::size_t i = 0; i < obs_circle.n_facets(); i++) {
             ObsPt<2> pt = {0.390, obs_circle.facets[i].vertices[0], {0,0}, {0,0}}; 
-            auto op = integral_equation_vector(p, qs, pt);
-            double result = bem_mat_mult(op, u)[0];
+            auto op = mesh_to_point_operator(p, qs, pt);
+            double result = apply_operator(op, u)[0];
             CHECK_CLOSE(result, -7.0, 1e-4);
         }
 
-        // Now, do all of the observation quadrature points using direct_interact
+        // Now, do all of the observation quadrature points using mesh_to_mesh_operator
         // But, we need to scale by the length of the element of the observation
         // mesh, because the new values are for element interactions, not pt
         // interactions. For example, Integral(1)_{0 to 0.2} == 0.2
-        auto results_op = interact_matrix(p, qs);
-        auto results = bem_mat_mult(results_op, u);
+        auto results_op = mesh_to_mesh_operator(p, qs);
+        auto results = apply_operator(results_op, u);
         std::vector<double> all_ones(results.size());
         const double integral_of_basis_fnc = 0.5;
         for (size_t j = 0; j < obs_circle.facets.size(); j++) {
@@ -156,8 +156,8 @@ void galerkin_matrix_one_test(const Mesh<dim>& mesh,
     auto p = make_problem<dim>(mesh, mesh, identity);
     QuadStrategy<dim> qs(2);
 
-    auto matrix = interact_matrix(p, qs);
-    std::vector<double> res = bem_mat_mult(matrix, str); 
+    auto matrix = mesh_to_mesh_operator(p, qs);
+    std::vector<double> res = apply_operator(matrix, str); 
     double total = 0.0;
     for (auto r: res) {
         total += r;
