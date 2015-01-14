@@ -7,119 +7,26 @@
 #include "mesh.h"
 #include "adaptive_quad.h"
 #include "quadrature.h"
+#include "integral_term.h"
+#include "identity_kernels.h"
 
 namespace tbem {
-
-template <size_t dim>
-struct IdentityScalar {
-    typedef double OutType;
-    typedef double InType;
-    typedef double OperatorType;
-
-    OperatorType call_with_no_params() const {
-        return 1.0;
-    }
-
-    OperatorType operator()(const double& r2, const Vec<double,dim>& delta,
-        const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs) const 
-    {
-        return call_with_no_params();
-    }
-};
-
-template <size_t dim, size_t n_rows, size_t n_cols>
-struct IdentityTensor {
-    typedef Vec<double,n_rows> OutType;
-    typedef Vec<double,n_cols> InType;
-    typedef Vec<Vec<double,n_cols>,n_rows> OperatorType;
-
-    OperatorType call_with_no_params() const {
-        auto out = zeros<OperatorType>::make();
-        for (size_t i = 0; i < n_rows; i++) {
-            for (size_t j = 0; j < n_cols; j++) {
-                if (i == j) {
-                    out[i][j] = 1.0;
-                }
-            }
-        }
-        return out;
-    }
-
-    OperatorType operator()(const double& r2, const Vec<double,dim>& delta,
-        const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs) const 
-    {
-        return call_with_no_params();
-    }
-};
-
-template <size_t dim>
-struct ObsPt;
-template <size_t dim>
-struct FacetInfo;
-
-/* Data transfer object for computing integral terms. 
- * Values are stored by reference for efficiency's sake.
- * This means that the responsibility for maintaining their lifetime is on the
- * user.
- */
-template <size_t dim, typename KT>
-struct IntegralTerm {
-    const QuadStrategy<dim>& qs;
-    const KT& k;
-    const ObsPt<dim>& obs;
-    const FacetInfo<dim>& src_face;
-    const double appx_pt_face_dist_squared;
-};
-
-template <size_t dim, typename KT>
-IntegralTerm<dim,KT> make_integral_term(const QuadStrategy<dim>& qs,
-        const KT& k, const ObsPt<dim>& obs, const FacetInfo<dim>& src_face,
-        const double appx_pt_face_dist_squared) {
-    return IntegralTerm<dim,KT>{qs, k, obs, src_face, appx_pt_face_dist_squared};
-}
-
-/* Given observation point information and source face information, the
- * fucntion evaluates the influence of a single source quadrature point
- * on the observation point.
- */
-template <size_t dim, typename KT>
-Vec<typename KT::OperatorType,dim> eval_point_influence(
-    const Vec<double,dim-1>& x_hat, const KT& kernel, const FacetInfo<dim>& face,
-    const Vec<double,dim>& obs_loc, const Vec<double,dim>& obs_n);
-
-template <size_t dim>
-struct UnitFacetAdaptiveIntegrator {
-    template <typename KT>
-    Vec<typename KT::OperatorType,dim> 
-    operator()(const IntegralTerm<dim,KT>& term, 
-               const Vec<double,dim>& nf_obs_pt);
-};
-
-
-/* Compute the full influence of a source facet on an observation point, given
- * a kernel function/Green's function
- */
-template <size_t dim, typename KT>
-Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term);
-
 template <size_t dim, typename KT>
 struct Problem {
     const Mesh<dim> src_mesh;
     const Mesh<dim> obs_mesh;
     const KT K;
-    const std::vector<typename KT::InType> src_strength;
 };
 
 template <size_t dim, typename KT>
 Problem<dim,KT> make_problem(const Mesh<dim>& src_mesh,
-                             const Mesh<dim>& obs_mesh, const KT& k,
-                             const std::vector<typename KT::InType>& src_strength) {
-    return {src_mesh, obs_mesh, k, src_strength};
+                             const Mesh<dim>& obs_mesh, const KT& k) 
+{
+    return {src_mesh, obs_mesh, k};
 }
 
 template <size_t dim>
-class FacetInfo {
-public:
+struct FacetInfo {
     //The responsibility is on the user to maintain the lifetime of the facet.
     const Facet<dim>& face;
 
@@ -147,6 +54,55 @@ struct ObsPt {
 };
 
 
+template <size_t dim>
+ObsPt<dim> ObsPt<dim>::from_face(const Vec<double,dim-1>& ref_loc,
+                                 const FacetInfo<dim>& obs_face) {
+    const int basis_order = 1;
+    return {
+        obs_face.length_scale / basis_order,
+        ref_to_real(ref_loc, obs_face.face.vertices),
+        obs_face.normal,
+        obs_face.normal 
+    };
+}
+
+template <>
+FacetInfo<3> FacetInfo<3>::build(const Facet<3>& facet){
+    auto unscaled_n = unscaled_normal(facet.vertices);
+    auto area = tri_area(unscaled_n);
+    auto length_scale = std::sqrt(area);
+    auto jacobian = area * inv_ref_facet_area;
+    auto normal = unscaled_n / jacobian;
+    return FacetInfo<3>{facet, area, length_scale, jacobian, normal};
+}
+
+template <>
+FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet){
+    auto unscaled_n = unscaled_normal(facet.vertices);
+    auto area_scale = hypot2(unscaled_n);
+    auto length = std::sqrt(area_scale);
+    auto jacobian = length * inv_ref_facet_area;
+    auto normal = unscaled_n / length;
+    return FacetInfo<2>{facet, area_scale, length, jacobian, normal};
+}
+
+/* It may be that the exact distance to an element is not required,
+ * but a low precision approximate distance is useful.
+ * This function simply approximates the distance by the distance from
+ * the given point to each vertex of the element.
+ * A better approximation to the distance to a face might include
+ * the centroid (see appx_face_dist2)
+ */
+template <size_t dim>
+double appx_face_dist2(const Vec<double,dim>& pt,
+                       const std::array<Vec<double,dim>,dim>& vs) {
+    double res = dist2(pt, vs[0]);
+    for (int d = 1; d < dim; d++) {
+        res = std::min(res, dist2(pt, vs[d])); 
+    }
+    return res;
+}
+
 /* Given an unknown function defined in terms of a polynomial basis:
  * u(x) = \sum_i U_i \phi_i(x)
  * Determine the coefficients for the expansion of an integral term in
@@ -157,17 +113,20 @@ struct ObsPt {
 template <size_t dim, typename KT>
 std::vector<typename KT::OperatorType> 
 integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
-                         const ObsPt<dim>& obs);
-
-/* Evaluate the integral equation for a specific observation point:
- * \int_{S_{src}} K(x,y) u(y) dy
- * y is given by the ObsPt<dim> obs.
- * The caller provides a quadrature strategy that specifies the order and 
- * tolerance for evaluating the integral equation.
- */
-template <size_t dim, typename KT>
-typename KT::OutType eval_integral_equation(const Problem<dim,KT>& p,
-    const QuadStrategy<dim>& qs, const ObsPt<dim>& obs);
+                         const ObsPt<dim>& obs) {
+    int n_out_dofs = dim * p.src_mesh.facets.size();
+    std::vector<typename KT::OperatorType> result(n_out_dofs);
+    for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
+        auto src_face = FacetInfo<dim>::build(p.src_mesh.facets[i]);
+        const double dist2 = appx_face_dist2<dim>(obs.loc, src_face.face.vertices);
+        auto term = make_integral_term(qs, p.K, obs, src_face, dist2);
+        auto integrals = compute_term<dim>(term);
+        for (int b = 0; b < dim; b++) {
+            result[dim * i + b] = integrals[b];
+        }
+    }
+    return result;
+}
 
 /* Given a kernel function and two meshes this function calculates the
  * Galerkin boundary element matrix representing the operator 
@@ -176,18 +135,38 @@ typename KT::OutType eval_integral_equation(const Problem<dim,KT>& p,
  * K(x,y) is the kernel function and \phi_i(x) is a basis function.
  */
 template <size_t dim, typename KT>
-std::vector<typename KT::OperatorType> 
-interact_matrix(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs);
+std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
+                                    const QuadStrategy<dim>& qs) 
+{
+    size_t n_obs_dofs = dim * p.obs_mesh.facets.size();
+    size_t n_src_dofs = dim * p.src_mesh.facets.size();
+    std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_src_dofs, 
+            zeros<typename KT::OperatorType>::make());
+#pragma omp parallel for
+    for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
+        auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
+        for (size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
+            auto pt = ObsPt<dim>::from_face(qs.obs_quad[obs_q].x_hat, obs_face);
 
-template <size_t dim, typename KT>
-std::vector<typename KT::OutType> direct_interact(const Problem<dim,KT>& p,
-                                                  const QuadStrategy<dim>& qs);
+            const auto row = integral_equation_vector(p, qs, pt);
 
+            const auto basis = linear_basis(qs.obs_quad[obs_q].x_hat);
 
-template <typename KT>
-std::vector<typename KT::OutType>
-bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
-             int n_obs_dofs, const std::vector<typename KT::InType>& x);
+            for (int v = 0; v < dim; v++) {
+                int b = dim * obs_idx + v;
+                for (size_t i = 0; i < n_src_dofs; i++) {
+                    matrix[b * n_src_dofs + i] +=
+                        basis[v] *
+                        row[i] *
+                        qs.obs_quad[obs_q].w *
+                        obs_face.jacobian;
+                }
+            }
+        }
+    }
+    return matrix;
+}
+
 
 /* In many integral equations, one of the functions of interest appears
  * outside of an integration, possibly as the result of integrating against
@@ -198,12 +177,70 @@ bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
  */
 template <size_t dim, typename KT>
 std::vector<typename KT::OutType> mass_term(const Problem<dim,KT>& p,
-    const QuadStrategy<dim>& qs);
+    const QuadStrategy<dim>& qs, const std::vector<typename KT::InType> function) 
+{
+    int n_obs_dofs = dim * p.obs_mesh.facets.size();
+    std::vector<typename KT::OutType> integrals(
+        n_obs_dofs, 
+        zeros<typename KT::OutType>::make()
+    );
+
+    for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
+        auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
+        for (size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
+            auto qpt = qs.obs_quad[obs_q];
+
+            int dof = dim * obs_idx;
+            Vec<typename KT::InType,dim> face_vals;
+            for (int d = 0; d < dim; d++) {
+                face_vals[d] = function[dof + d];
+            }
+
+            auto interp_val = dot_product(linear_basis(qpt.x_hat), face_vals);
+            auto kernel_val = p.K.call_with_no_params();
+            auto out_val = dot_product(interp_val, kernel_val);
+
+            auto basis = linear_basis(qpt.x_hat);
+            for(int v = 0; v < dim; v++) {
+                integrals[dof + v] += obs_face.jacobian * basis[v] * 
+                                      out_val * qpt.w;
+            }
+        }
+    }
+    return integrals;
+}
+
+template <typename KT>
+std::vector<typename KT::OutType>
+bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
+             int n_obs_dofs, const std::vector<typename KT::InType>& x) {
+
+    assert(n_obs_dofs * x.size() == A.size());
+    std::vector<typename KT::OutType> res(n_obs_dofs, 
+                                          zeros<typename KT::OutType>::make());
+#pragma omp parallel for
+    for (int i = 0; i < n_obs_dofs; i++) {
+        for (size_t j = 0; j < x.size(); j++) {
+            res[i] += dot_product(x[j], A[i * x.size() + j]);
+        }
+    }
+    return res;
+}
 
 template <size_t dim>
 double get_len_scale(Mesh<dim>& mesh, int which_face, int q);
 
-#include "bem_impl.h"
+template <>
+double get_len_scale<3>(Mesh<3>& mesh, int which_face, int q) {
+    return std::sqrt(tri_area(mesh.facets[which_face].vertices)) / q;
+}
+
+template <>
+double get_len_scale<2>(Mesh<2>& mesh, int which_face, int q) {
+    return dist(mesh.facets[which_face].vertices[1],
+                mesh.facets[which_face].vertices[0]) / q;
+}
+
 
 } // END NAMESPACE tbem
 #endif

@@ -20,31 +20,33 @@ TEST(ConstantLaplaceBoundary) {
         for (auto v: f.vertices) {
             auto obs_pt = v;
             auto obs_n = -normalized(obs_pt);
-            auto p = make_problem<3>(sphere, sphere, LaplaceDouble<3>(), src_strength);
-
-            double result = eval_integral_equation(p, qs, 
-                {obs_length_scale, obs_pt, obs_n, obs_n});
-            CHECK_CLOSE(result, -1.0, 1e-2);
+            auto p = make_problem<3>(sphere, sphere, LaplaceDouble<3>());
+            ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
+            auto op = integral_equation_vector(p, qs, obs);
+            auto result = bem_mat_mult(op, p.K, 1, src_strength);
+            CHECK_CLOSE(result[0], -1.0, 1e-2);
         }
     }
 }
 
-TEST(DirectInteractConstantLaplace) {
+TEST(GalerkinMatrixConstantLaplace) {
     auto sphere = sphere_mesh({0,0,0}, 1.0, 2);
     int n_dofs = sphere.n_dofs();
     std::vector<double> str(n_dofs, 1.0);
 
     QuadStrategy<3> qs(2, 2, 4, 3.0, 1e-3);
-    auto p_double = make_problem<3>(sphere, sphere, LaplaceDouble<3>(), str);
-    auto p_single = make_problem<3>(sphere, sphere, LaplaceSingle<3>(), str);
-    auto res0 = direct_interact(p_double, qs);
+    auto p_double = make_problem<3>(sphere, sphere, LaplaceDouble<3>());
+    auto p_single = make_problem<3>(sphere, sphere, LaplaceSingle<3>());
+    auto mat0 = interact_matrix(p_double, qs);
+    auto res0 = bem_mat_mult(mat0, p_double.K, str.size(), str);
     for (std::size_t i = 0; i < res0.size(); i++) {
         res0[i] = -res0[i];
     }
-    auto res1 = direct_interact(p_single, qs);
+    auto mat1 = interact_matrix(p_single, qs);
+    auto res1 = bem_mat_mult(mat1, p_single.K, str.size(), str);
 
-    auto p_mass = make_problem<3>(sphere, sphere, IdentityScalar<3>(), str);
-    auto res2 = mass_term(p_mass, qs);
+    auto p_mass = make_problem<3>(sphere, sphere, IdentityScalar<3>());
+    auto res2 = mass_term(p_mass, qs, str);
     CHECK_ARRAY_CLOSE(res0, res2, n_dofs, 3e-2);
     CHECK_ARRAY_CLOSE(res1, res2, n_dofs, 3e-2);
     CHECK_ARRAY_CLOSE(res0, res1, n_dofs, 3e-2);
@@ -110,12 +112,13 @@ TEST(ConstantLaplace2D) {
     std::vector<double> u(src_circle.n_dofs(), 7.0);
     for (double i = 1.0; i < 19.0; i++) {
         Mesh<2> obs_circle = circle_mesh(center, i, refine);
-        auto p = make_problem<2>(src_circle, obs_circle, LaplaceDouble<2>(), u);
+        auto p = make_problem<2>(src_circle, obs_circle, LaplaceDouble<2>());
 
         // Do it via eval_integral_equation for each vertex.
         for (std::size_t i = 0; i < obs_circle.n_facets(); i++) {
             ObsPt<2> pt = {0.390, obs_circle.facets[i].vertices[0], {0,0}, {0,0}}; 
-            double result = eval_integral_equation(p, qs, pt);
+            auto op = integral_equation_vector(p, qs, pt);
+            double result = bem_mat_mult(op, p.K, 1, u)[0];
             CHECK_CLOSE(result, -7.0, 1e-4);
         }
 
@@ -123,7 +126,8 @@ TEST(ConstantLaplace2D) {
         // But, we need to scale by the length of the element of the observation
         // mesh, because the new values are for element interactions, not pt
         // interactions. For example, Integral(1)_{0 to 0.2} == 0.2
-        auto results = direct_interact(p, qs);
+        auto results_op = interact_matrix(p, qs);
+        auto results = bem_mat_mult(results_op, p.K, obs_circle.n_dofs(), u);
         std::vector<double> all_ones(results.size());
         const double integral_of_basis_fnc = 0.5;
         for (size_t j = 0; j < obs_circle.facets.size(); j++) {
@@ -138,39 +142,34 @@ TEST(ConstantLaplace2D) {
 }
 
 template <size_t dim>
-void direct_interact_one_test(const Mesh<dim>& mesh,
+void galerkin_matrix_one_test(const Mesh<dim>& mesh,
                               double correct) {
     std::vector<double> str(mesh.n_dofs(), 1.0);
+    auto p = make_problem<dim>(mesh, mesh, IdentityScalar<dim>());
+    QuadStrategy<dim> qs(2);
 
-    QuadStrategy<dim> qs(2, 2, 3, 3.0, 1e-2);
-    auto p = make_problem<dim>(mesh, mesh, IdentityScalar<dim>(), str);
-    std::vector<double> res = direct_interact(p, qs);
     auto matrix = interact_matrix(p, qs);
+    std::vector<double> res = 
+        bem_mat_mult(matrix, IdentityScalar<dim>(), mesh.n_dofs(), str);
 
-    std::vector<double> res2 = bem_mat_mult(matrix, IdentityScalar<dim>(), mesh.n_dofs(), str);
     double total = 0.0;
     for (auto r: res) {
         total += r;
     }
-    double total2 = 0.0;
-    for (auto r2: res2) {
-        total2 += r2;
-    }
-    double sa2 = std::pow(correct, 2);
-    double error = std::fabs((sa2 - total) / sa2);
-    double error2 = std::fabs((sa2 - total2) / sa2);
+
+    double sa_squared = std::pow(correct, 2);
+    double error = std::fabs((sa_squared - total) / sa_squared);
     CHECK_CLOSE(error, 0.0, 6.4e-2);
-    CHECK_CLOSE(error2, 0.0, 6.4e-2);
 }
 
-TEST(DirectInteractOne2d) {
+TEST(GalerkinMatrixOne2d) {
     auto circle = circle_mesh({0,0}, 1.0, 4);
-    direct_interact_one_test<2>(circle, 2 * M_PI);
+    galerkin_matrix_one_test<2>(circle, 2 * M_PI);
 }
 
-TEST(DirectInteractOne3d) {
+TEST(GalerkinMatrixOne3d) {
     auto sphere = sphere_mesh({0,0,0}, 1.0, 3);
-    direct_interact_one_test<3>(sphere, 4 * M_PI);
+    galerkin_matrix_one_test<3>(sphere, 4 * M_PI);
 }
 
 int main(int, char const *[])

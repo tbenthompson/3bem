@@ -30,11 +30,12 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     // First, the double layer potential is evaluated (DoubleLayer(u))
     // This is added to the mass matrix term (u)
     TIC
-    auto p_double = make_problem<dim>(mesh, mesh, LaplaceDouble<dim>(), u);
-    auto rhs_double = direct_interact(p_double, qs);
+    auto p_double = make_problem<dim>(mesh, mesh, LaplaceDouble<dim>());
+    auto rhs_double_op = interact_matrix(p_double, qs);
+    auto rhs_double = bem_mat_mult(rhs_double_op, p_double.K, mesh.n_dofs(), u);
 
-    auto p_mass = make_problem<dim>(mesh, mesh, IdentityScalar<dim>(), u);
-    auto rhs_mass = mass_term(p_mass, qs);
+    auto p_mass = make_problem<dim>(mesh, mesh, IdentityScalar<dim>());
+    auto rhs_mass = mass_term(p_mass, qs, u);
     
     std::vector<double> rhs_full(mesh.n_dofs());
     double mass_factor[2] = {1.0, 1.0};
@@ -46,7 +47,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     // The LHS matrix for a Dirichlet Laplace problem.
     TIC2
     auto single_kernel = LaplaceSingle<dim>();
-    auto p_single = make_problem<dim>(mesh, mesh, single_kernel, dudn);
+    auto p_single = make_problem<dim>(mesh, mesh, single_kernel);
     auto matrix = interact_matrix(p_single, qs);
     TOC("Matrix construct on " + std::to_string(mesh.n_facets()) + " facets");
 
@@ -88,8 +89,10 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
         ObsPt<dim> obs = {0.001, obs_pt, zeros<Vec<double,dim>>::make(),
                           zeros<Vec<double,dim>>::make()};
        
-        double double_layer = eval_integral_equation(p_double, qs, obs);
-        double single_layer = eval_integral_equation(p_single, qs, obs);
+        auto double_layer_op = integral_equation_vector(p_double, qs, obs);
+        double double_layer = bem_mat_mult(double_layer_op, p_double.K, 1, u)[0];
+        auto single_layer_op = integral_equation_vector(p_single, qs, obs);
+        double single_layer = bem_mat_mult(single_layer_op, p_single.K, 1, dudn)[0];
         double result = single_layer - double_layer;
         double exact = fnc(obs_pt);
         double error = std::fabs(exact - result);

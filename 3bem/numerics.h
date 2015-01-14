@@ -4,7 +4,7 @@
 #include <vector>
 #include <cmath>
 #include <functional>
-#include "vec.h"
+#include "vec_ops.h"
 
 namespace tbem {
 
@@ -30,12 +30,12 @@ inline double ref_to_real(double x_hat, double a, double b) {
 
 // 2D linear basis on [-1,1]
 inline Vec2<double> linear_basis(const std::array<double,1>& x_hat) {
-    return {0.5 - 0.5 * x_hat[0], 0.5 + 0.5 * x_hat[0]};
+    return {{0.5 - 0.5 * x_hat[0], 0.5 + 0.5 * x_hat[0]}};
 }
 
 // 3D linear basis on (0,0)-(1,0)-(0,1)
 inline Vec3<double> linear_basis(const std::array<double,2>& x_hat) {
-    return {1 - x_hat[0] - x_hat[1], x_hat[0], x_hat[1]};
+    return {{1 - x_hat[0] - x_hat[1], x_hat[0], x_hat[1]}};
 }
 
 template <size_t dim>
@@ -47,20 +47,20 @@ inline double linear_interp(const std::array<double,dim-1>& x_hat,
 inline Vec2<double> ref_to_real(const std::array<double,1>& x_hat,
                                 const std::array<Vec2<double>,2>& locs) {
     auto basis = linear_basis(x_hat);
-    return {
-        dot_product(basis, Vec2<double>{locs[0][0], locs[1][0]}),
-        dot_product(basis, Vec2<double>{locs[0][1], locs[1][1]}),
-    };
+    return {{
+        dot_product(basis, Vec2<double>{{locs[0][0], locs[1][0]}}),
+        dot_product(basis, Vec2<double>{{locs[0][1], locs[1][1]}}),
+    }};
 }
 
 inline Vec3<double> ref_to_real(const std::array<double,2>& x_hat,
                                 const std::array<Vec3<double>,3>& locs) {
     auto basis = linear_basis(x_hat);
-    return {
-        dot_product(basis, Vec3<double>{locs[0][0], locs[1][0], locs[2][0]}),
-        dot_product(basis, Vec3<double>{locs[0][1], locs[1][1], locs[2][1]}),
-        dot_product(basis, Vec3<double>{locs[0][2], locs[1][2], locs[2][2]})
-    };
+    return {{
+        dot_product(basis, Vec3<double>{{locs[0][0], locs[1][0], locs[2][0]}}),
+        dot_product(basis, Vec3<double>{{locs[0][1], locs[1][1], locs[2][1]}}),
+        dot_product(basis, Vec3<double>{{locs[0][2], locs[1][2], locs[2][2]}})
+    }};
 }
  
 

@@ -104,23 +104,10 @@ struct EvalProb {
 
     template <typename KT>
     double go(const KT& k) {
-        auto p = make_problem<3>(sphere, sphere, k, src_strength);
-
-        return eval_integral_equation(p, qs, 
-            {obs_length_scale, obs_pt, obs_n, obs_n});
-    }
-
-    template <typename KT>
-    double go_row(const KT& k) {
-        auto p = make_problem<3>(sphere, sphere, k, src_strength);
-
-        auto row = integral_equation_vector(p, qs, 
-            {obs_length_scale, obs_pt, obs_n, obs_n});
-        double row_sum = 0.0;
-        for(std::size_t i = 0; i < row.size(); i++) {
-            row_sum += row[i] * src_strength[i];
-        }
-        return row_sum;
+        auto p = make_problem<3>(sphere, sphere, k);
+        ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
+        auto op = integral_equation_vector(p, qs, obs);
+        return bem_mat_mult(op, k, 1, src_strength)[0];
     }
 
     Mesh<3> sphere;
@@ -134,26 +121,20 @@ struct EvalProb {
 TEST(EvalIntegralEquationSphereSurfaceArea) {
     EvalProb ep(5, 3, 2);
     double result = ep.go(IdentityScalar<3>());
-    double result2 = ep.go_row(IdentityScalar<3>());
     double exact_surf_area = 4*M_PI*9;
     CHECK_CLOSE(result, exact_surf_area, 1e-1);
-    CHECK_CLOSE(result2, exact_surf_area, 1e-1);
 }
 
 TEST(ConstantLaplace) {
     EvalProb ep(5, 3, 2);
     double result = ep.go(LaplaceDouble<3>());
-    double result2 = ep.go_row(LaplaceDouble<3>());
     CHECK_CLOSE(result, -1.0, 1e-3);
-    CHECK_CLOSE(result2, -1.0, 1e-3);
 }
 
 TEST(MatrixRowVsEval) {
     EvalProb ep(4, 3, 2);
     double result = ep.go(LaplaceDouble<3>());
-    double result2 = ep.go_row(LaplaceDouble<3>());
     CHECK_CLOSE(result, -1.0, 1e-3);
-    CHECK_CLOSE(result2, -1.0, 1e-3);
 }
 
 TEST(MassTerm) {
@@ -166,9 +147,9 @@ TEST(MassTerm) {
             }
         }
     }
-    auto p = make_problem<3>(sphere, sphere, IdentityScalar<3>(), str);
+    auto p = make_problem<3>(sphere, sphere, IdentityScalar<3>());
     QuadStrategy<3> qs(2);
-    auto res = mass_term(p, qs);
+    auto res = mass_term(p, qs, str);
     CHECK_EQUAL(res.size(), sphere.n_dofs());
     double true_area = 0.0;
     for (auto f: sphere.facets) {
@@ -230,9 +211,9 @@ TEST(TensorKernel) {
 TEST(TensorMassTerm) {
     auto sphere = sphere_mesh({0,0,0}, 1.0, 1);
     std::vector<Vec3<double>> str(sphere.n_dofs(), {1.0, 1.0, 1.0});
-    auto p = make_problem<3>(sphere, sphere, IdentityTensor<3,3,3>(), str);
+    auto p = make_problem<3>(sphere, sphere, IdentityTensor<3,3,3>());
     QuadStrategy<3> qs(2);
-    auto res = mass_term(p, qs);
+    auto res = mass_term(p, qs, str);
     CHECK_EQUAL(res[0].size(), 3);
 }
 

@@ -3,6 +3,7 @@
 #include <iostream>
 #include "shared.h"
 #include "vec.h"
+#include "vec_ops.h"
 
 using namespace tbem;
 

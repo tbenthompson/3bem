@@ -3,6 +3,7 @@
 
 #include <array>
 #include "vec.h"
+#include "vec_ops.h"
 #include "kernel.h"
 
 namespace tbem { 

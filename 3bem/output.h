@@ -6,12 +6,9 @@
 #include <iostream>
 #include <fstream>
 #include "mesh.h"
+#include "vec_ops.h"
 
 namespace tbem {
-
-//Forward declaration of Vec
-template <typename T, unsigned long dim>
-using Vec = std::array<T,dim>;
 
 inline bool does_file_exist(const std::string& filename)
 {

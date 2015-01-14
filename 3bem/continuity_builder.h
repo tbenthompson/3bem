@@ -5,6 +5,7 @@
 
 #include "constraint.h"
 #include "vertex_iterator.h"
+#include "vec_ops.h"
     
 namespace tbem {
 
