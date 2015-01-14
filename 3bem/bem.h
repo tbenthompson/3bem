@@ -13,14 +13,15 @@
 namespace tbem {
 template <size_t dim, typename KT>
 struct Problem {
-    const Mesh<dim> src_mesh;
-    const Mesh<dim> obs_mesh;
-    const KT K;
+    const Mesh<dim>& src_mesh;
+    const Mesh<dim>& obs_mesh;
+    const KT& K;
 };
 
 template <size_t dim, typename KT>
 Problem<dim,KT> make_problem(const Mesh<dim>& src_mesh,
-                             const Mesh<dim>& obs_mesh, const KT& k) 
+                             const Mesh<dim>& obs_mesh, 
+                             const KT& k) 
 {
     return {src_mesh, obs_mesh, k};
 }
@@ -103,6 +104,18 @@ double appx_face_dist2(const Vec<double,dim>& pt,
     return res;
 }
 
+template <typename I, typename O, typename Op>
+struct MatrixOperator 
+{
+    typedef I InType;
+    typedef O OutType;
+    typedef Op OperatorType;
+
+    const size_t rows;
+    const size_t cols;
+    std::vector<OperatorType> data;
+};
+
 /* Given an unknown function defined in terms of a polynomial basis:
  * u(x) = \sum_i U_i \phi_i(x)
  * Determine the coefficients for the expansion of an integral term in
@@ -111,10 +124,10 @@ double appx_face_dist2(const Vec<double,dim>& pt,
  * Q_i = \int_{S_{src}} K(x,y) \phi_i(y) dy
  */
 template <size_t dim, typename KT>
-std::vector<typename KT::OperatorType> 
+MatrixOperator<typename KT::InType, typename KT::OutType, typename KT::OperatorType>
 integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
                          const ObsPt<dim>& obs) {
-    int n_out_dofs = dim * p.src_mesh.facets.size();
+    size_t n_out_dofs = dim * p.src_mesh.facets.size();
     std::vector<typename KT::OperatorType> result(n_out_dofs);
     for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
         auto src_face = FacetInfo<dim>::build(p.src_mesh.facets[i]);
@@ -125,7 +138,7 @@ integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
             result[dim * i + b] = integrals[b];
         }
     }
-    return result;
+    return {1, n_out_dofs, result};
 }
 
 /* Given a kernel function and two meshes this function calculates the
@@ -135,8 +148,8 @@ integral_equation_vector(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs,
  * K(x,y) is the kernel function and \phi_i(x) is a basis function.
  */
 template <size_t dim, typename KT>
-std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
-                                    const QuadStrategy<dim>& qs) 
+MatrixOperator<typename KT::InType, typename KT::OutType, typename KT::OperatorType>
+interact_matrix(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs) 
 {
     size_t n_obs_dofs = dim * p.obs_mesh.facets.size();
     size_t n_src_dofs = dim * p.src_mesh.facets.size();
@@ -149,6 +162,7 @@ std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
             auto pt = ObsPt<dim>::from_face(qs.obs_quad[obs_q].x_hat, obs_face);
 
             const auto row = integral_equation_vector(p, qs, pt);
+            assert(row.cols == n_src_dofs);
 
             const auto basis = linear_basis(qs.obs_quad[obs_q].x_hat);
 
@@ -157,14 +171,14 @@ std::vector<typename KT::OperatorType> interact_matrix(const Problem<dim,KT>& p,
                 for (size_t i = 0; i < n_src_dofs; i++) {
                     matrix[b * n_src_dofs + i] +=
                         basis[v] *
-                        row[i] *
+                        row.data[i] *
                         qs.obs_quad[obs_q].w *
                         obs_face.jacobian;
                 }
             }
         }
     }
-    return matrix;
+    return {n_obs_dofs, n_src_dofs, matrix};
 }
 
 
@@ -210,18 +224,17 @@ std::vector<typename KT::OutType> mass_term(const Problem<dim,KT>& p,
     return integrals;
 }
 
-template <typename KT>
-std::vector<typename KT::OutType>
-bem_mat_mult(const std::vector<typename KT::OperatorType>& A, const KT& k,
-             int n_obs_dofs, const std::vector<typename KT::InType>& x) {
-
-    assert(n_obs_dofs * x.size() == A.size());
-    std::vector<typename KT::OutType> res(n_obs_dofs, 
-                                          zeros<typename KT::OutType>::make());
+template <typename InType, typename OutType, typename OperatorType>
+std::vector<OutType>
+bem_mat_mult(const MatrixOperator<InType,OutType,OperatorType>& A,
+    const std::vector<InType>& x) 
+{
+    assert(A.cols * x.size() == A.data.size());
+    std::vector<OutType> res(A.rows, zeros<OutType>::make());
 #pragma omp parallel for
-    for (int i = 0; i < n_obs_dofs; i++) {
+    for (int i = 0; i < A.rows; i++) {
         for (size_t j = 0; j < x.size(); j++) {
-            res[i] += dot_product(x[j], A[i * x.size() + j]);
+            res[i] += dot_product(x[j], A.data[i * x.size() + j]);
         }
     }
     return res;

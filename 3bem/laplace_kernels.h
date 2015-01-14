@@ -15,7 +15,7 @@ template <size_t dim>
 struct LaplaceHypersingular;
 
 template <>
-struct LaplaceSingle<3>: Kernel<3, double, double, double> 
+struct LaplaceSingle<3>: Kernel<3,double,double,double> 
 {
     double operator()(double r2, const Vec<double,3>& delta,
                       const Vec<double,3>& nsrc, const Vec<double,3>& nobs) const {
@@ -24,7 +24,7 @@ struct LaplaceSingle<3>: Kernel<3, double, double, double>
 };
 
 template <>
-struct LaplaceDouble<3>: Kernel<3, double, double, double> 
+struct LaplaceDouble<3>: Kernel<3,double,double,double> 
 {
     double operator()(double r2, const Vec<double,3>& delta,
                       const Vec<double,3>& nsrc, const Vec<double,3>& nobs) const {

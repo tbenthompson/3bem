@@ -102,12 +102,11 @@ struct EvalProb {
         src_strength(std::vector<double>(sphere.n_dofs(), 1.0))
     {}
 
-    template <typename KT>
-    double go(const KT& k) {
+    double go(const Kernel<3,double,double,double>& k) {
         auto p = make_problem<3>(sphere, sphere, k);
         ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
         auto op = integral_equation_vector(p, qs, obs);
-        return bem_mat_mult(op, k, 1, src_strength)[0];
+        return bem_mat_mult(op, src_strength)[0];
     }
 
     Mesh<3> sphere;
@@ -120,14 +119,16 @@ struct EvalProb {
 
 TEST(EvalIntegralEquationSphereSurfaceArea) {
     EvalProb ep(5, 3, 2);
-    double result = ep.go(IdentityScalar<3>());
+    IdentityScalar<3> identity;
+    double result = ep.go(identity);
     double exact_surf_area = 4*M_PI*9;
     CHECK_CLOSE(result, exact_surf_area, 1e-1);
 }
 
 TEST(ConstantLaplace) {
     EvalProb ep(5, 3, 2);
-    double result = ep.go(LaplaceDouble<3>());
+    LaplaceDouble<3> double_kernel;
+    double result = ep.go(double_kernel);
     CHECK_CLOSE(result, -1.0, 1e-3);
 }
 
@@ -147,7 +148,8 @@ TEST(MassTerm) {
             }
         }
     }
-    auto p = make_problem<3>(sphere, sphere, IdentityScalar<3>());
+    IdentityScalar<3> identity;
+    auto p = make_problem<3>(sphere, sphere, identity);
     QuadStrategy<3> qs(2);
     auto res = mass_term(p, qs, str);
     CHECK_EQUAL(res.size(), sphere.n_dofs());
@@ -211,7 +213,8 @@ TEST(TensorKernel) {
 TEST(TensorMassTerm) {
     auto sphere = sphere_mesh({0,0,0}, 1.0, 1);
     std::vector<Vec3<double>> str(sphere.n_dofs(), {1.0, 1.0, 1.0});
-    auto p = make_problem<3>(sphere, sphere, IdentityTensor<3,3,3>());
+    IdentityTensor<3,3,3> identity;
+    auto p = make_problem<3>(sphere, sphere, identity);
     QuadStrategy<3> qs(2);
     auto res = mass_term(p, qs, str);
     CHECK_EQUAL(res[0].size(), 3);
