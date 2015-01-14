@@ -3,6 +3,7 @@
 
 #include <array>
 #include "vec.h"
+#include "kernel.h"
 
 namespace tbem { 
 const double kronecker[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
@@ -17,21 +18,21 @@ template <size_t dim>
 struct ElasticHypersingular;
 
 template <>
-struct ElasticDisplacement<2> {
+struct ElasticDisplacement<2>: 
+    public Kernel<2,Vec2<double>, Vec2<double>, Vec2<Vec2<double>>>
+{
     const double disp_C1;
     const double disp_C2;
-    typedef Vec2<double> OutType;
-    typedef Vec2<double> InType;
-    typedef Vec2<Vec2<double>> OperatorType;
 
     ElasticDisplacement(double shear_modulus, double poisson_ratio):
         disp_C1(1.0 / (8 * M_PI * shear_modulus * (1 - poisson_ratio))),
         disp_C2(3 - 4 * poisson_ratio)
     {}
 
-    OperatorType operator()(double r2, const Vec2<double>& delta, 
-                       const Vec2<double>& nsrc, const Vec2<double>& nobs) const {
-        OperatorType out;
+    typename Kernel::OperatorType operator()(double r2, const Vec2<double>& delta, 
+        const Vec2<double>& nsrc, const Vec2<double>& nobs) const 
+    {
+        typename Kernel::OperatorType out;
         double r = std::sqrt(r2);
         for (int k = 0; k < 2; k++) {
             for (int j = 0; j < 2; j++) {
@@ -44,21 +45,20 @@ struct ElasticDisplacement<2> {
 };
 
 template <>
-struct ElasticTraction<2> {
+struct ElasticTraction<2>: 
+    public Kernel<2,Vec2<double>, Vec2<double>, Vec2<Vec2<double>>>
+{
     const double trac_C1;
     const double trac_C2;
-    typedef Vec2<double> OutType;
-    typedef Vec2<double> InType;
-    typedef Vec2<Vec2<double>> OperatorType;
 
     ElasticTraction(double shear_modulus, double poisson_ratio):
         trac_C1(1.0 / (4 * M_PI * (1 - poisson_ratio))),
         trac_C2(1 - 2 * poisson_ratio)
     {}
     
-    OperatorType operator()(double r2, const Vec2<double>& delta, 
+    Kernel::OperatorType operator()(double r2, const Vec2<double>& delta, 
                        const Vec2<double>& nsrc, const Vec2<double>& nobs) const {
-        OperatorType out;
+        Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto drdn = dot_product(delta, nsrc) / r;
         for (int k = 0; k < 2; k++) {
@@ -75,21 +75,20 @@ struct ElasticTraction<2> {
 };
 
 template <>
-struct ElasticAdjointTraction<2> {
+struct ElasticAdjointTraction<2>: 
+    public Kernel<2,Vec2<double>, Vec2<double>, Vec2<Vec2<double>>>
+{
     const double trac_C1;
     const double trac_C2;
-    typedef Vec2<double> OutType;
-    typedef Vec2<double> InType;
-    typedef Vec2<Vec2<double>> OperatorType;
 
     ElasticAdjointTraction(double shear_modulus, double poisson_ratio):
         trac_C1(1.0 / (4 * M_PI * (1 - poisson_ratio))),
         trac_C2(1 - 2 * poisson_ratio)
     {}
     
-    OperatorType operator()(double r2, const Vec2<double>& delta, 
+    Kernel::OperatorType operator()(double r2, const Vec2<double>& delta, 
                        const Vec2<double>& nsrc, const Vec2<double>& nobs) const {
-        OperatorType out;
+        Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto drdm = dot_product(delta, nobs) / r;
         for (int k = 0; k < 2; k++) {
@@ -106,13 +105,12 @@ struct ElasticAdjointTraction<2> {
 };
 
 template <>
-struct ElasticHypersingular<2> {
+struct ElasticHypersingular<2>: 
+    public Kernel<2,Vec2<double>, Vec2<double>, Vec2<Vec2<double>>>
+{
     const double shear_modulus;
     const double poisson_ratio;
     const double trac_C2;
-    typedef Vec2<double> OutType;
-    typedef Vec2<double> InType;
-    typedef Vec2<Vec2<double>> OperatorType;
 
     ElasticHypersingular(double shear_modulus, double poisson_ratio):
         shear_modulus(shear_modulus),
@@ -120,9 +118,9 @@ struct ElasticHypersingular<2> {
         trac_C2(1 - 2 * poisson_ratio)
     {}
 
-    OperatorType operator()(double r2, const Vec2<double>& delta, 
+    Kernel::OperatorType operator()(double r2, const Vec2<double>& delta, 
                        const Vec2<double>& nsrc, const Vec2<double>& nobs) const {
-        OperatorType out;
+        Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto dr = delta / r;
         const auto drdn = dot_product(dr, nsrc);
@@ -148,21 +146,20 @@ struct ElasticHypersingular<2> {
 };
 
 template <>
-struct ElasticDisplacement<3> {
+struct ElasticDisplacement<3>: 
+    public Kernel<3,Vec3<double>, Vec3<double>, Vec3<Vec3<double>>>
+{
     const double disp_C1;
     const double disp_C2;
-    typedef Vec3<double> OutType;
-    typedef Vec3<double> InType;
-    typedef Vec3<Vec3<double>> OperatorType;
 
     ElasticDisplacement(double shear_modulus, double poisson_ratio):
         disp_C1(1.0 / (16 * M_PI * shear_modulus * (1 - poisson_ratio))),
         disp_C2(3 - 4 * poisson_ratio)
     {}
 
-    OperatorType operator()(double r2, const Vec3<double>& delta, 
+    Kernel::OperatorType operator()(double r2, const Vec3<double>& delta, 
                        const Vec3<double>& nsrc, const Vec3<double>& nobs) const {
-        OperatorType out;
+        Kernel::OperatorType out;
         for (int k = 0; k < 3; k++) {
             for (int j = 0; j < 3; j++) {
                 double r = std::sqrt(r2);
@@ -175,21 +172,20 @@ struct ElasticDisplacement<3> {
 };
 
 template <>
-struct ElasticTraction<3> {
+struct ElasticTraction<3>: 
+    public Kernel<3,Vec3<double>, Vec3<double>, Vec3<Vec3<double>>>
+{
     const double trac_C1;
     const double trac_C2;
-    typedef Vec3<double> OutType;
-    typedef Vec3<double> InType;
-    typedef Vec3<Vec3<double>> OperatorType;
 
     ElasticTraction(double shear_modulus, double poisson_ratio):
         trac_C1(1.0 / (8 * M_PI * (1 - poisson_ratio))),
         trac_C2(1 - 2 * poisson_ratio)
     {}
     
-    OperatorType operator()(double r2, const Vec3<double>& delta, 
+    Kernel::OperatorType operator()(double r2, const Vec3<double>& delta, 
                        const Vec3<double>& nsrc, const Vec3<double>& nobs) const {
-        OperatorType out;
+        Kernel::OperatorType out;
         const double r = std::sqrt(r2);
         const auto drdn = dot_product(delta, nsrc) / r;
         for (int k = 0; k < 3; k++) {
@@ -206,19 +202,20 @@ struct ElasticTraction<3> {
 };
 
 template <>
-struct ElasticAdjointTraction<3> {
+struct ElasticAdjointTraction<3>: 
+    public Kernel<3,Vec3<double>, Vec3<double>, Vec3<Vec3<double>>>
+{
     const double trac_C1;
     const double trac_C2;
-    typedef Vec3<Vec3<double>> OperatorType;
 
     ElasticAdjointTraction(double shear_modulus, double poisson_ratio):
         trac_C1(1.0 / (8 * M_PI * (1 - poisson_ratio))),
         trac_C2(1 - 2 * poisson_ratio)
     {}
     
-    OperatorType operator()(double r2, const Vec3<double>& delta, 
+    Kernel::OperatorType operator()(double r2, const Vec3<double>& delta, 
                        const Vec3<double>& nsrc, const Vec3<double>& nobs) const {
-        OperatorType out;
+        Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto drdm = dot_product(delta, nobs) / r;
         for (int k = 0; k < 3; k++) {
@@ -235,15 +232,14 @@ struct ElasticAdjointTraction<3> {
 };
 
 template <>
-struct ElasticHypersingular<3> {
+struct ElasticHypersingular<3>: 
+    public Kernel<3,Vec3<double>, Vec3<double>, Vec3<Vec3<double>>>
+{
     const double poisson_ratio;
     const double trac_C2;
     const double hyp_C1;
     const double hyp_C2;
     const double hyp_C3;
-    typedef Vec3<double> OutType;
-    typedef Vec3<double> InType;
-    typedef Vec3<Vec3<double>> OperatorType;
 
     ElasticHypersingular(double shear_modulus, double poisson_ratio):
         poisson_ratio(poisson_ratio),
@@ -253,9 +249,9 @@ struct ElasticHypersingular<3> {
         hyp_C3(3 * poisson_ratio)
     {}
     
-    OperatorType operator()(double r2, const Vec3<double>& delta, 
+    Kernel::OperatorType operator()(double r2, const Vec3<double>& delta, 
                        const Vec3<double>& nsrc, const Vec3<double>& nobs) const {
-        OperatorType out;
+        Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const Vec3<double> dr = delta / r;
         const auto drdm = dot_product(delta, nobs) / r;

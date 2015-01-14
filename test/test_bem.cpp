@@ -147,21 +147,6 @@ TEST(ConstantLaplace) {
     CHECK_CLOSE(result, -1.0, 1e-3);
     CHECK_CLOSE(result2, -1.0, 1e-3);
 }
-// 
-// //TODO: Slow test.
-// TEST(ConstantLaplaceBoundary) {
-//     EvalProb ep(2, 4, 4);
-//     for (auto f: ep.sphere.facets) {
-//         for (auto v: f.vertices) {
-//             ep.obs_pt = v;
-//             ep.obs_n = -normalized(ep.obs_pt);
-//             double result = ep.go(LaplaceDouble<3>());
-//             double result2 = ep.go(LaplaceDouble<3>());
-//             CHECK_CLOSE(result, -1.0, 1e-2);
-//             CHECK_CLOSE(result2, -1.0, 1e-2);
-//         }
-//     }
-// }
 
 TEST(MatrixRowVsEval) {
     EvalProb ep(4, 3, 2);

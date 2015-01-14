@@ -2,24 +2,24 @@
 #define __QWEQASDKJVNS_VERTEX_ITERATOR_H
 #include <cassert>
 
-#include "mesh.h"
+#include "function.h"
 
 namespace tbem {
 
-/* A barebones iterator for the vertices of a MeshField 
+/* A barebones iterator for the vertices of a Function 
  * If this becomes heavily used, it might be worth becoming a more standard 
  * iterator design patterns in c++
  * http://stackoverflow.com/questions/8054273/how-to-implement-an-stl-style-iterator-and-avoid-common-pitfalls
  */
 template <typename T, size_t dim>
-struct FacetCornerIterator {
-    typedef FacetCornerIterator<T,dim> iterator;
+struct FunctionDOFIterator {
+    typedef FunctionDOFIterator<T,dim> iterator;
 
-    const MeshField<T,dim>& mesh;
+    const Function<T,dim>& mesh;
     size_t facet_idx;    
     size_t vertex_idx;
 
-    FacetCornerIterator(const MeshField<T,dim>& mesh, int facet_idx, int vertex_idx):
+    FunctionDOFIterator(const Function<T,dim>& mesh, int facet_idx, int vertex_idx):
         mesh(mesh),
         facet_idx(facet_idx),
         vertex_idx(vertex_idx)
@@ -61,7 +61,7 @@ struct FacetCornerIterator {
         return get_vertex();
     }
 
-    const FacetField<T,dim>& get_facet() const {
+    const FacetFunction<T,dim>& get_facet() const {
         return mesh.facets[facet_idx];
     }
 
@@ -80,7 +80,7 @@ struct FacetCornerIterator {
 };
 
 template <size_t dim>
-using VertexIterator = FacetCornerIterator<Vec<double,dim>,dim>;
+using VertexIterator = FunctionDOFIterator<Vec<double,dim>,dim>;
 
 /* This is useful to put VertexIterator as the key in an unordered_map
  */

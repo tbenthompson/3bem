@@ -1,5 +1,5 @@
 TOP PRIORITY (tasks until next merge with stable):
-T: Set up a simple automatic way to confirm that each of the integration tests with a known analytic solution is checked against that solution
+BC constraints in continuity_builder.h
 DD: Define much much clearer interfaces with the outside world.
 NF: Hanging nodes?
 NF: Handle the general case when fault-surface intersection does not occur at a vertex.
@@ -15,6 +15,7 @@ DESIGN DECISIONS(DD):
 -- Decide whether to allow separating out individual rows or components of the tensor kernels. Adds complexity and a little bit of value, but the same thing can be achieved using the full tensor kernels and constraints. Is this true? If a different integral equation (traction vs. displacement) were used for the various rows, then constraints would not suffice. Interesting. Is there a way to easily build a tensor kernel out of a variety of components?
 
 NEW FUNCTIONALITY(NF):
+-- It'd be nice to have some kind of abstraction for an "Operator" and a "Function"
 -- A way of computing the condition number of a BEM matrix.
 -- Imagine some kind of general purpose "nearfield" structure that can allow a simple O(N) solution to the near neighbors problems in mesh_continuity, apply_discontinuities as well as the FMM tree structure.
 -- DOF handling should be more systematic with a mesh_identifier, a face_id, a vertex_id, and a component_id for each dof_id. This needs a bidirectional mapping, especially for some of the constraints code. I should also account for the tensor/vector nature of certain fields. 
@@ -22,7 +23,8 @@ NEW FUNCTIONALITY(NF):
 -- Slight encapsulation of the std::vector storage with useful things like negation, element-wise multiplication, etc. This might be useful to combine with a MeshField style field-over-mesh sitution.
 
 MODIFIED FUNCTIONALITY(MF):
--- Replace std::vector with a MeshField in Problem and the BEM code?
+-- Remove the dependence on a kernel in bem_mat_mult
+-- Replace std::vector with the Function class in Problem and the BEM code
 
 STRUCTURAL(S):
 -- Restrict the main .h files to outward facing interfaces. Use _impl.h files for inward facing header files. Do this with constraints.h

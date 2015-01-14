@@ -72,7 +72,7 @@ ConstraintEQ substitute(const ConstraintEQ& c, int constrained_dof_index,
     double multiplicative_factor = constrained_term.weight;
 
     std::vector<LinearTerm> out_terms;
-    auto which_subs_terms_unused = integers(subs_in.terms.size());
+    auto which_subs_terms_unused = range(subs_in.terms.size());
     for (size_t i = 0; i < c.terms.size(); i++) {
         if ((int)i == constrained_dof_index) {
             continue;
