@@ -1,5 +1,6 @@
 TOP PRIORITY (tasks until next merge with stable):
 BC constraints in continuity_builder.h
+Different Constraints for each row of a vector
 DD: Define much much clearer interfaces with the outside world.
 NF: Hanging nodes?
 NF: Handle the general case when fault-surface intersection does not occur at a vertex.
