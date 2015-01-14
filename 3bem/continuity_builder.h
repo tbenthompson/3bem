@@ -1,4 +1,5 @@
 #ifndef __ASKDJAWERWFJS_CONTINUITY_BUILDER_H
+
 #define __ASKDJAWERWFJS_CONTINUITY_BUILDER_H
 #include <unordered_map>
 
@@ -120,6 +121,24 @@ std::vector<ConstraintEQ> convert_to_constraints(const OverlapMap<dim>& continui
         auto c = continuity_constraint(p.first.absolute_index(),
             p.second.absolute_index());
         constraints.push_back(c);
+    }
+    return constraints;
+}
+
+template <size_t dim> 
+std::vector<ConstraintEQ> form_neighbor_bcs(
+    const VertexIterator<dim>& continuous_mesh,
+    const VertexIterator<dim>& neighbor_mesh,
+    const std::vector<double>& values
+)
+{
+    auto overlaps = find_overlapping_vertices(continuous_mesh, neighbor_mesh);
+    std::vector<ConstraintEQ> constraints;
+    for (const auto& o: overlaps) {
+        auto constrained_dof = o.first.absolute_index();
+        auto bc_val = values[o.second.absolute_index()];
+        auto c = boundary_condition(constrained_dof, bc_val);
+        constraints.push_back(c);    
     }
     return constraints;
 }
