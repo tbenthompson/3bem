@@ -14,6 +14,11 @@ double perimeter(Mesh<2> m) {
     return p;
 }
 
+TEST(CallRefineWithNoFacetsToRefine) {
+    Mesh<3> mf1{{Facet<3>{{0.0, 1.0, 2.0}}}};
+    mf1.refine({});
+}
+
 TEST(Refine2DMesh) {
     auto m2 = circle_mesh({0,0}, 1.0, 3);
     double length = perimeter(m2);
