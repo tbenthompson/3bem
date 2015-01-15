@@ -49,7 +49,6 @@ TEST(IntegralLaplaceSingleFakeNear) {
     integral_term_test(single_kernel, 1e-12, exact);
 }
 
-
 TEST(IntegralLaplaceDoubleFakeNear) {
     LaplaceDouble<3> double_kernel;
     double exact = -0.00621003;

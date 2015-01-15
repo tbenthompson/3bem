@@ -25,9 +25,12 @@ double apply_operator(double A, double x) {
     return A * x;
 }
 
-template <typename T, size_t dim>
-T apply_operator(const Vec<T,dim>& A, const Vec<double,dim>& x) {
-    return dot_product(x, A);
+Vec<double,2> apply_operator(const Vec<Vec<double,2>,2>& A, const Vec<double,2>& x) {
+    return {dot_product(A[0], x), dot_product(A[1], x)};
+}
+
+Vec<double,3> apply_operator(const Vec<Vec<double,3>,3>& A, const Vec<double,3>& x) {
+    return {dot_product(A[0], x), dot_product(A[1], x), dot_product(A[2], x)};
 }
 
 template <typename InType, typename OutType, typename OperatorType>
@@ -45,24 +48,6 @@ apply_operator(const MatrixOperator<InType,OutType,OperatorType>& A,
     }
     return res;
 }
-// template <size_t dim, typename InType, typename OutType, typename OperatorType>
-// Function<OutType,dim>
-// apply_operator(const MatrixOperator<InType,OutType,OperatorType>& A,
-//                const Function<InType,dim> x) 
-// {
-//     assert(A.rows * x.n_dofs() == A.data.size());
-//     std::vector<
-//     return Function<OutType,dim>{};
-// //     assert(A.rows * x.size() == A.data.size());
-// //     std::vector<OutType> res(A.rows, zeros<OutType>::make());
-// // #pragma omp parallel for
-// //     for (int i = 0; i < A.rows; i++) {
-// //         for (size_t j = 0; j < x.size(); j++) {
-// //             res[i] += apply_operator(A.data[i * x.size() + j], x[j]);
-// //         }
-// //     }
-// //     return res;
-// }
 
 } // end namespace tbem
 

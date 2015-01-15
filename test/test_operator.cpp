@@ -33,6 +33,30 @@ TEST(SimpleMatrixMultiply) {
 //     CHECK_EQUAL(res[0][0], 4);
 //     CHECK_EQUAL(res[1][0], 3);
 // }
+// 
+// TEST(InnerProductTensorVector) {
+//     Vec2<Vec2<double>> left{{{3.0, 0.0}, {0.0,4.0}}};
+//     Vec2<double> right{1.0, 1.0};
+//     Vec2<double> correct{{3.0, 4.0}};
+//     auto result = apply_operator(left, right);
+//     CHECK_EQUAL(result, correct);
+// }
+// 
+// TEST(InnerProduct3TensorVector) {
+//     Vec2<Vec2<Vec2<double>>> left{{
+//         {{{3.0, 0.0}, {0.0, 4.0}}},
+//         {{{3.0, 0.0}, {0.0, 4.0}}}
+//     }};
+//     Vec2<double> right = {1.0, 1.0};
+//     Vec2<Vec2<double>> correct{{{6.0, 0.0}, {0.0,8.0}}};
+//     auto result = apply_operator(left, right);
+//     CHECK_EQUAL(result, correct);
+// }
+
+// TEST(InnerProductTensorTensor) {
+//     Vec2<Vec2<double>> left{{{-1.0, 0.0}, {0.0,-2.0}}};
+//     Vec2<Vec2<double>> right{{{3.0, 0.0}, {0.0,4.0}}};
+// }
 
 int main(int, char const *[])
 {

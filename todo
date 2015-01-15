@@ -1,16 +1,15 @@
 TOP PRIORITY -- BLOCKING PROGRESS ON ELASTIC SOLVER:
 Goal1: Be able to constrain different components of a vector field differently.
-Goal2: More elegant handling of discretized Functions (in the mathematical sense).
-MF: Replace std::vector with the Function class in Problem
 MF: Come up with a good way to separate out components of a vector/tensor.
 NF: Different Constraints for each row of a vector
 NF: Decide whether to allow separating out individual rows or components of the tensor kernels. Adds complexity and a little bit of value, but the same thing can be achieved using the full tensor kernels and constraints. Is this true? If a different integral equation (traction vs. displacement) were used for the various rows, then constraints would not suffice. Interesting. Is there a way to easily build a tensor kernel out of a variety of components?
-NF: Slight encapsulation of the std::vector storage with useful things like negation, element-wise multiplication, etc. This might be useful to combine with Function.
 NF: DOF handling should be more systematic with a mesh_identifier, a face_id, a vertex_id, and a component_id for each dof_id. This needs a bidirectional mapping, especially for some of the constraints code. I should also account for the tensor/vector nature of certain fields. 
+
 
 ---------------------------------------
 
 HANGING NODES AND COMPLEX GEOMETRIES:
+S: more flexible build system -- debug vs release vs profile vs test_coverage?
 DD: Define much much clearer interfaces with the outside world.
 -- Maybe restrict the main .h files to outward facing interfaces. I could use _impl.h files for inward facing header files. I could try this with constraints.h
 S: Consider getting rid of autocheck as a dependency.
@@ -47,3 +46,10 @@ NEW FUNCTIONALITY(NF):
 MODIFIED FUNCTIONALITY(MF):
 STRUCTURAL(S):
 OPTIMIZATION(O):
+
+
+
+Possibly sidelined (forever?):
+Goal2: More elegant handling of discretized Functions (in the mathematical sense).
+MF: Replace std::vector with the Function class in Problem
+NF: Slight encapsulation of the std::vector storage with useful things like negation, element-wise multiplication, etc. This might be useful to combine with Function.

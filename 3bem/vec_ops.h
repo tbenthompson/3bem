@@ -139,18 +139,9 @@ Vec3<T> cross(const Vec3<T>& x, const Vec3<T>& y) {
     };
 }
 
-inline double dot_product(const double& x, const double& y) {
-    return x * y;
-}
-
-template <typename T>
-T dot_product(const Vec<double,3>& x, const Vec<T,3>& y) {
-    return sum(Vec<T,3>{{x[0] * y[0], x[1] * y[1], x[2] * y[2]}});
-}
-
-template <typename T>
-T dot_product(const Vec<double,2>& x, const Vec<T,2>& y) {
-    return sum(Vec<T,2>{{x[0] * y[0], x[1] * y[1]}});
+template <typename T, size_t dim>
+T dot_product(const Vec<T,dim>& x, const Vec<T,dim>& y) {
+    return sum(x * y);
 }
 
 template <typename T, size_t dim>

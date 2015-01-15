@@ -146,25 +146,6 @@ TEST(InnerProductVecVec) {
     CHECK_EQUAL(result, correct);
 }
 
-TEST(InnerProductTensorVector) {
-    Vec2<Vec2<double>> right{{{3.0, 0.0}, {0.0,4.0}}};
-    Vec2<double> left = {1.0, 1.0};
-    Vec2<double> correct{{3.0, 4.0}};
-    auto result = dot_product(left, right);
-    CHECK_EQUAL(result, correct);
-}
-
-TEST(InnerProduct3TensorVector) {
-    Vec2<Vec2<Vec2<double>>> right{{
-        {{{3.0, 0.0}, {0.0, 4.0}}},
-        {{{3.0, 0.0}, {0.0, 4.0}}}
-    }};
-    Vec2<double> left = {1.0, 1.0};
-    Vec2<Vec2<double>> correct{{{6.0, 0.0}, {0.0,8.0}}};
-    auto result = dot_product(left, right);
-    CHECK_EQUAL(result, correct);
-}
-
 TEST(ZerosTensor) {
     auto z = zeros<Vec2<Vec2<double>>>::make();
     Vec2<Vec2<double>> c{{{0.0, 0.0}, {0.0, 0.0}}};
