@@ -112,17 +112,17 @@ struct RearrangedConstraintEQ {
 };
 
 RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c, 
-                                                  int constrained_index);
+    int constrained_index);
 
 ConstraintEQ substitute(const ConstraintEQ& c, int constrained_dof_index,
-                        const RearrangedConstraintEQ& subs_in);
+    const RearrangedConstraintEQ& subs_in);
 
 typedef std::unordered_map<int,RearrangedConstraintEQ> ConstraintMapT;
 
 bool is_constrained(const ConstraintMapT& dof_constraint_map, int dof);
 
 RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
-                                             const ConstraintMapT& map);
+    const ConstraintMapT& map);
 
 struct ConstraintMatrix {
     const ConstraintMapT map;

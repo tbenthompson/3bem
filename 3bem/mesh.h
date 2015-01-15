@@ -15,7 +15,7 @@ namespace tbem {
  */
 
 template <size_t dim>
-using Facet = FacetFunction<Vec<double,dim>,dim>;
+using Facet = Vec<Vec<double,dim>,dim>;
 
 template <size_t dim>
 using Mesh = Function<Vec<double,dim>,dim>;

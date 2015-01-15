@@ -1,0 +1,6 @@
+There is a tension between a viewpoint that 3bem forms matrices which multiply vectors and
+a viewpoint that 3bem forms discretized linear operators that operate on discretized functions. These are obviously no different from the standpoint of correct behavior, but they have rather different design implications. For example, I currently implicitly have the idea of a tensor operator and a vector (in the 3 dimensions sense, not the linear algebra sense) embedded in the code.
+
+Should I make this explicit, or should I drift towards a purely linear algebra viewpoint? I like the functional analysis viewpoint since it allow thinking a bit more abstractly and defining alternate types of operators (FMMOperator, SparseMatrixOperator, DenseMatrixOperator, etc). Is there any abstraction value here on the Function end? Could I easily treat block operators and block functions nicely in this framework but not in the other?
+
+Regardless, I'm going to need to modify the constraints to better handle the vector and tensor nature of useful problems.

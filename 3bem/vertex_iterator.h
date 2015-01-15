@@ -61,12 +61,12 @@ struct FunctionDOFIterator {
         return get_vertex();
     }
 
-    const FacetFunction<T,dim>& get_facet() const {
+    const Vec<T,dim>& get_facet() const {
         return mesh.facets[facet_idx];
     }
 
     const T& get_vertex() const {
-        return mesh.facets[facet_idx].vertices[vertex_idx];
+        return mesh.facets[facet_idx][vertex_idx];
     }
     
     friend bool operator==(const iterator& a, const iterator& b) {

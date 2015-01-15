@@ -29,9 +29,9 @@ Mesh<3> sphere_mesh(const Vec3<double>& center, double r, int refinements) {
     std::vector<Facet<3>> spherified_facets;
     for (const auto& f: prototype.facets) {
         spherified_facets.push_back({
-            spherify(center, r, f.vertices[0]),
-            spherify(center, r, f.vertices[1]),
-            spherify(center, r, f.vertices[2])
+            spherify(center, r, f[0]),
+            spherify(center, r, f[1]),
+            spherify(center, r, f[2])
         });
     }
     return {spherified_facets};
@@ -74,8 +74,8 @@ Mesh<2> circle_mesh(std::array<double,2> c, double r, int refinements) {
     std::vector<Facet<2>> circlified_facets;
     for (const auto& f: prototype.facets) {
         circlified_facets.push_back({
-            circlify(c, r, f.vertices[0]),
-            circlify(c, r, f.vertices[1])
+            circlify(c, r, f[0]),
+            circlify(c, r, f[1])
         });
     }
 

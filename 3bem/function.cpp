@@ -30,12 +30,12 @@ FunctionDOFIterator<T,dim> Function<T,dim>::end() const {
  * in half. 
  */
 template <typename T>
-std::array<FacetFunction<T,2>,2> refine_facet(const FacetFunction<T,2>& f) {
-    auto midpt = (f.vertices[0] + f.vertices[1]) / 2.0;
-    return {
-        FacetFunction<T,2>{{f.vertices[0], midpt}},
-        FacetFunction<T,2>{{midpt, f.vertices[1]}}
-    };
+std::array<Vec<T,2>,2> refine_facet(const Vec<T,2>& f) {
+    auto midpt = (f[0] + f[1]) / 2.0;
+    return {{
+        {{f[0], midpt}},
+        {{midpt, f[1]}}
+    }};
 }
 
 /* Produces 4 new triangles from an initial triangle by adding a
@@ -48,21 +48,21 @@ std::array<FacetFunction<T,2>,2> refine_facet(const FacetFunction<T,2>& f) {
  *      stand the test of time!)
  */
 template <typename T>
-std::array<FacetFunction<T,3>,4> refine_facet(const FacetFunction<T,3>& f) {
-    auto midpt01 = (f.vertices[0] + f.vertices[1]) / 2.0;
-    auto midpt12 = (f.vertices[1] + f.vertices[2]) / 2.0;
-    auto midpt20 = (f.vertices[2] + f.vertices[0]) / 2.0;
+std::array<Vec<T,3>,4> refine_facet(const Vec<T,3>& f) {
+    auto midpt01 = (f[0] + f[1]) / 2.0;
+    auto midpt12 = (f[1] + f[2]) / 2.0;
+    auto midpt20 = (f[2] + f[0]) / 2.0;
 
     //Maintain the orientation. Since vertex 1 is "next" after vertex 0 
     //in the original triangle, midpt01 should be "next" after vertex 0
     //in the refined triangle. Following this principle for all the triangles
     //gives this set of new faces
-    return {
-        FacetFunction<T,3>{{f.vertices[0], midpt01, midpt20}},
-        FacetFunction<T,3>{{f.vertices[1], midpt12, midpt01}},
-        FacetFunction<T,3>{{f.vertices[2], midpt20, midpt12}},
-        FacetFunction<T,3>{{midpt01, midpt12, midpt20}}
-    };
+    return {{
+        {{f[0], midpt01, midpt20}},
+        {{f[1], midpt12, midpt01}},
+        {{f[2], midpt20, midpt12}},
+        {{midpt01, midpt12, midpt20}}
+    }};
 }
 
 template <typename T, size_t dim>
@@ -72,7 +72,7 @@ Function<T,dim>::refine(const std::vector<int>& refine_these) const {
         return *this;
     }
 
-    std::vector<FacetFunction<T,dim>> out_facets;
+    std::vector<Vec<T,dim>> out_facets;
 
     // Sort the refined edges so that we only have to check the
     // next one at any point in the loop.
@@ -115,9 +115,9 @@ Function<T,dim>::refine_repeatedly(unsigned int times) const {
 
 template <typename T, size_t dim>
 Function<T,dim> 
-Function<T,dim>::form_union(const std::vector<Function<T,dim>>& meshes) {
+Function<T,dim>::create_union(const std::vector<Function<T,dim>>& meshes) {
 
-    std::vector<FacetFunction<T,dim>> new_facets;
+    std::vector<Vec<T,dim>> new_facets;
     for (int i = 0; i < meshes.size(); i++) {
         for (const auto& f: meshes[i].facets) {
             new_facets.push_back(f);
@@ -134,14 +134,13 @@ template <typename T, size_t dim>
 Function<T,dim>
 Function<T,dim>::from_vertices_faces(const std::vector<T>& vertices,
                          const std::vector<std::array<int,dim>>& facets_by_vert_idx) {
-    std::vector<FacetFunction<T,dim>> facets;
+    std::vector<Vec<T,dim>> facets;
     for (const auto& in_facet: facets_by_vert_idx) { 
         Vec<T,dim> out_verts;
         for (int d = 0; d < dim; d++) {
             out_verts[d] = vertices[in_facet[d]];
         }
-        auto out_facet = FacetFunction<T,dim>{out_verts};
-        facets.push_back(out_facet);
+        facets.push_back(out_verts);
     }
     return Function<T,dim>{facets};
 }

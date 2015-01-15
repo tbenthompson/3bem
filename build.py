@@ -25,9 +25,8 @@ def files_in_dir(directory, ext):
             ret.append(os.path.join(directory, file_name))
     return ret
 
-dirs = ['3bem', 'examples', 'test', 'inttest']
+dirs = ['3bem', 'test', 'inttest']
 lib_srces = files_in_dir("3bem", "cpp")
-examples = files_in_dir("examples", "cpp")
 tests = files_in_dir("test", "cpp")
 inttests = files_in_dir("inttest", "cpp")
 
@@ -78,10 +77,6 @@ test_link_flags.append('-lUnitTest++')
 test_link_flags.extend(lib_dep_flags)
 test_link_flags.extend(link_flags)
 
-example_link_flags = lib_dep_flags
-example_link_flags.extend(link_flags)
-example_link_flags.extend('-lglut -lGL -lGLU -lGLEW'.split())
-
 build_dir = 'build'
 
 command_params = []
@@ -121,17 +116,12 @@ def setup_tree():
 
 def compile():
     compile_lib()
-    compile_examples()
     compile_tests()
     compile_inttests()
 
 def compile_lib():
     for source in lib_srces:
         compile_runner(source, lib_cpp_flags)
-
-def compile_examples():
-    for source in examples:
-        compile_runner(source, cpp_flags)
 
 def compile_tests():
     for source in tests:
@@ -149,7 +139,6 @@ def oname(filename):
 
 def link():
     link_lib()
-    link_examples()
     link_tests()
     link_inttests()
 
@@ -158,10 +147,6 @@ def link_lib():
     after()
     run(compiler, '-o', oname('lib3bem.so'), lib_objs, lib_link_flags)
     after()
-
-def link_examples():
-    for source in examples:
-        link_runner(source, example_link_flags)
 
 def link_tests():
     for source in tests:

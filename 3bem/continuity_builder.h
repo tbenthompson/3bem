@@ -71,8 +71,8 @@ bool continuity_pair_crosses_cut(const VertexIterator<dim>& facet0_it,
     const auto& facet1 = facet1_it.get_facet();
     const auto& disc_facet = discontinuity_it.get_facet();
 
-    auto facet0_side = which_side_facet(disc_facet.vertices, facet0.vertices);
-    auto facet1_side = which_side_facet(disc_facet.vertices, facet1.vertices);
+    auto facet0_side = which_side_facet(disc_facet, facet0);
+    auto facet1_side = which_side_facet(disc_facet, facet1);
 
     if (facet0_side == facet1_side) {
         return false;

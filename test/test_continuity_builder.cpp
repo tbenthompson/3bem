@@ -9,9 +9,9 @@ Mesh<2> disjoint_mesh() {
     std::vector<Facet<2>> facets;
     for (int i = 0; i < 10; i++) {
         double val = 2 * i;
-        facets.push_back(Facet<2>{{{
+        facets.push_back({{
             {{val, -val}}, {{val + 1, -val - 1}}
-        }}});
+        }});
     }
     return {facets};
 }

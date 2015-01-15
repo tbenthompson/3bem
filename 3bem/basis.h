@@ -17,7 +17,7 @@ std::vector<double> constrained_interpolate(const Mesh<dim>& mesh,
             if(is_constrained(matrix.map, dof)) {
                 continue;
             }
-            res.push_back(fnc(mesh.facets[i].vertices[d]));
+            res.push_back(fnc(mesh.facets[i][d]));
         }
     }
     return matrix.get_all(res, n_dofs);
