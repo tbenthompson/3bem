@@ -3,6 +3,7 @@
 #include "quadrature.h"
 #include "mesh_gen.h"
 #include "laplace_kernels.h"
+#include "test_shared.h"
 
 using namespace tbem;
 

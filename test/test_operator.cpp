@@ -4,59 +4,40 @@
 
 using namespace tbem;
 
-TEST(SimpleMatrixMultiply) {
-    MatrixOperator<double,double,double> matrix{
-        2,2,
-        {0,1,1,0}
-    };
-    auto res = apply_operator(matrix, {3,4});
-    CHECK_ARRAY_EQUAL(res, (std::vector<double>{4,3}), 2);
+TEST(ReshapeToOperator) {
+    Vec2<Vec2<double>> entry{{{0,1},{2,3}}};
+    std::vector<Vec2<Vec2<double>>> A{entry};
+    auto result = reshape_to_operator(1, 1, A);
+    CHECK_EQUAL(result.data.size(), 4);
+    for (size_t i = 0; i < A.size(); i++) {
+        for (int d1 = 0; d1 < 2; d1++) {
+            for (int d2 = 0; d2 < 2; d2++) {
+                CHECK_EQUAL(A[i][d1][d2], result.data[d1 * 2 + d2][i]);
+            }
+        }
+    }
 }
 
-// TODO: Someday I want this test to compile. It'd be a really cool way to do
-// block operators.
-// TEST(BlockMatrixMultiplyCanWeRecursivelyUseMatrixOperator) {
-//     MatrixOperator<
-//         std::vector<double>,
-//         std::vector<double>,
-//         MatrixOperator<double,double,double>
-//     > matrix{
-//         2,2,
-//         {
-//             {1,1,{0}},
-//             {1,1,{1}},
-//             {1,1,{1}},
-//             {1,1,{0}}
-//         }
-//     };
-//     auto res = apply_operator(matrix, {{3},{4}});
-//     CHECK_EQUAL(res[0][0], 4);
-//     CHECK_EQUAL(res[1][0], 3);
-// }
-// 
-// TEST(InnerProductTensorVector) {
-//     Vec2<Vec2<double>> left{{{3.0, 0.0}, {0.0,4.0}}};
-//     Vec2<double> right{1.0, 1.0};
-//     Vec2<double> correct{{3.0, 4.0}};
-//     auto result = apply_operator(left, right);
-//     CHECK_EQUAL(result, correct);
-// }
-// 
-// TEST(InnerProduct3TensorVector) {
-//     Vec2<Vec2<Vec2<double>>> left{{
-//         {{{3.0, 0.0}, {0.0, 4.0}}},
-//         {{{3.0, 0.0}, {0.0, 4.0}}}
-//     }};
-//     Vec2<double> right = {1.0, 1.0};
-//     Vec2<Vec2<double>> correct{{{6.0, 0.0}, {0.0,8.0}}};
-//     auto result = apply_operator(left, right);
-//     CHECK_EQUAL(result, correct);
-// }
 
-// TEST(InnerProductTensorTensor) {
-//     Vec2<Vec2<double>> left{{{-1.0, 0.0}, {0.0,-2.0}}};
-//     Vec2<Vec2<double>> right{{{3.0, 0.0}, {0.0,4.0}}};
-// }
+TEST(SimpleMatrixMultiply) {
+    MatrixOperator matrix{
+        2,2,1,1,
+        {{0,1,1,0}}
+    };
+    auto res = apply_operator(matrix, std::vector<double>{3,4});
+    CHECK_EQUAL(res[0], 4);
+    CHECK_EQUAL(res[1], 3);
+}
+
+TEST(SimpleMatrixMultiplyWithComponents) {
+    MatrixOperator matrix{
+        1,1,2,2,
+        {{0},{1},{1},{0}}
+    };
+    auto res = apply_operator(matrix, std::vector<std::vector<double>>{{3},{4}});
+    CHECK_EQUAL(res[0][0], 4);
+    CHECK_EQUAL(res[1][0], 3);
+}
 
 int main(int, char const *[])
 {

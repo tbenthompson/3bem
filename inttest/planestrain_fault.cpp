@@ -1,5 +1,4 @@
-#include "3bem.h"
-#include "elastic_kernels.h"
+#include "disloc_shared.h"
 
 using namespace tbem;
 
@@ -15,34 +14,26 @@ int main() {
     // Earth's surface
     auto surface = line_mesh({-100, 0.0}, {100, 0.0}).refine_repeatedly(11);
 
-    auto continuity = mesh_continuity(surface.begin());
-    auto cut_continuity = cut_at_intersection(
-        continuity, surface.begin(), fault.begin()
-    );
-    auto constraints = convert_to_constraints(cut_continuity);
-    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
+    auto constraint_matrix = surf_fault_constraints(surface.begin(), fault.begin());
 
     double shear_mod = 30e9;
     double poisson = 0.25;
     ElasticHypersingular<2> hyp(shear_mod, poisson);
 
     double slip = 1;
-    std::vector<Vec2<double>> du(fault.n_dofs(), constant<Vec2<double>>::make(slip));
-
-    std::vector<Vec2<double>> all_dofs_rhs(surface.n_dofs(), 
-        zeros<Vec2<double>>::make());
+    std::vector<double> duxy(fault.n_dofs(), slip);
+    std::vector<std::vector<double>> du{duxy, duxy};
 
     TIC
     auto p_rhs = make_problem<2>(fault, surface, hyp);
     auto rhs_op = mesh_to_mesh_operator(p_rhs, qs);
     auto res = apply_operator(rhs_op, du);
-    for (unsigned int i = 0; i < res.size(); i++) {
-        all_dofs_rhs[i] += res[i];
-    }
-    auto rhs = constraint_matrix.get_reduced(all_dofs_rhs);
+    auto all_dofs_rhs = apply_operator(rhs_op, du);
+    auto rhs = concatenate({
+        constraint_matrix.get_reduced(all_dofs_rhs[0]),
+        constraint_matrix.get_reduced(all_dofs_rhs[1])
+    });
     TOC("Building RHS");
-
-    int n_reduced_surface_dofs = 2 * rhs.size();
 
     TIC2
     auto p_lhs = make_problem<2>(surface, surface, hyp);
@@ -50,25 +41,35 @@ int main() {
     TOC("Building LHS matrices");
 
     int count = 0;
-    auto disp_reduced = solve_system((double*)rhs.data(),
-                                             n_reduced_surface_dofs, 1e-5,
+    auto disp_reduced = solve_system(rhs.data, 1e-5,
         [&] (std::vector<double>& x, std::vector<double>& y) {
             std::cout << "iteration " << count << std::endl;
             count++;
-            auto x_vec_reduced = reinterpret_vector<Vec2<double>>(x);
-            auto x_vec = constraint_matrix.get_all(x_vec_reduced, surface.n_dofs());
+
+            auto x_vec_reduced = expand(rhs, x);
+            std::vector<std::vector<double>> x_vec{
+                constraint_matrix.get_all(x_vec_reduced[0], surface.n_dofs()),
+                constraint_matrix.get_all(x_vec_reduced[1], surface.n_dofs())
+            };
             auto y_vec = apply_operator(lhs, x_vec);
-            auto y_vec_reduced = constraint_matrix.get_reduced(y_vec);
-            for (std::size_t i = 0; i < y_vec_reduced.size(); i++) {
-                y[2 * i] = y_vec_reduced[i][0];
-                y[2 * i + 1] = y_vec_reduced[i][1];
+            auto out = concatenate({
+                constraint_matrix.get_reduced(y_vec[0]),
+                constraint_matrix.get_reduced(y_vec[1])
+            });
+            for (std::size_t i = 0; i < out.data.size(); i++) {
+                y[i] = out.data[i];
             }
         }
     );
 
-    auto disp_reduced_vec = reinterpret_vector<Vec2<double>>(disp_reduced);
-    auto disp_vec = constraint_matrix.get_all(disp_reduced_vec, surface.n_dofs());
+    auto disp_reduced_vec = expand(rhs, disp_reduced);
+    std::vector<std::vector<double>> soln{
+        constraint_matrix.get_all(disp_reduced_vec[0], surface.n_dofs()),
+        constraint_matrix.get_all(disp_reduced_vec[1], surface.n_dofs())
+    };
 
-    auto file = HDFOutputter("test_out/planestrain_thrust.hdf5");
-    out_surface<2>(file, surface, disp_vec, 2);
+    auto filex = HDFOutputter("test_out/planestrain_ux.hdf5");
+    out_surface(filex, surface, soln[0], 1);
+    auto filey = HDFOutputter("test_out/planestrain_uy.hdf5");
+    out_surface(filey, surface, soln[1], 1);
 }

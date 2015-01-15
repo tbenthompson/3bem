@@ -82,13 +82,14 @@ TEST(TensorKernel) {
 
 TEST(TensorMassTerm) {
     auto sphere = sphere_mesh({0,0,0}, 1.0, 1);
-    std::vector<Vec3<double>> str(sphere.n_dofs(), {1.0, 1.0, 1.0});
+    std::vector<std::vector<double>> str(3, std::vector<double>(sphere.n_dofs(), 1.0));
     IdentityTensor<3,3,3> identity;
     auto p = make_problem<3>(sphere, sphere, identity);
     QuadStrategy<3> qs(2);
     auto mass_op = mass_operator(p, qs);
-    auto res = apply_operator(mass_op, str);
-    CHECK_EQUAL(res[0].size(), 3);
+    CHECK_EQUAL(mass_op.data.size(), 9);
+    auto res = apply_operator(mass_op, {str});
+    CHECK_EQUAL(res.size(), 3);
 }
 
 

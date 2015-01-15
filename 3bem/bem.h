@@ -105,16 +105,8 @@ double appx_face_dist2(const Vec<double,dim>& pt,
     return res;
 }
 
-/* Given an unknown function defined in terms of a polynomial basis:
- * u(x) = \sum_i U_i \phi_i(x)
- * Determine the coefficients for the expansion of an integral term in
- * terms of U_i.
- * In other words, this function calculates the vector Q_i where
- * Q_i = \int_{S_{src}} K(x,y) \phi_i(y) dy
- */
 template <size_t dim, typename KT>
-MatrixOperator<typename KT::InType, typename KT::OutType, typename KT::OperatorType>
-mesh_to_point_operator(const Problem<dim,KT>& p,
+std::vector<typename KT::OperatorType> mesh_to_point_vector(const Problem<dim,KT>& p,
     const QuadStrategy<dim>& qs, const ObsPt<dim>& obs) 
 {
     size_t n_out_dofs = dim * p.src_mesh.facets.size();
@@ -128,7 +120,23 @@ mesh_to_point_operator(const Problem<dim,KT>& p,
             result[dim * i + b] = integrals[b];
         }
     }
-    return {1, n_out_dofs, result};
+    return result;
+}
+
+/* Given an unknown function defined in terms of a polynomial basis:
+ * u(x) = \sum_i U_i \phi_i(x)
+ * Determine the coefficients for the expansion of an integral term in
+ * terms of U_i.
+ * In other words, this function calculates the vector Q_i where
+ * Q_i = \int_{S_{src}} K(x,y) \phi_i(y) dy
+ */
+template <size_t dim, typename KT>
+MatrixOperator mesh_to_point_operator(const Problem<dim,KT>& p,
+    const QuadStrategy<dim>& qs, const ObsPt<dim>& obs) 
+{
+    size_t n_out_dofs = dim * p.src_mesh.facets.size();
+    auto result = mesh_to_point_vector(p, qs, obs);
+    return reshape_to_operator(1, n_out_dofs, result);
 }
 
 /* Given a kernel function and two meshes this function calculates the
@@ -138,8 +146,8 @@ mesh_to_point_operator(const Problem<dim,KT>& p,
  * K(x,y) is the kernel function and \phi_i(x) is a basis function.
  */
 template <size_t dim, typename KT>
-MatrixOperator<typename KT::InType, typename KT::OutType, typename KT::OperatorType>
-mesh_to_mesh_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs) 
+MatrixOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
+                                     const QuadStrategy<dim>& qs) 
 {
     size_t n_obs_dofs = p.obs_mesh.n_dofs();
     size_t n_src_dofs = p.src_mesh.n_dofs();
@@ -151,8 +159,8 @@ mesh_to_mesh_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
         for (size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
             auto pt = ObsPt<dim>::from_face(qs.obs_quad[obs_q].x_hat, obs_face);
 
-            const auto row = mesh_to_point_operator(p, qs, pt);
-            assert(row.cols == n_src_dofs);
+            const auto row = mesh_to_point_vector(p, qs, pt);
+            assert(row.size() == n_src_dofs);
 
             const auto basis = linear_basis(qs.obs_quad[obs_q].x_hat);
 
@@ -161,14 +169,14 @@ mesh_to_mesh_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
                 for (size_t src_dof = 0; src_dof < n_src_dofs; src_dof++) {
                     matrix[obs_dof * n_src_dofs + src_dof] +=
                         basis[obs_basis_idx] *
-                        row.data[src_dof] *
+                        row[src_dof] *
                         qs.obs_quad[obs_q].w *
                         obs_face.jacobian;
                 }
             }
         }
     }
-    return {n_obs_dofs, n_src_dofs, matrix};
+    return reshape_to_operator(n_obs_dofs, n_src_dofs, matrix);
 }
 
 /* In many integral equations, one of the functions of interest appears
@@ -179,8 +187,7 @@ mesh_to_mesh_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
  * This function calculates such integrals using gaussian quadrature.
  */
 template <size_t dim, typename KT>
-MatrixOperator<typename KT::InType, typename KT::OutType, typename KT::OperatorType>
-mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
+MatrixOperator mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
 {
     auto n_obs_dofs = p.obs_mesh.n_dofs();
     std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_obs_dofs,
@@ -210,7 +217,7 @@ mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
         }
     }
 
-    return {n_obs_dofs, n_obs_dofs, matrix};
+    return reshape_to_operator(n_obs_dofs, n_obs_dofs, matrix);
 }
 
 template <size_t dim>
@@ -226,6 +233,7 @@ double get_len_scale<2>(Mesh<2>& mesh, int which_face, int q) {
     return dist(mesh.facets[which_face][1],
                 mesh.facets[which_face][0]) / q;
 }
+
 
 
 } // END NAMESPACE tbem

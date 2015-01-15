@@ -1,7 +1,7 @@
 #include "UnitTest++.h"
 #include "continuity_builder.h"
 #include "mesh_gen.h"
-#include "shared.h"
+#include "test_shared.h"
 
 using namespace tbem;
 

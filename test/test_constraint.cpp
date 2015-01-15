@@ -1,7 +1,7 @@
 #include "UnitTest++.h"
 #include "constraint.h"
 #include <iostream>
-#include "shared.h"
+#include "test_shared.h"
 #include "vec.h"
 #include "vec_ops.h"
 

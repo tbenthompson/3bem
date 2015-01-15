@@ -1,7 +1,7 @@
 #include "UnitTest++.h"
 #include "algs.h"
 #include "util.h"
-#include "shared.h"
+#include "test_shared.h"
 
 using namespace tbem;
 
