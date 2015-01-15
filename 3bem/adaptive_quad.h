@@ -30,7 +30,7 @@
 #include <cmath>
 #include <limits>
 #include <iostream>
-#include "vec.h"
+#include "vec_ops.h"
 
 namespace tbem {
 using std::fabs;
