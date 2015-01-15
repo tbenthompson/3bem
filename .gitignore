@@ -10,3 +10,5 @@ lib/*
 *.pyc
 *.hdf5
 coverage.info
+!notes/method_desc/*.tex
+notes/method_desc/*
