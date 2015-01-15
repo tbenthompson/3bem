@@ -1,9 +1,12 @@
 #ifndef __PPPPPPPPKPKPKPKP_INTEGRAL_TERM_H
 #define __PPPPPPPPKPKPKPKP_INTEGRAL_TERM_H
 
+#include <cassert>
 #include <cstdlib>
 #include "vec.h"
 #include "quadrature.h"
+#include "adaptive_quad.h"
+#include "numerics.h"
 
 namespace tbem {
 

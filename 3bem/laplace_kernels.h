@@ -1,7 +1,7 @@
 #ifndef __ddddddddddddEQwQWEA_LAPLACE_KERNELS_H
 #define __ddddddddddddEQwQWEA_LAPLACE_KERNELS_H
 
-#include "vec.h"
+#include "vec_ops.h"
 #include "kernel.h"
 
 namespace tbem {

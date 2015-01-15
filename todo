@@ -3,12 +3,8 @@ Goal1: Be able to constrain different components of a vector field differently.
 Goal2: More elegant handling of discretized Functions (in the mathematical sense).
 MF: Replace std::vector with the Function class in Problem and the BEM code
 MF: Come up with a good way to separate out components of a vector/tensor.
-NF: Mass matrix operator
 NF: Different Constraints for each row of a vector
-NF: Interface for Operators
--- move mat_mult to be a member function for an operator?
 NF: Decide whether to allow separating out individual rows or components of the tensor kernels. Adds complexity and a little bit of value, but the same thing can be achieved using the full tensor kernels and constraints. Is this true? If a different integral equation (traction vs. displacement) were used for the various rows, then constraints would not suffice. Interesting. Is there a way to easily build a tensor kernel out of a variety of components?
-NF: It'd be nice to have some kind of abstraction for an "Operator" and a "Function"
 NF: Slight encapsulation of the std::vector storage with useful things like negation, element-wise multiplication, etc. This might be useful to combine with Function.
 NF: DOF handling should be more systematic with a mesh_identifier, a face_id, a vertex_id, and a component_id for each dof_id. This needs a bidirectional mapping, especially for some of the constraints code. I should also account for the tensor/vector nature of certain fields. 
 
@@ -28,6 +24,8 @@ NF: Handle the general case when fault-surface intersection does not occur at a 
 ---------------------------------------
 
 FMM-BEM INTEGRATION:
+NF: Interface for Operators -- extend with sparse matrix operators and FMMOperator
+-- move mat_mult to be a member function for an operator?
 NF: Imagine some kind of general purpose "nearfield" structure that can allow a simple O(N) solution to the near neighbors problems in mesh_continuity, apply_discontinuities as well as the FMM tree structure.
 NF: Once FMM-BEM integration is completed, a sparse matrix storage format should be used for the nearfield entries.
 NF: A method that creates a non-matrix based operator that consists of strengths of point sources. First, evaluate this with a direct multiplication interaction.
