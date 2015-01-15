@@ -34,7 +34,7 @@ Vec3<double> spherify_pt(Vec3<double> pt, Vec3<double> c, double r) {
 }
 
 Vec3<double> random_pt_sphere(Vec3<double> c, double r) {
-    auto pt = random_pt();
+    auto pt = random_pt3d();
     return spherify_pt(pt, c, r);
 }
 

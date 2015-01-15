@@ -27,7 +27,16 @@ std::array<std::vector<double>,3> random_pts(int N) {
     return locs;
 }
 
-Vec3<double> random_pt() {
+Vec2<double> random_pt2d() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0, 1);
+    return {
+        dis(gen), dis(gen)
+    };
+}
+
+Vec3<double> random_pt3d() {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0, 1);

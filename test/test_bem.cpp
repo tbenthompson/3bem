@@ -16,8 +16,8 @@ struct EvalProb {
              double r = 3.0):
         sphere(sphere_mesh(center, r, refine_level)),
         qs(gauss_order, gauss_order, near_eval, 2.0, 1e-2),
-        obs_pt(random_pt()),
-        obs_n(random_pt()),
+        obs_pt(random_pt3d()),
+        obs_n(random_pt3d()),
         obs_length_scale(get_len_scale<3>(sphere, 0, gauss_order)),
         src_strength(std::vector<double>(sphere.n_dofs(), 1.0))
     {}

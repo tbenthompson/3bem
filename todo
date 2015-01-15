@@ -1,12 +1,10 @@
-TOP PRIORITY -- BLOCKING PROGRESS ON ELASTIC SOLVER:
-QUESTION: Is it worth encapsulating std::vector<std::vector<double>> in a Function class?
-MF: fix up the constraint handling to deal with the new operator and function datatypes
-NF: DOF handling should be more systematic with a mesh_identifier, a face_id, a vertex_id, and a component_id for each dof_id. This needs a bidirectional mapping, especially for some of the constraints code. I should also account for the tensor/vector nature of certain fields. 
-
-
+CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
+-- petsc-interface -- return soln instead of copying within the matvecfnc
+-- outputter clean up
+-- constraints on vectors should be easier
 ---------------------------------------
 
-HANGING NODES AND COMPLEX GEOMETRIES:
+NEXT: HANGING NODES AND COMPLEX GEOMETRIES:
 S: more flexible build system -- debug vs release vs profile vs test_coverage?
 DD: Define much much clearer interfaces with the outside world.
 -- Maybe restrict the main .h files to outward facing interfaces. I could use _impl.h files for inward facing header files. I could try this with constraints.h

@@ -20,22 +20,19 @@ namespace tbem {
  * displacement is zero is one of the simplest ways of solving this problem.
  */
 
-template <typename T>
-struct GeneralLinearTerm {
+struct LinearTerm {
     const int dof;
-    const T weight;
+    const double weight;
 
-    bool operator==(const GeneralLinearTerm<T>& other) const {
+    bool operator==(const LinearTerm& other) const {
         return dof == other.dof && weight == other.weight;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const GeneralLinearTerm<T>& lt) {
+    friend std::ostream& operator<<(std::ostream& os, const LinearTerm& lt) {
         os << "(" << lt.dof << ", " << lt.weight << ")";
         return os;
     }
 };
-
-typedef GeneralLinearTerm<double> LinearTerm;
 
 /* A constraint is composed of LinearTerms and a right hand side constant.
  * This structure represents one constraint equation, with each variable
@@ -131,89 +128,16 @@ struct ConstraintMatrix {
             const std::vector<ConstraintEQ>& constraints);
 
     /* Accepts a reduced DOF vector and returns the full DOF vector. */
-    template <typename T>
-    std::vector<T> get_all(const std::vector<T>& in, int total_dofs) const;
+    std::vector<double> get_all(const std::vector<double>& in, int total_dofs) const;
 
     /* Accepts a full DOF vector and returns the reduced DOF vector.
      */
-    template <typename T>
-    std::vector<T> get_reduced(const std::vector<T>& all) const;
+    std::vector<double> get_reduced(const std::vector<double>& all) const;
 
-    template <typename T>
-    std::vector<GeneralLinearTerm<T>>
-    add_term_with_constraints(const GeneralLinearTerm<T>& entry) const;
+    std::vector<LinearTerm>
+    add_term_with_constraints(const LinearTerm& entry) const;
 };
 
-template <typename T>
-std::vector<T> ConstraintMatrix::get_all(const std::vector<T>& in, int total_dofs) const {
-    std::vector<T> out(total_dofs); 
-
-    int next_reduced_dof = 0;
-
-    for (int dof_index = 0; dof_index < total_dofs; dof_index++) {
-        if(is_constrained(map, dof_index)) {
-            continue;
-        }
-        out[dof_index] = in[next_reduced_dof];
-        next_reduced_dof++;
-    }
-
-    for (int dof_index = 0; dof_index < total_dofs; dof_index++) {
-        if(!is_constrained(map, dof_index)) {
-            continue;
-        }
-        auto constraint = map.find(dof_index)->second;
-        auto val = constant<T>::make(constraint.rhs);
-        for (size_t j = 0; j < constraint.terms.size(); j++) {
-            val += constraint.terms[j].weight * out[constraint.terms[j].dof];
-        }
-        out[dof_index] = val;
-    }
-    return out;
-}
-
-template <typename T>
-std::vector<GeneralLinearTerm<T>>
-ConstraintMatrix::add_term_with_constraints(const GeneralLinearTerm<T>& entry) const {
-    if (!is_constrained(map, entry.dof)) {
-        return {entry};
-    }
-
-    const auto& constraint = map.find(entry.dof)->second;
-    const auto& terms = constraint.terms;
-    std::vector<GeneralLinearTerm<T>> out_terms;
-    for (size_t i = 0; i < terms.size(); i++) {
-        T recurse_weight = terms[i].weight * entry.weight;
-        GeneralLinearTerm<T> new_entry{terms[i].dof, recurse_weight};
-        const auto& terms = add_term_with_constraints(new_entry);
-        for (const auto& t: terms) {
-            out_terms.push_back(std::move(t));
-        }
-    }
-    return out_terms;
-}
-
-template <typename T>
-std::vector<T> ConstraintMatrix::get_reduced(const std::vector<T>& all) const {
-    std::vector<T> condensed_dofs(all.size(), zeros<T>::make());
-    for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
-        GeneralLinearTerm<T> term_to_add{(int)dof_idx, all[dof_idx]};
-        auto expanded_term = add_term_with_constraints(term_to_add);
-        for (const auto& t: expanded_term) {
-            condensed_dofs[t.dof] += t.weight;
-        }
-    }
-
-    std::vector<T> out;
-    for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
-        if (is_constrained(map, dof_idx)) {
-            continue;
-        }
-        out.push_back(condensed_dofs[dof_idx]);
-    }
-
-    return out;
-}
 
 } // END namespace tbem
 
