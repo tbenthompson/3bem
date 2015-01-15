@@ -17,7 +17,7 @@ TEST(IntegralOne) {
     QuadStrategy<2> quad_strategy(2);
     IdentityScalar<2> identity;
     ObsPt<2> obs{0.01, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
-    auto facet_info = FacetInfo<2>::build(Facet<2>{{ {{0,0},{1,0}} }});
+    auto facet_info = FacetInfo<2>::build({{{0,0},{1,0}}});
     auto term = make_integral_term(quad_strategy, identity, obs, facet_info, 1.0);
     auto result = compute_term(term);
     CHECK_ARRAY_CLOSE(result, (Vec2<double>{0.5, 0.5}), 2, 1e-6);
@@ -27,7 +27,7 @@ template <typename KT>
 void integral_term_test(const KT& K, double claimed_distance, double exact) {
     QuadStrategy<3> quad_strategy(2);
     ObsPt<3> obs{0.01, {2.0, 2.0, 2.0}, {1.0, 0.0, 0.0}, {0.0, 0.0}};
-    auto facet_info = FacetInfo<3>::build({ {{{0,0,0},{2,0,0},{0,1,0}}} });
+    auto facet_info = FacetInfo<3>::build({{{0,0,0},{2,0,0},{0,1,0}}});
     auto term = make_integral_term(
         quad_strategy, K, obs,
         facet_info, claimed_distance
@@ -72,8 +72,7 @@ TEST(RichardsonZeros) {
 
 TEST(TensorKernel) {
     ElasticDisplacement<2> k(30e9, 0.25);
-    auto facet = Facet<2>{{{{-1.0, 0.0}, {1.0, 0.0}}}};
-    auto facet_info = FacetInfo<2>::build(facet);
+    auto facet_info = FacetInfo<2>::build({{{-1.0, 0.0}, {1.0, 0.0}}});
     auto result = eval_point_influence({0.0}, k, facet_info, {0.0, 1.0}, {0.0, 1.0});
     CHECK_CLOSE(result[0][1][1], 8.84194e-13, 1e-17);
     CHECK_CLOSE(result[1][1][1], 8.84194e-13, 1e-17);

@@ -63,7 +63,7 @@ TEST(MassTerm) {
     std::vector<double> str(sphere.n_dofs(), 1.0);
     for (std::size_t i = 0; i < sphere.n_facets(); i++) {
         for (int d = 0; d < 3; d++) {
-            if (sphere.facets[i].vertices[d][0] > 0.5) {
+            if (sphere.facets[i][d][0] > 0.5) {
                 str[3 * i + d] = 0.0;
             }
         }
@@ -76,7 +76,7 @@ TEST(MassTerm) {
     CHECK_EQUAL(res.size(), sphere.n_dofs());
     double true_area = 0.0;
     for (auto f: sphere.facets) {
-        true_area += tri_area(f.vertices);
+        true_area += tri_area(f);
     }
     double mass_area = 0.0;
     for (auto r: res) {
@@ -88,7 +88,6 @@ TEST(MassTerm) {
 TEST(FacetInfo2D) {
     Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{1.0, 0.0}};
     auto face_info = FacetInfo<2>::build(f);
-    CHECK_EQUAL(&face_info.face, &f);
     CHECK_EQUAL(face_info.area_scale, 1);
     CHECK_EQUAL(face_info.length_scale, 1);
     CHECK_EQUAL(face_info.jacobian, 0.5);
@@ -102,7 +101,6 @@ TEST(FacetInfo3D) {
         Vec3<double>{0.0, 1.0, 0.0}
     };
     auto face_info = FacetInfo<3>::build(f);
-    CHECK_EQUAL(&face_info.face, &f);
     CHECK_EQUAL(face_info.area_scale, 0.5);
     CHECK_EQUAL(face_info.length_scale, std::sqrt(1.0 / 2.0));
     CHECK_EQUAL(face_info.jacobian, 1.0);

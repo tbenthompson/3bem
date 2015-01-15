@@ -48,7 +48,7 @@ Vec<typename KT::OperatorType,dim> eval_point_influence(const Vec<double,dim-1>&
                                   const FacetInfo<dim>& face,
                                   const Vec<double,dim>& obs_loc,
                                   const Vec<double,dim>& obs_n) {
-    const auto src_pt = ref_to_real(x_hat, face.face.vertices);
+    const auto src_pt = ref_to_real(x_hat, face.face);
     const auto d = src_pt - obs_loc;
     const auto r2 = dot_product(d, d);
     const auto kernel_val = kernel(r2, d, face.normal, obs_n);

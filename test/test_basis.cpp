@@ -12,7 +12,7 @@ TEST(Interpolate) {
     auto res = interpolate<3>(m, [](const Vec<double,3>& x) {return x[0];});
     for (unsigned int i = 0; i < m.n_facets(); i++) {
         for (int d = 0; d < 3; d++) {
-            CHECK_CLOSE(res[3 * i + d], m.facets[i].vertices[d][0], 1e-14);
+            CHECK_CLOSE(res[3 * i + d], m.facets[i][d][0], 1e-14);
         }
     }
 }
@@ -31,7 +31,7 @@ TEST(ConstrainedInterpolate) {
     );
     for (unsigned int i = 0; i < mesh.n_facets(); i++) {
         for (int d = 0; d < 3; d++) {
-            CHECK_CLOSE(res[3 * i + d], mesh.facets[i].vertices[d][0], 1e-14);
+            CHECK_CLOSE(res[3 * i + d], mesh.facets[i][d][0], 1e-14);
         }
     }
 }

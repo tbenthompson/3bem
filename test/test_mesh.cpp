@@ -9,7 +9,7 @@ using namespace tbem;
 double perimeter(Mesh<2> m) {
     double p = 0;
     for (auto f: m.facets) {
-        p += dist(f.vertices[0], f.vertices[1]);
+        p += dist(f[0], f[1]);
     }
     return p;
 }
@@ -24,27 +24,27 @@ TEST(Refine2DMesh) {
 TEST(RefineSubset) {
     auto m2 = line_mesh({0,0}, {1,0}).refine({0}).refine({0});
     CHECK_EQUAL(m2.n_facets(), 3);
-    CHECK_EQUAL(m2.facets[1].vertices[0], (Vec2<double>{0.25,0.0}));
+    CHECK_EQUAL(m2.facets[1][0], (Vec2<double>{0.25,0.0}));
 }
 
 
 TEST(CircleMesh) {
     std::array<double, 2> center = {20.0, 0.0};
     auto src_circle = circle_mesh(center, 19.0, 4);
-    CHECK_CLOSE(src_circle.facets[16].vertices[0][0], 20.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[32].vertices[0][0], 1.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[48].vertices[0][0], 20.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[0].vertices[0][0], 39.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[16].vertices[0][1], 19.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[32].vertices[0][1], 0.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[48].vertices[0][1], -19.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[0].vertices[0][1], 0.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[16][0][0], 20.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[32][0][0], 1.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[48][0][0], 20.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[0][0][0], 39.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[16][0][1], 19.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[32][0][1], 0.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[48][0][1], -19.0, 1e-4);
+    CHECK_CLOSE(src_circle.facets[0][0][1], 0.0, 1e-4);
 }
 
 double surface_area(Mesh<3> m) {
     double sa = 0;
     for (auto f: m.facets) {
-        sa += tri_area(f.vertices);
+        sa += tri_area(f);
     }
     return sa;
 }

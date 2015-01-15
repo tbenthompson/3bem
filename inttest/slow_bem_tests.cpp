@@ -17,7 +17,7 @@ TEST(ConstantLaplaceBoundary) {
     std::vector<double> src_strength(sphere.n_dofs(), 1.0);
     double obs_length_scale = get_len_scale<3>(sphere, 0, gauss_order);
     for (auto f: sphere.facets) {
-        for (auto v: f.vertices) {
+        for (auto v: f) {
             auto obs_pt = v;
             auto obs_n = -normalized(obs_pt);
             LaplaceDouble<3> double_kernel;
@@ -124,7 +124,7 @@ TEST(ConstantLaplace2D) {
 
         // Do it via eval_integral_equation for each vertex.
         for (std::size_t i = 0; i < obs_circle.n_facets(); i++) {
-            ObsPt<2> pt = {0.390, obs_circle.facets[i].vertices[0], {0,0}, {0,0}}; 
+            ObsPt<2> pt = {0.390, obs_circle.facets[i][0], {0,0}, {0,0}}; 
             auto op = mesh_to_point_operator(p, qs, pt);
             double result = apply_operator(op, u)[0];
             CHECK_CLOSE(result, -7.0, 1e-4);
@@ -140,7 +140,7 @@ TEST(ConstantLaplace2D) {
         const double integral_of_basis_fnc = 0.5;
         for (size_t j = 0; j < obs_circle.facets.size(); j++) {
             double integral_of_one = integral_of_basis_fnc * 
-                dist(obs_circle.facets[j].vertices[0], obs_circle.facets[j].vertices[1]);
+                dist(obs_circle.facets[j][0], obs_circle.facets[j][1]);
             double val = -7.0 * integral_of_one;
             all_ones[2 * j] = val;
             all_ones[2 * j + 1] = val;

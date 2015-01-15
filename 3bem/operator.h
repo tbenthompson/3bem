@@ -45,6 +45,24 @@ apply_operator(const MatrixOperator<InType,OutType,OperatorType>& A,
     }
     return res;
 }
+// template <size_t dim, typename InType, typename OutType, typename OperatorType>
+// Function<OutType,dim>
+// apply_operator(const MatrixOperator<InType,OutType,OperatorType>& A,
+//                const Function<InType,dim> x) 
+// {
+//     assert(A.rows * x.n_dofs() == A.data.size());
+//     std::vector<
+//     return Function<OutType,dim>{};
+// //     assert(A.rows * x.size() == A.data.size());
+// //     std::vector<OutType> res(A.rows, zeros<OutType>::make());
+// // #pragma omp parallel for
+// //     for (int i = 0; i < A.rows; i++) {
+// //         for (size_t j = 0; j < x.size(); j++) {
+// //             res[i] += apply_operator(A.data[i * x.size() + j], x[j]);
+// //         }
+// //     }
+// //     return res;
+// }
 
 } // end namespace tbem
 

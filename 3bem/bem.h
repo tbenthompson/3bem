@@ -30,7 +30,7 @@ Problem<dim,KT> make_problem(const Mesh<dim>& src_mesh,
 template <size_t dim>
 struct FacetInfo {
     //The responsibility is on the user to maintain the lifetime of the facet.
-    const Facet<dim>& face;
+    const Facet<dim> face;
 
     const double area_scale;
     const double length_scale;
@@ -62,7 +62,7 @@ ObsPt<dim> ObsPt<dim>::from_face(const Vec<double,dim-1>& ref_loc,
     const int basis_order = 1;
     return {
         obs_face.length_scale / basis_order,
-        ref_to_real(ref_loc, obs_face.face.vertices),
+        ref_to_real(ref_loc, obs_face.face),
         obs_face.normal,
         obs_face.normal 
     };
@@ -70,7 +70,7 @@ ObsPt<dim> ObsPt<dim>::from_face(const Vec<double,dim-1>& ref_loc,
 
 template <>
 FacetInfo<3> FacetInfo<3>::build(const Facet<3>& facet){
-    auto unscaled_n = unscaled_normal(facet.vertices);
+    auto unscaled_n = unscaled_normal(facet);
     auto area = tri_area(unscaled_n);
     auto length_scale = std::sqrt(area);
     auto jacobian = area * inv_ref_facet_area;
@@ -80,7 +80,7 @@ FacetInfo<3> FacetInfo<3>::build(const Facet<3>& facet){
 
 template <>
 FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet){
-    auto unscaled_n = unscaled_normal(facet.vertices);
+    auto unscaled_n = unscaled_normal(facet);
     auto area_scale = hypot2(unscaled_n);
     auto length = std::sqrt(area_scale);
     auto jacobian = length * inv_ref_facet_area;
@@ -121,7 +121,7 @@ mesh_to_point_operator(const Problem<dim,KT>& p,
     std::vector<typename KT::OperatorType> result(n_out_dofs);
     for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
         auto src_face = FacetInfo<dim>::build(p.src_mesh.facets[i]);
-        const double dist2 = appx_face_dist2<dim>(obs.loc, src_face.face.vertices);
+        const double dist2 = appx_face_dist2<dim>(obs.loc, src_face.face);
         auto term = make_integral_term(qs, p.K, obs, src_face, dist2);
         auto integrals = compute_term<dim>(term);
         for (int b = 0; b < dim; b++) {
@@ -218,13 +218,13 @@ double get_len_scale(Mesh<dim>& mesh, int which_face, int q);
 
 template <>
 double get_len_scale<3>(Mesh<3>& mesh, int which_face, int q) {
-    return std::sqrt(tri_area(mesh.facets[which_face].vertices)) / q;
+    return std::sqrt(tri_area(mesh.facets[which_face])) / q;
 }
 
 template <>
 double get_len_scale<2>(Mesh<2>& mesh, int which_face, int q) {
-    return dist(mesh.facets[which_face].vertices[1],
-                mesh.facets[which_face].vertices[0]) / q;
+    return dist(mesh.facets[which_face][1],
+                mesh.facets[which_face][0]) / q;
 }
 
 

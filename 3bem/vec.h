@@ -29,11 +29,12 @@ namespace tbem {
  * Extending this to use recursion to do 1D,2D,3D all in one.
  */
 
-// Cool! C++11 templated typedef
 template <typename T, size_t dim>
 using Vec = std::array<T,dim>;
+
 template <typename T>
 using Vec3 = Vec<T,3>;
+
 template <typename T>
 using Vec2 = Vec<T,2>;
 

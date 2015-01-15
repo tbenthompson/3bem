@@ -66,7 +66,7 @@ TEST_FIXTURE(PremadeMesh2D, DereferenceNonInitial) {
     iter.facet_idx = 2;
     iter.vertex_idx = 1;
     auto vert = *iter;
-    CHECK_EQUAL(vert, m.facets[2].vertices[1]);
+    CHECK_EQUAL(vert, m.facets[2][1]);
 }
 
 TEST_FIXTURE(PremadeMesh3D, AbsoluteIndex3D) {
