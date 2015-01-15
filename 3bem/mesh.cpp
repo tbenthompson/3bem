@@ -6,31 +6,30 @@
 namespace tbem {
 
 
-template <typename T, size_t dim>
-size_t Function<T,dim>::n_facets() const {
+template <size_t dim>
+size_t Mesh<dim>::n_facets() const {
     return facets.size();
 }
 
-template <typename T, size_t dim>
-size_t Function<T,dim>::n_dofs() const {
+template <size_t dim>
+size_t Mesh<dim>::n_dofs() const {
     return dim * n_facets();
 }
 
-template <typename T, size_t dim>
-FunctionDOFIterator<T,dim> Function<T,dim>::begin() const {
-    return FunctionDOFIterator<T,dim>(*this, 0, 0);
+template <size_t dim>
+VertexIterator<dim> Mesh<dim>::begin() const {
+    return VertexIterator<dim>(*this, 0, 0);
 }
 
-template <typename T, size_t dim>
-FunctionDOFIterator<T,dim> Function<T,dim>::end() const {
-    return FunctionDOFIterator<T,dim>(*this, facets.size(), 0);
+template <size_t dim>
+VertexIterator<dim> Mesh<dim>::end() const {
+    return VertexIterator<dim>(*this, facets.size(), 0);
 }
 
 /* Produces 2 new segments by splitting the current segment 
  * in half. 
  */
-template <typename T>
-std::array<Vec<T,2>,2> refine_facet(const Vec<T,2>& f) {
+std::array<Facet<2>,2> refine_facet(const Facet<2>& f) {
     auto midpt = (f[0] + f[1]) / 2.0;
     return {{
         {{f[0], midpt}},
@@ -47,8 +46,7 @@ std::array<Vec<T,2>,2> refine_facet(const Vec<T,2>& f) {
  *      (My first ever ASCII art, a masterpiece that will
  *      stand the test of time!)
  */
-template <typename T>
-std::array<Vec<T,3>,4> refine_facet(const Vec<T,3>& f) {
+std::array<Facet<3>,4> refine_facet(const Facet<3>& f) {
     auto midpt01 = (f[0] + f[1]) / 2.0;
     auto midpt12 = (f[1] + f[2]) / 2.0;
     auto midpt20 = (f[2] + f[0]) / 2.0;
@@ -65,14 +63,14 @@ std::array<Vec<T,3>,4> refine_facet(const Vec<T,3>& f) {
     }};
 }
 
-template <typename T, size_t dim>
-Function<T,dim> 
-Function<T,dim>::refine(const std::vector<int>& refine_these) const {
+template <size_t dim>
+Mesh<dim> 
+Mesh<dim>::refine(const std::vector<int>& refine_these) const {
     if (refine_these.empty()) {
         return *this;
     }
 
-    std::vector<Vec<T,dim>> out_facets;
+    std::vector<Facet<dim>> out_facets;
 
     // Sort the refined edges so that we only have to check the
     // next one at any point in the loop.
@@ -93,61 +91,59 @@ Function<T,dim>::refine(const std::vector<int>& refine_these) const {
             out_facets.push_back(facets[i]);
         }
     }
-    return Function<T,dim>{out_facets};
+    return Mesh<dim>{out_facets};
 }
 
 /* A helper function to refine all the facets. */
-template <typename T, size_t dim>
-Function<T,dim> 
-Function<T,dim>::refine() const {
+template <size_t dim>
+Mesh<dim> 
+Mesh<dim>::refine() const {
     return refine(range(facets.size()));
 }
 
 /* A helper function to refine all the facets multiple times. */
-template <typename T, size_t dim>
-Function<T,dim> 
-Function<T,dim>::refine_repeatedly(unsigned int times) const {
+template <size_t dim>
+Mesh<dim> 
+Mesh<dim>::refine_repeatedly(unsigned int times) const {
     if (times == 0) {
         return *this;
     }
     return refine_repeatedly(times - 1).refine();
 }
 
-template <typename T, size_t dim>
-Function<T,dim> 
-Function<T,dim>::create_union(const std::vector<Function<T,dim>>& meshes) {
+template <size_t dim>
+Mesh<dim> 
+Mesh<dim>::create_union(const std::vector<Mesh<dim>>& meshes) {
 
-    std::vector<Vec<T,dim>> new_facets;
+    std::vector<Facet<dim>> new_facets;
     for (int i = 0; i < meshes.size(); i++) {
         for (const auto& f: meshes[i].facets) {
             new_facets.push_back(f);
         }
     }
 
-    return Function<T,dim>{new_facets};
+    return Mesh<dim>{new_facets};
 }
 
 /* Given a list of vertices and a list of faces that references the vertex
  * list, this will construct a mesh object.
  */
-template <typename T, size_t dim>
-Function<T,dim>
-Function<T,dim>::from_vertices_faces(const std::vector<T>& vertices,
+template <size_t dim>
+Mesh<dim>
+Mesh<dim>::from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
                          const std::vector<std::array<int,dim>>& facets_by_vert_idx) {
-    std::vector<Vec<T,dim>> facets;
+    std::vector<Facet<dim>> facets;
     for (const auto& in_facet: facets_by_vert_idx) { 
-        Vec<T,dim> out_verts;
+        Facet<dim> out_verts;
         for (int d = 0; d < dim; d++) {
             out_verts[d] = vertices[in_facet[d]];
         }
         facets.push_back(out_verts);
     }
-    return Function<T,dim>{facets};
+    return Mesh<dim>{facets};
 }
 
-template class Function<double,2>;
-template class Function<Vec<double,2>,2>;
-template class Function<double,3>;
-template class Function<Vec<double,3>,3>;
+template class Mesh<2>;
+template class Mesh<3>;
 
 } //END NAMESPACE tbem

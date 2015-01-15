@@ -2,24 +2,24 @@
 #define __QWEQASDKJVNS_VERTEX_ITERATOR_H
 #include <cassert>
 
-#include "function.h"
+#include "mesh.h"
 
 namespace tbem {
 
-/* A barebones iterator for the vertices of a Function 
+/* A barebones iterator for the vertices of a Mesh 
  * If this becomes heavily used, it might be worth becoming a more standard 
  * iterator design patterns in c++
  * http://stackoverflow.com/questions/8054273/how-to-implement-an-stl-style-iterator-and-avoid-common-pitfalls
  */
-template <typename T, size_t dim>
-struct FunctionDOFIterator {
-    typedef FunctionDOFIterator<T,dim> iterator;
+template <size_t dim>
+struct VertexIterator {
+    typedef VertexIterator<dim> iterator;
 
-    const Function<T,dim>& mesh;
+    const Mesh<dim>& mesh;
     size_t facet_idx;    
     size_t vertex_idx;
 
-    FunctionDOFIterator(const Function<T,dim>& mesh, int facet_idx, int vertex_idx):
+    VertexIterator(const Mesh<dim>& mesh, int facet_idx, int vertex_idx):
         mesh(mesh),
         facet_idx(facet_idx),
         vertex_idx(vertex_idx)
@@ -57,15 +57,15 @@ struct FunctionDOFIterator {
         return facet_idx * dim + vertex_idx; 
     }
 
-    const T& operator*() const {
+    const Vec<double,dim>& operator*() const {
         return get_vertex();
     }
 
-    const Vec<T,dim>& get_facet() const {
+    const Facet<dim>& get_facet() const {
         return mesh.facets[facet_idx];
     }
 
-    const T& get_vertex() const {
+    const Vec<double,dim>& get_vertex() const {
         return mesh.facets[facet_idx][vertex_idx];
     }
     
@@ -78,9 +78,6 @@ struct FunctionDOFIterator {
         return !(a == b);
     }
 };
-
-template <size_t dim>
-using VertexIterator = FunctionDOFIterator<Vec<double,dim>,dim>;
 
 /* This is useful to put VertexIterator as the key in an unordered_map
  */
