@@ -5,7 +5,7 @@
 #include "mesh.h"
 #include "mesh_gen.h"
 #include "util.h"
-#include "shared.h"
+#include "test_shared.h"
 #include "laplace_kernels.h"
 #include "elastic_kernels.h"
 

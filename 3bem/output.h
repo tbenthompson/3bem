@@ -1,6 +1,7 @@
 #ifndef __QMSJOIRNXLKSPAPPZPP_OUTPUT_H
 #define __QMSJOIRNXLKSPAPPZPP_OUTPUT_H
 
+#include <cassert>
 #include <array>
 #include <vector>
 #include <iostream>
@@ -36,6 +37,7 @@ public:
 template <size_t dim, typename T>
 void out_surface(const Outputter& o, const Mesh<dim>& mesh,
                  const std::vector<T> data, int n_vars) {
+    assert(data.size() == mesh.n_dofs());
     o.write_locations(mesh.facets.size(), dim * dim, mesh.facets.data());
     o.write_values(n_vars, reinterpret_vector<double>(data));
 }
@@ -43,6 +45,7 @@ void out_surface(const Outputter& o, const Mesh<dim>& mesh,
 template <size_t dim, typename T> 
 void out_volume(const Outputter& o, const std::vector<Vec<double,dim>>& points,
                 const std::vector<T>& data, int n_vars) {
+    assert(points.size() == data.size());
     o.write_locations(points.size(), dim, points.data());
     o.write_values(n_vars, reinterpret_vector<double>(data));
 }
