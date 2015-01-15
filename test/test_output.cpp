@@ -10,8 +10,11 @@ TEST(CreateHDFFile) {
     std::remove(filename.c_str());
     CHECK(!does_file_exist(filename));
     {
-        int n_locs = 10;
-        auto pts = reinterpret_vector<Vec2<double>>(random_list(2 * n_locs));
+        size_t n_locs = 10;
+        std::vector<Vec2<double>> pts;
+        for (size_t i = 0; i < n_locs; i++) {
+            pts.push_back(random_pt2d());
+        }
         auto data = random_list(n_locs);
         auto o = HDFOutputter(filename);
         out_volume<2>(o, pts, data, 1);

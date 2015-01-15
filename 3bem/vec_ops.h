@@ -347,12 +347,6 @@ struct constant<Vec3<F>> {
     }
 };
 
-template <typename T, typename F>
-std::vector<T> reinterpret_vector(const std::vector<F>& A) {
-    std::vector<T> out((T*)A.data(), (T*)(A.data() + A.size()));
-    return out;
-}
-
 } // end namespace tbem
 
 #endif

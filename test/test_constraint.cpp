@@ -213,19 +213,6 @@ TEST(ConstraintMatrixGetReducedThenGetAll) {
     CHECK_ARRAY_CLOSE(res, res_exact, 5, 1e-13);
 }
 
-TEST(ConstraintMatrixGetAllVec2) {
-    auto c0 = boundary_condition(1, 4.0);
-    auto c1 = continuity_constraint(1, 2);
-    auto c2 = continuity_constraint(2, 3);
-    auto cm = ConstraintMatrix::from_constraints({c0, c1, c2});
-    auto in = cm.get_reduced(std::vector<Vec2<double>>{
-        {2.0,3.0}, {4.0,4.0}, {4.0,1.5}, {4.0,-1.5}
-    });
-    auto res = cm.get_all(in, 4);
-    Vec2<double> res_exact[4] = {{2.0,3.0}, {4.0,4.0}, {4.0,4.0}, {4.0,4.0}};
-    CHECK_ARRAY_CLOSE((&res[0][0]), (&res_exact[0][0]), 8, 1e-13);
-}
-
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();

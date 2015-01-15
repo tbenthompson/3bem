@@ -147,4 +147,74 @@ ConstraintMatrix ConstraintMatrix::from_constraints(
     return ConstraintMatrix{new_map};
 };
 
+std::vector<double> ConstraintMatrix::get_all(const std::vector<double>& in,
+    int total_dofs) const 
+{
+    std::vector<double> out(total_dofs); 
+
+    int next_reduced_dof = 0;
+
+    for (int dof_index = 0; dof_index < total_dofs; dof_index++) {
+        if(is_constrained(map, dof_index)) {
+            continue;
+        }
+        out[dof_index] = in[next_reduced_dof];
+        next_reduced_dof++;
+    }
+
+    for (int dof_index = 0; dof_index < total_dofs; dof_index++) {
+        if(!is_constrained(map, dof_index)) {
+            continue;
+        }
+        auto constraint = map.find(dof_index)->second;
+        auto val = constraint.rhs;
+        for (size_t j = 0; j < constraint.terms.size(); j++) {
+            val += constraint.terms[j].weight * out[constraint.terms[j].dof];
+        }
+        out[dof_index] = val;
+    }
+    return out;
+}
+
+std::vector<LinearTerm>
+ConstraintMatrix::add_term_with_constraints(const LinearTerm& entry) const {
+    if (!is_constrained(map, entry.dof)) {
+        return {entry};
+    }
+
+    const auto& constraint = map.find(entry.dof)->second;
+    const auto& terms = constraint.terms;
+    std::vector<LinearTerm> out_terms;
+    for (size_t i = 0; i < terms.size(); i++) {
+        double recurse_weight = terms[i].weight * entry.weight;
+        LinearTerm new_entry{terms[i].dof, recurse_weight};
+        const auto& terms = add_term_with_constraints(new_entry);
+        for (const auto& t: terms) {
+            out_terms.push_back(std::move(t));
+        }
+    }
+    return out_terms;
+}
+
+std::vector<double> ConstraintMatrix::get_reduced(const std::vector<double>& all) const {
+    std::vector<double> condensed_dofs(all.size(), 0.0);
+    for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
+        LinearTerm term_to_add{(int)dof_idx, all[dof_idx]};
+        auto expanded_term = add_term_with_constraints(term_to_add);
+        for (const auto& t: expanded_term) {
+            condensed_dofs[t.dof] += t.weight;
+        }
+    }
+
+    std::vector<double> out;
+    for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
+        if (is_constrained(map, dof_idx)) {
+            continue;
+        }
+        out.push_back(condensed_dofs[dof_idx]);
+    }
+
+    return out;
+}
+
 } //END namespace tbem
