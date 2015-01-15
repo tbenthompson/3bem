@@ -1,6 +1,12 @@
 #ifndef __123123123789798798_OPERATOR_H
 #define __123123123789798798_OPERATOR_H
 
+#include <cassert>
+#include <vector>
+#include "numbers.h"
+//TODO: Try to remove this dependency on vec_ops
+#include "vec_ops.h"
+
 namespace tbem {
     
 template <typename I, typename O, typename Op>
@@ -12,8 +18,17 @@ struct MatrixOperator
 
     const size_t rows;
     const size_t cols;
-    std::vector<OperatorType> data;
+    const std::vector<OperatorType> data;
 };
+
+double apply_operator(double A, double x) {
+    return A * x;
+}
+
+template <typename T, size_t dim>
+T apply_operator(const Vec<T,dim>& A, const Vec<double,dim>& x) {
+    return dot_product(x, A);
+}
 
 template <typename InType, typename OutType, typename OperatorType>
 std::vector<OutType>
@@ -25,7 +40,7 @@ apply_operator(const MatrixOperator<InType,OutType,OperatorType>& A,
 #pragma omp parallel for
     for (int i = 0; i < A.rows; i++) {
         for (size_t j = 0; j < x.size(); j++) {
-            res[i] += dot_product(x[j], A.data[i * x.size() + j]);
+            res[i] += apply_operator(A.data[i * x.size() + j], x[j]);
         }
     }
     return res;

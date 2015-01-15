@@ -36,7 +36,7 @@ int main() {
     auto circle = circle_mesh(center, r, refine_level);
     std::vector<Vec2<double>> test_pts(n_test_pts);
     for (int i = 0; i < n_test_pts; i++) {
-        test_pts[i] = random_pt_sphere<2>(center, random_val() * obs_radius);
+        test_pts[i] = random_pt_sphere(center, random_val() * obs_radius);
     }
     dirichlet_laplace_test<2>(circle, test_pts, log_u, LogDudn());
     dirichlet_laplace_test<2>(circle, test_pts, theta_u, ThetaDudn());
