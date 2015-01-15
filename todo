@@ -1,7 +1,6 @@
 TOP PRIORITY -- BLOCKING PROGRESS ON ELASTIC SOLVER:
 Goal1: Be able to constrain different components of a vector field differently.
 Goal2: More elegant handling of discretized Functions (in the mathematical sense).
-S: Can some decoupling be done so that individual pieces of mesh_to_mesh_operator can be tested indepedently in unit tests rather than integration tests. Adaptive quadrature.
 MF: Replace std::vector with the Function class in Problem and the BEM code
 MF: Come up with a good way to separate out components of a vector/tensor.
 NF: Mass matrix operator

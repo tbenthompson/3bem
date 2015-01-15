@@ -49,15 +49,46 @@ struct IntegrationProb {
     Facet<3> face;
 };
 
-TEST_FIXTURE(IntegrationProb, IntegralOne) {
-    double abc = integrate<double,2>(q, [](std::array<double,2> x_hat){return 1.0;});
-    CHECK_CLOSE(abc, 0.5, 1e-12);
-    exact = 1.0; go(IdentityScalar<3>()); check();
+
+TEST(IntegralOne2) {
+    QuadStrategy<2> quad_strategy(2);
+    IdentityScalar<2> identity;
+    ObsPt<2> obs{0.01, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
+    auto facet_info = FacetInfo<2>::build(Facet<2>{{ {{0,0},{1,0}} }});
+    auto term = make_integral_term(quad_strategy, identity, obs, facet_info, 1.0);
+    auto result = compute_term(term);
+    CHECK_ARRAY_CLOSE(result, (Vec2<double>{0.5, 0.5}), 2, 1e-6);
 }
 
-TEST_FIXTURE(IntegrationProb, IntegralLaplaceSingle) {
-    exact = 0.0269063; go(LaplaceSingle<3>()); check();
+template <typename KT>
+void laplace_single_test(const KT& K, double claimed_distance) {
+    QuadStrategy<3> quad_strategy(2);
+    ObsPt<3> obs{0.01, {2.0, 2.0, 2.0}, {1.0, 0.0, 0.0}, {0.0, 0.0}};
+    auto facet_info = FacetInfo<3>::build({ {{{0,0,0},{2,0,0},{0,1,0}}} });
+    auto term = make_integral_term(
+        quad_strategy, single_kernel, obs,
+        facet_info, claimed_distance
+    );
+    auto result = compute_term(term);
+    double exact = 0.0269063;
+    double est = sum(result); 
+    CHECK_CLOSE(est, exact, 1e-3);
 }
+
+TEST(IntegralLaplaceSingleFar) {
+    LaplaceSingle<3> single_kernel;
+    integral_term_test(single_kernel, 2.0);
+}
+
+TEST(IntegralLaplaceSingleFakeNear) {
+    LaplaceSingle<3> single_kernel;
+    integral_term_test(single_kernel, 1e-1);
+    integral_term_test(single_kernel, 1e-12);
+}
+
+// TEST_FIXTURE(IntegrationProb, IntegralLaplaceSingle) {
+//     exact = 0.0269063; go(LaplaceSingle<3>()); check();
+// }
 
 TEST_FIXTURE(IntegrationProb, IntegralLaplaceDouble) {
     exact = -0.00621003; go(LaplaceDouble<3>()); check();
@@ -82,7 +113,8 @@ TEST_FIXTURE(IntegrationProb, RichardsonIntegral) {
     obs_n = {1,0,0};
     for (int i = 0; i < 5; i++) {
         obs_loc = {2.0, 2.0, 2.0 + offset};
-        go(LaplaceSingle<3>());
+        LaplaceSingle<3> kernel;
+        go(kernel);
         vals.push_back(result);
         offset /= 2;
     }

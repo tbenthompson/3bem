@@ -21,6 +21,13 @@ TEST(Refine2DMesh) {
     CHECK_CLOSE(length, 2 * M_PI, 1e-1);
 }
 
+TEST(RefineSubset) {
+    auto m2 = line_mesh({0,0}, {1,0}).refine({0}).refine({0});
+    CHECK_EQUAL(m2.n_facets(), 3);
+    CHECK_EQUAL(m2.facets[1].vertices[0], (Vec2<double>{0.25,0.0}));
+}
+
+
 TEST(CircleMesh) {
     std::array<double, 2> center = {20.0, 0.0};
     auto src_circle = circle_mesh(center, 19.0, 4);

@@ -21,7 +21,7 @@ int main() {
     auto sphere = sphere_mesh(center, r, refine_level);
     std::vector<Vec3<double>> test_pts(n_test_pts);
     for (int i = 0; i < n_test_pts; i++) {
-        test_pts[i] = random_pt_sphere<3>(center, random_val() * obs_radius);
+        test_pts[i] = random_pt_sphere(center, random_val() * obs_radius);
     }
     dirichlet_laplace_test<3>(sphere, test_pts, harmonic_u, InvDudn());
 }

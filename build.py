@@ -53,10 +53,12 @@ profile_flags = release_flags + ['-g']
 test_coverage_flags = ['--coverage']
 test_coverage_flags.extend(debug_flags)
 
-# cpp_flags.extend(test_coverage_flags)
-# cpp_flags.extend(debug_flags)
-cpp_flags.extend(release_flags)
-# cpp_flags.extend(profile_flags)
+flag_sets = dict()
+flag_sets['test_coverage_flags'] = test_coverage_flags
+flag_sets['debug_flags'] = debug_flags
+flag_sets['release_flags'] = release_flags
+flag_sets['profile_flags'] = profile_flags
+cpp_flags.extend(flag_sets['test_coverage_flags'])
 
 lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)
