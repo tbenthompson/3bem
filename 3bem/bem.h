@@ -12,6 +12,12 @@
 #include "operator.h"
 
 namespace tbem {
+
+    //TODO: Switch the order of obs_mesh and src_mesh
+    //TODO: Switch the order of obs_mesh and src_mesh
+    //TODO: Switch the order of obs_mesh and src_mesh
+    //TODO: Switch the order of obs_mesh and src_mesh
+    //TODO: Switch the order of obs_mesh and src_mesh
 template <size_t dim, typename KT>
 struct Problem {
     const Mesh<dim>& src_mesh;
@@ -19,6 +25,11 @@ struct Problem {
     const KT& K;
 };
 
+    //TODO: Switch the order of obs_mesh and src_mesh
+    //TODO: Switch the order of obs_mesh and src_mesh
+    //TODO: Switch the order of obs_mesh and src_mesh
+    //TODO: Switch the order of obs_mesh and src_mesh
+    //TODO: Switch the order of obs_mesh and src_mesh
 template <size_t dim, typename KT>
 Problem<dim,KT> make_problem(const Mesh<dim>& src_mesh,
                              const Mesh<dim>& obs_mesh, 
@@ -37,12 +48,32 @@ struct FacetInfo {
     const double jacobian;
     const Vec<double,dim> normal;
 
-    static const double inv_ref_facet_area;
     static FacetInfo<dim> build(const Facet<dim>& facet);
 };
 
-template <> const double FacetInfo<3>::inv_ref_facet_area = 2.0;
-template <> const double FacetInfo<2>::inv_ref_facet_area = 0.5;
+
+template <>
+inline FacetInfo<3> FacetInfo<3>::build(const Facet<3>& facet){
+    const double inv_ref_facet_area = 2.0;
+    auto unscaled_n = unscaled_normal(facet);
+    auto area = tri_area(unscaled_n);
+    auto length_scale = std::sqrt(area);
+    auto jacobian = area * inv_ref_facet_area;
+    auto normal = unscaled_n / jacobian;
+    return FacetInfo<3>{facet, area, length_scale, jacobian, normal};
+}
+
+template <>
+inline FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet){
+    const double inv_ref_facet_area = 0.5;
+    auto unscaled_n = unscaled_normal(facet);
+    auto area_scale = hypot2(unscaled_n);
+    auto length = std::sqrt(area_scale);
+    auto jacobian = length * inv_ref_facet_area;
+    auto normal = unscaled_n / length;
+    return FacetInfo<2>{facet, area_scale, length, jacobian, normal};
+}
+
 
 template <size_t dim>
 struct ObsPt {
@@ -66,26 +97,6 @@ ObsPt<dim> ObsPt<dim>::from_face(const Vec<double,dim-1>& ref_loc,
         obs_face.normal,
         obs_face.normal 
     };
-}
-
-template <>
-FacetInfo<3> FacetInfo<3>::build(const Facet<3>& facet){
-    auto unscaled_n = unscaled_normal(facet);
-    auto area = tri_area(unscaled_n);
-    auto length_scale = std::sqrt(area);
-    auto jacobian = area * inv_ref_facet_area;
-    auto normal = unscaled_n / jacobian;
-    return FacetInfo<3>{facet, area, length_scale, jacobian, normal};
-}
-
-template <>
-FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet){
-    auto unscaled_n = unscaled_normal(facet);
-    auto area_scale = hypot2(unscaled_n);
-    auto length = std::sqrt(area_scale);
-    auto jacobian = length * inv_ref_facet_area;
-    auto normal = unscaled_n / length;
-    return FacetInfo<2>{facet, area_scale, length, jacobian, normal};
 }
 
 /* It may be that the exact distance to an element is not required,
@@ -224,12 +235,12 @@ template <size_t dim>
 double get_len_scale(Mesh<dim>& mesh, int which_face, int q);
 
 template <>
-double get_len_scale<3>(Mesh<3>& mesh, int which_face, int q) {
+inline double get_len_scale<3>(Mesh<3>& mesh, int which_face, int q) {
     return std::sqrt(tri_area(mesh.facets[which_face])) / q;
 }
 
 template <>
-double get_len_scale<2>(Mesh<2>& mesh, int which_face, int q) {
+inline double get_len_scale<2>(Mesh<2>& mesh, int which_face, int q) {
     return dist(mesh.facets[which_face][1],
                 mesh.facets[which_face][0]) / q;
 }

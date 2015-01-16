@@ -2,6 +2,7 @@ CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
 -- petsc-interface -- return soln instead of copying within the matvecfnc
 -- outputter clean up
 -- constraints on vectors should be easier
+-- moves inlines to .cpp files
 ---------------------------------------
 
 NEXT: HANGING NODES AND COMPLEX GEOMETRIES:

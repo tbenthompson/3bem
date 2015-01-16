@@ -28,7 +28,9 @@ def files_in_dir(directory, ext):
 dirs = ['3bem', 'test', 'inttest']
 lib_srces = files_in_dir("3bem", "cpp")
 tests = files_in_dir("test", "cpp")
-inttests = files_in_dir("inttest", "cpp")
+inttests_cpp = files_in_dir("inttest", "cpp")
+inttests_exec = files_in_dir("inttest", "cpp")
+inttests_exec.remove('inttest/laplace')
 
 compiler = 'mpic++'
 
@@ -128,7 +130,7 @@ def compile_tests():
         compile_runner(source, cpp_flags)
 
 def compile_inttests():
-    for source in inttests:
+    for source in inttests_cpp:
         compile_runner(source, cpp_flags)
 
 def compile_runner(source, flags):
@@ -153,17 +155,19 @@ def link_tests():
         link_runner(source, test_link_flags)
 
 def link_inttests():
-    for source in inttests:
-        link_runner(source, test_link_flags)
+    for source in inttests_exec:
+        link_runner(source, test_link_flags,
+                additional_objs = [oname('inttest/laplace.o')])
 
-def link_runner(source, flags):
-    run(compiler, '-o', oname(source), oname(source + '.o'), flags)
+def link_runner(source, flags, additional_objs = []):
+    objs = [oname(source + '.o')] + additional_objs
+    run(compiler, '-o', oname(source), objs, flags)
 
 def fast_tests():
     run_test_set(tests)
 
 def slow_tests():
-    run_test_set(inttests)
+    run_test_set(inttests_exec)
     check_slow_tests()
 
 def check_slow_tests():
