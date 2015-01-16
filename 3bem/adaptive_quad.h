@@ -85,7 +85,7 @@ T adaptlobstp(const F& f, const double a, const double b,
     }
 }
 
-double get_error_is(double p_tol, double erri1, double erri2, double is, 
+inline double get_error_is(double p_tol, double erri1, double erri2, double is, 
                     double a, double b) {
     constexpr double eps = std::numeric_limits<double>::epsilon();
     double R = 1.0;
