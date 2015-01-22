@@ -68,6 +68,7 @@ link_flags = '--coverage -fopenmp -lhdf5'.split()
 link_flags.append('-Wl,-rpath=' + petsc_dir + '/' + petsc_arch + '/lib')
 link_flags.append('-L' + petsc_dir + '/' + petsc_arch + '/lib')
 link_flags.append('-lpetsc')
+link_flags.append('-larmadillo')
 
 lib_link_flags = ['-shared']
 lib_link_flags.extend(link_flags)
