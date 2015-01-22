@@ -68,6 +68,7 @@ PetscErrorCode mult_wrapper(Mat A, Vec x, Vec y) {
 void setup_ksp(MPI_Comm comm, KSP& ksp, Mat& mat, double tolerance) {
     PC pc;
     PetscErrorCode ierr; 
+    int maxiter = 1000;
 
     ierr = KSPCreate(comm, &ksp);
     CHKERRABORT(comm,ierr);
@@ -77,7 +78,7 @@ void setup_ksp(MPI_Comm comm, KSP& ksp, Mat& mat, double tolerance) {
     CHKERRABORT(comm,ierr);
     //ierr = PCSetType(pc, ??????);
     CHKERRABORT(comm,ierr);
-    ierr = KSPSetTolerances(ksp, tolerance, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
+    ierr = KSPSetTolerances(ksp, tolerance, PETSC_DEFAULT, PETSC_DEFAULT, maxiter);
     CHKERRABORT(comm,ierr);
 }
 

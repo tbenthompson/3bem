@@ -38,7 +38,7 @@ std::vector<std::vector<double>> apply_operator(const MatrixOperator& A,
         for (size_t d2 = 0; d2 < A.n_comp_cols; d2++) {
             size_t comp_idx = d1 * A.n_comp_cols + d2;
             assert(A.rows * x[d2].size() == A.data[comp_idx].size());
-#pragma omp parallel for
+// #pragma omp parallel for
             for (size_t i = 0; i < A.rows; i++) {
                 for (size_t j = 0; j < A.cols; j++) {
                     size_t matrix_idx = i * A.cols + j;
