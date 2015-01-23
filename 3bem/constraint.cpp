@@ -177,36 +177,32 @@ distribute_vector(const ConstraintMatrix& matrix, const std::vector<double>& in,
     return out;
 }
 
-std::vector<LinearTerm>
-add_term_with_constraints(const ConstraintMatrix& matrix, const LinearTerm& entry) {
+void add_term_with_constraints(const ConstraintMatrix& matrix,
+    std::vector<double>& modifiable_vec, const LinearTerm& entry) 
+{
     if (!is_constrained(matrix, entry.dof)) {
-        return {entry};
+        modifiable_vec[entry.dof] += entry.weight;
+        return;
     }
 
     const auto& constraint = matrix.find(entry.dof)->second;
     const auto& terms = constraint.terms;
     std::vector<LinearTerm> out_terms;
-    for (size_t i = 0; i < terms.size(); i++) {
-        double recurse_weight = terms[i].weight * entry.weight;
-        LinearTerm new_entry{terms[i].dof, recurse_weight};
-        const auto& terms = add_term_with_constraints(matrix, new_entry);
-        for (const auto& t: terms) {
-            out_terms.push_back(std::move(t));
-        }
+    for (const auto& t: terms) {
+        double recurse_weight = t.weight * entry.weight;
+        modifiable_vec[t.dof] += recurse_weight;
     }
-    return out_terms;
 }
 
 std::vector<double> condense_vector(const ConstraintMatrix& matrix,
     const std::vector<double>& all) 
 {
     std::vector<double> condensed_dofs(all.size(), 0.0);
-    for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
-        LinearTerm term_to_add{dof_idx, all[dof_idx]};
-        auto expanded_term = add_term_with_constraints(matrix, term_to_add);
-        for (const auto& t: expanded_term) {
-            condensed_dofs[t.dof] += t.weight;
-        }
+    for (int dof_idx = all.size() - 1; dof_idx >= 0; dof_idx--) {
+        double condensed_value = condensed_dofs[dof_idx];
+        condensed_dofs[dof_idx] = 0.0;
+        LinearTerm term_to_add{(size_t)dof_idx, all[dof_idx] + condensed_value};
+        add_term_with_constraints(matrix, condensed_dofs, term_to_add);
     }
 
     std::vector<double> out;
