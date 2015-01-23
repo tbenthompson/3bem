@@ -22,7 +22,7 @@ TEST(ConstrainedInterpolate) {
 
     auto continuity = mesh_continuity(mesh.begin());
     auto constraints = convert_to_constraints(continuity);
-    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
+    auto constraint_matrix = from_constraints(constraints);
 
     auto res = constrained_interpolate<3>(
         mesh, 

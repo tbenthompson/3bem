@@ -14,13 +14,13 @@ std::vector<double> constrained_interpolate(const Mesh<dim>& mesh,
     for (unsigned int i = 0; i < mesh.facets.size(); i++) {
         for (int d = 0; d < dim; d++) {
             int dof = dim * i + d;
-            if(is_constrained(matrix.map, dof)) {
+            if(is_constrained(matrix, dof)) {
                 continue;
             }
             res.push_back(fnc(mesh.facets[i][d]));
         }
     }
-    return matrix.get_all(res, n_dofs);
+    return distribute_vector(matrix, res, n_dofs);
 }
 
 /* Interpolates a function onto the linear basis defined by the specified

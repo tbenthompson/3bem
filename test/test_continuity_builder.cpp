@@ -61,10 +61,10 @@ TEST(ConstraintMesh) {
     auto sphere = sphere_mesh({{0, 0, 0}}, 1, 2);
     auto continuity = mesh_continuity(sphere.begin());
     auto constraints = convert_to_constraints(continuity);
-    auto matrix = ConstraintMatrix::from_constraints(constraints);
+    auto matrix = from_constraints(constraints);
     CHECK_EQUAL(3 * sphere.facets.size(), 384);
-    CHECK_EQUAL(matrix.map.size(), 318);
-    auto my_c = matrix.map.begin()->second.terms;
+    CHECK_EQUAL(matrix.size(), 318);
+    auto my_c = matrix.begin()->second.terms;
     CHECK_EQUAL(my_c[0].weight, 1);
 }
 
@@ -91,9 +91,9 @@ TEST(GetReducedToCountTheNumberOfVerticesOnASphereApproximation) {
     auto sphere = sphere_mesh({{0, 0, 0}}, 1, 0);
     auto continuity = mesh_continuity(sphere.begin());
     auto constraints = convert_to_constraints(continuity);
-    auto matrix = ConstraintMatrix::from_constraints(constraints);
+    auto matrix = from_constraints(constraints);
     std::vector<double> all(3 * sphere.facets.size(), 1.0);
-    auto reduced = matrix.get_reduced(all);
+    auto reduced = condense_vector(matrix, all);
     CHECK_EQUAL(reduced.size(), 6);
     CHECK_ARRAY_EQUAL(reduced, (std::vector<double>(6, 4.0)), 6);
 }
