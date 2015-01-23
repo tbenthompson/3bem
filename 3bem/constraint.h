@@ -21,7 +21,7 @@ namespace tbem {
  */
 
 struct LinearTerm {
-    const int dof;
+    const size_t dof;
     const double weight;
 
     bool operator==(const LinearTerm& other) const {
@@ -57,18 +57,18 @@ struct ConstraintEQ {
     }
 };
 
-inline ConstraintEQ boundary_condition(int dof, double value) {
+inline ConstraintEQ boundary_condition(size_t dof, double value) {
     return {{LinearTerm{dof, 1.0}}, value};
 }
 
-inline ConstraintEQ continuity_constraint(int dof1, int dof2) {
+inline ConstraintEQ continuity_constraint(size_t dof1, size_t dof2) {
     return {
         {LinearTerm{dof1, 1.0}, LinearTerm{dof2, -1.0}},
         0.0
     };
 }
 
-int find_last_dof_index(const ConstraintEQ& c);
+size_t find_last_dof_index(const ConstraintEQ& c);
 
 ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps = 1e-15);
 
@@ -91,7 +91,7 @@ struct RearrangedConstraintEQ {
     // requires building the map item by item, so immutability is difficult for
     // this data type. Since this is only used internally, it's not too big
     // of a deal. Just don't change its member!
-    int constrained_dof;
+    size_t constrained_dof;
     std::vector<LinearTerm> terms;
     double rhs;
 
@@ -108,36 +108,43 @@ struct RearrangedConstraintEQ {
     }
 };
 
-RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c, 
-    int constrained_index);
+typedef std::unordered_map<int,RearrangedConstraintEQ> ConstraintMatrix;
 
-ConstraintEQ substitute(const ConstraintEQ& c, int constrained_dof_index,
+RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c, 
+    size_t constrained_index);
+
+ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
     const RearrangedConstraintEQ& subs_in);
 
-typedef std::unordered_map<int,RearrangedConstraintEQ> ConstraintMapT;
-
-bool is_constrained(const ConstraintMapT& dof_constraint_map, int dof);
+bool is_constrained(const ConstraintMatrix& dof_constraint_map, size_t dof);
 
 RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
-    const ConstraintMapT& map);
+    const ConstraintMatrix& map);
 
-struct ConstraintMatrix {
-    const ConstraintMapT map;
+ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints);
 
-    static ConstraintMatrix from_constraints(
-            const std::vector<ConstraintEQ>& constraints);
+/* Accepts a reduced DOF vector and returns the full DOF vector. */
+std::vector<double> distribute_vector(const ConstraintMatrix& matrix, 
+    const std::vector<double>& in, size_t total_dofs);
 
-    /* Accepts a reduced DOF vector and returns the full DOF vector. */
-    std::vector<double> get_all(const std::vector<double>& in, int total_dofs) const;
+/* Accepts a full DOF vector and returns the reduced DOF vector.  */
+std::vector<double> condense_vector(const ConstraintMatrix& matrix,
+    const std::vector<double>& all);
 
-    /* Accepts a full DOF vector and returns the reduced DOF vector.
-     */
-    std::vector<double> get_reduced(const std::vector<double>& all) const;
-
-    std::vector<LinearTerm>
-    add_term_with_constraints(const LinearTerm& entry) const;
+struct Matrix {
+    const size_t n_rows;
+    const size_t n_cols;
+    const std::vector<double> data;
 };
 
+struct MatrixEntry 
+{
+    const size_t loc[2];
+    const double value;
+};
+
+Matrix
+condense_matrix(const ConstraintMatrix& constraint_matrix, const Matrix& matrix);
 
 } // END namespace tbem
 

@@ -11,10 +11,8 @@ namespace tbem {
 
 struct MatrixOperator 
 {
-    //TODO: rename to n_rows
-    const size_t rows;
-    //TODO: rename to n_cols
-    const size_t cols;
+    const size_t n_rows;
+    const size_t n_cols;
     const size_t n_comp_rows;
     const size_t n_comp_cols;
     const std::vector<std::vector<double>> data;
