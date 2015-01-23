@@ -2,8 +2,6 @@ CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
 -- petsc-interface -- return soln instead of copying within the matvecfnc
 -- outputter clean up
 -- constraints on multicomponent vectors should be easier
--- constraints code should use mutablility for speed
--- use the lower triangular property to make matrix condensation faster
 ---------------------------------------
 
 NEXT: HANGING NODES AND COMPLEX GEOMETRIES:
