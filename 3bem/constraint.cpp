@@ -245,10 +245,9 @@ void add_entry_with_constraints(const ConstraintMatrix& constraint_matrix,
         size_t loc[2];
         loc[constrained_axis] = t.dof;
         loc[other_axis] = entry.loc[other_axis];
-        MatrixEntry e{
-            {loc[0], loc[1]}, recurse_weight
-        };
-        add_entry_with_constraints(constraint_matrix, modifiable_matrix, e);
+        assert(loc[constrained_axis] < constrained_dof);
+        modifiable_matrix.data[loc[0] * modifiable_matrix.n_cols + loc[1]] 
+            += recurse_weight;
     }
 }
 
@@ -260,11 +259,13 @@ condense_matrix(const ConstraintMatrix& constraint_matrix, const Matrix& matrix)
         std::vector<double>(matrix.n_rows * matrix.n_cols, 0.0)
     };
 
-    for (size_t row_idx = 0; row_idx < matrix.n_rows; row_idx++) {
-        for (size_t col_idx = 0; col_idx < matrix.n_cols; col_idx++) {
+    for (int row_idx = matrix.n_rows - 1; row_idx >= 0; --row_idx) {
+        for (int col_idx = matrix.n_cols - 1; col_idx >= 0; --col_idx) {
+            double condensed_value = condensed.data[row_idx * matrix.n_cols + col_idx];
+            condensed.data[row_idx * matrix.n_cols + col_idx] = 0.0;
             MatrixEntry entry_to_add{
-                {row_idx, col_idx},
-                matrix.data[row_idx * matrix.n_cols + col_idx]
+                {(size_t)row_idx, (size_t)col_idx},
+                condensed_value + matrix.data[row_idx * matrix.n_cols + col_idx]
             };
 
             add_entry_with_constraints(constraint_matrix, condensed, entry_to_add);
