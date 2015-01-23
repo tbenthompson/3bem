@@ -41,9 +41,9 @@ int main() {
     auto rhs_op = mesh_to_mesh_operator(p_rhs, qs);
     auto all_dofs_rhs = apply_operator(rhs_op, du);
     auto rhs = concatenate({
-        constraint_matrix.get_reduced(all_dofs_rhs[0]),
-        constraint_matrix.get_reduced(all_dofs_rhs[1]),
-        constraint_matrix.get_reduced(all_dofs_rhs[2])
+        condense_vector(constraint_matrix, all_dofs_rhs[0]),
+        condense_vector(constraint_matrix, all_dofs_rhs[1]),
+        condense_vector(constraint_matrix, all_dofs_rhs[2])
     });
     TOC("Building RHS");
 
@@ -60,15 +60,15 @@ int main() {
 
             auto x_vec_reduced = expand(rhs, x);
             std::vector<std::vector<double>> x_vec{
-                constraint_matrix.get_all(x_vec_reduced[0], surface.n_dofs()),
-                constraint_matrix.get_all(x_vec_reduced[1], surface.n_dofs()),
-                constraint_matrix.get_all(x_vec_reduced[2], surface.n_dofs())
+                distribute_vector(constraint_matrix, x_vec_reduced[0], surface.n_dofs()),
+                distribute_vector(constraint_matrix, x_vec_reduced[1], surface.n_dofs()),
+                distribute_vector(constraint_matrix, x_vec_reduced[2], surface.n_dofs())
             };
             auto y_vec = apply_operator(lhs, x_vec);
             auto out = concatenate({
-                constraint_matrix.get_reduced(y_vec[0]),
-                constraint_matrix.get_reduced(y_vec[1]),
-                constraint_matrix.get_reduced(y_vec[2])
+                condense_vector(constraint_matrix, y_vec[0]),
+                condense_vector(constraint_matrix, y_vec[1]),
+                condense_vector(constraint_matrix, y_vec[2])
             });
             for (std::size_t i = 0; i < out.data.size(); i++) {
                 y[i] = -out.data[i];
@@ -78,15 +78,11 @@ int main() {
 
     auto disp_reduced_vec = expand(rhs, disp_reduced);
     std::vector<std::vector<double>> soln{
-        constraint_matrix.get_all(disp_reduced_vec[0], surface.n_dofs()),
-        constraint_matrix.get_all(disp_reduced_vec[1], surface.n_dofs()),
-        constraint_matrix.get_all(disp_reduced_vec[2], surface.n_dofs())
+        distribute_vector(constraint_matrix, disp_reduced_vec[0], surface.n_dofs()),
+        distribute_vector(constraint_matrix, disp_reduced_vec[1], surface.n_dofs()),
+        distribute_vector(constraint_matrix, disp_reduced_vec[2], surface.n_dofs())
     };
 
-    auto filex = HDFOutputter("test_out/rect_dislocation_ux.hdf5");
-    out_surface(filex, surface, soln[0], 1);
-    auto filey = HDFOutputter("test_out/rect_dislocation_uy.hdf5");
-    out_surface(filey, surface, soln[1], 1);
-    auto filez = HDFOutputter("test_out/rect_dislocation_uz.hdf5");
-    out_surface(filez, surface, soln[2], 1);
+    auto file = HDFOutputter("test_out/rect_dislocation_u.hdf5");
+    out_surface(file, surface, soln);
 }

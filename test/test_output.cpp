@@ -17,7 +17,7 @@ TEST(CreateHDFFile) {
         }
         auto data = random_list(n_locs);
         auto o = HDFOutputter(filename);
-        out_volume<2>(o, pts, data, 1);
+        out_volume<2>(o, pts, {data});
     }
     CHECK(does_file_exist(filename));
 }

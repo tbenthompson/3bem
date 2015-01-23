@@ -53,12 +53,10 @@ def test_halfspace_vol_disp():
     np.testing.assert_almost_equal(data[:, 0], exact_uz, 2)
 
 def test_halfspace_vol_trac():
-    tracx_filename = 'test_out/antiplane_half_space_voltx.hdf5'
-    tracy_filename = 'test_out/antiplane_half_space_volty.hdf5'
-    locs, tracx = load_volume(tracx_filename)
-    locs, tracy = load_volume(tracy_filename)
-    tracx = tracx[:, 0]
-    tracy = tracy[:, 0]
+    trac_filename = 'test_out/antiplane_half_space_volt.hdf5'
+    locs, trac = load_volume(trac_filename)
+    tracx = trac[:, 0]
+    tracy = trac[:, 1]
     x = locs[:, 0]
     y = locs[:, 1]
     exact_tracx = -(s * shear_modulus) / (2 * np.pi) * (
