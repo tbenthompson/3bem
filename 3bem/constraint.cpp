@@ -220,54 +220,46 @@ std::vector<double> condense_vector(const ConstraintMatrix& matrix,
     return out;
 }
 
-std::vector<MatrixEntry>
-entries_from_terms(const std::vector<LinearTerm>& terms, size_t axis, 
-        MatrixEntry original_entry)
-{
-    size_t other_axis = (axis + 1) % 2;
-    std::vector<MatrixEntry> entries;
-    for (const auto& t: terms) {
-        size_t loc[2];
-        loc[axis] = t.dof;
-        loc[other_axis] = original_entry.loc[other_axis];
-        entries.push_back(MatrixEntry{{loc[0], loc[1]}, t.weight});
-    }
-    return entries;
-}
-
-std::vector<MatrixEntry>
-add_entry_with_constraints(const ConstraintMatrix& constraint_matrix,
+void add_entry_with_constraints(const ConstraintMatrix& constraint_matrix, 
+    Matrix& modifiable_matrix,
     const MatrixEntry& entry) 
 {
     int constrained_axis;
     if (!is_constrained(constraint_matrix, entry.loc[0])) {
         if (!is_constrained(constraint_matrix, entry.loc[1])) {
-            return {entry};
+            modifiable_matrix.data[entry.loc[0] * modifiable_matrix.n_cols + entry.loc[1]] 
+                += entry.value;
+            return;
         }
         constrained_axis = 1;
     } else {
         constrained_axis = 0;
     }
 
-    auto applied = add_term_with_constraints(constraint_matrix,
-        LinearTerm{entry.loc[constrained_axis], entry.value});
-    auto entries = entries_from_terms(applied, constrained_axis, entry);
-
-    std::vector<MatrixEntry> out;
-    for (const auto& e: entries) {
-        auto recurse_entries = add_entry_with_constraints(constraint_matrix, e);
-        for (const auto& e_recurse: recurse_entries) {
-            out.push_back(e_recurse);
-        }
+    size_t other_axis = (constrained_axis + 1) % 2;
+    auto constrained_dof = entry.loc[constrained_axis];
+    const auto& constraint = constraint_matrix.find(constrained_dof)->second;
+    const auto& terms = constraint.terms;
+    for (const auto& t: terms) {
+        double recurse_weight = t.weight * entry.value;
+        size_t loc[2];
+        loc[constrained_axis] = t.dof;
+        loc[other_axis] = entry.loc[other_axis];
+        MatrixEntry e{
+            {loc[0], loc[1]}, recurse_weight
+        };
+        add_entry_with_constraints(constraint_matrix, modifiable_matrix, e);
     }
-    
-    return out;
 }
 
 Matrix
 condense_matrix(const ConstraintMatrix& constraint_matrix, const Matrix& matrix)
 {
-    std::vector<double> condensed(matrix.n_rows * matrix.n_cols, 0.0);
+    Matrix condensed {
+        matrix.n_rows, matrix.n_cols,
+        std::vector<double>(matrix.n_rows * matrix.n_cols, 0.0)
+    };
+
     for (size_t row_idx = 0; row_idx < matrix.n_rows; row_idx++) {
         for (size_t col_idx = 0; col_idx < matrix.n_cols; col_idx++) {
             MatrixEntry entry_to_add{
@@ -275,11 +267,7 @@ condense_matrix(const ConstraintMatrix& constraint_matrix, const Matrix& matrix)
                 matrix.data[row_idx * matrix.n_cols + col_idx]
             };
 
-            auto expanded_entry =
-                add_entry_with_constraints(constraint_matrix, entry_to_add);
-            for (const auto& e: expanded_entry) {
-                condensed[e.loc[0] * matrix.n_cols + e.loc[1]] += e.value;
-            }
+            add_entry_with_constraints(constraint_matrix, condensed, entry_to_add);
         }
     }
 
@@ -298,7 +286,7 @@ condense_matrix(const ConstraintMatrix& constraint_matrix, const Matrix& matrix)
             if (n_rows == 1) {
                 n_cols++;
             }
-            out.push_back(condensed[row_idx * matrix.n_cols + col_idx]);
+            out.push_back(condensed.data[row_idx * matrix.n_cols + col_idx]);
         }
     }
 

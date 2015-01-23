@@ -132,9 +132,9 @@ std::vector<double> condense_vector(const ConstraintMatrix& matrix,
     const std::vector<double>& all);
 
 struct Matrix {
-    const size_t n_rows;
-    const size_t n_cols;
-    const std::vector<double> data;
+    size_t n_rows;
+    size_t n_cols;
+    std::vector<double> data;
 };
 
 struct MatrixEntry 
