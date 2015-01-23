@@ -83,10 +83,6 @@ int main() {
         distribute_vector(constraint_matrix, disp_reduced_vec[2], surface.n_dofs())
     };
 
-    auto filex = HDFOutputter("test_out/rect_dislocation_ux.hdf5");
-    out_surface(filex, surface, soln[0], 1);
-    auto filey = HDFOutputter("test_out/rect_dislocation_uy.hdf5");
-    out_surface(filey, surface, soln[1], 1);
-    auto filez = HDFOutputter("test_out/rect_dislocation_uz.hdf5");
-    out_surface(filez, surface, soln[2], 1);
+    auto file = HDFOutputter("test_out/rect_dislocation_u.hdf5");
+    out_surface(file, surface, soln);
 }

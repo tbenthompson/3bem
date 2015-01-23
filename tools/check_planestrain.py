@@ -18,16 +18,14 @@ def exact_displacements(x):
     return exact_ux, exact_uy
 
 def test_planestrain():
-    filename_ux = "test_out/planestrain_ux.hdf5"
-    vertices, data_ux = load_surface(filename_ux)
-    filename_uy = "test_out/planestrain_uy.hdf5"
-    vertices, data_uy = load_surface(filename_uy)
+    filename_u = "test_out/planestrain_u.hdf5"
+    vertices, data_u = load_surface(filename_u)
 
     indices = [i for i in range(vertices.shape[0])
                if 0 < np.abs(vertices[i, 0]) < 10]
     x = vertices[indices, 0]
-    ux = data_ux[indices, 0]
-    uy = data_uy[indices, 0]
+    ux = data_u[indices, 0]
+    uy = data_u[indices, 1]
 
     exact_ux, exact_uy = exact_displacements(x)
 

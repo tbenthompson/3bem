@@ -68,8 +68,6 @@ int main() {
         distribute_vector(constraint_matrix, disp_reduced_vec[1], surface.n_dofs())
     };
 
-    auto filex = HDFOutputter("test_out/planestrain_ux.hdf5");
-    out_surface(filex, surface, soln[0], 1);
-    auto filey = HDFOutputter("test_out/planestrain_uy.hdf5");
-    out_surface(filey, surface, soln[1], 1);
+    auto file = HDFOutputter("test_out/planestrain_u.hdf5");
+    out_surface(file, surface, soln);
 }

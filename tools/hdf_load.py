@@ -21,6 +21,19 @@ def get_3d_vertices(facets):
     ]).T
     return vertices
 
+def dataset_name(i):
+    return "values" + str(i)
+
+def load_data(f):
+    datasets = []
+    i = 0
+    while dataset_name(i) in f:
+        datasets.append(f[dataset_name(i)][:])
+        i += 1
+    assert(len(datasets) > 0)
+    data = np.hstack(datasets)
+    return data
+
 def load_surface(filename):
     f = h5py.File(filename)
     facets = f['locations']
@@ -28,11 +41,11 @@ def load_surface(filename):
         vertices = get_3d_vertices(facets)
     elif (facets.shape[1] == 4):
         vertices = get_2d_vertices(facets)
-    data = f['values']
+    data = load_data(f)
     return vertices, data
 
 def load_volume(filename):
     f = h5py.File(filename)
     locs = f['locations']
-    data = f['values']
+    data = load_data(f)
     return locs, data

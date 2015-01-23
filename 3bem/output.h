@@ -20,7 +20,8 @@ inline bool does_file_exist(const std::string& filename)
 class Outputter {
 public:
     virtual void write_locations(int dim1, int dim2, const void* data_ptr) const = 0;
-    virtual void write_values(int n_vars, const std::vector<double>& data) const = 0;
+    virtual void write_values(const std::string& name, int n_vars,
+        const std::vector<double>& data) const = 0;
 };
 
 class HDFOutputter: public Outputter {
@@ -29,25 +30,30 @@ public:
     ~HDFOutputter();
 
     virtual void write_locations(int dim1, int dim2, const void* data_ptr) const;
-    virtual void write_values(int n_vars, const std::vector<double>& data) const;
+    virtual void write_values(const std::string& name, int n_vars,
+        const std::vector<double>& data) const;
 
     const int file_id;
 };
 
 template <size_t dim>
 void out_surface(const Outputter& o, const Mesh<dim>& mesh,
-                 const std::vector<double> data, int n_vars) {
+                 const std::vector<std::vector<double>>& data) {
     assert(data.size() == mesh.n_dofs());
     o.write_locations(mesh.facets.size(), dim * dim, mesh.facets.data());
-    o.write_values(n_vars, data);
+    for (size_t i = 0; i < data.size(); i++) {
+        o.write_values("values" + std::to_string(i), 1, data[i]);
+    }
 }
 
 template <size_t dim> 
 void out_volume(const Outputter& o, const std::vector<Vec<double,dim>>& points,
-                const std::vector<double>& data, int n_vars) {
+                const std::vector<std::vector<double>>& data) {
     assert(points.size() == data.size());
     o.write_locations(points.size(), dim, points.data());
-    o.write_values(n_vars, data);
+    for (size_t i = 0; i < data.size(); i++) {
+        o.write_values("values" + std::to_string(i), 1, data[i]);
+    }
 }
 
 } // END namespace tbem
