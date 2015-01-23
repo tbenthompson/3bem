@@ -255,5 +255,4 @@ TEST(CondenseMatrixBoundaryCondition) {
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();
-    // return RunOneTest("CircularConstraints");
 }
