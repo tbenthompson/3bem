@@ -25,7 +25,7 @@ void full_space() {
     auto continuity = mesh_continuity(surface1.begin());
     auto cut_cont = cut_at_intersection(continuity, surface1.begin(), fault.begin());
     auto constraints = convert_to_constraints(cut_cont);
-    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
+    auto constraint_matrix = from_constraints(constraints);
 
     // Quadrature details -- these parameters basically achieve machine precision
     double far_threshold = 4.0;
@@ -69,7 +69,7 @@ void half_space() {
     auto continuity = mesh_continuity(surface2.begin());
     auto cut_cont = cut_at_intersection(continuity, surface2.begin(), fault.begin());
     auto constraints = convert_to_constraints(cut_cont);
-    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
+    auto constraint_matrix = from_constraints(constraints);
     
     TIC
     // The RHS is the effect of the fault on the surface.
@@ -81,7 +81,7 @@ void half_space() {
     for (std::size_t i = 0; i < rhs_all_dofs.size(); i++) {
         rhs_all_dofs[i] = -rhs_all_dofs[i];
     }
-    auto rhs = constraint_matrix.get_reduced(rhs_all_dofs);
+    auto rhs = condense_vector(constraint_matrix, rhs_all_dofs);
 
     // The LHS is the effect of the surface on the surface.
     auto p_lhs_halfspace = make_problem<2>(surface2, surface2, hypersingular_kernel);
@@ -91,13 +91,13 @@ void half_space() {
     double linear_solve_tol = 1e-5;
     auto soln_reduced = solve_system(rhs, linear_solve_tol,
         [&] (std::vector<double>& x, std::vector<double>& y) {
-            auto x_full = constraint_matrix.get_all(x, surface2.n_dofs());
+            auto x_full = distribute_vector(constraint_matrix, x, surface2.n_dofs());
             auto y_mult = apply_operator(lhs, x_full); 
-            auto y_temp = constraint_matrix.get_reduced(y_mult);
+            auto y_temp = condense_vector(constraint_matrix, y_mult);
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
         });
     TOC("Solve antiplane half space.");
-    auto soln = constraint_matrix.get_all(soln_reduced, surface2.n_dofs());
+    auto soln = distribute_vector(constraint_matrix, soln_reduced, surface2.n_dofs());
 
     auto filesurface = HDFOutputter("test_out/antiplane_half_space.hdf5");
     out_surface<2>(filesurface, surface2, soln, 1);

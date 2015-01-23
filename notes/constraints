@@ -5,7 +5,7 @@
 
 Constraints can be represented by a sparse matrix with whatever data structure is appropriate. Maybe a hash table? Things not in the hashtable are unconstrained? Alternatively, if a majority of DOFs are constrained, then a more traditional sparse matrix format might be appropriate. The choice is not yet important.
 
-The get_all operation will retrieve all the DOFs from the subset of reduced DOFs. To perform this in linear time without complications, the constraint matrix should be ordered so that it is lower triangular. To do this,
+The distribute_vector operation will retrieve all the DOFs from the subset of reduced DOFs. To perform this in linear time without complications, the constraint matrix should be ordered so that it is lower triangular. To do this,
 For each constraint:
 -- choose the DOF with the highest index as the "constrained" dof. This is the index of the row that the constraint is put into the sparse matrix.
 -- If that DOF is already constrained, then it substitute its constraint into the constraint currently under consideration. This should strictly reduce the value of the highest index. If the highest index dof is still constrained, repeat. 

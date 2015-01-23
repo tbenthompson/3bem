@@ -3,8 +3,8 @@
 namespace tbem {
 
 RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c, 
-                                                  int constrained_index) {
-    assert(constrained_index < (int)c.terms.size());
+                                                  size_t constrained_index) {
+    assert(constrained_index < c.terms.size());
     const auto& constrained_term = c.terms[constrained_index]; 
 
     std::vector<LinearTerm> divided_negated_terms;
@@ -25,8 +25,8 @@ RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c,
     };
 }
 
-bool is_constrained(const ConstraintMapT& dof_constraint_map,
-                           int dof) {
+bool is_constrained(const ConstraintMatrix& dof_constraint_map,
+                           size_t dof) {
     const auto& it = dof_constraint_map.find(dof);
     if (it == dof_constraint_map.end()) {
         return false;
@@ -34,7 +34,7 @@ bool is_constrained(const ConstraintMapT& dof_constraint_map,
     return true;
 }
 
-int find_last_dof_index(const ConstraintEQ& c) {
+size_t find_last_dof_index(const ConstraintEQ& c) {
     auto highest_dof_term = std::max_element(c.terms.begin(), c.terms.end(),
         [&] (const LinearTerm& a, const LinearTerm& b) {
             return a.dof < b.dof;
@@ -43,7 +43,7 @@ int find_last_dof_index(const ConstraintEQ& c) {
 }
 
 typedef std::vector<LinearTerm>::const_iterator LinearTermIterator;
-LinearTermIterator find_term_with_dof(const std::vector<LinearTerm>& terms, int dof) {
+LinearTermIterator find_term_with_dof(const std::vector<LinearTerm>& terms, size_t dof) {
     return std::find_if(terms.begin(), terms.end(),
         [&] (const LinearTerm& sub_lt) {
             return sub_lt.dof == dof;
@@ -64,7 +64,7 @@ void remove(std::vector<T>& vec, size_t pos)
     vec.erase(it);
 }
 
-ConstraintEQ substitute(const ConstraintEQ& c, int constrained_dof_index,
+ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
                         const RearrangedConstraintEQ& subs_in) {
 
     const auto& constrained_term = c.terms[constrained_dof_index];
@@ -74,7 +74,7 @@ ConstraintEQ substitute(const ConstraintEQ& c, int constrained_dof_index,
     std::vector<LinearTerm> out_terms;
     auto which_subs_terms_unused = range(subs_in.terms.size());
     for (size_t i = 0; i < c.terms.size(); i++) {
-        if ((int)i == constrained_dof_index) {
+        if (i == constrained_dof_index) {
             continue;
         }
         const auto& term = c.terms[i];
@@ -85,13 +85,13 @@ ConstraintEQ substitute(const ConstraintEQ& c, int constrained_dof_index,
         } else {
             double additive_weight = subs_term->weight * multiplicative_factor;
             out_terms.push_back(LinearTerm{term.dof, term.weight + additive_weight});
-            int subs_term_index = std::distance(subs_in.terms.begin(), subs_term);
-            assert(subs_term_index < (int)subs_in.terms.size());
+            size_t subs_term_index = std::distance(subs_in.terms.begin(), subs_term);
+            assert(subs_term_index < subs_in.terms.size());
             remove(which_subs_terms_unused, subs_term_index);
         } 
     }
 
-    for (int subs_term_index: which_subs_terms_unused) {
+    for (size_t subs_term_index: which_subs_terms_unused) {
         const auto& subs_term = subs_in.terms[subs_term_index];
         double additive_weight = subs_term.weight * multiplicative_factor;
         out_terms.push_back(LinearTerm{subs_term.dof, additive_weight});
@@ -112,61 +112,62 @@ ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps) {
 }
 
 RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
-                                             const ConstraintMapT& map) {
+                                             const ConstraintMatrix& matrix) {
     if (c.terms.size() == 0) {
         std::string msg = "Function: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.";
         throw std::invalid_argument(msg);
     }
 
-    int last_dof_index = find_last_dof_index(c);
-    int last_dof = c.terms[last_dof_index].dof;
-    if (is_constrained(map, last_dof)) {
-        const auto& last_dof_constraint = map.find(last_dof)->second;
+    auto last_dof_index = find_last_dof_index(c);
+    auto last_dof = c.terms[last_dof_index].dof;
+    if (is_constrained(matrix, last_dof)) {
+        const auto& last_dof_constraint = matrix.find(last_dof)->second;
         ConstraintEQ c_subs = substitute(c, last_dof_index, last_dof_constraint);
         ConstraintEQ c_subs_filtered = filter_zero_terms(c_subs);
-        return make_lower_triangular(c_subs_filtered, map);
+        return make_lower_triangular(c_subs_filtered, matrix);
     }
     return isolate_term_on_lhs(c, last_dof_index);
 }
 
-ConstraintMatrix ConstraintMatrix::from_constraints(
+ConstraintMatrix from_constraints(
         const std::vector<ConstraintEQ>& constraints) {
-    ConstraintMapT new_map;
+    ConstraintMatrix new_mat;
 
     for (size_t i = 0; i < constraints.size(); i++) {
         const auto& c = constraints[i];
         try {
-            auto lower_tri_constraint = make_lower_triangular(c, new_map);
-            new_map[lower_tri_constraint.constrained_dof] =
+            auto lower_tri_constraint = make_lower_triangular(c, new_mat);
+            new_mat[lower_tri_constraint.constrained_dof] =
                 std::move(lower_tri_constraint);
         } catch (const std::invalid_argument& e) {
             continue;
         }
     }
 
-    return ConstraintMatrix{new_map};
+    return ConstraintMatrix{new_mat};
 };
 
-std::vector<double> ConstraintMatrix::get_all(const std::vector<double>& in,
-    int total_dofs) const 
+std::vector<double>
+distribute_vector(const ConstraintMatrix& matrix, const std::vector<double>& in,
+                  size_t total_dofs) 
 {
     std::vector<double> out(total_dofs); 
 
-    int next_reduced_dof = 0;
+    size_t next_reduced_dof = 0;
 
-    for (int dof_index = 0; dof_index < total_dofs; dof_index++) {
-        if(is_constrained(map, dof_index)) {
+    for (size_t dof_index = 0; dof_index < total_dofs; dof_index++) {
+        if(is_constrained(matrix, dof_index)) {
             continue;
         }
         out[dof_index] = in[next_reduced_dof];
         next_reduced_dof++;
     }
 
-    for (int dof_index = 0; dof_index < total_dofs; dof_index++) {
-        if(!is_constrained(map, dof_index)) {
+    for (size_t dof_index = 0; dof_index < total_dofs; dof_index++) {
+        if(!is_constrained(matrix, dof_index)) {
             continue;
         }
-        auto constraint = map.find(dof_index)->second;
+        auto constraint = matrix.find(dof_index)->second;
         auto val = constraint.rhs;
         for (size_t j = 0; j < constraint.terms.size(); j++) {
             val += constraint.terms[j].weight * out[constraint.terms[j].dof];
@@ -177,18 +178,18 @@ std::vector<double> ConstraintMatrix::get_all(const std::vector<double>& in,
 }
 
 std::vector<LinearTerm>
-ConstraintMatrix::add_term_with_constraints(const LinearTerm& entry) const {
-    if (!is_constrained(map, entry.dof)) {
+add_term_with_constraints(const ConstraintMatrix& matrix, const LinearTerm& entry) {
+    if (!is_constrained(matrix, entry.dof)) {
         return {entry};
     }
 
-    const auto& constraint = map.find(entry.dof)->second;
+    const auto& constraint = matrix.find(entry.dof)->second;
     const auto& terms = constraint.terms;
     std::vector<LinearTerm> out_terms;
     for (size_t i = 0; i < terms.size(); i++) {
         double recurse_weight = terms[i].weight * entry.weight;
         LinearTerm new_entry{terms[i].dof, recurse_weight};
-        const auto& terms = add_term_with_constraints(new_entry);
+        const auto& terms = add_term_with_constraints(matrix, new_entry);
         for (const auto& t: terms) {
             out_terms.push_back(std::move(t));
         }
@@ -196,11 +197,13 @@ ConstraintMatrix::add_term_with_constraints(const LinearTerm& entry) const {
     return out_terms;
 }
 
-std::vector<double> ConstraintMatrix::get_reduced(const std::vector<double>& all) const {
+std::vector<double> condense_vector(const ConstraintMatrix& matrix,
+    const std::vector<double>& all) 
+{
     std::vector<double> condensed_dofs(all.size(), 0.0);
     for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
-        LinearTerm term_to_add{(int)dof_idx, all[dof_idx]};
-        auto expanded_term = add_term_with_constraints(term_to_add);
+        LinearTerm term_to_add{dof_idx, all[dof_idx]};
+        auto expanded_term = add_term_with_constraints(matrix, term_to_add);
         for (const auto& t: expanded_term) {
             condensed_dofs[t.dof] += t.weight;
         }
@@ -208,13 +211,98 @@ std::vector<double> ConstraintMatrix::get_reduced(const std::vector<double>& all
 
     std::vector<double> out;
     for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
-        if (is_constrained(map, dof_idx)) {
+        if (is_constrained(matrix, dof_idx)) {
             continue;
         }
         out.push_back(condensed_dofs[dof_idx]);
     }
 
     return out;
+}
+
+std::vector<MatrixEntry>
+entries_from_terms(const std::vector<LinearTerm>& terms, size_t axis, 
+        MatrixEntry original_entry)
+{
+    size_t other_axis = (axis + 1) % 2;
+    std::vector<MatrixEntry> entries;
+    for (const auto& t: terms) {
+        size_t loc[2];
+        loc[axis] = t.dof;
+        loc[other_axis] = original_entry.loc[other_axis];
+        entries.push_back(MatrixEntry{{loc[0], loc[1]}, t.weight});
+    }
+    return entries;
+}
+
+std::vector<MatrixEntry>
+add_entry_with_constraints(const ConstraintMatrix& constraint_matrix,
+    const MatrixEntry& entry) 
+{
+    int constrained_axis;
+    if (!is_constrained(constraint_matrix, entry.loc[0])) {
+        if (!is_constrained(constraint_matrix, entry.loc[1])) {
+            return {entry};
+        }
+        constrained_axis = 1;
+    } else {
+        constrained_axis = 0;
+    }
+
+    auto applied = add_term_with_constraints(constraint_matrix,
+        LinearTerm{entry.loc[constrained_axis], entry.value});
+    auto entries = entries_from_terms(applied, constrained_axis, entry);
+
+    std::vector<MatrixEntry> out;
+    for (const auto& e: entries) {
+        auto recurse_entries = add_entry_with_constraints(constraint_matrix, e);
+        for (const auto& e_recurse: recurse_entries) {
+            out.push_back(e_recurse);
+        }
+    }
+    
+    return out;
+}
+
+Matrix
+condense_matrix(const ConstraintMatrix& constraint_matrix, const Matrix& matrix)
+{
+    std::vector<double> condensed(matrix.n_rows * matrix.n_cols, 0.0);
+    for (size_t row_idx = 0; row_idx < matrix.n_rows; row_idx++) {
+        for (size_t col_idx = 0; col_idx < matrix.n_cols; col_idx++) {
+            MatrixEntry entry_to_add{
+                {row_idx, col_idx},
+                matrix.data[row_idx * matrix.n_cols + col_idx]
+            };
+
+            auto expanded_entry =
+                add_entry_with_constraints(constraint_matrix, entry_to_add);
+            for (const auto& e: expanded_entry) {
+                condensed[e.loc[0] * matrix.n_cols + e.loc[1]] += e.value;
+            }
+        }
+    }
+
+    std::vector<double> out;
+    size_t n_rows = 0;
+    size_t n_cols = 0;
+    for (size_t row_idx = 0; row_idx < matrix.n_rows; row_idx++) {
+        if (is_constrained(constraint_matrix, row_idx)) {
+            continue;
+        }
+        n_rows++;
+        for (size_t col_idx = 0; col_idx < matrix.n_cols; col_idx++) {
+            if (is_constrained(constraint_matrix, col_idx)) {
+                continue;
+            }
+            if (n_rows == 1) {
+                n_cols++;
+            }
+            out.push_back(condensed[row_idx * matrix.n_cols + col_idx]);
+        }
+    }
+
+    return {n_rows, n_cols, out};
 }
 
 } //END namespace tbem

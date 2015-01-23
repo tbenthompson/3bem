@@ -2,6 +2,7 @@
 #define __HJKHSDFLJSLLHA_LAPLACE_H
 #include "3bem.h"
 #include "laplace_kernels.h"
+#include "armadillo_interface.h"
 
 using namespace tbem;
 
@@ -30,7 +31,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     auto continuity = mesh_continuity(mesh.begin());
     auto constraints = convert_to_constraints(continuity);
-    auto constraint_matrix = ConstraintMatrix::from_constraints(constraints);
+    auto constraint_matrix = from_constraints(constraints);
 
     auto u = constrained_interpolate<dim>(mesh, fnc, constraint_matrix);
     auto dudn = constrained_interpolate<dim>(mesh, deriv, constraint_matrix);
@@ -63,33 +64,42 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     auto p_single = make_problem<dim>(mesh, mesh, single_kernel);
     auto matrix = mesh_to_mesh_operator(p_single, qs);
     TOC("Matrix construct on " + std::to_string(mesh.n_facets()) + " facets");
+    TIC2
+    auto condensed_matrix = condense_matrix(constraint_matrix, 
+        {matrix.n_rows, matrix.n_cols, matrix.data[0]});
+    MatrixOperator condensed_op{
+        condensed_matrix.n_rows, condensed_matrix.n_cols, 1, 1, {condensed_matrix.data}
+    };
+    TOC("Matrix condense");
+
+    TIC2
+    auto inv_condensed_matrix = armadillo_invert(condensed_op.data[0]);
+    MatrixOperator inv_condensed_op{
+        condensed_matrix.n_rows, condensed_matrix.n_cols, 1, 1, {inv_condensed_matrix}
+    };
+    std::cout << "DOFs: " << condensed_matrix.n_rows << std::endl;
+    TOC("Invert");
 
 
     // Apply the constraints to the RHS vector to get a condensed vector.
-    auto rhs = constraint_matrix.get_reduced(rhs_full);
+    auto rhs = condense_vector(constraint_matrix, rhs_full);
     
     // Actually solve the linear system by providing a function to evaluate
     // matrix vector products.
-    int count = 0;
-    double linear_solve_tol = 1e-5;
-    auto dudn_solved_subset = solve_system(rhs, linear_solve_tol,
-        [&] (std::vector<double>& x, std::vector<double>& y) {
-            std::cout << "iteration " << count << std::endl;
-            count++;
-            TIC
-            // Expand the condensed vector to get all the DOFs. This is done
-            // each iteration of the linear solve so that the matrix can be 
-            // left in its uncondensed form.
-            auto x_full = constraint_matrix.get_all(x, mesh.n_dofs());
-            auto y_mult = apply_operator(matrix, x_full); 
-
-            // Reduce the result of the matrix vector product.
-            auto y_temp = constraint_matrix.get_reduced(y_mult);
-            std::copy(y_temp.begin(), y_temp.end(), y.begin());
-            TOC("Matrix multiply on " + std::to_string(mesh.n_facets()) + " faces");
-        });
+    // int count = 0;
+    // double linear_solve_tol = 1e-5;
+    // auto dudn_solved_subset = solve_system(rhs, linear_solve_tol,
+    //     [&] (std::vector<double>& x, std::vector<double>& y) {
+    //         std::cout << "iteration " << count << std::endl;
+    //         count++;
+    //         TIC
+    //         auto y_mult = apply_operator(condensed_op, x); 
+    //         std::copy(y_mult.begin(), y_mult.end(), y.begin());
+    //         TOC("Matrix multiply on " + std::to_string(mesh.n_facets()) + " faces");
+    //     });
+    auto dudn_solved_subset = apply_operator(inv_condensed_op, rhs);
     // Get all the constrained DOFs from the reduced DOF vector.
-    auto dudn_solved = constraint_matrix.get_all(dudn_solved_subset, mesh.n_dofs());
+    auto dudn_solved = distribute_vector(constraint_matrix, dudn_solved_subset, mesh.n_dofs());
 
     // Output the error and the solution 
     std::cout << error_inf(dudn_solved, dudn) << std::endl;

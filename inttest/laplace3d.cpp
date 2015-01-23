@@ -16,7 +16,7 @@ struct InvDudn {
 
 int main() {
     double obs_radius = 2.9;
-    int refine_level = 3;
+    int refine_level = 4;
     int n_test_pts = 100;
     auto sphere = sphere_mesh(center, r, refine_level);
     std::vector<Vec3<double>> test_pts(n_test_pts);
