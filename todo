@@ -1,8 +1,9 @@
 CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
 -- petsc-interface -- return soln instead of copying within the matvecfnc
 -- outputter clean up
--- constraints on vectors should be easier
--- moves inlines to .cpp files
+-- constraints on multicomponent vectors should be easier
+-- constraints code should use mutablility for speed
+-- use the lower triangular property to make matrix condensation faster
 ---------------------------------------
 
 NEXT: HANGING NODES AND COMPLEX GEOMETRIES:
@@ -48,5 +49,6 @@ OPTIMIZATION(O):
 
 Possibly sidelined (forever?):
 Goal2: More elegant handling of discretized Functions (in the mathematical sense).
+-- this stuff is growing organically in elastic
 MF: Replace std::vector with the Function class in Problem
 NF: Slight encapsulation of the std::vector storage with useful things like negation, element-wise multiplication, etc. This might be useful to combine with Function.
