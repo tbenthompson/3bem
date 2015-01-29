@@ -73,7 +73,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     TOC("Matrix condense");
 
     TIC2
-    auto inv_condensed_matrix = armadillo_invert(condensed_op.data[0]);
+    auto inv_condensed_matrix = arma_invert(condensed_op.data[0]);
     MatrixOperator inv_condensed_op{
         condensed_matrix.n_rows, condensed_matrix.n_cols, 1, 1, {inv_condensed_matrix}
     };

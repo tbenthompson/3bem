@@ -25,8 +25,7 @@ RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c,
     };
 }
 
-bool is_constrained(const ConstraintMatrix& dof_constraint_map,
-                           size_t dof) {
+bool is_constrained(const ConstraintMatrix& dof_constraint_map, size_t dof) {
     const auto& it = dof_constraint_map.find(dof);
     if (it == dof_constraint_map.end()) {
         return false;
@@ -65,8 +64,8 @@ void remove(std::vector<T>& vec, size_t pos)
 }
 
 ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
-                        const RearrangedConstraintEQ& subs_in) {
-
+                        const RearrangedConstraintEQ& subs_in) 
+{
     const auto& constrained_term = c.terms[constrained_dof_index];
     assert(constrained_term.dof == subs_in.constrained_dof);
     double multiplicative_factor = constrained_term.weight;
@@ -101,7 +100,8 @@ ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
     return {out_terms, out_rhs};
 }
 
-ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps) {
+ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps) 
+{
     std::vector<LinearTerm> out_terms;
     for(const auto& t: c.terms) {
         if (std::fabs(t.weight) > eps) {
@@ -112,7 +112,8 @@ ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps) {
 }
 
 RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
-                                             const ConstraintMatrix& matrix) {
+                                             const ConstraintMatrix& matrix) 
+{
     if (c.terms.size() == 0) {
         std::string msg = "Function: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.";
         throw std::invalid_argument(msg);
@@ -129,16 +130,16 @@ RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
     return isolate_term_on_lhs(c, last_dof_index);
 }
 
-ConstraintMatrix from_constraints(
-        const std::vector<ConstraintEQ>& constraints) {
+ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints) 
+{
     ConstraintMatrix new_mat;
 
     for (size_t i = 0; i < constraints.size(); i++) {
         const auto& c = constraints[i];
         try {
             auto lower_tri_constraint = make_lower_triangular(c, new_mat);
-            new_mat[lower_tri_constraint.constrained_dof] =
-                std::move(lower_tri_constraint);
+            new_mat.insert(std::make_pair(lower_tri_constraint.constrained_dof,
+                                          lower_tri_constraint));
         } catch (const std::invalid_argument& e) {
             continue;
         }
@@ -170,7 +171,8 @@ distribute_vector(const ConstraintMatrix& matrix, const std::vector<double>& in,
         auto constraint = matrix.find(dof_index)->second;
         auto val = constraint.rhs;
         for (size_t j = 0; j < constraint.terms.size(); j++) {
-            val += constraint.terms[j].weight * out[constraint.terms[j].dof];
+            assert(constraint.terms[j].dof < dof_index);
+            val += constraint.terms[j].weight * in[constraint.terms[j].dof];
         }
         out[dof_index] = val;
     }

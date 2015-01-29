@@ -1,11 +1,10 @@
 CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
--- petsc-interface -- return soln instead of copying within the matvecfnc
--- outputter clean up
--- constraints on multicomponent vectors should be easier
+-- condense non-square matrix
 ---------------------------------------
 
 NEXT: HANGING NODES AND COMPLEX GEOMETRIES:
 S: more flexible build system -- debug vs release vs profile vs test_coverage?
+MF: petsc-interface -- return soln instead of copying within the matvecfnc
 DD: Define much much clearer interfaces with the outside world.
 -- Maybe restrict the main .h files to outward facing interfaces. I could use _impl.h files for inward facing header files. I could try this with constraints.h
 S: Consider getting rid of autocheck as a dependency.
@@ -19,6 +18,7 @@ NF: Handle the general case when fault-surface intersection does not occur at a 
 ---------------------------------------
 
 FMM-BEM INTEGRATION:
+DD: BIG: decide whether to use the direct FMM-based inversion methods.
 NF: Interface for Operators -- extend with sparse matrix operators and FMMOperator
 -- move mat_mult to be a member function for an operator?
 NF: Imagine some kind of general purpose "nearfield" structure that can allow a simple O(N) solution to the near neighbors problems in mesh_continuity, apply_discontinuities as well as the FMM tree structure.
