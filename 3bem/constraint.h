@@ -80,20 +80,9 @@ ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps = 1e-15);
  * x_2 = (1/4)(13.7 + x_1 - 3*x_0)
  */
 struct RearrangedConstraintEQ {
-    // Q: Why aren't these variables marked const? 
-    // A: Constructing a standard library map object 
-    // (std::map or std::unordered_map) can be done either by adding in
-    // items one by one or building a list of pairs and then inserting those
-    // all at once. An immutable type can only be inserted as as list
-    // of pairs because the map preallocates (and preconstructs) all of its
-    // space and an immutable type has no assignment operator (you can't change
-    // it!). But, the algorithm for ensuring the constraints are lower triangular
-    // requires building the map item by item, so immutability is difficult for
-    // this data type. Since this is only used internally, it's not too big
-    // of a deal. Just don't change its member!
-    size_t constrained_dof;
-    std::vector<LinearTerm> terms;
-    double rhs;
+    const size_t constrained_dof;
+    const std::vector<LinearTerm> terms;
+    const double rhs;
 
     friend std::ostream& operator<<(std::ostream& os, 
                                     const RearrangedConstraintEQ& c) {
