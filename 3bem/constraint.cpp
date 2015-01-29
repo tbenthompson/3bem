@@ -172,7 +172,7 @@ distribute_vector(const ConstraintMatrix& matrix, const std::vector<double>& in,
         auto val = constraint.rhs;
         for (size_t j = 0; j < constraint.terms.size(); j++) {
             assert(constraint.terms[j].dof < dof_index);
-            val += constraint.terms[j].weight * in[constraint.terms[j].dof];
+            val += constraint.terms[j].weight * out[constraint.terms[j].dof];
         }
         out[dof_index] = val;
     }
