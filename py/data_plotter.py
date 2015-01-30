@@ -28,11 +28,10 @@ def plot2d(facets, data):
 
     # Antiplane
     x = vertices[:, 0]
-    theta = np.arctan2(vertices[:, 1], vertices[:, 0] - 5)
     # s = 1
     # uz = s * np.arctan(1.0 / x) / np.pi
     # plt.plot(x, uz, 'r.-')
-    plt.plot(theta, data, 'b.-')
+    plt.plot(x, data, 'b.-')
 
     # Plane strain
     # x = vertices[:, 0]
