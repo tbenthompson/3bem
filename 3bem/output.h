@@ -39,9 +39,9 @@ public:
 template <size_t dim>
 void out_surface(const Outputter& o, const Mesh<dim>& mesh,
                  const std::vector<std::vector<double>>& data) {
-    assert(data.size() == mesh.n_dofs());
     o.write_locations(mesh.facets.size(), dim * dim, mesh.facets.data());
     for (size_t i = 0; i < data.size(); i++) {
+        assert(data[i].size() == mesh.n_dofs());
         o.write_values("values" + std::to_string(i), 1, data[i]);
     }
 }
@@ -49,9 +49,9 @@ void out_surface(const Outputter& o, const Mesh<dim>& mesh,
 template <size_t dim> 
 void out_volume(const Outputter& o, const std::vector<Vec<double,dim>>& points,
                 const std::vector<std::vector<double>>& data) {
-    assert(points.size() == data.size());
     o.write_locations(points.size(), dim, points.data());
     for (size_t i = 0; i < data.size(); i++) {
+        assert(data[i].size() == points.size());
         o.write_values("values" + std::to_string(i), 1, data[i]);
     }
 }
