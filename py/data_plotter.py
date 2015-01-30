@@ -70,7 +70,8 @@ def plot3d(facets, data):
 def main(filename, values_dim):
     f = h5py.File(filename)
     facets = f['locations']
-    data = f['values'][:, values_dim]
+    data = f['values' + str(values_dim)][:, 0]
+    plt.title(filename)
     if (facets.shape[1] == 9):
         plot3d(facets, data)
     elif (facets.shape[1] == 4):

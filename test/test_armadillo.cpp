@@ -1,13 +1,13 @@
 #include "UnitTest++.h"
 #include "armadillo_interface.h"
 
-TEST(Blah) {
+TEST(ArmadilloInvert) {
     std::vector<double> orig_mat{
         {-1, 1,
          2, 1}
     };
 
-    auto arma_result = armadillo_invert(orig_mat);
+    auto arma_result = arma_invert(orig_mat);
 
     std::vector<double> correct{
         {-1 / 3.0, 1 / 3.0,
