@@ -1,3 +1,4 @@
+#include <cassert>
 #include "function.h"
 
 namespace tbem {
@@ -25,6 +26,8 @@ ConcatenatedFunction concatenate(const std::vector<std::vector<double>>& fncs)
 std::vector<std::vector<double>> expand(const ConcatenatedFunction& block_fnc,
     const std::vector<double>& replacement_data) 
 {
+    assert(replacement_data.size() == block_fnc.data.size());
+
     std::vector<std::vector<double>> out(block_fnc.components);
     size_t start_pos = 0;
     for (size_t i = 0; i < block_fnc.components; i++) {

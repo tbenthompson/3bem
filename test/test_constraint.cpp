@@ -84,8 +84,8 @@ ConstraintMatrix two_bcs_constraint_map() {
     ConstraintEQ eqtn0{{LinearTerm{3,1}}, 4.0};
     ConstraintEQ eqtn1{{LinearTerm{1,1}}, 2.0};
     ConstraintMatrix constraint_set;
-    constraint_set[1] = isolate_term_on_lhs(eqtn1, 0);
-    constraint_set[3] = isolate_term_on_lhs(eqtn0, 0);
+    constraint_set.insert(std::make_pair(1, isolate_term_on_lhs(eqtn1, 0)));
+    constraint_set.insert(std::make_pair(3, isolate_term_on_lhs(eqtn0, 0)));
     return constraint_set;
 }
 
@@ -186,30 +186,35 @@ TEST(CondenseEmpty) {
     CHECK_EQUAL(result.size(), 0);
 }
 
-TEST(CondenseRecurse) {
-    auto cm = from_constraints({
-        boundary_condition(1, 4.0),
+ConstraintMatrix bcs1_and_continuity0234(int bc_dof, double bc_val) {
+    return from_constraints({
+        boundary_condition(bc_dof, bc_val),
         continuity_constraint(0, 2),
         continuity_constraint(2, 3),
         continuity_constraint(3, 4)
     });
+}
+
+TEST(CondenseRecurse) {
+    auto cm = bcs1_and_continuity0234(1, 4.0);
     auto result = condense_vector(cm, {0.0, 0.0, 0.0, 0.0, 4.0});
     CHECK_EQUAL(result.size(), 1);
     CHECK_EQUAL(result[0], 4.0);
 }
 
 TEST(CondenseThenDistribute) {
-    auto cm = from_constraints({
-        boundary_condition(1, 4.0),
-        continuity_constraint(0, 2),
-        continuity_constraint(2, 3),
-        continuity_constraint(3, 4)
-    });
+    auto cm = bcs1_and_continuity0234(1, 4.0);
     auto in = condense_vector(cm, std::vector<double>{2.0, 4.0, 4.0, 4.0, 4.0});
     CHECK_EQUAL(in[0], 14.0);
     auto res = distribute_vector(cm, in, 5);
     double res_exact[5] = {in[0], 4.0, in[0], in[0], in[0]};
     CHECK_ARRAY_CLOSE(res, res_exact, 5, 1e-13);
+}
+
+TEST(CondenseWithFullyDeterminedSubset) {
+    auto cm = bcs1_and_continuity0234(2, 2.0);
+    auto in = condense_vector(cm, std::vector<double>{2.0, 4.0, 4.0, 4.0, 4.0});
+    CHECK_EQUAL(in[0], 4.0);
 }
 
 TEST(CondenseMatrixContinuity) {
