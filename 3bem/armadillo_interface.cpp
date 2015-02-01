@@ -1,19 +1,23 @@
 #include "armadillo_interface.h"
+#include "operator.h"
 #include <armadillo>
 
-std::vector<double> arma_invert(const std::vector<double>& vec_mat) 
+namespace tbem {
+
+arma::mat arma_mat(const Operator& op)
 {
-    auto entries = vec_mat.size();
-    auto rows = std::sqrt(entries);
-    auto cols = rows;
-    arma::mat A(&vec_mat[0], rows, cols);
-    arma::mat inv_A = arma::inv(A);
+    return arma::mat(&op.data[0], op.n_rows, op.n_cols);
+}
+Operator arma_invert(const Operator& op) 
+{
+    arma::mat inv_A = arma::inv(arma_mat(op));
     std::vector<double> out(inv_A.begin(), inv_A.end());
-    return out;
+    return {op.n_rows, op.n_cols, out};
 }
 
-std::vector<double> arma_invert_block(size_t n_comp_rows, size_t n_comp_cols,
-    const std::vector<std::vector<double>>& block_mat) 
-{
-
+double arma_cond(const Operator& op) {
+    auto A = arma_mat(op);
+    return arma::cond(A);
 }
+
+} // end namespace tbem

@@ -52,9 +52,8 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     auto rhs_mass = apply_operator(mass_op, u);
     
     std::vector<double> rhs_full(mesh.n_dofs());
-    double mass_factor[2] = {1.0, 1.0};
     for (unsigned int i = 0; i < rhs_full.size(); i++){
-        rhs_full[i] = rhs_double[i] + mass_factor[dim - 2] * rhs_mass[i];
+        rhs_full[i] = rhs_double[i] + rhs_mass[i];
     }
 
     // Apply the constraints to the RHS vector to get a condensed vector.
@@ -74,16 +73,8 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     TOC("Matrix condense");
 
     TIC2
-    auto inv_condensed_matrix = arma_invert(condensed_op.data);
-    BlockOperator inv_condensed_op{
-        1, 1, 
-        {{
-             condensed_op.n_rows,
-             condensed_op.n_cols,
-             inv_condensed_matrix
-        }}
-    };
-    auto dudn_solved_subset = apply_operator(inv_condensed_op, rhs);
+    auto inv_condensed_matrix = arma_invert(condensed_op);
+    auto dudn_solved_subset = apply_operator({1, 1, {inv_condensed_matrix}}, rhs);
     TOC("Solve");
 
     // Get all the constrained DOFs from the reduced DOF vector.

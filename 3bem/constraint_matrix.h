@@ -33,6 +33,10 @@ struct MatrixEntry
 Operator condense_matrix(const ConstraintMatrix& row_cm,
     const ConstraintMatrix& col_cm, const Operator& matrix);
 
+BlockOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
+    const std::vector<ConstraintMatrix>& col_cms, const BlockOperator& op);
+
 } // end namespace tbem
 
 #endif
+
