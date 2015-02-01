@@ -148,7 +148,7 @@ TEST(CondenseMatrixContinuity) {
     std::vector<double> matrix{
         {1,0,0  ,  0,1,0  ,  0,0,1}
     };
-    auto result = condense_matrix(cm, {1, 1, {{3, 3, matrix}}}).ops[0];
+    auto result = condense_matrix(cm, cm, {3, 3, matrix});
     CHECK_EQUAL(result.n_rows * result.n_cols, 1);
     CHECK_EQUAL(result.data[0], 3);
 }
@@ -160,7 +160,7 @@ TEST(CondenseMatrixContinuityPartial) {
     std::vector<double> matrix{
         {1,0,0  ,  0,1,0  ,  0,0,1}
     };
-    auto result = condense_matrix(cm, {1, 1, {{3, 3, matrix}}}).ops[0];
+    auto result = condense_matrix(cm, cm, {3, 3, matrix});
     CHECK_EQUAL(result.n_rows * result.n_cols, 4);
     std::vector<double> exact{1, 0, 0, 2};
     CHECK_ARRAY_EQUAL(result.data, exact, 4);
@@ -173,9 +173,25 @@ TEST(CondenseMatrixBoundaryCondition) {
     std::vector<double> matrix{
         {1,0,  0,1}
     };
-    auto result = condense_matrix(cm, {1, 1, {{2, 2, matrix}}}).ops[0];
+    auto result = condense_matrix(cm, cm, {2, 2, matrix});
     CHECK_EQUAL(result.n_rows * result.n_cols, 1);
     CHECK_EQUAL(result.data[0], 1.0);
+}
+
+TEST(CondenseNonSquareMatrixContinuity) {
+    auto row_cm = from_constraints({
+        continuity_constraint(0, 1),
+    });
+    auto col_cm = from_constraints({
+        continuity_constraint(0, 2),
+        continuity_constraint(1, 2)
+    });
+    std::vector<double> matrix{
+        {1,0,0  ,  0,1,0}
+    };
+    auto result = condense_matrix(row_cm, col_cm, {2, 3, matrix});
+    CHECK_EQUAL(result.n_rows * result.n_cols, 1);
+    CHECK_EQUAL(result.data[0], 2);
 }
 
 int main(int, char const *[])

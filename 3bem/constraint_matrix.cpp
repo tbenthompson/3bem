@@ -118,27 +118,31 @@ std::vector<double> condense_vector(const ConstraintMatrix& matrix,
     return out;
 }
 
-void add_entry_with_constraints(const ConstraintMatrix& constraint_matrix, 
-    BlockOperator& modifiable_matrix,
+void add_entry_with_constraints(const ConstraintMatrix& row_cm, 
+    const ConstraintMatrix& col_cm, Operator& modifiable_matrix,
     const MatrixEntry& entry) 
 {
     int constrained_axis;
     int other_axis;
-    if (!is_constrained(constraint_matrix, entry.loc[0])) {
-        if (!is_constrained(constraint_matrix, entry.loc[1])) {
-            size_t entry_idx = entry.loc[0] * modifiable_matrix.ops[0].n_cols + entry.loc[1];
-            modifiable_matrix.ops[0].data[entry_idx] += entry.value;
+    const ConstraintMatrix* cm;
+    if (!is_constrained(row_cm, entry.loc[0])) {
+        if (!is_constrained(col_cm, entry.loc[1])) {
+            size_t entry_idx = entry.loc[0] * modifiable_matrix.n_cols +
+                               entry.loc[1];
+            modifiable_matrix.data[entry_idx] += entry.value;
             return;
         }
+        cm = &col_cm;
         constrained_axis = 1;
         other_axis = 0;
     } else {
+        cm = &row_cm;
         constrained_axis = 0;
         other_axis = 1;
     }
 
     auto constrained_dof = entry.loc[constrained_axis];
-    const auto& constraint = constraint_matrix.find(constrained_dof)->second;
+    const auto& constraint = cm->find(constrained_dof)->second;
     const auto& terms = constraint.terms;
 
     for (const auto& t: terms) {
@@ -148,67 +152,64 @@ void add_entry_with_constraints(const ConstraintMatrix& constraint_matrix,
         loc[other_axis] = entry.loc[other_axis];
         assert(loc[constrained_axis] < constrained_dof);
 
-        size_t entry_idx = loc[0] * modifiable_matrix.ops[0].n_cols + loc[1];
-        modifiable_matrix.ops[0].data[entry_idx] += recurse_weight;
+        size_t entry_idx = loc[0] * modifiable_matrix.n_cols + loc[1];
+        modifiable_matrix.data[entry_idx] += recurse_weight;
     }
 }
 
-BlockOperator remove_constrained(const ConstraintMatrix& row_cm,
-    const ConstraintMatrix& col_cm, const BlockOperator& matrix) 
+Operator remove_constrained(const ConstraintMatrix& row_cm,
+    const ConstraintMatrix& col_cm, const Operator& matrix) 
 {
-    auto n_rows_out = matrix.ops[0].n_rows - row_cm.size();
-    auto n_cols_out = matrix.ops[0].n_cols - col_cm.size();
+    auto n_rows_out = matrix.n_rows - row_cm.size();
+    auto n_cols_out = matrix.n_cols - col_cm.size();
     auto n_elements_out = n_rows_out * n_cols_out;
     std::vector<double> out(n_elements_out);
 
     size_t out_row_idx = 0;
-    for (size_t in_row_idx = 0; in_row_idx < matrix.ops[0].n_rows; in_row_idx++) {
+    for (size_t in_row_idx = 0; in_row_idx < matrix.n_rows; in_row_idx++) {
         if (is_constrained(row_cm, in_row_idx)) {
             continue;
         }
         size_t out_col_idx = 0;
-        for (size_t in_col_idx = 0; in_col_idx < matrix.ops[0].n_cols; in_col_idx++) {
+        for (size_t in_col_idx = 0; in_col_idx < matrix.n_cols; in_col_idx++) {
             if (is_constrained(col_cm, in_col_idx)) {
                 continue;
             }
-            auto in_entry_idx = in_row_idx * matrix.ops[0].n_cols + in_col_idx;
+            auto in_entry_idx = in_row_idx * matrix.n_cols + in_col_idx;
             auto out_entry_idx = out_row_idx * n_cols_out + out_col_idx;
-            out[out_entry_idx] = matrix.ops[0].data[in_entry_idx];
+            out[out_entry_idx] = matrix.data[in_entry_idx];
 
             out_col_idx++;
         }
         out_row_idx++;
     }
 
-    return {1, 1, {{n_rows_out, n_cols_out, out}}};
+    return {n_rows_out, n_cols_out, out};
 }
 
-BlockOperator condense_matrix(const ConstraintMatrix& constraint_matrix,
-    const BlockOperator& matrix)
+Operator condense_matrix(const ConstraintMatrix& row_cm,
+    const ConstraintMatrix& col_cm, const Operator& matrix)
 {
-    BlockOperator condensed {
-        1, 1,
-        {{
-            matrix.ops[0].n_rows, matrix.ops[0].n_cols,
-            std::vector<double>(matrix.ops[0].n_rows * matrix.ops[0].n_cols, 0.0)
-        }}
+    Operator condensed {
+        matrix.n_rows, matrix.n_cols,
+        std::vector<double>(matrix.n_rows * matrix.n_cols, 0.0)
     };
 
-    for (int row_idx = matrix.ops[0].n_rows - 1; row_idx >= 0; --row_idx) {
-        for (int col_idx = matrix.ops[0].n_cols - 1; col_idx >= 0; --col_idx) {
-            auto entry_idx = row_idx * matrix.ops[0].n_cols + col_idx;
-            auto condensed_value = condensed.ops[0].data[entry_idx];
-            condensed.ops[0].data[entry_idx] = 0.0;
+    for (int row_idx = matrix.n_rows - 1; row_idx >= 0; --row_idx) {
+        for (int col_idx = matrix.n_cols - 1; col_idx >= 0; --col_idx) {
+            auto entry_idx = row_idx * matrix.n_cols + col_idx;
+            auto condensed_value = condensed.data[entry_idx];
+            condensed.data[entry_idx] = 0.0;
             MatrixEntry entry_to_add{
                 {(size_t)row_idx, (size_t)col_idx},
-                condensed_value + matrix.ops[0].data[entry_idx]
+                condensed_value + matrix.data[entry_idx]
             };
 
-            add_entry_with_constraints(constraint_matrix, condensed, entry_to_add);
+            add_entry_with_constraints(row_cm, col_cm, condensed, entry_to_add);
         }
     }
     
-    return remove_constrained(constraint_matrix, constraint_matrix, condensed);
+    return remove_constrained(row_cm, col_cm, condensed);
 }
 
 } // END namespace tbem
