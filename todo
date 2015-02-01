@@ -1,5 +1,6 @@
 CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
 -- condense non-square matrix
+-- inhomogeneous constraint condensation
 ---------------------------------------
 
 NEXT: HANGING NODES AND COMPLEX GEOMETRIES:

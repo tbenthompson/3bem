@@ -3,7 +3,7 @@
 
 #include "3bem.h"
 #include "elastic_kernels.h"
-#include "constraint.h"
+#include "constraint_matrix.h"
 
 using namespace tbem;
 
