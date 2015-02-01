@@ -142,7 +142,7 @@ std::vector<typename KT::OperatorType> mesh_to_point_vector(const Problem<dim,KT
  * Q_i = \int_{S_{src}} K(x,y) \phi_i(y) dy
  */
 template <size_t dim, typename KT>
-MatrixOperator mesh_to_point_operator(const Problem<dim,KT>& p,
+BlockOperator mesh_to_point_operator(const Problem<dim,KT>& p,
     const QuadStrategy<dim>& qs, const ObsPt<dim>& obs) 
 {
     size_t n_out_dofs = dim * p.src_mesh.facets.size();
@@ -157,7 +157,7 @@ MatrixOperator mesh_to_point_operator(const Problem<dim,KT>& p,
  * K(x,y) is the kernel function and \phi_i(x) is a basis function.
  */
 template <size_t dim, typename KT>
-MatrixOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
+BlockOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
                                      const QuadStrategy<dim>& qs) 
 {
     size_t n_obs_dofs = p.obs_mesh.n_dofs();
@@ -198,7 +198,7 @@ MatrixOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
  * This function calculates such integrals using gaussian quadrature.
  */
 template <size_t dim, typename KT>
-MatrixOperator mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
+BlockOperator mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
 {
     auto n_obs_dofs = p.obs_mesh.n_dofs();
     std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_obs_dofs,

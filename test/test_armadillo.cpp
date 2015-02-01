@@ -1,5 +1,8 @@
 #include "UnitTest++.h"
-#include "armadillo_interface.h"
+#include "armadillo_facade.h"
+#include "operator.h"
+
+using namespace tbem;
 
 TEST(ArmadilloInvert) {
     std::vector<double> orig_mat{
@@ -7,7 +10,7 @@ TEST(ArmadilloInvert) {
          2, 1}
     };
 
-    auto arma_result = arma_invert(orig_mat);
+    auto arma_result = arma_invert({2, 2, orig_mat}).data;
 
     std::vector<double> correct{
         {-1 / 3.0, 1 / 3.0,

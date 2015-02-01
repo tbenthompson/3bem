@@ -5,6 +5,28 @@ namespace ac = autocheck;
 
 using namespace tbem;
 
+struct Data {
+    BlockFunction a{ {1,2}, {3,4} };
+    BlockFunction b{ {-1,-2}, {-3,-4} };
+    BlockFunction c{ {0,0}, {0,0} };
+};
+
+TEST_FIXTURE(Data, BlockFunctionAdd) {
+    a += b;
+    CHECK_EQUAL(a, c);
+}
+
+TEST_FIXTURE(Data, BlockFunctionSub) {
+    a -= -b;
+    CHECK_EQUAL(a, c);
+}
+
+TEST_FIXTURE(Data, BlockFunctionMul) {
+    a *= 2;
+    a += b * 2;
+    CHECK_EQUAL(a, c);
+}
+
 TEST(Concatenate) {
     ConcatenatedFunction block_fnc = concatenate({
         {1,2},
@@ -27,7 +49,7 @@ TEST(Expand) {
     CHECK_EQUAL(expanded[1][0], 6);
 }
 
-bool expand_concat_identity(const std::vector<std::vector<double>>& A) {
+bool expand_concat_identity(const BlockFunction& A) {
     auto block_fnc = concatenate(A); 
     auto expanded = expand(block_fnc);
     if (A.size() != expanded.size()) {

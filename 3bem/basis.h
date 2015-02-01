@@ -1,7 +1,7 @@
 #ifndef __NWQPOISJMNLJSDROIT_BASIS_H
 #define __NWQPOISJMNLJSDROIT_BASIS_H
 #include "mesh.h"
-#include "constraint.h"
+#include "constraint_matrix.h"
 
 namespace tbem {
 
