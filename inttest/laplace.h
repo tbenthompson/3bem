@@ -2,7 +2,7 @@
 #define __HJKHSDFLJSLLHA_LAPLACE_H
 #include "3bem.h"
 #include "laplace_kernels.h"
-#include "armadillo_interface.h"
+#include "armadillo_facade.h"
 
 using namespace tbem;
 

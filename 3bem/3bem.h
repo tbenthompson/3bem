@@ -12,7 +12,7 @@
 
 #include "constraint_matrix.h"
 #include "continuity_builder.h"
-#include "petsc_interface.h"
+#include "petsc_facade.h"
 
 #include "vec.h"
 #include "util.h"

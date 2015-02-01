@@ -1,5 +1,5 @@
 #include "UnitTest++.h"
-#include "armadillo_interface.h"
+#include "armadillo_facade.h"
 #include "operator.h"
 
 using namespace tbem;

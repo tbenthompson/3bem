@@ -1,5 +1,5 @@
 #include "disloc_shared.h"
-#include "armadillo_interface.h"
+#include "armadillo_facade.h"
 #include <armadillo>
 
 using namespace tbem;

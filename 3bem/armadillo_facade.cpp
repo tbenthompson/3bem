@@ -1,4 +1,4 @@
-#include "armadillo_interface.h"
+#include "armadillo_facade.h"
 #include "operator.h"
 #include <armadillo>
 
