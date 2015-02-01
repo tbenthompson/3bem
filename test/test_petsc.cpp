@@ -1,5 +1,5 @@
 #include "UnitTest++.h"
-#include "petsc_interface.h"
+#include "petsc_facade.h"
 #include "util.h"
 #include <iostream>
 
