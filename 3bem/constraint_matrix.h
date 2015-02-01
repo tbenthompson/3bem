@@ -30,8 +30,8 @@ struct MatrixEntry
     const double value;
 };
 
-BlockOperator condense_matrix(const ConstraintMatrix& constraint_matrix,
-    const BlockOperator& matrix);
+Operator condense_matrix(const ConstraintMatrix& row_cm,
+    const ConstraintMatrix& col_cm, const Operator& matrix);
 
 } // end namespace tbem
 

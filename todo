@@ -1,10 +1,12 @@
 CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
--- condense non-square matrix
 -- inhomogeneous constraint condensation
+-- direct inversion of elastic matrices
+-- compute condition number
 ---------------------------------------
 
 NEXT: HANGING NODES AND COMPLEX GEOMETRIES:
 S: more flexible build system -- debug vs release vs profile vs test_coverage?
+S: more flexible build system -- compile one test at a time (just use object files?)
 MF: petsc-interface -- return soln instead of copying within the matvecfnc
 DD: Define much much clearer interfaces with the outside world.
 -- Maybe restrict the main .h files to outward facing interfaces. I could use _impl.h files for inward facing header files. I could try this with constraints.h
@@ -43,11 +45,3 @@ NEW FUNCTIONALITY(NF):
 MODIFIED FUNCTIONALITY(MF):
 STRUCTURAL(S):
 OPTIMIZATION(O):
-
-
-
-Possibly sidelined (forever?):
-Goal2: More elegant handling of discretized Functions (in the mathematical sense).
--- this stuff is growing organically in elastic
-MF: Replace std::vector with the Function class in Problem
-NF: Slight encapsulation of the std::vector storage with useful things like negation, element-wise multiplication, etc. This might be useful to combine with Function.

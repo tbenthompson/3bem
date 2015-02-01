@@ -69,16 +69,17 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     auto matrix = mesh_to_mesh_operator(p_single, qs);
     TOC("Matrix construct on " + std::to_string(mesh.n_facets()) + " facets");
     TIC2
-    auto condensed_op = condense_matrix(constraint_matrix, matrix);
+    auto condensed_op = condense_matrix(
+        constraint_matrix, constraint_matrix, matrix.ops[0]);
     TOC("Matrix condense");
 
     TIC2
-    auto inv_condensed_matrix = arma_invert(condensed_op.ops[0].data);
+    auto inv_condensed_matrix = arma_invert(condensed_op.data);
     BlockOperator inv_condensed_op{
         1, 1, 
         {{
-             condensed_op.ops[0].n_rows,
-             condensed_op.ops[0].n_cols,
+             condensed_op.n_rows,
+             condensed_op.n_cols,
              inv_condensed_matrix
         }}
     };
