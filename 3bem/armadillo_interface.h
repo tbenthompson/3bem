@@ -4,9 +4,12 @@
 #include <vector>
 #include <cstdlib>
 
-std::vector<double> arma_invert(const std::vector<double>& vec_mat);
+namespace tbem {
 
-std::vector<double> arma_invert_block(size_t n_comp_rows, size_t n_comp_cols,
-    const std::vector<std::vector<double>>& block_mat);
+struct Operator;
+Operator arma_invert(const Operator& op);
+double arma_cond(const Operator& op);
+
+} // end namespace tbem
 
 #endif

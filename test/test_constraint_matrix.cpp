@@ -194,6 +194,9 @@ TEST(CondenseNonSquareMatrixContinuity) {
     CHECK_EQUAL(result.data[0], 2);
 }
 
+BlockOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
+    const std::vector<ConstraintMatrix>& col_cms, const BlockOperator& op);
+
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();

@@ -1,7 +1,9 @@
 CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
+-- something is wrong with the constraint implementation! 
 -- inhomogeneous constraint condensation
--- direct inversion of elastic matrices
 -- compute condition number
+-- maybe use armadillo as the backend for operators and functions?
+-- rename petsc_interface to _adapter , same for armadillo
 ---------------------------------------
 
 NEXT: HANGING NODES AND COMPLEX GEOMETRIES:
