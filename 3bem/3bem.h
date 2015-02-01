@@ -10,7 +10,7 @@
 #include "basis.h"
 #include "quadrature.h"
 
-#include "constraint.h"
+#include "constraint_matrix.h"
 #include "continuity_builder.h"
 #include "petsc_interface.h"
 

@@ -1,7 +1,6 @@
 #ifndef __AAABBBEEEEDDD_CONSTRAINT_H
 #define __AAABBBEEEEDDD_CONSTRAINT_H
 #include <vector>
-#include <unordered_map>
 #include <iostream>
 #include <cassert>
 #include <algorithm>
@@ -97,43 +96,11 @@ struct RearrangedConstraintEQ {
     }
 };
 
-typedef std::unordered_map<int,RearrangedConstraintEQ> ConstraintMatrix;
-
 RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c, 
     size_t constrained_index);
 
 ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
     const RearrangedConstraintEQ& subs_in);
-
-bool is_constrained(const ConstraintMatrix& dof_constraint_map, size_t dof);
-
-RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
-    const ConstraintMatrix& map);
-
-ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints);
-
-/* Accepts a reduced DOF vector and returns the full DOF vector. */
-std::vector<double> distribute_vector(const ConstraintMatrix& matrix, 
-    const std::vector<double>& in, size_t total_dofs);
-
-/* Accepts a full DOF vector and returns the reduced DOF vector.  */
-std::vector<double> condense_vector(const ConstraintMatrix& matrix,
-    const std::vector<double>& all);
-
-struct Matrix {
-    size_t n_rows;
-    size_t n_cols;
-    std::vector<double> data;
-};
-
-struct MatrixEntry 
-{
-    const size_t loc[2];
-    const double value;
-};
-
-Matrix
-condense_matrix(const ConstraintMatrix& constraint_matrix, const Matrix& matrix);
 
 } // END namespace tbem
 

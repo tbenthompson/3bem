@@ -3,7 +3,7 @@
 #define __ASKDJAWERWFJS_CONTINUITY_BUILDER_H
 #include <unordered_map>
 
-#include "constraint.h"
+#include "constraint_matrix.h"
 #include "vertex_iterator.h"
 #include "vec_ops.h"
     

@@ -56,6 +56,10 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     for (unsigned int i = 0; i < rhs_full.size(); i++){
         rhs_full[i] = rhs_double[i] + mass_factor[dim - 2] * rhs_mass[i];
     }
+
+    // Apply the constraints to the RHS vector to get a condensed vector.
+    auto rhs = condense_vector(constraint_matrix, rhs_full);
+
     TOC("RHS Eval")
 
     // The LHS matrix for a Dirichlet Laplace problem.
@@ -65,39 +69,22 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     auto matrix = mesh_to_mesh_operator(p_single, qs);
     TOC("Matrix construct on " + std::to_string(mesh.n_facets()) + " facets");
     TIC2
-    auto condensed_matrix = condense_matrix(constraint_matrix, 
-        {matrix.n_rows, matrix.n_cols, matrix.data[0]});
-    MatrixOperator condensed_op{
-        condensed_matrix.n_rows, condensed_matrix.n_cols, 1, 1, {condensed_matrix.data}
-    };
+    auto condensed_op = condense_matrix(constraint_matrix, matrix);
     TOC("Matrix condense");
 
     TIC2
-    auto inv_condensed_matrix = arma_invert(condensed_op.data[0]);
-    MatrixOperator inv_condensed_op{
-        condensed_matrix.n_rows, condensed_matrix.n_cols, 1, 1, {inv_condensed_matrix}
+    auto inv_condensed_matrix = arma_invert(condensed_op.ops[0].data);
+    BlockOperator inv_condensed_op{
+        1, 1, 
+        {{
+             condensed_op.ops[0].n_rows,
+             condensed_op.ops[0].n_cols,
+             inv_condensed_matrix
+        }}
     };
-    std::cout << "DOFs: " << condensed_matrix.n_rows << std::endl;
-    TOC("Invert");
-
-
-    // Apply the constraints to the RHS vector to get a condensed vector.
-    auto rhs = condense_vector(constraint_matrix, rhs_full);
-    
-    // Actually solve the linear system by providing a function to evaluate
-    // matrix vector products.
-    // int count = 0;
-    // double linear_solve_tol = 1e-5;
-    // auto dudn_solved_subset = solve_system(rhs, linear_solve_tol,
-    //     [&] (std::vector<double>& x, std::vector<double>& y) {
-    //         std::cout << "iteration " << count << std::endl;
-    //         count++;
-    //         TIC
-    //         auto y_mult = apply_operator(condensed_op, x); 
-    //         std::copy(y_mult.begin(), y_mult.end(), y.begin());
-    //         TOC("Matrix multiply on " + std::to_string(mesh.n_facets()) + " faces");
-    //     });
     auto dudn_solved_subset = apply_operator(inv_condensed_op, rhs);
+    TOC("Solve");
+
     // Get all the constrained DOFs from the reduced DOF vector.
     auto dudn_solved = distribute_vector(constraint_matrix, dudn_solved_subset, mesh.n_dofs());
 
