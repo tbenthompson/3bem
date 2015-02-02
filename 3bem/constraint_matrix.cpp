@@ -160,6 +160,9 @@ void add_entry_with_constraints(const ConstraintMatrix& row_cm,
 Operator remove_constrained(const ConstraintMatrix& row_cm,
     const ConstraintMatrix& col_cm, const Operator& matrix) 
 {
+    assert(matrix.n_rows >= row_cm.size());
+    assert(matrix.n_cols >= col_cm.size());
+
     auto n_rows_out = matrix.n_rows - row_cm.size();
     auto n_cols_out = matrix.n_cols - col_cm.size();
     auto n_elements_out = n_rows_out * n_cols_out;
@@ -221,6 +224,7 @@ BlockOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_c
                 condense_matrix(row_cms[d1], col_cms[d2],
                     op.ops[d1 * op.n_comp_cols + d2])
             );
+            std::cout << out_ops[out_ops.size() - 1].data.size() << std::endl;
         }
     }
     return {
