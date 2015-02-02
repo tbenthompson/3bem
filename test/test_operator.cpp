@@ -1,5 +1,6 @@
 #include "UnitTest++.h"
 #include "operator.h"
+#include "test_shared.h"
 
 
 using namespace tbem;
@@ -77,6 +78,28 @@ TEST(CombineComponents2By2) {
         2,3,6,7,
         8,9,12,13,
         10,11,14,15
+    };
+    CHECK_EQUAL(combined_op.ops[0].n_rows, 4);
+    CHECK_EQUAL(combined_op.ops[0].n_cols, 4);
+    CHECK_ARRAY_EQUAL(combined_op.ops[0].data, correct, 16);
+}
+
+TEST(CombineComponentsNonSquareBlocks) {
+    BlockOperator matrix{
+        2, 2,
+        {
+            {1, 1, {0}},
+            {1, 3, {1,2,3}},
+            {3, 1, {4,8,12}},
+            {3, 3, {5,6,7,9,10,11,13,14,15}}
+        }
+    };
+    auto combined_op = combine_components(matrix);
+    double correct[16] = {
+        0,1,2,3,
+        4,5,6,7,
+        8,9,10,11,
+        12,13,14,15
     };
     CHECK_EQUAL(combined_op.ops[0].n_rows, 4);
     CHECK_EQUAL(combined_op.ops[0].n_cols, 4);
