@@ -59,7 +59,7 @@ flag_sets['test_coverage_flags'] = test_coverage_flags
 flag_sets['debug_flags'] = debug_flags
 flag_sets['release_flags'] = release_flags
 flag_sets['profile_flags'] = profile_flags
-cpp_flags.extend(flag_sets['debug_flags'])
+cpp_flags.extend(flag_sets['release_flags'])
 
 lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)
