@@ -224,7 +224,6 @@ BlockOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_c
                 condense_matrix(row_cms[d1], col_cms[d2],
                     op.ops[d1 * op.n_comp_cols + d2])
             );
-            std::cout << out_ops[out_ops.size() - 1].data.size() << std::endl;
         }
     }
     return {
