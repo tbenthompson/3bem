@@ -1,6 +1,6 @@
 #include <cassert>
 #include "output.h"
-#include "hdf5.h"
+#include <hdf5.h>
 #include "mesh.h"
 
 namespace tbem {
