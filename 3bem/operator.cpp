@@ -35,7 +35,7 @@ BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols,
 
 BlockFunction apply_operator(const BlockOperator& A, const BlockFunction& x)
 {
-    assert(A.n_comp_rows * x.size() == A.data.size());
+    assert(A.n_comp_rows * x.size() == A.ops.size());
     assert(A.n_comp_cols == x.size());
 
     BlockFunction res(A.n_comp_rows, Function(A.ops[0].n_rows, 0.0));
@@ -44,7 +44,7 @@ BlockFunction apply_operator(const BlockOperator& A, const BlockFunction& x)
             size_t comp_idx = d1 * A.n_comp_cols + d2;
 
             const auto& op = A.ops[comp_idx];
-            assert(op.n_rows * x[d2].size() == op.size());
+            assert(op.n_rows * x[d2].size() == op.data.size());
             assert(op.n_cols == x[d2].size());
 
 #pragma omp parallel for
@@ -65,34 +65,54 @@ Function apply_operator(const BlockOperator& A, const Function& x)
     return apply_operator(A, BlockFunction{x})[0];
 }
 
+size_t total_cols(const BlockOperator& block_op) {
+    size_t n_cols = 0;
+    for (size_t d2 = 0; d2 < block_op.n_comp_cols; d2++) {
+        n_cols += block_op.ops[d2].n_cols;
+    }
+    return n_cols;
+}
+
+size_t total_rows(const BlockOperator& block_op) {
+    size_t n_rows = 0;
+    for (size_t d1 = 0; d1 < block_op.n_comp_rows; d1++) {
+        n_rows += block_op.ops[d1 * block_op.n_comp_cols].n_rows;
+    }
+    return n_rows;
+}
+
 BlockOperator combine_components(const BlockOperator& block_op) {
-    size_t total_cols = block_op.n_comp_cols * block_op.ops[0].n_cols;
-    size_t total_rows = block_op.n_comp_rows * block_op.ops[0].n_rows;
-    int n_elements = total_cols * total_rows;
+    auto n_cols = total_cols(block_op);
+    auto n_rows = total_rows(block_op);
+    auto n_elements = n_cols * n_rows;
 
     std::vector<double> out(n_elements);
 
+    size_t n_rows_so_far = 0;
     for (size_t d1 = 0; d1 < block_op.n_comp_rows; d1++) {
-        for (size_t row_idx = 0; row_idx < block_op.ops[0].n_rows; row_idx++) {
-            size_t out_row_idx = d1 * block_op.ops[0].n_rows + row_idx;
+        auto n_this_comp_rows = block_op.ops[d1 * block_op.n_comp_cols].n_rows;
+        for (size_t row_idx = 0; row_idx < n_this_comp_rows; row_idx++) {
+            auto out_row_idx = n_rows_so_far + row_idx;
 
+            size_t n_cols_so_far = 0;
             for (size_t d2 = 0; d2 < block_op.n_comp_cols; d2++) {
-                size_t in_comp = d1 * block_op.n_comp_cols + d2;
+                auto in_comp = d1 * block_op.n_comp_cols + d2;
 
                 const auto& op = block_op.ops[in_comp];
                 for (size_t col_idx = 0; col_idx < op.n_cols; col_idx++) {
+                    auto out_col_idx = n_cols_so_far + col_idx;
 
-                    size_t out_col_idx = d2 * op.n_cols + col_idx;
-                    size_t in_element = row_idx * op.n_cols + col_idx;
-                    size_t out_element = out_row_idx * total_cols + out_col_idx;
+                    auto in_element = row_idx * op.n_cols + col_idx;
+                    auto out_element = out_row_idx * n_cols + out_col_idx;
                     out[out_element] = op.data[in_element];
-
                 }
+                n_cols_so_far += op.n_cols;
             }
         }
+        n_rows_so_far += n_this_comp_rows;
     }
 
-    return {1, 1, {{total_rows, total_cols, out}}};
+    return {1, 1, {{n_rows, n_cols, out}}};
 }
 
 
