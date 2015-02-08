@@ -20,4 +20,40 @@ ConstraintMatrix surf_fault_constraints(const VertexIterator<dim>& surf_it,
     return constraint_matrix;
 }
 
+template <size_t dim>
+std::vector<double> solve(
+    const BlockOperator& lhs,
+    const std::vector<double>& rhs, 
+    const BlockDOFMap& dof_map,
+    const Mesh<dim>& mesh,
+    const ConstraintMatrix& constraint_matrix) {
+
+    size_t count = 0;
+    return solve_system(rhs, 1e-5,
+        [&] (std::vector<double>& x, std::vector<double>& y) {
+            std::cout << "iteration " << count << std::endl;
+            count++;
+
+            auto x_fncs = expand(dof_map, x);
+            BlockFunction x_vec;
+            for (size_t d = 0; d < dim; d++) {
+                x_vec.push_back(
+                    distribute_vector(constraint_matrix, x_fncs[d], mesh.n_dofs())
+                );
+            }
+            auto y_vec = apply_operator(lhs, x_vec);
+            BlockFunction condensed;
+            for (size_t d = 0; d < dim; d++) {
+                condensed.push_back(
+                    condense_vector(constraint_matrix, y_vec[d])
+                );
+            }
+            auto out = concatenate(dof_map, condensed);
+            for (std::size_t i = 0; i < out.size(); i++) {
+                y[i] = out[i];
+            }
+        }
+    );
+}
+
 #endif

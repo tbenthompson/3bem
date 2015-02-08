@@ -4,6 +4,7 @@
 #include "bem.h"
 #include "operator.h"
 #include "function.h"
+#include "block_dof_map.h"
 #include "mesh.h"
 #include "mesh_gen.h"
 
@@ -11,7 +12,7 @@
 #include "quadrature.h"
 
 #include "constraint_matrix.h"
-#include "continuity_builder.h"
+#include "constraint_builder.h"
 #include "petsc_facade.h"
 
 #include "vec.h"

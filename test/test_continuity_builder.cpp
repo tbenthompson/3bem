@@ -1,5 +1,5 @@
 #include "UnitTest++.h"
-#include "continuity_builder.h"
+#include "constraint_builder.h"
 #include "mesh_gen.h"
 #include "test_shared.h"
 

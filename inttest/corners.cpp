@@ -58,20 +58,21 @@ int main() {
 
     std::vector<double> rhs_potential(n_dofs, 0.0);
     std::vector<double> rhs_flux(n_dofs, 0.0);
-    auto rhs = concatenate({
+    std::vector<Function> condensed{
         condense_vector(potential_cm, rhs_potential),
         condense_vector(flux_cm, rhs_flux),
-    });
-    auto add_placeholder = rhs.data;
-    add_placeholder.push_back(1.0);
+    };
+    auto dof_map = block_dof_map_from_functions(condensed);
+    auto rhs = concatenate(dof_map, condensed);
+    rhs.push_back(1.0);
 
     double linear_solve_tol = 1e-9;
     int count = 0;
-    auto soln_reduced = solve_system(add_placeholder, linear_solve_tol,
+    auto soln_reduced = solve_system(rhs, linear_solve_tol,
         [&] (std::vector<double>& x, std::vector<double>& y) {
             std::cout << "iteration " << count << std::endl;
             count++;
-            auto both = expand(rhs, x);
+            auto both = expand(dof_map, x);
             auto potential = distribute_vector(potential_cm, both[0], n_dofs);
             auto flux = distribute_vector(flux_cm, both[1], n_dofs);
             auto single_eval = apply_operator(single_op, flux);
@@ -93,7 +94,7 @@ int main() {
             y[y.size() - 1] = 1.0;
         });
 
-    auto both_soln = expand(rhs, soln_reduced);
+    auto both_soln = expand(dof_map, soln_reduced);
     auto potential_soln = distribute_vector(potential_cm, both_soln[0], n_dofs);
     auto flux_soln = distribute_vector(flux_cm, both_soln[1], n_dofs);
     auto single_eval = apply_operator(single_op, flux_soln);
