@@ -29,10 +29,12 @@ int main() {
     auto rhs_op = mesh_to_mesh_operator(p_rhs, qs);
     auto res = apply_operator(rhs_op, du);
     auto all_dofs_rhs = apply_operator(rhs_op, du);
-    auto rhs = concatenate({
+    BlockFunction condensed{
         condense_vector(constraint_matrix, all_dofs_rhs[0]),
         condense_vector(constraint_matrix, all_dofs_rhs[1])
-    });
+    };
+    auto dof_map = block_dof_map_from_functions(condensed);
+    auto rhs = concatenate(dof_map, condensed);
     TOC("Building RHS");
 
     TIC2
@@ -40,29 +42,9 @@ int main() {
     auto lhs = mesh_to_mesh_operator(p_lhs, qs);
     TOC("Building LHS matrices");
 
-    int count = 0;
-    auto disp_reduced = solve_system(rhs.data, 1e-5,
-        [&] (std::vector<double>& x, std::vector<double>& y) {
-            std::cout << "iteration " << count << std::endl;
-            count++;
+    auto disp_reduced = solve(lhs, rhs, dof_map, surface, constraint_matrix);
 
-            auto x_vec_reduced = expand(rhs, x);
-            std::vector<std::vector<double>> x_vec{
-                distribute_vector(constraint_matrix, x_vec_reduced[0], surface.n_dofs()),
-                distribute_vector(constraint_matrix, x_vec_reduced[1], surface.n_dofs())
-            };
-            auto y_vec = apply_operator(lhs, x_vec);
-            auto out = concatenate({
-                condense_vector(constraint_matrix, y_vec[0]),
-                condense_vector(constraint_matrix, y_vec[1])
-            });
-            for (std::size_t i = 0; i < out.data.size(); i++) {
-                y[i] = out.data[i];
-            }
-        }
-    );
-
-    auto disp_reduced_vec = expand(rhs, disp_reduced);
+    auto disp_reduced_vec = expand(dof_map, disp_reduced);
     std::vector<std::vector<double>> soln{
         distribute_vector(constraint_matrix, disp_reduced_vec[0], surface.n_dofs()),
         distribute_vector(constraint_matrix, disp_reduced_vec[1], surface.n_dofs())

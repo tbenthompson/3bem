@@ -88,21 +88,6 @@ inline bool operator==(BlockFunction& a, const BlockFunction& b) {
     return true;
 }
 
-struct ConcatenatedFunction 
-{
-    const size_t components;
-    const std::vector<double> data;
-    const std::vector<size_t> component_lengths;
-};
-
-
-ConcatenatedFunction concatenate(const BlockFunction& fncs); 
-
-BlockFunction expand(const ConcatenatedFunction& block_fnc,
-    const std::vector<double>& replacement_data);
-
-BlockFunction expand(const ConcatenatedFunction& block_fnc); 
-
 } // end namespace tbem
 
 #endif
