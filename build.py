@@ -25,9 +25,12 @@ def files_in_dir(directory, ext):
             ret.append(os.path.join(directory, file_name))
     return ret
 
+def oname(filename):
+    return os.path.join(build_dir, filename)
+
+
 dirs = ['3bem', 'test', 'inttest']
 lib_srces = files_in_dir("3bem", "cpp")
-tests = files_in_dir("test", "cpp")
 inttests_cpp = files_in_dir("inttest", "cpp")
 inttests_exec = files_in_dir("inttest", "cpp")
 inttests_exec.remove('inttest/laplace')
@@ -45,8 +48,8 @@ includes = [
     petsc_dir + '/include'
 ]
 
-cpp_flags = '-Wall -std=c++11 -fopenmp'.split()
-cpp_flags.extend(['-I' + loc for loc in includes])
+base_cpp_flags = '-Wall -std=c++11 -fopenmp'.split()
+base_cpp_flags.extend(['-I' + loc for loc in includes])
 
 debug_flags = '-g -Og -DDEBUG=1'.split()
 release_flags = '-DNDEBUG=1 -Ofast -ffast-math -funroll-loops'.split()
@@ -59,7 +62,7 @@ flag_sets['test_coverage_flags'] = test_coverage_flags
 flag_sets['debug_flags'] = debug_flags
 flag_sets['release_flags'] = release_flags
 flag_sets['profile_flags'] = profile_flags
-cpp_flags.extend(flag_sets['release_flags'])
+cpp_flags = base_cpp_flags + flag_sets['release_flags']
 
 lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)
@@ -82,6 +85,23 @@ test_link_flags.extend(link_flags)
 
 build_dir = 'build'
 
+def tests():
+    return files_in_dir("test", "cpp")
+
+def build_executables():
+    executables = []
+    for t in tests():
+        test_data = dict()
+        test_data['source_files'] = [t]
+        test_data['cpp_flags'] = cpp_flags + flag_sets['release_flags']
+        test_data['exec_name'] = oname(t)
+        test_data['link_flags'] = test_link_flags
+        if 'regression_021515' in t:
+            test_data['cpp_flags'] = base_cpp_flags + ['-DDEBUG=1', '-O3']
+        executables.append(test_data)
+    return executables
+
+executables = build_executables()
 command_params = []
 
 def entrypoint():
@@ -92,17 +112,6 @@ def save_parameters():
     if len(sys.argv) > 2:
         command_params.extend(sys.argv[2:])
         del sys.argv[2:]
-
-def just_test():
-    test_filename = command_params[0]
-    test_rootname, _ = os.path.splitext(test_filename)
-    setup_tree()
-    compile_lib()
-    compile_runner(test_rootname, cpp_flags)
-    link_lib()
-    link_runner(test_rootname, test_link_flags)
-    run(oname(test_rootname))
-
 
 def build():
     setup_tree()
@@ -127,8 +136,9 @@ def compile_lib():
         compile_runner(source, lib_cpp_flags)
 
 def compile_tests():
-    for source in tests:
-        compile_runner(source, cpp_flags)
+    for e in executables:
+        for s in e['source_files']:
+            compile_runner(s, e['cpp_flags'])
 
 def compile_inttests():
     for source in inttests_cpp:
@@ -136,9 +146,6 @@ def compile_inttests():
 
 def compile_runner(source, flags):
     run(compiler, '-c', source + '.cpp', '-o', oname(source + '.o'), flags)
-
-def oname(filename):
-    return os.path.join(build_dir, filename)
 
 def link():
     link_lib()
@@ -152,20 +159,20 @@ def link_lib():
     after()
 
 def link_tests():
-    for source in tests:
-        link_runner(source, test_link_flags)
+    for e in executables:
+        link_runner(e['source_files'], e['exec_name'], e['link_flags'])
 
 def link_inttests():
     for source in inttests_exec:
-        link_runner(source, test_link_flags,
+        link_runner([source], oname(source), test_link_flags,
                 additional_objs = [oname('inttest/laplace.o')])
 
-def link_runner(source, flags, additional_objs = []):
-    objs = [oname(source + '.o')] + additional_objs
-    run(compiler, '-o', oname(source), objs, flags)
+def link_runner(sources, exec_name, flags, additional_objs = []):
+    objs = [oname(s + '.o') for s in sources] + additional_objs
+    run(compiler, '-o', exec_name, objs, flags)
 
 def fast_tests():
-    run_test_set(tests)
+    run_test_set(tests())
 
 def slow_tests():
     run_test_set(inttests_exec)

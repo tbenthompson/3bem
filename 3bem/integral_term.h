@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <iomanip> 
 #include "vec.h"
 #include "quadrature.h"
 #include "adaptive_quad.h"
@@ -157,7 +158,8 @@ Vec<typename KT::OperatorType,dim> compute_near_term(const IntegralTerm<dim, KT>
             singular_threshold * term.src_face.area_scale) { 
         return compute_as_limit(term);
     } else {
-        return compute_adaptively<dim>(term, term.obs.loc);
+        auto res =  compute_adaptively<dim>(term, term.obs.loc);
+        return res;
     }
 }
 

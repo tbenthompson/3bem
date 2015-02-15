@@ -54,7 +54,6 @@ int main() {
     auto lhs = mesh_to_mesh_operator(p_lhs, qs);
     TOC("Building LHS matrices");
 
-    int count = 0;
     auto disp_reduced = solve(lhs, rhs, dof_map, surface, constraint_matrix);
 
     auto disp_reduced_vec = expand(dof_map, disp_reduced);

@@ -41,12 +41,13 @@ const double lobatto_x1 = .94288241569547971905635175843185720232;
 const double lobatto_x2 = .64185334234578130578123554132903188354;
 const double lobatto_x3 = .23638319966214988028222377349205292599;
 
-
+static int adaptive_quad_n = 0;
 template <typename T, typename F>
 T adaptlobstp(const F& f, const double a, const double b, 
               const T& fa, const T& fb, const T& is )
 {
     // std::cout << a << " " << b << std::endl;
+    adaptive_quad_n++;
     double m = (a + b) / 2.; 
     double h = (b - a) / 2.;
 
@@ -73,7 +74,6 @@ T adaptlobstp(const F& f, const double a, const double b,
     if (all(is + (i1 - i2) == is)) {
         return i1;
     } else if (mll <= a or b <= mrr) {
-        // std::cout << "YIKES FROM ADAPT!" << std::endl;
         return i1;
     } else {
         return adaptlobstp(f, a, mll, fa, fmll, is)
@@ -88,21 +88,13 @@ T adaptlobstp(const F& f, const double a, const double b,
 inline double get_error_is(double p_tol, double erri1, double erri2, double is, 
                     double a, double b) {
     constexpr double eps = std::numeric_limits<double>::epsilon();
-    double R = 1.0;
-    if (erri2 != 0.0) {
-        R = erri1 / erri2;
-    }
-
-    double tol = p_tol;
-    if (R > 0.0 and R < 1.0) {
-        tol = p_tol / R;
-    }
+    const double R = ((erri2 == 0.0) ? 1.0 : (erri1 / erri2));
+    const double tol = ((R > 0.0 and R < 1.0) ? (p_tol / R) : p_tol);
 
     double retval = fabs(is) * tol / eps;
-    if (retval == 0.0) {
+    if (fabs(retval) < p_tol) {
         retval = b - a;
     }
-
     return retval;
 }
 

@@ -164,6 +164,12 @@ TEST(ConstantTensor) {
     CHECK_EQUAL(z, c);
 }
 
+TEST(Inequality) {
+    Vec2<double> a{1, 0};
+    auto res = a < 0.5;
+    CHECK_EQUAL(res, (Vec2<bool>{false, true}));
+}
+
 int main() {
     return UnitTest::RunAllTests();
 }
