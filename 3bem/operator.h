@@ -32,7 +32,7 @@ reshape_to_operator(const size_t rows, const size_t cols, const std::vector<doub
 
 template <size_t dim>
 BlockOperator reshape_to_operator(const size_t rows, const size_t cols, 
-    std::vector<Vec<Vec<double,dim>,dim>> A);
+    const std::vector<Vec<Vec<double,dim>,dim>>& A);
 
 BlockFunction apply_operator(const BlockOperator& A, const BlockFunction& x);
 

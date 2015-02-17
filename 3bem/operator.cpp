@@ -15,7 +15,7 @@ BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols,
 
 template <size_t dim>
 BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols, 
-    std::vector<Vec<Vec<double,dim>,dim>> A) 
+    const std::vector<Vec<Vec<double,dim>,dim>>& A) 
 {
     std::vector<Operator> ops;
     for (int d1 = 0; d1 < dim; d1++) {
@@ -32,10 +32,10 @@ BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols,
 
 template 
 BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols, 
-    std::vector<Vec<Vec<double,2>,2>> A);
+    const std::vector<Vec<Vec<double,2>,2>>& A);
 template 
 BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols, 
-    std::vector<Vec<Vec<double,3>,3>> A); 
+    const std::vector<Vec<Vec<double,3>,3>>& A); 
 
 BlockFunction apply_operator(const BlockOperator& A, const BlockFunction& x)
 {
