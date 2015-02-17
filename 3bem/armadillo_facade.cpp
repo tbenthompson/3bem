@@ -6,13 +6,13 @@ namespace tbem {
 
 arma::mat arma_mat(const Operator& op)
 {
-    return arma::mat(&op.data[0], op.n_rows, op.n_cols);
+    return arma::mat(&(*op.data)[0], op.n_rows, op.n_cols);
 }
 Operator arma_invert(const Operator& op) 
 {
     arma::mat inv_A = arma::inv(arma_mat(op));
     std::vector<double> out(inv_A.begin(), inv_A.end());
-    return {op.n_rows, op.n_cols, out};
+    return make_operator(op.n_rows, op.n_cols, out);
 }
 
 double arma_cond(const Operator& op) {

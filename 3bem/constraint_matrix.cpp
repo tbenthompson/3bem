@@ -129,7 +129,7 @@ void add_entry_with_constraints(const ConstraintMatrix& row_cm,
         if (!is_constrained(col_cm, entry.loc[1])) {
             size_t entry_idx = entry.loc[0] * modifiable_matrix.n_cols +
                                entry.loc[1];
-            modifiable_matrix.data[entry_idx] += entry.value;
+            (*modifiable_matrix.data)[entry_idx] += entry.value;
             return;
         }
         cm = &col_cm;
@@ -153,7 +153,7 @@ void add_entry_with_constraints(const ConstraintMatrix& row_cm,
         assert(loc[constrained_axis] < constrained_dof);
 
         size_t entry_idx = loc[0] * modifiable_matrix.n_cols + loc[1];
-        modifiable_matrix.data[entry_idx] += recurse_weight;
+        (*modifiable_matrix.data)[entry_idx] += recurse_weight;
     }
 }
 
@@ -166,7 +166,7 @@ Operator remove_constrained(const ConstraintMatrix& row_cm,
     auto n_rows_out = matrix.n_rows - row_cm.size();
     auto n_cols_out = matrix.n_cols - col_cm.size();
     auto n_elements_out = n_rows_out * n_cols_out;
-    std::vector<double> out(n_elements_out);
+    auto out = std::make_shared<std::vector<double>>(n_elements_out);
 
     size_t out_row_idx = 0;
     for (size_t in_row_idx = 0; in_row_idx < matrix.n_rows; in_row_idx++) {
@@ -180,7 +180,7 @@ Operator remove_constrained(const ConstraintMatrix& row_cm,
             }
             auto in_entry_idx = in_row_idx * matrix.n_cols + in_col_idx;
             auto out_entry_idx = out_row_idx * n_cols_out + out_col_idx;
-            out[out_entry_idx] = matrix.data[in_entry_idx];
+            (*out)[out_entry_idx] = (*matrix.data)[in_entry_idx];
 
             out_col_idx++;
         }
@@ -195,17 +195,17 @@ Operator condense_matrix(const ConstraintMatrix& row_cm,
 {
     Operator condensed {
         matrix.n_rows, matrix.n_cols,
-        std::vector<double>(matrix.n_rows * matrix.n_cols, 0.0)
+        std::make_shared<std::vector<double>>(matrix.n_rows * matrix.n_cols, 0.0)
     };
 
     for (int row_idx = matrix.n_rows - 1; row_idx >= 0; --row_idx) {
         for (int col_idx = matrix.n_cols - 1; col_idx >= 0; --col_idx) {
             auto entry_idx = row_idx * matrix.n_cols + col_idx;
-            auto condensed_value = condensed.data[entry_idx];
-            condensed.data[entry_idx] = 0.0;
+            auto condensed_value = (*condensed.data)[entry_idx];
+            (*condensed.data)[entry_idx] = 0.0;
             MatrixEntry entry_to_add{
                 {(size_t)row_idx, (size_t)col_idx},
-                condensed_value + matrix.data[entry_idx]
+                condensed_value + (*matrix.data)[entry_idx]
             };
 
             add_entry_with_constraints(row_cm, col_cm, condensed, entry_to_add);
