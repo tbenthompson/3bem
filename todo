@@ -1,9 +1,7 @@
 CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
--- something is wrong with the constraint implementation! 
--- inhomogeneous constraint condensation
 ---------------------------------------
 
-NEXT: HANGING NODES AND COMPLEX GEOMETRIES:
+MILESTONE: HANGING NODES AND COMPLEX GEOMETRIES
 S: more flexible build system -- debug vs release vs profile vs test_coverage?
 S: more flexible build system -- compile one test at a time (just use object files?)
 MF: petsc-interface -- return soln instead of copying within the matvecfnc
@@ -19,7 +17,7 @@ NF: Handle the general case when fault-surface intersection does not occur at a 
 
 ---------------------------------------
 
-FMM-BEM INTEGRATION:
+MILESTONE: FMM-BEM INTEGRATION
 DD: BIG: decide whether to use the direct FMM-based inversion methods.
 NF: Interface for Operators -- extend with sparse matrix operators and FMMOperator
 -- move mat_mult to be a member function for an operator?
@@ -36,6 +34,9 @@ S: Decoupling to allow testing individual pieces of the FMM algorithm.
 S: Extract a get_box or get_single_pt_box function or both from the Octree::build_child function. In general, make that function more testable.
 S: The min_code and max_code may not be necessary in OctreeCell except for construction.
 S: Make Octree an immutable data type. 
+
+MILESTONE: MUCH FASTER NEARFIELD QUADRATURE?
+NF: Interface for integral term computation. The seam between bem.h and integral_term.h
 
 --------------------------------------- Unaffiliated tasks
 TESTS(T):

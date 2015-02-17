@@ -83,6 +83,20 @@ TEST(AEqualsBPlusCAndCEqualsD) {
     check_distribute_vector(cm, {1.0, 0.5}, {1.0, 0.5, 0.5, 0.5});
 }
 
+TEST(ZeroWeightConstraint) {
+    auto cm = from_constraints({
+        ConstraintEQ{{{0, 1.0}, {1, 0.0}}, 0.0},
+    });
+    CHECK_EQUAL(cm.at(0).terms.size(), 0);
+}
+
+TEST(EmptyConstraint) {
+    auto cm = from_constraints({
+        ConstraintEQ{{{1, 0.0}}, 0.0},
+    });
+    CHECK_EQUAL(cm.size(), 0);
+}
+
 TEST(CircularConstraints) {
     auto cm = from_constraints({
         continuity_constraint(0, 1),

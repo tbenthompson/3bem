@@ -35,9 +35,9 @@ ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints)
     ConstraintMatrix new_mat;
 
     for (size_t i = 0; i < constraints.size(); i++) {
-        const auto& c = constraints[i];
+        const auto zeros_filtered = filter_zero_terms(constraints[i]);
         try {
-            auto lower_tri_constraint = make_lower_triangular(c, new_mat);
+            auto lower_tri_constraint = make_lower_triangular(zeros_filtered, new_mat);
             new_mat.insert(std::make_pair(lower_tri_constraint.constrained_dof,
                                           lower_tri_constraint));
         } catch (const std::invalid_argument& e) {
