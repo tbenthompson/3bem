@@ -13,6 +13,7 @@ Mesh<3> sphere_mesh(const Vec3<double>& center, double r, int refinements) {
         {0.0, -r, 0.0}, {r, 0.0, 0.0}, {0.0, 0.0, r},
         {-r, 0.0, 0.0}, {0.0, 0.0, -r}, {0.0, r, 0.0}
     };
+
     for (unsigned int i = 0; i < vertices.size(); i++) {
         vertices[i] += center;
     }
