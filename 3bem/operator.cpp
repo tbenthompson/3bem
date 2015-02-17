@@ -2,10 +2,15 @@
 
 namespace tbem {
 
+Operator make_operator(size_t n_rows, size_t n_cols, const std::vector<double>& data) 
+{
+    return {n_rows, n_cols, std::make_shared<std::vector<double>>(data)};
+}
+
 BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols,
     const std::vector<double>& A) 
 {
-    return {1, 1, {{n_rows, n_cols, A}}};
+    return {1, 1, {make_operator(n_rows, n_cols, A)}};
 }
 
 template <size_t dim>
@@ -16,9 +21,9 @@ BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols,
     std::vector<Operator> ops;
     for (int d1 = 0; d1 < dim; d1++) {
         for (int d2 = 0; d2 < dim; d2++) {
-            std::vector<double> data(n_rows * n_cols);
+            auto data = std::make_shared<std::vector<double>>(n_rows * n_cols);
             for (size_t i = 0; i < A.size(); i++) {
-                data[i] = A[i][d1][d2];
+                (*data)[i] = A[i][d1][d2];
             }
             ops.push_back({n_rows, n_cols, data});
         }
@@ -51,7 +56,7 @@ BlockFunction apply_operator(const BlockOperator& A, const BlockFunction& x)
             for (size_t i = 0; i < op.n_rows; i++) {
                 for (size_t j = 0; j < op.n_cols; j++) {
                     size_t matrix_idx = i * op.n_cols + j;
-                    res[d1][i] += op.data[matrix_idx] * x[d2][j];
+                    res[d1][i] += (*op.data)[matrix_idx] * x[d2][j];
                 }
             }
         }
@@ -86,7 +91,7 @@ BlockOperator combine_components(const BlockOperator& block_op) {
     auto n_rows = total_rows(block_op);
     auto n_elements = n_cols * n_rows;
 
-    std::vector<double> out(n_elements);
+    auto out = std::make_shared<std::vector<double>>(n_elements);
 
     size_t n_rows_so_far = 0;
     for (size_t d1 = 0; d1 < block_op.n_comp_rows; d1++) {
@@ -104,7 +109,7 @@ BlockOperator combine_components(const BlockOperator& block_op) {
 
                     auto in_element = row_idx * op.n_cols + col_idx;
                     auto out_element = out_row_idx * n_cols + out_col_idx;
-                    out[out_element] = op.data[in_element];
+                    (*out)[out_element] = (*op.data)[in_element];
                 }
                 n_cols_so_far += op.n_cols;
             }
