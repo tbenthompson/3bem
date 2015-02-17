@@ -17,7 +17,6 @@ template <size_t dim>
 BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols, 
     std::vector<Vec<Vec<double,dim>,dim>> A) 
 {
-    std::vector<std::vector<double>> out(dim * dim, std::vector<double>(A.size()));
     std::vector<Operator> ops;
     for (int d1 = 0; d1 < dim; d1++) {
         for (int d2 = 0; d2 < dim; d2++) {
