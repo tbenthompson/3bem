@@ -138,6 +138,34 @@ BlockOperator mesh_to_point_operator(const Problem<dim,KT>& p,
     return reshape_to_operator(1, n_out_dofs, result);
 }
 
+template <typename T>
+BlockOperator build_operator_shape(size_t rows, size_t cols);
+
+template <>
+inline BlockOperator build_operator_shape<double>(size_t rows, size_t cols) {
+    auto op = Operator::empty(rows, cols);
+    return {1, 1, {op}}; 
+}
+
+template <>
+inline BlockOperator build_operator_shape<Vec<Vec<double,2>,2>>(size_t rows, size_t cols) {
+    std::vector<Operator> ops;
+    for (size_t i = 0; i < 4; i++) {
+        ops.push_back(Operator::empty(rows, cols));
+    }
+    return {2, 2, ops}; 
+}
+
+template <>
+inline BlockOperator build_operator_shape<Vec<Vec<double,3>,3>>(size_t rows, size_t cols) {
+    std::vector<Operator> ops;
+    for (size_t i = 0; i < 9; i++) {
+        ops.push_back(Operator::empty(rows, cols));
+    }
+    return {3, 3, ops}; 
+}
+
+
 /* Given a kernel function and two meshes this function calculates the
  * Galerkin boundary element matrix representing the operator 
  * \int_{S_{obs}} \phi_i(x) \int_{S_{src}} K(x,y) \phi_j(y) dy dx
@@ -152,6 +180,7 @@ BlockOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
     size_t n_src_dofs = p.src_mesh.n_dofs();
     std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_src_dofs, 
             zeros<typename KT::OperatorType>::make());
+    auto op = build_operator_shape<typename KT::OperatorType>(n_obs_dofs, n_src_dofs);
 #pragma omp parallel for
     for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
@@ -166,11 +195,9 @@ BlockOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
             for (int obs_basis_idx = 0; obs_basis_idx < dim; obs_basis_idx++) {
                 int obs_dof = dim * obs_idx + obs_basis_idx;
                 for (size_t src_dof = 0; src_dof < n_src_dofs; src_dof++) {
-                    matrix[obs_dof * n_src_dofs + src_dof] +=
-                        basis[obs_basis_idx] *
-                        row[src_dof] *
-                        qs.obs_quad[obs_q].w *
-                        obs_face.jacobian;
+                    auto val_to_add = basis[obs_basis_idx] * row[src_dof] *
+                        qs.obs_quad[obs_q].w * obs_face.jacobian;
+                    matrix[obs_dof * n_src_dofs + src_dof] += val_to_add;
                 }
             }
         }

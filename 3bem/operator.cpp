@@ -20,11 +20,11 @@ BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols,
     std::vector<Operator> ops;
     for (int d1 = 0; d1 < dim; d1++) {
         for (int d2 = 0; d2 < dim; d2++) {
-            auto data = std::make_shared<std::vector<double>>(n_rows * n_cols);
+            auto cur_op = Operator::empty(n_rows, n_cols);
             for (size_t i = 0; i < A.size(); i++) {
-                (*data)[i] = A[i][d1][d2];
+                cur_op[i] = A[i][d1][d2];
             }
-            ops.push_back({n_rows, n_cols, data});
+            ops.push_back(cur_op);
         }
     }
     return {dim, dim, ops};
@@ -88,9 +88,8 @@ size_t total_rows(const BlockOperator& block_op) {
 BlockOperator combine_components(const BlockOperator& block_op) {
     auto n_cols = total_cols(block_op);
     auto n_rows = total_rows(block_op);
-    auto n_elements = n_cols * n_rows;
 
-    auto out = std::make_shared<std::vector<double>>(n_elements);
+    auto out = Operator::empty(n_rows, n_cols);
 
     size_t n_rows_so_far = 0;
     for (size_t d1 = 0; d1 < block_op.n_comp_rows; d1++) {
@@ -108,7 +107,7 @@ BlockOperator combine_components(const BlockOperator& block_op) {
 
                     auto in_element = row_idx * op.n_cols + col_idx;
                     auto out_element = out_row_idx * n_cols + out_col_idx;
-                    (*out)[out_element] = op[in_element];
+                    out[out_element] = op[in_element];
                 }
                 n_cols_so_far += op.n_cols;
             }
@@ -116,7 +115,7 @@ BlockOperator combine_components(const BlockOperator& block_op) {
         n_rows_so_far += n_this_comp_rows;
     }
 
-    return {1, 1, {{n_rows, n_cols, out}}};
+    return {1, 1, {out}};
 }
 
 

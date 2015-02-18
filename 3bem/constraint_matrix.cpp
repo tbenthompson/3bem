@@ -165,10 +165,7 @@ Operator remove_constrained(const ConstraintMatrix& row_cm,
 
     auto n_rows_out = matrix.n_rows - row_cm.size();
     auto n_cols_out = matrix.n_cols - col_cm.size();
-    auto n_elements_out = n_rows_out * n_cols_out;
-    Operator out{
-        n_rows_out, n_cols_out, std::make_shared<std::vector<double>>(n_elements_out)
-    };
+    auto out = Operator::empty(n_rows_out, n_cols_out);
 
     size_t out_row_idx = 0;
     for (size_t in_row_idx = 0; in_row_idx < matrix.n_rows; in_row_idx++) {
@@ -195,10 +192,7 @@ Operator remove_constrained(const ConstraintMatrix& row_cm,
 Operator condense_matrix(const ConstraintMatrix& row_cm,
     const ConstraintMatrix& col_cm, const Operator& matrix)
 {
-    Operator condensed {
-        matrix.n_rows, matrix.n_cols,
-        std::make_shared<std::vector<double>>(matrix.n_rows * matrix.n_cols, 0.0)
-    };
+    auto condensed = Operator::constant(matrix.n_rows, matrix.n_cols, 0.0);
 
     for (int row_idx = matrix.n_rows - 1; row_idx >= 0; --row_idx) {
         for (int col_idx = matrix.n_cols - 1; col_idx >= 0; --col_idx) {

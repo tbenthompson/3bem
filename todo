@@ -20,6 +20,7 @@ NF: Handle the general case when fault-surface intersection does not occur at a 
 MILESTONE: FMM-BEM INTEGRATION
 DD: BIG: decide whether to use the direct FMM-based inversion methods.
 
+MF: Change the mass_operator to be the galerkin operator? What difficulties does this introduce?
 NF: Interface for Operators -- extend with sparse matrix operators and FMMOperator
 -- start with a second operator type that recomputes the far-field but only computes the near-field once. this will break the current memory barrier and clarify the interface with an easy test case. the fmm case mixes up the operator problem together with the approximation problem. attack one at a time
 -- move mat_mult to be a member function for an operator?

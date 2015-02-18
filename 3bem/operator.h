@@ -26,10 +26,12 @@ struct Operator {
     const size_t n_rows;
     const size_t n_cols;
 
-    typedef std::shared_ptr<std::vector<double>> OperatorDataPtr;
+    typedef std::vector<double> DataT;
+    //TODO: Consider changing to unique_ptr
+    typedef std::shared_ptr<DataT> OperatorDataPtr;
     OperatorDataPtr internal_data;
 
-    const std::vector<double>& data() const {
+    const DataT& data() const {
         return *internal_data;
     }
 
@@ -40,6 +42,14 @@ struct Operator {
     const double& operator[] (size_t idx) const {
         return (*internal_data)[idx];
     }
+
+    static Operator empty(size_t n_rows, size_t n_cols) {
+        return {n_rows, n_cols, std::make_shared<DataT>(n_rows * n_cols)};
+    }
+
+    static Operator constant(size_t n_rows, size_t n_cols, double val) {
+        return {n_rows, n_cols, std::make_shared<DataT>(n_rows * n_cols, val)};
+    }
 };
 
 struct BlockOperator 
@@ -49,6 +59,7 @@ struct BlockOperator
     std::vector<Operator> ops;
 };
 
+//TODO: Make this a static member 
 Operator make_operator(size_t n_rows, size_t n_cols, const std::vector<double>& data);
 
 BlockOperator 
