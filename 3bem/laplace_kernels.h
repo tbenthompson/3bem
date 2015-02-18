@@ -15,7 +15,7 @@ template <size_t dim>
 struct LaplaceHypersingular;
 
 template <>
-struct LaplaceSingle<3>: ScalarKernel<3> 
+struct LaplaceSingle<3>: Kernel<3,1,1> 
 {
     Vec1<Vec1<double>> operator()(double r2, const Vec<double,3>& delta,
                       const Vec<double,3>& nsrc, const Vec<double,3>& nobs) const {
@@ -24,7 +24,7 @@ struct LaplaceSingle<3>: ScalarKernel<3>
 };
 
 template <>
-struct LaplaceDouble<3>: ScalarKernel<3> 
+struct LaplaceDouble<3>: Kernel<3,1,1> 
 {
     Vec1<Vec1<double>> operator()(double r2, const Vec<double,3>& delta,
                       const Vec<double,3>& nsrc, const Vec<double,3>& nobs) const {
@@ -33,7 +33,7 @@ struct LaplaceDouble<3>: ScalarKernel<3>
 };
 
 template <>
-struct LaplaceSingle<2>: ScalarKernel<2>
+struct LaplaceSingle<2>: Kernel<2,1,1>
 {
     Vec1<Vec1<double>> operator()(double r2, const Vec<double,2>& delta,
                       const Vec<double,2>& nsrc, const Vec<double,2>& nobs) const {
@@ -42,7 +42,7 @@ struct LaplaceSingle<2>: ScalarKernel<2>
 };
 
 template <>
-struct LaplaceDouble<2>: ScalarKernel<2>
+struct LaplaceDouble<2>: Kernel<2,1,1>
 {
     Vec1<Vec1<double>> operator()(double r2, const Vec<double,2>& delta,
                       const Vec<double,2>& nsrc, const Vec<double,2>& nobs) const {
@@ -51,7 +51,7 @@ struct LaplaceDouble<2>: ScalarKernel<2>
 };
 
 template <>
-struct LaplaceHypersingular<2>: ScalarKernel<2>
+struct LaplaceHypersingular<2>: Kernel<2,1,1>
 {
     Vec1<Vec1<double>> operator()(double r2, const Vec<double,2>& delta,
                       const Vec<double,2>& nsrc, const Vec<double,2>& nobs) const {

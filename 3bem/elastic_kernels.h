@@ -19,8 +19,7 @@ template <size_t dim>
 struct ElasticHypersingular;
 
 template <>
-struct ElasticDisplacement<2>: 
-    public Kernel<2,Vec2<double>, Vec2<double>, Vec2<Vec2<double>>>
+struct ElasticDisplacement<2>: public Kernel<2,2,2>
 {
     const double disp_C1;
     const double disp_C2;
@@ -46,8 +45,7 @@ struct ElasticDisplacement<2>:
 };
 
 template <>
-struct ElasticTraction<2>: 
-    public Kernel<2,Vec2<double>, Vec2<double>, Vec2<Vec2<double>>>
+struct ElasticTraction<2>: public Kernel<2,2,2> 
 {
     const double trac_C1;
     const double trac_C2;
@@ -76,8 +74,7 @@ struct ElasticTraction<2>:
 };
 
 template <>
-struct ElasticAdjointTraction<2>: 
-    public Kernel<2,Vec2<double>, Vec2<double>, Vec2<Vec2<double>>>
+struct ElasticAdjointTraction<2>: public Kernel<2,2,2>
 {
     const double trac_C1;
     const double trac_C2;
@@ -106,8 +103,7 @@ struct ElasticAdjointTraction<2>:
 };
 
 template <>
-struct ElasticHypersingular<2>: 
-    public Kernel<2,Vec2<double>, Vec2<double>, Vec2<Vec2<double>>>
+struct ElasticHypersingular<2>: public Kernel<2,2,2>
 {
     const double shear_modulus;
     const double poisson_ratio;
@@ -147,8 +143,7 @@ struct ElasticHypersingular<2>:
 };
 
 template <>
-struct ElasticDisplacement<3>: 
-    public Kernel<3,Vec3<double>, Vec3<double>, Vec3<Vec3<double>>>
+struct ElasticDisplacement<3>: public Kernel<3,3,3>
 {
     const double disp_C1;
     const double disp_C2;
@@ -173,8 +168,7 @@ struct ElasticDisplacement<3>:
 };
 
 template <>
-struct ElasticTraction<3>: 
-    public Kernel<3,Vec3<double>, Vec3<double>, Vec3<Vec3<double>>>
+struct ElasticTraction<3>: public Kernel<3,3,3>
 {
     const double trac_C1;
     const double trac_C2;
@@ -203,8 +197,7 @@ struct ElasticTraction<3>:
 };
 
 template <>
-struct ElasticAdjointTraction<3>: 
-    public Kernel<3,Vec3<double>, Vec3<double>, Vec3<Vec3<double>>>
+struct ElasticAdjointTraction<3>: public Kernel<3,3,3>
 {
     const double trac_C1;
     const double trac_C2;
@@ -233,8 +226,7 @@ struct ElasticAdjointTraction<3>:
 };
 
 template <>
-struct ElasticHypersingular<3>: 
-    public Kernel<3,Vec3<double>, Vec3<double>, Vec3<Vec3<double>>>
+struct ElasticHypersingular<3>: public Kernel<3,3,3>
 {
     const double poisson_ratio;
     const double trac_C2;

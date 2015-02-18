@@ -5,18 +5,15 @@
 
 namespace tbem {
 
-template <size_t dim, typename O, typename I, typename Op>
+template <size_t dim, size_t n_rows, size_t n_cols>
 struct Kernel {
-    typedef O OutType;
-    typedef I InType;
-    typedef Op OperatorType;
+    typedef Vec<double,n_rows> OutType;
+    typedef Vec<double,n_cols> InType;
+    typedef Vec<Vec<double,n_cols>,n_rows> OperatorType;
 
     virtual OperatorType operator()(double r2, const Vec<double,dim>& delta, 
         const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs) const = 0;
 };
-
-template <size_t dim>
-using ScalarKernel = Kernel<dim,Vec1<double>,Vec1<double>,Vec1<Vec1<double>>>;
 
 } //End namespace tbem
 
