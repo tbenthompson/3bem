@@ -20,7 +20,8 @@ TEST(IntegralOne) {
     auto facet_info = FacetInfo<2>::build({{{0,0},{1,0}}});
     auto term = make_integral_term(quad_strategy, identity, obs, facet_info, 1.0);
     auto result = compute_term(term);
-    CHECK_ARRAY_CLOSE(result, (Vec2<double>{0.5, 0.5}), 2, 1e-6);
+    CHECK_CLOSE(result[0][0][0], 0.5, 1e-6);
+    CHECK_CLOSE(result[1][0][0], 0.5, 1e-6);
 }
 
 template <typename KT>
@@ -33,8 +34,8 @@ void integral_term_test(const KT& K, double claimed_distance, double exact) {
         facet_info, claimed_distance
     );
     auto result = compute_term(term);
-    double est = sum(result); 
-    CHECK_CLOSE(est, exact, 1e-3);
+    auto est = sum(result); 
+    CHECK_CLOSE(est[0][0], exact, 1e-3);
 }
 
 TEST(IntegralLaplaceSingleFar) {

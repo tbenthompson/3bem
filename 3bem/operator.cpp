@@ -32,6 +32,9 @@ BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols,
 
 template 
 BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols, 
+    const std::vector<Vec<Vec<double,1>,1>>& A);
+template 
+BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols, 
     const std::vector<Vec<Vec<double,2>,2>>& A);
 template 
 BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols, 

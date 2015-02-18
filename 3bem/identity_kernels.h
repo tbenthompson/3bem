@@ -5,20 +5,20 @@
 #include "vec.h"
 
 namespace tbem {
-
-template <size_t dim>
-struct IdentityScalar: public Kernel<dim,double,double,double> 
-{
-    double call_with_no_params() const {
-        return 1.0;
-    }
-
-    double operator()(double r2, const Vec<double,dim>& delta,
-        const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs) const 
-    {
-        return call_with_no_params();
-    }
-};
+// 
+// template <size_t dim>
+// struct IdentityScalar: public Kernel<dim,double,double,double> 
+// {
+//     double call_with_no_params() const {
+//         return 1.0;
+//     }
+// 
+//     double operator()(double r2, const Vec<double,dim>& delta,
+//         const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs) const 
+//     {
+//         return call_with_no_params();
+//     }
+// };
 
 template <size_t dim, size_t n_rows, size_t n_cols>
 struct IdentityTensor: public
@@ -42,6 +42,9 @@ struct IdentityTensor: public
         return call_with_no_params();
     }
 };
+
+template <size_t dim>
+using IdentityScalar = IdentityTensor<dim,1,1>;
 
 }//end namespace tbem
 

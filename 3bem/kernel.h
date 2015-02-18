@@ -15,6 +15,9 @@ struct Kernel {
         const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs) const = 0;
 };
 
+template <size_t dim>
+using ScalarKernel = Kernel<dim,Vec1<double>,Vec1<double>,Vec1<Vec1<double>>>;
+
 } //End namespace tbem
 
 #endif

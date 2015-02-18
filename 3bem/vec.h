@@ -38,6 +38,9 @@ using Vec3 = Vec<T,3>;
 template <typename T>
 using Vec2 = Vec<T,2>;
 
+template <typename T>
+using Vec1 = Vec<T,1>;
+
 } // END namespace tbem
 
 #endif

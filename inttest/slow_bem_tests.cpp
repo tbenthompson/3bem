@@ -92,7 +92,7 @@ void test_one_segment2d_integration(const KT& k,
             double obs_y = -5.0 + 10 * (j / 19.0);
             Vec2<double> obs_loc = {obs_x, obs_y};
             Vec2<double> obs_normal = {0.0, 0.0};
-            double result = integrate<double,1>(quad, 
+            auto result = integrate<Vec1<Vec1<double>>,1>(quad, 
                 [&](const Vec<double,1> x_hat) {
                     auto eval = eval_point_influence<2>(x_hat, k, face,
                                                 obs_loc, obs_normal);
@@ -100,7 +100,7 @@ void test_one_segment2d_integration(const KT& k,
                 });
                     
             double exact_val = exact(obs_x, obs_y);
-            CHECK_CLOSE(result, exact_val, 1e-4);
+            CHECK_CLOSE(result[0][0], exact_val, 1e-4);
         }
     }
 }

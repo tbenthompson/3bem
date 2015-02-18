@@ -99,6 +99,12 @@ inline double get_error_is(double p_tol, double erri1, double erri2, double is,
 }
 
 template <typename T>
+Vec1<T> get_error_is(double p_tol, Vec1<T> erri1, Vec1<T> erri2,
+                          Vec1<T> is, double a, double b) {
+    return {get_error_is(p_tol, erri1[0], erri2[0], is[0], a, b)};
+}
+
+template <typename T>
 Vec2<T> get_error_is(double p_tol, Vec2<T> erri1, Vec2<T> erri2,
                           Vec2<T> is, double a, double b) {
     return {

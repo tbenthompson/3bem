@@ -5,30 +5,6 @@
 
 namespace tbem {
 
-/* A helper function for integrating a given function using a quadrature rule.
- * Via templating, can be used with 1D, 2D, double, Vec3<double> quadrature.
- */
-template <typename T, size_t dim>
-T integrate(const std::vector<QuadPt<dim>>& qr, 
-            const std::function<T(std::array<double,dim>)>& fnc) {
-    T integral_val = qr[0].w * fnc(qr[0].x_hat);;
-    for (unsigned int i = 1; i < qr.size(); i++) {
-        integral_val += qr[i].w * fnc(qr[i].x_hat);
-    }
-    return integral_val;
-}
-
-//Explicitly instantiate the only reasonable options for the templated
-//integrate function.
-template double integrate(const QuadRule<1>&, 
-        const std::function<double(std::array<double,1>)>&);
-template double integrate(const QuadRule<2>&,
-        const std::function<double(std::array<double,2>)>&);
-template Vec3<double> integrate(const QuadRule<1>&, 
-        const std::function<Vec3<double>(std::array<double,1>)>&);
-template Vec3<double> integrate(const QuadRule<2>&,
-        const std::function<Vec3<double>(std::array<double,2>)>&);
-
 /* Evaluate legendre polynomials P_{n}(x) and P_{n - 1}(x).
  * This is a helper function for the Gaussian quadrature algorithm.
  */

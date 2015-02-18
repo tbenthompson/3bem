@@ -13,6 +13,10 @@ template <typename T>
 void operator+=(Vec2<T>& a, const Vec2<T>& b) {
     a[0] += b[0]; a[1] += b[1];
 }
+template <typename T>
+void operator+=(Vec1<T>& a, const Vec1<T>& b) {
+    a[0] += b[0];
+}
 
 template <typename T>
 void operator-=(Vec3<T>& a, const Vec3<T>& b) {
@@ -21,6 +25,10 @@ void operator-=(Vec3<T>& a, const Vec3<T>& b) {
 template <typename T>
 void operator-=(Vec2<T>& a, const Vec2<T>& b) {
     a[0] -= b[0]; a[1] -= b[1];
+}
+template <typename T>
+void operator-=(Vec1<T>& a, const Vec1<T>& b) {
+    a[0] -= b[0];
 }
 
 template <typename T>
@@ -31,6 +39,10 @@ template <typename T>
 void operator*=(Vec2<T>& a, const Vec2<T>& b) {
     a[0] *= b[0]; a[1] *= b[1];
 }
+template <typename T>
+void operator*=(Vec1<T>& a, const Vec1<T>& b) {
+    a[0] *= b[0]; 
+}
 
 template <typename T>
 void operator/=(Vec3<T>& a, const Vec3<T>& b) {
@@ -40,6 +52,10 @@ template <typename T>
 void operator/=(Vec2<T>& a, const Vec2<T>& b) {
     a[0] /= b[0]; a[1] /= b[1]; 
 }
+template <typename T>
+void operator/=(Vec1<T>& a, const Vec1<T>& b) {
+    a[0] /= b[0]; 
+}
 
 template <typename T, typename F>
 void operator*=(Vec3<T>& a, const F& s) {
@@ -48,6 +64,10 @@ void operator*=(Vec3<T>& a, const F& s) {
 template <typename T, typename F>
 void operator*=(Vec2<T>& a, const F& s) {
     a[0] *= s; a[1] *= s;
+}
+template <typename T, typename F>
+void operator*=(Vec1<T>& a, const F& s) {
+    a[0] *= s; 
 }
 
 template <typename T, size_t dim>
@@ -194,13 +214,18 @@ inline Vec2<double> unit<double,2>(const int k) {
 }
 
 using std::fabs;
+
 template <typename T>
-Vec3<T> fabs(const Vec3<T>& v) {
-    return {fabs(v[0]), fabs(v[1]), fabs(v[2])};
+Vec1<T> fabs(const Vec1<T>& v) {
+    return {fabs(v[0])};
 }
 template <typename T>
 Vec2<T> fabs(const Vec2<T>& v) {
     return {fabs(v[0]), fabs(v[1])};
+}
+template <typename T>
+Vec3<T> fabs(const Vec3<T>& v) {
+    return {fabs(v[0]), fabs(v[1]), fabs(v[2])};
 }
 
 inline Vec3<double> 
@@ -297,6 +322,10 @@ template <typename T>
 inline Vec2<bool> operator==(const Vec2<T>& t, const T& rhs) {
     return {t[0] == rhs, t[1] == rhs};
 }
+template <typename T>
+inline Vec1<bool> operator==(const Vec1<T>& t, const T& rhs) {
+    return {t[0] == rhs};
+}
 
 template <typename T>
 inline Vec3<bool> operator!=(const Vec3<T>& t, const T& rhs) {
@@ -306,6 +335,10 @@ template <typename T>
 inline Vec2<bool> operator!=(const Vec2<T>& t, const T& rhs) {
     return {t[0] != rhs, t[1] != rhs};
 }
+template <typename T>
+inline Vec1<bool> operator!=(const Vec1<T>& t, const T& rhs) {
+    return {t[0] != rhs};
+}
 
 template <typename T>
 inline Vec3<bool> operator<(const Vec3<T>& t, const T& rhs) {
@@ -314,6 +347,10 @@ inline Vec3<bool> operator<(const Vec3<T>& t, const T& rhs) {
 template <typename T>
 inline Vec2<bool> operator<(const Vec2<T>& t, const T& rhs) {
     return {t[0] < rhs, t[1] < rhs};
+}
+template <typename T>
+inline Vec1<bool> operator<(const Vec1<T>& t, const T& rhs) {
+    return {t[0] < rhs};
 }
 
 inline double max(double x) {return x;}
@@ -328,6 +365,13 @@ inline bool any(Vec3<bool> v) {return v[0] || v[1] || v[2];}
 inline bool all(bool a) {return a;}
 inline bool all(Vec3<bool> v) {return v[0] && v[1] && v[2];}
 inline bool all(Vec2<bool> v) {return v[0] && v[1];}
+
+template <typename F>
+struct constant<Vec1<F>> {
+    static Vec1<F> make(double val) { 
+        return {constant<F>::make(val)};
+    }
+};
 
 template <typename F>
 struct constant<Vec2<F>> {

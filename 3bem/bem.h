@@ -180,7 +180,7 @@ BlockOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
     size_t n_src_dofs = p.src_mesh.n_dofs();
     std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_src_dofs, 
             zeros<typename KT::OperatorType>::make());
-    auto op = build_operator_shape<typename KT::OperatorType>(n_obs_dofs, n_src_dofs);
+    /* auto op = build_operator_shape<typename KT::OperatorType>(n_obs_dofs, n_src_dofs); */
 #pragma omp parallel for
     for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
