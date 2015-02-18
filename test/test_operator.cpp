@@ -13,7 +13,7 @@ TEST(ReshapeToOperator) {
     for (size_t i = 0; i < A.size(); i++) {
         for (int d1 = 0; d1 < 2; d1++) {
             for (int d2 = 0; d2 < 2; d2++) {
-                CHECK_EQUAL(A[i][d1][d2], (*result.ops[d1 * 2 + d2].data)[i]);
+                CHECK_EQUAL(A[i][d1][d2], result.ops[d1 * 2 + d2][i]);
             }
         }
     }
@@ -59,7 +59,7 @@ TEST(CombineComponents) {
     double correct[4] = {0,1,2,3};
     CHECK_EQUAL(combined_op.ops[0].n_rows, 2);
     CHECK_EQUAL(combined_op.ops[0].n_cols, 2);
-    CHECK_ARRAY_EQUAL(*combined_op.ops[0].data, correct, 4);
+    CHECK_ARRAY_EQUAL(combined_op.ops[0].data(), correct, 4);
 }
 
 TEST(CombineComponents2By2) {
@@ -81,7 +81,7 @@ TEST(CombineComponents2By2) {
     };
     CHECK_EQUAL(combined_op.ops[0].n_rows, 4);
     CHECK_EQUAL(combined_op.ops[0].n_cols, 4);
-    CHECK_ARRAY_EQUAL(*combined_op.ops[0].data, correct, 16);
+    CHECK_ARRAY_EQUAL(combined_op.ops[0].data(), correct, 16);
 }
 
 TEST(CombineComponentsNonSquareBlocks) {
@@ -103,7 +103,7 @@ TEST(CombineComponentsNonSquareBlocks) {
     };
     CHECK_EQUAL(combined_op.ops[0].n_rows, 4);
     CHECK_EQUAL(combined_op.ops[0].n_cols, 4);
-    CHECK_ARRAY_EQUAL(*combined_op.ops[0].data, correct, 16);
+    CHECK_ARRAY_EQUAL(combined_op.ops[0].data(), correct, 16);
 }
 
 int main(int, char const *[])

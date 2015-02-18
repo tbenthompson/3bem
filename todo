@@ -1,6 +1,4 @@
 CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
--- The pointer form of data storage for Operator creates ugly code. Encapsulate or
-revert to a naked std::vector and try to prevent copying
 ---------------------------------------
 
 MILESTONE: HANGING NODES AND COMPLEX GEOMETRIES
@@ -21,8 +19,11 @@ NF: Handle the general case when fault-surface intersection does not occur at a 
 
 MILESTONE: FMM-BEM INTEGRATION
 DD: BIG: decide whether to use the direct FMM-based inversion methods.
+
 NF: Interface for Operators -- extend with sparse matrix operators and FMMOperator
+-- start with a second operator type that recomputes the far-field but only computes the near-field once. this will break the current memory barrier and clarify the interface with an easy test case. the fmm case mixes up the operator problem together with the approximation problem. attack one at a time
 -- move mat_mult to be a member function for an operator?
+
 NF: Imagine some kind of general purpose "nearfield" structure that can allow a simple O(N) solution to the near neighbors problems in mesh_continuity, apply_discontinuities as well as the FMM tree structure.
 NF: Once FMM-BEM integration is completed, a sparse matrix storage format should be used for the nearfield entries.
 NF: A method that creates a non-matrix based operator that consists of strengths of point sources. First, evaluate this with a direct multiplication interaction.

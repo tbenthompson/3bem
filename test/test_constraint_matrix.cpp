@@ -164,7 +164,7 @@ TEST(CondenseMatrixContinuity) {
     };
     auto result = condense_matrix(cm, cm, make_operator(3, 3, matrix));
     CHECK_EQUAL(result.n_rows * result.n_cols, 1);
-    CHECK_EQUAL((*result.data)[0], 3);
+    CHECK_EQUAL(result[0], 3);
 }
 
 TEST(CondenseMatrixContinuityPartial) {
@@ -177,7 +177,7 @@ TEST(CondenseMatrixContinuityPartial) {
     auto result = condense_matrix(cm, cm, make_operator(3, 3, matrix));
     CHECK_EQUAL(result.n_rows * result.n_cols, 4);
     std::vector<double> exact{1, 0, 0, 2};
-    CHECK_ARRAY_EQUAL(*result.data, exact, 4);
+    CHECK_ARRAY_EQUAL(result.data(), exact, 4);
 }
 
 TEST(CondenseMatrixBoundaryCondition) {
@@ -189,7 +189,7 @@ TEST(CondenseMatrixBoundaryCondition) {
     };
     auto result = condense_matrix(cm, cm, make_operator(2, 2, matrix));
     CHECK_EQUAL(result.n_rows * result.n_cols, 1);
-    CHECK_EQUAL((*result.data)[0], 1.0);
+    CHECK_EQUAL(result[0], 1.0);
 }
 
 TEST(CondenseNonSquareMatrixContinuity) {
@@ -205,7 +205,7 @@ TEST(CondenseNonSquareMatrixContinuity) {
     };
     auto result = condense_matrix(row_cm, col_cm, make_operator(2, 3, matrix));
     CHECK_EQUAL(result.n_rows * result.n_cols, 1);
-    CHECK_EQUAL((*result.data)[0], 2);
+    CHECK_EQUAL(result[0], 2);
 }
 
 BlockOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,

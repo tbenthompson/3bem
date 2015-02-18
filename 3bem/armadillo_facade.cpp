@@ -6,7 +6,7 @@ namespace tbem {
 
 arma::mat arma_mat(const Operator& op)
 {
-    return arma::mat(&(*op.data)[0], op.n_rows, op.n_cols);
+    return arma::mat(&op[0], op.n_rows, op.n_cols);
 }
 Operator arma_invert(const Operator& op) 
 {

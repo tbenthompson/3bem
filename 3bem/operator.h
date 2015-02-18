@@ -10,12 +10,36 @@
 
 namespace tbem {
 
-typedef std::shared_ptr<std::vector<double>> OperatorDataPtr;
+struct OperatorI {
+    virtual size_t n_rows() const = 0;
+    virtual size_t n_cols() const = 0;
+    virtual Function apply_operator(const Function& x) const = 0;
+};
+
+struct DenseMatrixOperator: public OperatorI;
+struct MatrixFreeFarfieldOperator: public OperatorI;
+struct SparseMatrixFMMOperator: public OperatorI;
+struct MatrixFreeFMMOperator: public OperatorI;
+struct BlockOperatorI;
 
 struct Operator {
     const size_t n_rows;
     const size_t n_cols;
-    OperatorDataPtr data;
+
+    typedef std::shared_ptr<std::vector<double>> OperatorDataPtr;
+    OperatorDataPtr internal_data;
+
+    const std::vector<double>& data() const {
+        return *internal_data;
+    }
+
+    double& operator[] (size_t idx) {
+        return (*internal_data)[idx];
+    }
+
+    const double& operator[] (size_t idx) const {
+        return (*internal_data)[idx];
+    }
 };
 
 struct BlockOperator 

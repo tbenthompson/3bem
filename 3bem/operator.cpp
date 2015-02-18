@@ -55,7 +55,7 @@ BlockFunction apply_operator(const BlockOperator& A, const BlockFunction& x)
             for (size_t i = 0; i < op.n_rows; i++) {
                 for (size_t j = 0; j < op.n_cols; j++) {
                     size_t matrix_idx = i * op.n_cols + j;
-                    res[d1][i] += (*op.data)[matrix_idx] * x[d2][j];
+                    res[d1][i] += op[matrix_idx] * x[d2][j];
                 }
             }
         }
@@ -108,7 +108,7 @@ BlockOperator combine_components(const BlockOperator& block_op) {
 
                     auto in_element = row_idx * op.n_cols + col_idx;
                     auto out_element = out_row_idx * n_cols + out_col_idx;
-                    (*out)[out_element] = (*op.data)[in_element];
+                    (*out)[out_element] = op[in_element];
                 }
                 n_cols_so_far += op.n_cols;
             }
