@@ -5,11 +5,13 @@
 
 namespace tbem {
 
-template <size_t dim, size_t n_rows, size_t n_cols>
+template <size_t dim, size_t R, size_t C>
 struct Kernel {
-    typedef Vec<double,n_rows> OutType;
-    typedef Vec<double,n_cols> InType;
-    typedef Vec<Vec<double,n_cols>,n_rows> OperatorType;
+    const static size_t n_rows = R;
+    const static size_t n_cols = C;
+    typedef Vec<double,R> OutType;
+    typedef Vec<double,C> InType;
+    typedef Vec<Vec<double,C>,R> OperatorType;
 
     virtual OperatorType operator()(double r2, const Vec<double,dim>& delta, 
         const Vec<double,dim>& nsrc, const Vec<double,dim>& nobs) const = 0;

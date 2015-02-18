@@ -7,39 +7,6 @@ Operator make_operator(size_t n_rows, size_t n_cols, const std::vector<double>& 
     return {n_rows, n_cols, std::make_shared<std::vector<double>>(data)};
 }
 
-BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols,
-    const std::vector<double>& A) 
-{
-    return {1, 1, {make_operator(n_rows, n_cols, A)}};
-}
-
-template <size_t dim>
-BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols, 
-    const std::vector<Vec<Vec<double,dim>,dim>>& A) 
-{
-    std::vector<Operator> ops;
-    for (int d1 = 0; d1 < dim; d1++) {
-        for (int d2 = 0; d2 < dim; d2++) {
-            auto cur_op = Operator::empty(n_rows, n_cols);
-            for (size_t i = 0; i < A.size(); i++) {
-                cur_op[i] = A[i][d1][d2];
-            }
-            ops.push_back(cur_op);
-        }
-    }
-    return {dim, dim, ops};
-}
-
-template 
-BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols, 
-    const std::vector<Vec<Vec<double,1>,1>>& A);
-template 
-BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols, 
-    const std::vector<Vec<Vec<double,2>,2>>& A);
-template 
-BlockOperator reshape_to_operator(const size_t n_rows, const size_t n_cols, 
-    const std::vector<Vec<Vec<double,3>,3>>& A); 
-
 BlockFunction apply_operator(const BlockOperator& A, const BlockFunction& x)
 {
     assert(A.n_comp_rows * x.size() == A.ops.size());

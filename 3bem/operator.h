@@ -62,13 +62,6 @@ struct BlockOperator
 //TODO: Make this a static member 
 Operator make_operator(size_t n_rows, size_t n_cols, const std::vector<double>& data);
 
-BlockOperator 
-reshape_to_operator(const size_t rows, const size_t cols, const std::vector<double>& A);
-
-template <size_t dim>
-BlockOperator reshape_to_operator(const size_t rows, const size_t cols, 
-    const std::vector<Vec<Vec<double,dim>,dim>>& A);
-
 BlockFunction apply_operator(const BlockOperator& A, const BlockFunction& x);
 
 Function apply_operator(const BlockOperator& A, const Function& x); 

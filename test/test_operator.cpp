@@ -5,21 +5,6 @@
 
 using namespace tbem;
 
-TEST(ReshapeToOperator) {
-    Vec2<Vec2<double>> entry{{{0,1},{2,3}}};
-    std::vector<Vec2<Vec2<double>>> A{entry};
-    auto result = reshape_to_operator(1, 1, A);
-    CHECK_EQUAL(result.ops.size(), 4);
-    for (size_t i = 0; i < A.size(); i++) {
-        for (int d1 = 0; d1 < 2; d1++) {
-            for (int d2 = 0; d2 < 2; d2++) {
-                CHECK_EQUAL(A[i][d1][d2], result.ops[d1 * 2 + d2][i]);
-            }
-        }
-    }
-}
-
-
 TEST(SimpleMatrixMultiply) {
     BlockOperator matrix{
         1, 1, 

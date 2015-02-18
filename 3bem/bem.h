@@ -122,6 +122,27 @@ std::vector<typename KT::OperatorType> mesh_to_point_vector(const Problem<dim,KT
     return result;
 }
 
+inline BlockOperator build_operator_shape(size_t n_comp_rows, size_t n_comp_cols,
+    size_t n_rows, size_t n_cols) 
+{
+    std::vector<Operator> ops;
+    for (size_t i = 0; i < n_comp_rows * n_comp_cols; i++) {
+        ops.push_back(Operator::constant(n_rows, n_cols, 0.0));
+    }
+    return {n_comp_rows, n_comp_cols, ops}; 
+}
+
+template <size_t n_rows, size_t n_cols> 
+void reshape_to_add(BlockOperator& block_op, size_t idx,
+    const Vec<Vec<double,n_cols>,n_rows>& data) 
+{
+    for (size_t d1 = 0; d1 < n_rows; d1++) {
+        for (size_t d2 = 0; d2 < n_cols; d2++) {
+            block_op.ops[d1 * n_cols + d2][idx] += data[d1][d2];
+        }
+    }
+}
+
 /* Given an unknown function defined in terms of a polynomial basis:
  * u(x) = \sum_i U_i \phi_i(x)
  * Determine the coefficients for the expansion of an integral term in
@@ -135,36 +156,12 @@ BlockOperator mesh_to_point_operator(const Problem<dim,KT>& p,
 {
     size_t n_out_dofs = dim * p.src_mesh.facets.size();
     auto result = mesh_to_point_vector(p, qs, obs);
-    return reshape_to_operator(1, n_out_dofs, result);
-}
-
-template <typename T>
-BlockOperator build_operator_shape(size_t rows, size_t cols);
-
-template <>
-inline BlockOperator build_operator_shape<double>(size_t rows, size_t cols) {
-    auto op = Operator::empty(rows, cols);
-    return {1, 1, {op}}; 
-}
-
-template <>
-inline BlockOperator build_operator_shape<Vec<Vec<double,2>,2>>(size_t rows, size_t cols) {
-    std::vector<Operator> ops;
-    for (size_t i = 0; i < 4; i++) {
-        ops.push_back(Operator::empty(rows, cols));
+    auto block_op = build_operator_shape(KT::n_rows, KT::n_cols, 1, n_out_dofs);
+    for (size_t i = 0; i < result.size(); i++) {
+        reshape_to_add(block_op, i, result[i]);
     }
-    return {2, 2, ops}; 
+    return block_op;
 }
-
-template <>
-inline BlockOperator build_operator_shape<Vec<Vec<double,3>,3>>(size_t rows, size_t cols) {
-    std::vector<Operator> ops;
-    for (size_t i = 0; i < 9; i++) {
-        ops.push_back(Operator::empty(rows, cols));
-    }
-    return {3, 3, ops}; 
-}
-
 
 /* Given a kernel function and two meshes this function calculates the
  * Galerkin boundary element matrix representing the operator 
@@ -178,9 +175,7 @@ BlockOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
 {
     size_t n_obs_dofs = p.obs_mesh.n_dofs();
     size_t n_src_dofs = p.src_mesh.n_dofs();
-    std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_src_dofs, 
-            zeros<typename KT::OperatorType>::make());
-    /* auto op = build_operator_shape<typename KT::OperatorType>(n_obs_dofs, n_src_dofs); */
+    auto block_op = build_operator_shape(KT::n_cols, KT::n_rows, n_obs_dofs, n_src_dofs);
 #pragma omp parallel for
     for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
@@ -197,12 +192,13 @@ BlockOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
                 for (size_t src_dof = 0; src_dof < n_src_dofs; src_dof++) {
                     auto val_to_add = basis[obs_basis_idx] * row[src_dof] *
                         qs.obs_quad[obs_q].w * obs_face.jacobian;
-                    matrix[obs_dof * n_src_dofs + src_dof] += val_to_add;
+                    auto idx = obs_dof * n_src_dofs + src_dof;
+                    reshape_to_add(block_op, idx, val_to_add);
                 }
             }
         }
     }
-    return reshape_to_operator(n_obs_dofs, n_src_dofs, matrix);
+    return block_op;
 }
 
 /* In many integral equations, one of the functions of interest appears
@@ -216,8 +212,7 @@ template <size_t dim, typename KT>
 BlockOperator mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
 {
     auto n_obs_dofs = p.obs_mesh.n_dofs();
-    std::vector<typename KT::OperatorType> matrix(n_obs_dofs * n_obs_dofs,
-        zeros<typename KT::OperatorType>::make());    
+    auto block_op = build_operator_shape(KT::n_rows, KT::n_cols, n_obs_dofs, n_obs_dofs);
 
     auto kernel_val = p.K.call_with_no_params();
     for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) 
@@ -237,13 +232,14 @@ BlockOperator mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& q
                     int src_dof = dim * obs_idx + src_basis_idx;
                     auto basis_product = basis[obs_basis_idx] * basis[src_basis_idx];
                     auto entry_value = kernel_val * basis_product * weight;
-                    matrix[obs_dof * n_obs_dofs + src_dof] += entry_value;
+                    auto idx = obs_dof * n_obs_dofs + src_dof;
+                    reshape_to_add(block_op, idx, entry_value);
                 }
             }
         }
     }
 
-    return reshape_to_operator(n_obs_dofs, n_obs_dofs, matrix);
+    return block_op;
 }
 
 template <size_t dim>
