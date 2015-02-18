@@ -12,7 +12,7 @@ int main() {
     QuadStrategy<2> qs(3);
 
     // Earth's surface
-    auto surface = line_mesh({-100, 0.0}, {100, 0.0}).refine_repeatedly(11);
+    auto surface = line_mesh({-100, 0.0}, {100, 0.0}).refine_repeatedly(9);
 
     auto constraint_matrix = surf_fault_constraints(surface.begin(), fault.begin());
 
@@ -25,7 +25,7 @@ int main() {
     std::vector<std::vector<double>> du{duxy, duxy};
 
     TIC
-    auto p_rhs = make_problem<2>(fault, surface, hyp);
+    auto p_rhs = make_problem<2>(surface, fault, hyp);
     auto rhs_op = mesh_to_mesh_operator(p_rhs, qs);
     auto res = apply_operator(rhs_op, du);
     auto all_dofs_rhs = apply_operator(rhs_op, du);

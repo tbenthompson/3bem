@@ -20,7 +20,7 @@ ConstraintEQ bc_constraint(const Mesh<2>& mesh, const F& fnc,
 int main() {
     // Constraints on the end points!
 
-    int refine_level = 9;
+    int refine_level = 7;
     QuadStrategy<2> qs(4, 4, 10, 3.0, 1e-5);
     auto surface = circle_mesh(center, r, refine_level);
     auto n_dofs = surface.n_dofs(); 

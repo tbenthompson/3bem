@@ -13,29 +13,17 @@
 
 namespace tbem {
 
-    //TODO: Switch the order of obs_mesh and src_mesh
-    //TODO: Switch the order of obs_mesh and src_mesh
-    //TODO: Switch the order of obs_mesh and src_mesh
-    //TODO: Switch the order of obs_mesh and src_mesh
-    //TODO: Switch the order of obs_mesh and src_mesh
 template <size_t dim, typename KT>
 struct Problem {
-    const Mesh<dim>& src_mesh;
     const Mesh<dim>& obs_mesh;
+    const Mesh<dim>& src_mesh;
     const KT& K;
 };
 
-    //TODO: Switch the order of obs_mesh and src_mesh
-    //TODO: Switch the order of obs_mesh and src_mesh
-    //TODO: Switch the order of obs_mesh and src_mesh
-    //TODO: Switch the order of obs_mesh and src_mesh
-    //TODO: Switch the order of obs_mesh and src_mesh
-template <size_t dim, typename KT>
-Problem<dim,KT> make_problem(const Mesh<dim>& src_mesh,
-                             const Mesh<dim>& obs_mesh, 
-                             const KT& k) 
+template <size_t dim, typename KT> Problem<dim,KT> 
+make_problem(const Mesh<dim>& obs_mesh, const Mesh<dim>& src_mesh, const KT& k) 
 {
-    return {src_mesh, obs_mesh, k};
+    return {obs_mesh, src_mesh, k};
 }
 
 template <size_t dim>

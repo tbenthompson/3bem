@@ -16,11 +16,11 @@ struct OperatorI {
     virtual Function apply_operator(const Function& x) const = 0;
 };
 
-struct DenseMatrixOperator: public OperatorI;
-struct MatrixFreeFarfieldOperator: public OperatorI;
-struct SparseMatrixFMMOperator: public OperatorI;
-struct MatrixFreeFMMOperator: public OperatorI;
-struct BlockOperatorI;
+// struct DenseMatrixOperator: public OperatorI;
+// struct MatrixFreeFarfieldOperator: public OperatorI;
+// struct SparseMatrixFMMOperator: public OperatorI;
+// struct MatrixFreeFMMOperator: public OperatorI;
+// struct BlockOperatorI;
 
 struct Operator {
     const size_t n_rows;

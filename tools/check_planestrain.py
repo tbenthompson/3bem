@@ -29,9 +29,9 @@ def test_planestrain():
 
     exact_ux, exact_uy = exact_displacements(x)
 
-    np.testing.assert_almost_equal(ux, exact_ux, 2)
-    np.testing.assert_almost_equal(uy, exact_uy, 2)
+    np.testing.assert_almost_equal(ux, exact_ux, 1)
+    np.testing.assert_almost_equal(uy, exact_uy, 1)
 
-    check_error_norm(ux, exact_ux, 0.01)
-    check_error_norm(uy, exact_uy, 0.01)
+    check_error_norm(ux, exact_ux, 0.06)
+    check_error_norm(uy, exact_uy, 0.06)
 

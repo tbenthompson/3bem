@@ -129,6 +129,15 @@ TEST(TensorMassTerm) {
     CHECK_EQUAL(res.size(), 3);
 }
 
+TEST(MakeProblem) {
+    auto sphere1 = sphere_mesh({0,0,0}, 1.0, 0);
+    auto sphere2 = sphere_mesh({0,0,0}, 1.0, 1);
+    IdentityTensor<3,3,3> identity;
+    auto p = make_problem<3>(sphere1, sphere2, identity);
+    CHECK_EQUAL(&p.obs_mesh, &sphere1);
+    CHECK_EQUAL(&p.src_mesh, &sphere2);
+}
+
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();

@@ -121,7 +121,7 @@ TEST(ConstantLaplace2D) {
     std::vector<double> u(src_circle.n_dofs(), 7.0);
     for (double i = 1.0; i < 19.0; i++) {
         Mesh<2> obs_circle = circle_mesh(center, i, refine);
-        auto p = make_problem<2>(src_circle, obs_circle, double_kernel);
+        auto p = make_problem<2>(obs_circle, src_circle, double_kernel);
 
         // Do it via eval_integral_equation for each vertex.
         for (std::size_t i = 0; i < obs_circle.n_facets(); i++) {

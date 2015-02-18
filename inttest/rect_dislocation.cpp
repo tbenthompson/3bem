@@ -6,7 +6,7 @@ using namespace tbem;
 
 int main() {
     double surf_width = 4;
-    int refine_surf = 4;
+    int refine_surf = 3;
     double far_threshold = 3.0;
     int near_steps = 5;
     int src_quad_pts = 2;
@@ -37,7 +37,7 @@ int main() {
     std::vector<std::vector<double>> du{dux, duyz, duyz};
 
     TIC
-    auto p_rhs = make_problem<3>(fault, surface, hyp);
+    auto p_rhs = make_problem<3>(surface, fault, hyp);
     auto rhs_op = mesh_to_mesh_operator(p_rhs, qs);
     auto all_dofs_rhs = apply_operator(rhs_op, du);
     BlockFunction condensed{
