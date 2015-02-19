@@ -21,6 +21,7 @@ int main() {
     // Constraints on the end points!
 
     int refine_level = 7;
+    double linear_solve_tol = 1e-9;
     QuadStrategy<2> qs(4, 4, 10, 3.0, 1e-5);
     auto surface = circle_mesh(center, r, refine_level);
     auto n_dofs = surface.n_dofs(); 
@@ -64,9 +65,10 @@ int main() {
     };
     auto dof_map = block_dof_map_from_functions(condensed);
     auto rhs = concatenate(dof_map, condensed);
-    rhs.push_back(1.0);
+    // If the RHS is all zero, PETSc just returns. This forces it to
+    // actually solve the problem.
+    rhs[0] += 2 * linear_solve_tol;
 
-    double linear_solve_tol = 1e-9;
     int count = 0;
     auto soln_reduced = solve_system(rhs, linear_solve_tol,
         [&] (std::vector<double>& x, std::vector<double>& y) {
@@ -91,7 +93,6 @@ int main() {
             for (size_t i = 0; i < y_temp_flux.size(); i++) {
                 y[y_temp_potential.size() + i] = y_temp_flux[i];
             }
-            y[y.size() - 1] = 1.0;
         });
 
     auto both_soln = expand(dof_map, soln_reduced);

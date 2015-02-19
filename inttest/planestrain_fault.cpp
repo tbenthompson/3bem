@@ -21,8 +21,8 @@ int main() {
     ElasticHypersingular<2> hyp(shear_mod, poisson);
 
     double slip = 1;
-    std::vector<double> duxy(fault.n_dofs(), slip);
-    std::vector<std::vector<double>> du{duxy, duxy};
+    Function duxy(fault.n_dofs(), slip);
+    BlockFunction du{duxy, duxy};
 
     TIC
     auto p_rhs = make_problem<2>(surface, fault, hyp);
@@ -45,7 +45,7 @@ int main() {
     auto disp_reduced = solve(lhs, rhs, dof_map, surface, constraint_matrix);
 
     auto disp_reduced_vec = expand(dof_map, disp_reduced);
-    std::vector<std::vector<double>> soln{
+    BlockFunction soln{
         distribute_vector(constraint_matrix, disp_reduced_vec[0], surface.n_dofs()),
         distribute_vector(constraint_matrix, disp_reduced_vec[1], surface.n_dofs())
     };

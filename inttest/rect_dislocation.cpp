@@ -32,9 +32,9 @@ int main() {
     
     std::cout << "Number of surface DOFs: " << surface.n_dofs() << std::endl;
 
-    std::vector<double> dux(fault.n_dofs(), 1.0);
-    std::vector<double> duyz(fault.n_dofs(), 0.0);
-    std::vector<std::vector<double>> du{dux, duyz, duyz};
+    Function dux(fault.n_dofs(), 1.0);
+    Function duyz(fault.n_dofs(), 0.0);
+    BlockFunction du{dux, duyz, duyz};
 
     TIC
     auto p_rhs = make_problem<3>(surface, fault, hyp);
@@ -57,7 +57,7 @@ int main() {
     auto disp_reduced = solve(lhs, rhs, dof_map, surface, constraint_matrix);
 
     auto disp_reduced_vec = expand(dof_map, disp_reduced);
-    std::vector<std::vector<double>> soln{
+    BlockFunction soln{
         distribute_vector(constraint_matrix, disp_reduced_vec[0], surface.n_dofs()),
         distribute_vector(constraint_matrix, disp_reduced_vec[1], surface.n_dofs()),
         distribute_vector(constraint_matrix, disp_reduced_vec[2], surface.n_dofs())

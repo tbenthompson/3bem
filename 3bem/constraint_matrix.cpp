@@ -48,9 +48,8 @@ ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints)
     return ConstraintMatrix{new_mat};
 };
 
-std::vector<double>
-distribute_vector(const ConstraintMatrix& matrix, const std::vector<double>& in,
-                  size_t total_dofs) 
+Function
+distribute_vector(const ConstraintMatrix& matrix, const Function& in, size_t total_dofs) 
 {
     std::vector<double> out(total_dofs); 
 
@@ -80,7 +79,7 @@ distribute_vector(const ConstraintMatrix& matrix, const std::vector<double>& in,
 }
 
 void add_term_with_constraints(const ConstraintMatrix& matrix,
-    std::vector<double>& modifiable_vec, const LinearTerm& entry) 
+    Function& modifiable_vec, const LinearTerm& entry) 
 {
     if (!is_constrained(matrix, entry.dof)) {
         modifiable_vec[entry.dof] += entry.weight;
@@ -96,10 +95,9 @@ void add_term_with_constraints(const ConstraintMatrix& matrix,
     }
 }
 
-std::vector<double> condense_vector(const ConstraintMatrix& matrix,
-    const std::vector<double>& all) 
+Function condense_vector(const ConstraintMatrix& matrix, const Function& all) 
 {
-    std::vector<double> condensed_dofs(all.size(), 0.0);
+    Function condensed_dofs(all.size(), 0.0);
     for (int dof_idx = all.size() - 1; dof_idx >= 0; dof_idx--) {
         double condensed_value = condensed_dofs[dof_idx];
         condensed_dofs[dof_idx] = 0.0;
@@ -107,12 +105,14 @@ std::vector<double> condense_vector(const ConstraintMatrix& matrix,
         add_term_with_constraints(matrix, condensed_dofs, term_to_add);
     }
 
-    std::vector<double> out;
+    Function out(all.size() - matrix.size());
+    size_t next_out_idx = 0;
     for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
         if (is_constrained(matrix, dof_idx)) {
             continue;
         }
-        out.push_back(condensed_dofs[dof_idx]);
+        out[next_out_idx] = condensed_dofs[dof_idx];
+        next_out_idx++;
     }
 
     return out;
@@ -127,7 +127,7 @@ void add_entry_with_constraints(const ConstraintMatrix& row_cm,
     const ConstraintMatrix* cm;
     if (!is_constrained(row_cm, entry.loc[0])) {
         if (!is_constrained(col_cm, entry.loc[1])) {
-            size_t entry_idx = entry.loc[0] * modifiable_matrix.n_cols +
+            size_t entry_idx = entry.loc[0] * modifiable_matrix.n_cols() +
                                entry.loc[1];
             modifiable_matrix[entry_idx] += entry.value;
             return;
@@ -152,7 +152,7 @@ void add_entry_with_constraints(const ConstraintMatrix& row_cm,
         loc[other_axis] = entry.loc[other_axis];
         assert(loc[constrained_axis] < constrained_dof);
 
-        size_t entry_idx = loc[0] * modifiable_matrix.n_cols + loc[1];
+        size_t entry_idx = loc[0] * modifiable_matrix.n_cols() + loc[1];
         modifiable_matrix[entry_idx] += recurse_weight;
     }
 }
@@ -160,24 +160,24 @@ void add_entry_with_constraints(const ConstraintMatrix& row_cm,
 Operator remove_constrained(const ConstraintMatrix& row_cm,
     const ConstraintMatrix& col_cm, const Operator& matrix) 
 {
-    assert(matrix.n_rows >= row_cm.size());
-    assert(matrix.n_cols >= col_cm.size());
+    assert(matrix.n_rows() >= row_cm.size());
+    assert(matrix.n_cols() >= col_cm.size());
 
-    auto n_rows_out = matrix.n_rows - row_cm.size();
-    auto n_cols_out = matrix.n_cols - col_cm.size();
-    auto out = Operator::empty(n_rows_out, n_cols_out);
+    auto n_rows_out = matrix.n_rows() - row_cm.size();
+    auto n_cols_out = matrix.n_cols() - col_cm.size();
+    auto out = Operator(n_rows_out, n_cols_out);
 
     size_t out_row_idx = 0;
-    for (size_t in_row_idx = 0; in_row_idx < matrix.n_rows; in_row_idx++) {
+    for (size_t in_row_idx = 0; in_row_idx < matrix.n_rows(); in_row_idx++) {
         if (is_constrained(row_cm, in_row_idx)) {
             continue;
         }
         size_t out_col_idx = 0;
-        for (size_t in_col_idx = 0; in_col_idx < matrix.n_cols; in_col_idx++) {
+        for (size_t in_col_idx = 0; in_col_idx < matrix.n_cols(); in_col_idx++) {
             if (is_constrained(col_cm, in_col_idx)) {
                 continue;
             }
-            auto in_entry_idx = in_row_idx * matrix.n_cols + in_col_idx;
+            auto in_entry_idx = in_row_idx * matrix.n_cols() + in_col_idx;
             auto out_entry_idx = out_row_idx * n_cols_out + out_col_idx;
             out[out_entry_idx] = matrix[in_entry_idx];
 
@@ -192,11 +192,11 @@ Operator remove_constrained(const ConstraintMatrix& row_cm,
 Operator condense_matrix(const ConstraintMatrix& row_cm,
     const ConstraintMatrix& col_cm, const Operator& matrix)
 {
-    auto condensed = Operator::constant(matrix.n_rows, matrix.n_cols, 0.0);
+    auto condensed = Operator(matrix.n_rows(), matrix.n_cols(), 0.0);
 
-    for (int row_idx = matrix.n_rows - 1; row_idx >= 0; --row_idx) {
-        for (int col_idx = matrix.n_cols - 1; col_idx >= 0; --col_idx) {
-            auto entry_idx = row_idx * matrix.n_cols + col_idx;
+    for (int row_idx = matrix.n_rows() - 1; row_idx >= 0; --row_idx) {
+        for (int col_idx = matrix.n_cols() - 1; col_idx >= 0; --col_idx) {
+            auto entry_idx = row_idx * matrix.n_cols() + col_idx;
             auto condensed_value = condensed[entry_idx];
             condensed[entry_idx] = 0.0;
             MatrixEntry entry_to_add{

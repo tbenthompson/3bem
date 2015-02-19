@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cassert>
-typedef std::vector<double> Function;
+#include "function.h"
 
 namespace tbem {
 
@@ -18,13 +18,11 @@ struct BlockDOFMap {
 
 BlockDOFMap build_block_dof_map(std::vector<size_t> component_sizes);
 
-BlockDOFMap block_dof_map_from_functions(const std::vector<Function>& fncs);
+BlockDOFMap block_dof_map_from_functions(const BlockFunction& fncs);
 
-Function 
-concatenate(const BlockDOFMap& dof_map, const std::vector<Function>& fncs);
+Function concatenate(const BlockDOFMap& dof_map, const BlockFunction& fncs);
 
-std::vector<Function>
-expand(const BlockDOFMap& dof_map, const std::vector<double>& data);
+BlockFunction expand(const BlockDOFMap& dof_map, const Function& data);
 
 } // end namespace tbem
 

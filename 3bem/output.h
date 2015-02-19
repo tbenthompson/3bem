@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include "mesh.h"
+#include "function.h"
 #include "vec_ops.h"
 
 namespace tbem {
@@ -21,7 +22,7 @@ class Outputter {
 public:
     virtual void write_locations(int dim1, int dim2, const void* data_ptr) const = 0;
     virtual void write_values(const std::string& name, int n_vars,
-        const std::vector<double>& data) const = 0;
+        const Function& data) const = 0;
 };
 
 class HDFOutputter: public Outputter {
@@ -31,14 +32,14 @@ public:
 
     virtual void write_locations(int dim1, int dim2, const void* data_ptr) const;
     virtual void write_values(const std::string& name, int n_vars,
-        const std::vector<double>& data) const;
+        const Function& data) const;
 
     const int file_id;
 };
 
 template <size_t dim>
 void out_surface(const Outputter& o, const Mesh<dim>& mesh,
-                 const std::vector<std::vector<double>>& data) {
+                 const BlockFunction& data) {
     o.write_locations(mesh.facets.size(), dim * dim, mesh.facets.data());
     for (size_t i = 0; i < data.size(); i++) {
         assert(data[i].size() == mesh.n_dofs());
@@ -48,7 +49,7 @@ void out_surface(const Outputter& o, const Mesh<dim>& mesh,
 
 template <size_t dim> 
 void out_volume(const Outputter& o, const std::vector<Vec<double,dim>>& points,
-                const std::vector<std::vector<double>>& data) {
+                const BlockFunction& data) {
     o.write_locations(points.size(), dim, points.data());
     for (size_t i = 0; i < data.size(); i++) {
         assert(data[i].size() == points.size());

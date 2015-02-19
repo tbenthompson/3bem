@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "constraint.h"
 #include "operator.h"
+#include "function.h"
 
 namespace tbem {
 
@@ -17,12 +18,11 @@ RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
 ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints);
 
 /* Accepts a reduced DOF vector and returns the full DOF vector. */
-std::vector<double> distribute_vector(const ConstraintMatrix& matrix, 
-    const std::vector<double>& in, size_t total_dofs);
+Function distribute_vector(const ConstraintMatrix& matrix, 
+    const Function& in, size_t total_dofs);
 
 /* Accepts a full DOF vector and returns the reduced DOF vector.  */
-std::vector<double> condense_vector(const ConstraintMatrix& matrix,
-    const std::vector<double>& all);
+Function condense_vector(const ConstraintMatrix& matrix, const Function& all);
 
 struct MatrixEntry 
 {

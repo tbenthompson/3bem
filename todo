@@ -7,6 +7,7 @@ S: more flexible build system -- compile one test at a time (just use object fil
 MF: petsc-interface -- return soln instead of copying within the matvecfnc
 DD: Define much much clearer interfaces with the outside world.
 -- Maybe restrict the main .h files to outward facing interfaces. I could use _impl.h files for inward facing header files. I could try this with constraints.h
+-- figure out all the entry points that the "elastic" code touches the library, reduce the number and judge critically which access is necessary
 S: Consider getting rid of autocheck as a dependency.
 -- better random number generation in util.h, maybe separate out to random.h?
 S: Pull some of vec.h out into a separate module "geometry.h"
@@ -20,7 +21,7 @@ NF: Handle the general case when fault-surface intersection does not occur at a 
 MILESTONE: FMM-BEM INTEGRATION
 DD: BIG: decide whether to use the direct FMM-based inversion methods.
 
-MF: Change the mass_operator to be the galerkin operator? What difficulties does this introduce?
+MF: Change the mass_operator to be the galerkin operator? What difficulties does this introduce? Is this correct?
 NF: Interface for Operators -- extend with sparse matrix operators and FMMOperator
 -- start with a second operator type that recomputes the far-field but only computes the near-field once. this will break the current memory barrier and clarify the interface with an easy test case. the fmm case mixes up the operator problem together with the approximation problem. attack one at a time
 -- move mat_mult to be a member function for an operator?
@@ -29,6 +30,7 @@ NF: Imagine some kind of general purpose "nearfield" structure that can allow a 
 NF: Once FMM-BEM integration is completed, a sparse matrix storage format should be used for the nearfield entries.
 NF: A method that creates a non-matrix based operator that consists of strengths of point sources. First, evaluate this with a direct multiplication interaction.
 NF: Used the FMMOperator to perform an FMM evaluation within an iteration. 
+
 S: Make Box an immutable data type.
 S: Make OctreeCell an immutable data type.
 S: Within FMMInfo::P2M_helper: Extract P2M_cell_cell.
@@ -38,9 +40,6 @@ S: Decoupling to allow testing individual pieces of the FMM algorithm.
 S: Extract a get_box or get_single_pt_box function or both from the Octree::build_child function. In general, make that function more testable.
 S: The min_code and max_code may not be necessary in OctreeCell except for construction.
 S: Make Octree an immutable data type. 
-
-MILESTONE: MUCH FASTER NEARFIELD QUADRATURE?
-NF: Interface for integral term computation. The seam between bem.h and integral_term.h
 
 --------------------------------------- Unaffiliated tasks
 TESTS(T):

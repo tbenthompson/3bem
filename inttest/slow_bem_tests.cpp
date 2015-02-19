@@ -159,7 +159,7 @@ void galerkin_matrix_one_test(const Mesh<dim>& mesh,
     QuadStrategy<dim> qs(2);
 
     auto matrix = mesh_to_mesh_operator(p, qs);
-    std::vector<double> res = apply_operator(matrix, str); 
+    auto res = apply_operator(matrix, str); 
     double total = 0.0;
     for (auto r: res) {
         total += r;

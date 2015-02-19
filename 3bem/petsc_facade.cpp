@@ -19,18 +19,26 @@ void print_vec(Vec& x) {
 }
 
 template <class T>
-void wrapArrayInVector( T *sourceArray, size_t arraySize, std::vector<T, std::allocator<T> > &targetVector ) {
+void wrapArrayInVector(T *sourceArray, size_t arraySize, std::vector<T> &targetVector) 
+{
     typename std::_Vector_base<T, std::allocator<T> >::_Vector_impl *vectorPtr =
-    (typename std::_Vector_base<T, std::allocator<T> >::_Vector_impl *)((void *) &targetVector);
+        (typename std::_Vector_base<T, std::allocator<T> >::_Vector_impl *)(
+            (void *) &targetVector);
     vectorPtr->_M_start = sourceArray;
-    vectorPtr->_M_finish = vectorPtr->_M_end_of_storage = vectorPtr->_M_start + arraySize;
+    auto finish = vectorPtr->_M_start + arraySize;
+    vectorPtr->_M_finish = finish;
+    vectorPtr->_M_end_of_storage = finish;
 }
 
 template <class T>
-void releaseVectorWrapper( std::vector<T, std::allocator<T> > &targetVector ) {
-    typename std::_Vector_base<T, std::allocator<T> >::_Vector_impl *vectorPtr =
-        (typename std::_Vector_base<T, std::allocator<T> >::_Vector_impl *)((void *) &targetVector);
-    vectorPtr->_M_start = vectorPtr->_M_finish = vectorPtr->_M_end_of_storage = NULL;
+void releaseVectorWrapper(std::vector<T> &targetVector) 
+{
+    typename std::_Vector_base<T, std::allocator<T>>::_Vector_impl* vectorPtr =
+        (typename std::_Vector_base<T, std::allocator<T>>::_Vector_impl*)(
+            (void*) &targetVector);
+    vectorPtr->_M_start = NULL;
+    vectorPtr->_M_finish = NULL;
+    vectorPtr->_M_end_of_storage = NULL;
 }
 
 PetscErrorCode mult_wrapper(Mat A, Vec x, Vec y) {
@@ -82,8 +90,9 @@ void setup_ksp(MPI_Comm comm, KSP& ksp, Mat& mat, double tolerance) {
     CHKERRABORT(comm,ierr);
 }
 
-std::vector<double> solve_system(const double* rhs, int n_dofs,
-                                 double tolerance, MatVecFnc fnc) {
+std::vector<double>
+solve_system(const double* rhs, int n_dofs, double tolerance, MatVecFnc fnc) 
+{
     int argc = 0;
     char** args = new char*[0];
     PetscInitialize(&argc, &args, (char*)0, "bem code"); 
@@ -111,8 +120,8 @@ std::vector<double> solve_system(const double* rhs, int n_dofs,
     return retval;
 }
 
-std::vector<double> solve_system(const std::vector<double>& rhs,
-                                 double tolerance, MatVecFnc fnc) {
+std::vector<double> solve_system(const Function& rhs, double tolerance, MatVecFnc fnc) 
+{
     return solve_system(rhs.data(), rhs.size(), tolerance, fnc);
 }
 

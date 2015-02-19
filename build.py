@@ -52,7 +52,7 @@ base_cpp_flags = '-Wall -std=c++11 -fopenmp'.split()
 base_cpp_flags.extend(['-I' + loc for loc in includes])
 
 debug_flags = '-g -Og -DDEBUG=1'.split()
-release_flags = '-DNDEBUG=1 -Ofast -ffast-math -funroll-loops'.split()
+release_flags = '-DDEBUG=1 -Ofast -ffast-math -funroll-loops'.split()
 profile_flags = release_flags + ['-g']
 test_coverage_flags = ['--coverage']
 test_coverage_flags.extend(debug_flags)

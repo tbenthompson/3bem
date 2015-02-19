@@ -127,7 +127,7 @@ inline BlockOperator build_operator_shape(size_t n_comp_rows, size_t n_comp_cols
 {
     std::vector<Operator> ops;
     for (size_t i = 0; i < n_comp_rows * n_comp_cols; i++) {
-        ops.push_back(Operator::constant(n_rows, n_cols, 0.0));
+        ops.push_back(Operator(n_rows, n_cols, 0.0));
     }
     return {n_comp_rows, n_comp_cols, ops}; 
 }

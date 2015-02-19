@@ -10,7 +10,7 @@ TEST(ArmadilloInvert) {
          2, 1}
     };
 
-    auto arma_result = arma_invert(make_operator(2, 2, orig_mat));
+    auto arma_result = arma_invert(Operator(2, 2, orig_mat));
 
     std::vector<double> correct{
         {-1 / 3.0, 1 / 3.0,

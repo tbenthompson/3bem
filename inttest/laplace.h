@@ -6,7 +6,7 @@
 
 using namespace tbem;
 
-double error_inf(const std::vector<double>& a, const std::vector<double>& b);
+double error_inf(const Function& a, const Function& b);
 
 double random_val(); 
 

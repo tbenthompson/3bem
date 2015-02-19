@@ -6,10 +6,19 @@ namespace ac = autocheck;
 using namespace tbem;
 
 struct Data {
-    BlockFunction a{ {1,2}, {3,4} };
-    BlockFunction b{ {-1,-2}, {-3,-4} };
-    BlockFunction c{ {0,0}, {0,0} };
+    BlockFunction a{{1,2}, {3,4}};
+    BlockFunction b{{-1,-2}, {-3,-4}};
+    BlockFunction c{{0,0}, {0,0}};
 };
+
+TEST_FIXTURE(Data, FunctionSize) {
+    CHECK_EQUAL(a.size(), 2);
+    CHECK_EQUAL(a[0].size(), 2);
+}
+
+TEST_FIXTURE(Data, FunctionIdx) {
+    CHECK_EQUAL(a[0][0], 1.0);
+}
 
 TEST_FIXTURE(Data, BlockFunctionAdd) {
     a += b;
