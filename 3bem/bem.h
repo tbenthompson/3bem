@@ -9,7 +9,7 @@
 #include "quadrature.h"
 #include "integral_term.h"
 #include "identity_kernels.h"
-#include "operator.h"
+#include "dense_operator.h"
 
 namespace tbem {
 

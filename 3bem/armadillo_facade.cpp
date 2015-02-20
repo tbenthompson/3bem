@@ -1,5 +1,5 @@
 #include "armadillo_facade.h"
-#include "operator.h"
+#include "dense_operator.h"
 #include <armadillo>
 
 namespace tbem {

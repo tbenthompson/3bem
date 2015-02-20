@@ -3,7 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include "constraint.h"
-#include "operator.h"
+#include "dense_operator.h"
 #include "function.h"
 
 namespace tbem {

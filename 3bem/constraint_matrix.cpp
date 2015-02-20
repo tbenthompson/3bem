@@ -214,17 +214,17 @@ Operator condense_matrix(const ConstraintMatrix& row_cm,
 BlockOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
     const std::vector<ConstraintMatrix>& col_cms, const BlockOperator& op) {
     std::vector<Operator> out_ops;
-    for (size_t d1 = 0; d1 < op.n_comp_rows; d1++) {
-        for (size_t d2 = 0; d2 < op.n_comp_cols; d2++) {
+    for (size_t d1 = 0; d1 < op.n_block_rows(); d1++) {
+        for (size_t d2 = 0; d2 < op.n_block_cols(); d2++) {
             out_ops.push_back(
                 condense_matrix(row_cms[d1], col_cms[d2],
-                    op.ops[d1 * op.n_comp_cols + d2])
+                    op.ops[d1 * op.n_block_cols() + d2])
             );
         }
     }
     return {
-        op.n_comp_rows,
-        op.n_comp_cols,
+        op.n_block_rows(),
+        op.n_block_cols(),
         out_ops
     };
 }

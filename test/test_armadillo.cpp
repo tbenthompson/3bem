@@ -1,6 +1,6 @@
 #include "UnitTest++.h"
 #include "armadillo_facade.h"
-#include "operator.h"
+#include "dense_operator.h"
 
 using namespace tbem;
 
