@@ -12,7 +12,7 @@ struct InternalVec {
     typedef InternalVec<T> MyType;
     typedef std::vector<T> ContainerType;
 
-    ContainerType _data;
+    ContainerType storage;
 
     InternalVec(); 
     explicit InternalVec(size_t n_elements);
@@ -54,8 +54,8 @@ struct InternalVec {
     
 };
 
-typedef InternalVec<double> Function;
-typedef InternalVec<Function> BlockFunction;
+typedef InternalVec<double> VectorX;
+typedef InternalVec<VectorX> BlockVectorX;
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const InternalVec<T>& a);

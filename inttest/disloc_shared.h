@@ -23,7 +23,7 @@ ConstraintMatrix surf_fault_constraints(const VertexIterator<dim>& surf_it,
 template <size_t dim>
 std::vector<double> solve(
     const BlockOperator& lhs,
-    const Function& rhs, 
+    const VectorX& rhs, 
     const BlockDOFMap& dof_map,
     const Mesh<dim>& mesh,
     const ConstraintMatrix& constraint_matrix) {
@@ -35,12 +35,12 @@ std::vector<double> solve(
             count++;
 
             auto x_fncs = expand(dof_map, x);
-            BlockFunction x_vec(dim);
+            BlockVectorX x_vec(dim);
             for (size_t d = 0; d < dim; d++) {
                 x_vec[d] = distribute_vector(constraint_matrix, x_fncs[d], mesh.n_dofs());
             }
             auto y_vec = apply_operator(lhs, x_vec);
-            BlockFunction condensed(dim);
+            BlockVectorX condensed(dim);
             for (size_t d = 0; d < dim; d++) {
                 condensed[d] = condense_vector(constraint_matrix, y_vec[d]);
             }

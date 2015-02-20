@@ -13,7 +13,7 @@ using namespace tbem;
 auto fault = line_mesh({0, -1}, {0, 0}).refine_repeatedly(0);
 
 // Unit slip on the fault plane.
-Function slip(fault.n_dofs(), 1.0);
+VectorX slip(fault.n_dofs(), 1.0);
 
 
 void full_space() {
@@ -89,7 +89,7 @@ void half_space() {
 
     // Solve the linear system.
     double linear_solve_tol = 1e-5;
-    auto soln_reduced = solve_system(rhs._data, linear_solve_tol,
+    auto soln_reduced = solve_system(rhs, linear_solve_tol,
         [&] (std::vector<double>& x, std::vector<double>& y) {
             auto x_full = distribute_vector(constraint_matrix, x, surface2.n_dofs());
             auto y_mult = apply_operator(lhs, x_full); 
@@ -108,8 +108,8 @@ void half_space() {
     int nx = 200; int ny = 200;
     int n_tot = nx * ny;
     std::vector<Vec2<double>> interior_pts(n_tot);
-    Function interior_disp(n_tot);
-    BlockFunction interior_trac(2);
+    VectorX interior_disp(n_tot);
+    BlockVectorX interior_trac(2);
     interior_trac[0].resize(n_tot);
     interior_trac[1].resize(n_tot);
 

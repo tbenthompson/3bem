@@ -44,7 +44,7 @@ void HDFOutputter::write_locations(int dim1, int dim2, const void* data_ptr) con
 }
 
 void HDFOutputter::write_values(const std::string& name, 
-        int n_vars, const Function& data) const {
+        int n_vars, const VectorX& data) const {
     assert(data.size() % n_vars == 0);
 
     int n_dofs = data.size() / n_vars;

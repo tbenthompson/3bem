@@ -25,7 +25,7 @@ TEST(SimpleMatrixMultiplyWithComponents) {
             Operator(1, 1, {0})
         }
     };
-    BlockFunction x({Function({3}), Function({4})});
+    BlockVectorX x({VectorX({3}), VectorX({4})});
     auto res = apply_operator(matrix, x);
     CHECK_EQUAL(res[0][0], 4);
     CHECK_EQUAL(res[1][0], 3);

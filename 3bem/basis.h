@@ -7,7 +7,7 @@
 namespace tbem {
 
 template <size_t dim, typename Fnc> 
-Function constrained_interpolate(const Mesh<dim>& mesh,
+VectorX constrained_interpolate(const Mesh<dim>& mesh,
                                             const Fnc& fnc,
                                             const ConstraintMatrix& matrix) {
     int n_dofs = dim * mesh.facets.size();
@@ -28,7 +28,7 @@ Function constrained_interpolate(const Mesh<dim>& mesh,
  * mesh.
  */
 template <size_t dim, typename Fnc>
-Function interpolate(const Mesh<dim>& mesh, const Fnc& fnc) {
+VectorX interpolate(const Mesh<dim>& mesh, const Fnc& fnc) {
     return constrained_interpolate<dim,Fnc>(mesh, fnc, ConstraintMatrix{});
 }
 

@@ -2,7 +2,7 @@
 
 using namespace tbem;
 
-double error_inf(const Function& a, const Function& b) {
+double error_inf(const VectorX& a, const VectorX& b) {
     double error = 0.0;
     for (unsigned int i = 0; i < a.size(); i++) {
         error = std::max(std::fabs(a[i] - b[i]), error);

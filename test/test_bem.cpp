@@ -119,7 +119,7 @@ TEST(ObsPtFromFace) {
 
 TEST(TensorMassTerm) {
     auto sphere = sphere_mesh({0,0,0}, 1.0, 1);
-    BlockFunction str(3, Function(sphere.n_dofs(), 1.0));
+    BlockVectorX str(3, VectorX(sphere.n_dofs(), 1.0));
     IdentityTensor<3,3,3> identity;
     auto p = make_problem<3>(sphere, sphere, identity);
     QuadStrategy<3> qs(2);

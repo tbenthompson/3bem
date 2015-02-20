@@ -21,15 +21,15 @@ int main() {
     ElasticHypersingular<2> hyp(shear_mod, poisson);
 
     double slip = 1;
-    Function duxy(fault.n_dofs(), slip);
-    BlockFunction du{duxy, duxy};
+    VectorX duxy(fault.n_dofs(), slip);
+    BlockVectorX du{duxy, duxy};
 
     TIC
     auto p_rhs = make_problem<2>(surface, fault, hyp);
     auto rhs_op = mesh_to_mesh_operator(p_rhs, qs);
     auto res = apply_operator(rhs_op, du);
     auto all_dofs_rhs = apply_operator(rhs_op, du);
-    BlockFunction condensed{
+    BlockVectorX condensed{
         condense_vector(constraint_matrix, all_dofs_rhs[0]),
         condense_vector(constraint_matrix, all_dofs_rhs[1])
     };
@@ -45,7 +45,7 @@ int main() {
     auto disp_reduced = solve(lhs, rhs, dof_map, surface, constraint_matrix);
 
     auto disp_reduced_vec = expand(dof_map, disp_reduced);
-    BlockFunction soln{
+    BlockVectorX soln{
         distribute_vector(constraint_matrix, disp_reduced_vec[0], surface.n_dofs()),
         distribute_vector(constraint_matrix, disp_reduced_vec[1], surface.n_dofs())
     };

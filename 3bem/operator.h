@@ -13,7 +13,7 @@ namespace tbem {
 struct OperatorI {
     virtual size_t n_rows() const = 0;
     virtual size_t n_cols() const = 0;
-    virtual Function apply(const Function& x) const = 0;
+    virtual VectorX apply(const VectorX& x) const = 0;
 };
 
 // struct DenseMatrixOperator: public OperatorI;
@@ -50,7 +50,7 @@ struct Operator: public OperatorI {
     virtual size_t n_cols() const {return _n_cols;}
     size_t n_elements() const {return _n_rows * _n_cols;}
 
-    virtual Function apply(const Function& x) const;
+    virtual VectorX apply(const VectorX& x) const;
 
     const DataT& data() const {
         return *_data;
@@ -72,9 +72,9 @@ struct BlockOperator
     std::vector<Operator> ops;
 };
 
-BlockFunction apply_operator(const BlockOperator& A, const BlockFunction& x);
+BlockVectorX apply_operator(const BlockOperator& A, const BlockVectorX& x);
 
-Function apply_operator(const BlockOperator& A, const Function& x); 
+VectorX apply_operator(const BlockOperator& A, const VectorX& x); 
 
 BlockOperator combine_components(const BlockOperator& op);
 

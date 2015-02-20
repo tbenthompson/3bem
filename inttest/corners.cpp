@@ -59,7 +59,7 @@ int main() {
 
     std::vector<double> rhs_potential(n_dofs, 0.0);
     std::vector<double> rhs_flux(n_dofs, 0.0);
-    std::vector<Function> condensed{
+    std::vector<VectorX> condensed{
         condense_vector(potential_cm, rhs_potential),
         condense_vector(flux_cm, rhs_flux),
     };

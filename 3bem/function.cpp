@@ -16,79 +16,79 @@ InternalVec<T>::InternalVec() {}
 
 template <typename T>
 InternalVec<T>::InternalVec(size_t n_elements):
-    _data(n_elements)
+    storage(n_elements)
 {}
 
 template <typename T>
 InternalVec<T>::InternalVec(size_t n_elements, const T& value):
-    _data(n_elements, value)
+    storage(n_elements, value)
 {}
 
 template <typename T>
 InternalVec<T>::InternalVec(const ContainerType& data):
-    _data(data)
+    storage(data)
 {}
 
 template <typename T>
 InternalVec<T>::InternalVec(std::initializer_list<T> s):
-    _data(s)
+    storage(s)
 {}
 
 template <typename T>
 void InternalVec<T>::resize(size_t new_size) {
-    _data.resize(new_size);
+    storage.resize(new_size);
 }
 
 template <typename T>
 ValueType<T>& InternalVec<T>::operator[] (size_t idx) {
-    return _data[idx];
+    return storage[idx];
 }
 
 template <typename T>
 const ValueType<T>& InternalVec<T>::operator[] (size_t idx) const {
-    return _data[idx];
+    return storage[idx];
 }
 
 template <typename T>
 typename ContainerType<T>::iterator InternalVec<T>::begin() {
-    return _data.begin();
+    return storage.begin();
 }
 
 template <typename T>
 typename ContainerType<T>::const_iterator InternalVec<T>::begin() const {
-    return _data.begin();
+    return storage.begin();
 }
 
 template <typename T>
 typename ContainerType<T>::iterator InternalVec<T>::end() {
-    return _data.end();
+    return storage.end();
 }
 
 template <typename T>
 typename ContainerType<T>::const_iterator InternalVec<T>::end() const {
-    return _data.end();
+    return storage.end();
 }
 
 template <typename T>
 ValueType<T>* InternalVec<T>::data() {
-    return _data.data();
+    return storage.data();
 }
 
 template <typename T>
 const ValueType<T>* InternalVec<T>::data() const {
-    return _data.data();
+    return storage.data();
 }
 
 template <typename T>
 size_t InternalVec<T>::size() const {
-    return _data.size();
+    return storage.size();
 }
 
 template <typename T>
 MyType<T>& InternalVec<T>::operator+=(const MyType& b) {
     assert(size() == b.size());
     for (size_t i = 0; i < size(); i++) {
-        _data[i] += b[i];
+        storage[i] += b[i];
     }
     return *this;
 }
@@ -96,7 +96,7 @@ MyType<T>& InternalVec<T>::operator+=(const MyType& b) {
 template <typename T>
 MyType<T>& InternalVec<T>::operator+=(double b) {
     for (size_t i = 0; i < size(); i++) {
-        _data[i] += b;
+        storage[i] += b;
     }
     return *this;
 }
@@ -105,7 +105,7 @@ template <typename T>
 MyType<T>& InternalVec<T>::operator-=(const MyType& b) {
     assert(size() == b.size());
     for (size_t i = 0; i < size(); i++) {
-        _data[i] -= b[i];
+        storage[i] -= b[i];
     }
     return *this;
 }
@@ -113,7 +113,7 @@ MyType<T>& InternalVec<T>::operator-=(const MyType& b) {
 template <typename T>
 MyType<T>& InternalVec<T>::operator-=(double b) {
     for (size_t i = 0; i < size(); i++) {
-        _data[i] -= b;
+        storage[i] -= b;
     }
     return *this;
 }
@@ -122,7 +122,7 @@ template <typename T>
 MyType<T>& InternalVec<T>::operator*=(const MyType& b) {
     assert(size() == b.size());
     for (size_t i = 0; i < size(); i++) {
-        _data[i] *= b[i];
+        storage[i] *= b[i];
     }
     return *this;
 }
@@ -130,7 +130,7 @@ MyType<T>& InternalVec<T>::operator*=(const MyType& b) {
 template <typename T>
 MyType<T>& InternalVec<T>::operator*=(double b) {
     for (size_t i = 0; i < size(); i++) {
-        _data[i] *= b;
+        storage[i] *= b;
     }
     return *this;
 }
@@ -151,7 +151,7 @@ bool InternalVec<T>::operator==(const InternalVec<T>& b) const {
     }
     bool result = true;
     for (size_t i = 0; i < size(); i++) {
-        result = result && (_data[i] == b[i]);
+        result = result && (storage[i] == b[i]);
     }
     return result;
 }
@@ -202,9 +202,9 @@ std::ostream& operator<<(std::ostream& os, const InternalVec<T>& a) {
 }
 
 template 
-std::ostream& operator<<(std::ostream& os, const Function& a);
+std::ostream& operator<<(std::ostream& os, const VectorX& a);
 template 
-std::ostream& operator<<(std::ostream& os, const BlockFunction& a);
+std::ostream& operator<<(std::ostream& os, const BlockVectorX& a);
 
 template class InternalVec<double>;
 template class InternalVec<InternalVec<double>>;

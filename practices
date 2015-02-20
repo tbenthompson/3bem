@@ -16,7 +16,7 @@ verbs for function names
 
 Names should be descriptive
 
-Functions should be short -- <20 lines
+VectorXs should be short -- <20 lines
 
 Documentation should be in header files.
 

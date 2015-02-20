@@ -14,7 +14,7 @@ RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
                                              const ConstraintMatrix& matrix) 
 {
     if (c.terms.size() == 0) {
-        std::string msg = "Function: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.";
+        std::string msg = "VectorX: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.";
         throw std::invalid_argument(msg);
     }
 
@@ -48,8 +48,8 @@ ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints)
     return ConstraintMatrix{new_mat};
 };
 
-Function
-distribute_vector(const ConstraintMatrix& matrix, const Function& in, size_t total_dofs) 
+VectorX
+distribute_vector(const ConstraintMatrix& matrix, const VectorX& in, size_t total_dofs) 
 {
     std::vector<double> out(total_dofs); 
 
@@ -79,7 +79,7 @@ distribute_vector(const ConstraintMatrix& matrix, const Function& in, size_t tot
 }
 
 void add_term_with_constraints(const ConstraintMatrix& matrix,
-    Function& modifiable_vec, const LinearTerm& entry) 
+    VectorX& modifiable_vec, const LinearTerm& entry) 
 {
     if (!is_constrained(matrix, entry.dof)) {
         modifiable_vec[entry.dof] += entry.weight;
@@ -95,9 +95,9 @@ void add_term_with_constraints(const ConstraintMatrix& matrix,
     }
 }
 
-Function condense_vector(const ConstraintMatrix& matrix, const Function& all) 
+VectorX condense_vector(const ConstraintMatrix& matrix, const VectorX& all) 
 {
-    Function condensed_dofs(all.size(), 0.0);
+    VectorX condensed_dofs(all.size(), 0.0);
     for (int dof_idx = all.size() - 1; dof_idx >= 0; dof_idx--) {
         double condensed_value = condensed_dofs[dof_idx];
         condensed_dofs[dof_idx] = 0.0;
@@ -105,7 +105,7 @@ Function condense_vector(const ConstraintMatrix& matrix, const Function& all)
         add_term_with_constraints(matrix, condensed_dofs, term_to_add);
     }
 
-    Function out(all.size() - matrix.size());
+    VectorX out(all.size() - matrix.size());
     size_t next_out_idx = 0;
     for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
         if (is_constrained(matrix, dof_idx)) {

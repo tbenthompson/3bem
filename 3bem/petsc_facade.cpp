@@ -120,7 +120,7 @@ solve_system(const double* rhs, int n_dofs, double tolerance, MatVecFnc fnc)
     return retval;
 }
 
-std::vector<double> solve_system(const Function& rhs, double tolerance, MatVecFnc fnc) 
+std::vector<double> solve_system(const VectorX& rhs, double tolerance, MatVecFnc fnc) 
 {
     return solve_system(rhs.data(), rhs.size(), tolerance, fnc);
 }

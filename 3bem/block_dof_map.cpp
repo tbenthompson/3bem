@@ -25,7 +25,7 @@ BlockDOFMap build_block_dof_map(std::vector<size_t> component_sizes) {
     };
 }
 
-BlockDOFMap block_dof_map_from_functions(const BlockFunction& fncs) {
+BlockDOFMap block_dof_map_from_functions(const BlockVectorX& fncs) {
     std::vector<size_t> sizes;
     for (const auto& f: fncs) {
         sizes.push_back(f.size());
@@ -33,12 +33,12 @@ BlockDOFMap block_dof_map_from_functions(const BlockFunction& fncs) {
     return build_block_dof_map(sizes);
 }
 
-Function 
-concatenate(const BlockDOFMap& dof_map, const BlockFunction& fncs) 
+VectorX 
+concatenate(const BlockDOFMap& dof_map, const BlockVectorX& fncs) 
 {
     assert(fncs.size() == dof_map.n_components);
 
-    Function out(dof_map.n_dofs);
+    VectorX out(dof_map.n_dofs);
     for (size_t f_idx = 0; f_idx < dof_map.n_components; f_idx++) {
         auto start = dof_map.start_positions[f_idx];
         for (size_t i = 0; i < fncs[f_idx].size(); i++) {
@@ -49,9 +49,9 @@ concatenate(const BlockDOFMap& dof_map, const BlockFunction& fncs)
     return out;
 }
 
-BlockFunction expand(const BlockDOFMap& dof_map, const Function& data)
+BlockVectorX expand(const BlockDOFMap& dof_map, const VectorX& data)
 {
-    BlockFunction out(dof_map.n_components);
+    BlockVectorX out(dof_map.n_components);
 
     for (size_t i = 0; i < dof_map.n_components; i++) {
         auto start_dof = dof_map.start_positions[i];

@@ -2,10 +2,10 @@
 
 namespace tbem {
 
-Function Operator::apply(const Function& x) const {
+VectorX Operator::apply(const VectorX& x) const {
     assert(x.size() == n_cols());
    
-    Function res(n_rows(), 0.0);
+    VectorX res(n_rows(), 0.0);
 #pragma omp parallel for
     for (size_t i = 0; i < n_rows(); i++) {
         for (size_t j = 0; j < n_cols(); j++) {
@@ -17,12 +17,12 @@ Function Operator::apply(const Function& x) const {
     return res;
 }
 
-BlockFunction apply_operator(const BlockOperator& A, const BlockFunction& x)
+BlockVectorX apply_operator(const BlockOperator& A, const BlockVectorX& x)
 {
     assert(A.n_comp_rows * x.size() == A.ops.size());
     assert(A.n_comp_cols == x.size());
 
-    BlockFunction res(A.n_comp_rows, Function(A.ops[0].n_rows(), 0.0));
+    BlockVectorX res(A.n_comp_rows, VectorX(A.ops[0].n_rows(), 0.0));
     for (size_t d1 = 0; d1 < A.n_comp_rows; d1++) {
         for (size_t d2 = 0; d2 < A.n_comp_cols; d2++) {
             size_t comp_idx = d1 * A.n_comp_cols + d2;
@@ -37,10 +37,10 @@ BlockFunction apply_operator(const BlockOperator& A, const BlockFunction& x)
     return res;
 }
 
-Function apply_operator(const BlockOperator& A, const Function& x) 
+VectorX apply_operator(const BlockOperator& A, const VectorX& x) 
 {
     assert(A.n_comp_cols == 1 && A.n_comp_rows == 1);
-    return apply_operator(A, BlockFunction({x}))[0];
+    return apply_operator(A, BlockVectorX({x}))[0];
 }
 
 size_t total_cols(const BlockOperator& block_op) {
