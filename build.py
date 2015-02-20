@@ -104,6 +104,23 @@ def build_executables():
 executables = build_executables()
 command_params = []
 
+def test_function():
+    src = 'test/test_function'
+    lib_srcs = ['3bem/function']
+    compile_flags = cpp_flags + flag_sets['release_flags']
+    compile_runner(src, compile_flags)
+    import time
+    start = time.time()
+    for s in lib_srcs:
+        compile_runner(s, cpp_flags + flag_sets['release_flags'])
+    after()
+    stop = time.time()
+    print stop - start
+    start = stop
+    link_runner([src] + lib_srcs, oname(src), test_link_flags)
+    stop = time.time()
+    print stop - start
+
 def entrypoint():
     save_parameters()
     main(parallel_ok = True, jobs = 12)

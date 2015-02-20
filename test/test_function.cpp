@@ -1,15 +1,15 @@
 #include "UnitTest++.h"
 #include "function.h"
-#include "autocheck/autocheck.hpp"
-namespace ac = autocheck;
 
 using namespace tbem;
+
 
 struct Data {
     BlockFunction a{{1,2}, {3,4}};
     BlockFunction b{{-1,-2}, {-3,-4}};
     BlockFunction c{{0,0}, {0,0}};
 };
+
 
 TEST_FIXTURE(Data, FunctionSize) {
     CHECK_EQUAL(a.size(), 2);
@@ -35,6 +35,13 @@ TEST_FIXTURE(Data, BlockFunctionMul) {
     a += b * 2;
     CHECK_EQUAL(a, c);
 }
+
+TEST_FIXTURE(Data, MoreMath) {
+    auto d = a * b + 2 - (-c);
+    BlockFunction correct{{1, -2}, {-7, -14}};
+    CHECK_EQUAL(d, correct);
+}
+
 
 int main(int, char const *[])
 {
