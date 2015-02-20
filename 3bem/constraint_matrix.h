@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include "constraint.h"
 #include "dense_operator.h"
-#include "function.h"
+#include "fwd_vectorx.h"
 
 namespace tbem {
 
@@ -30,11 +30,11 @@ struct MatrixEntry
     const double value;
 };
 
-Operator condense_matrix(const ConstraintMatrix& row_cm,
-    const ConstraintMatrix& col_cm, const Operator& matrix);
+DenseOperator condense_matrix(const ConstraintMatrix& row_cm,
+    const ConstraintMatrix& col_cm, const DenseOperator& matrix);
 
-BlockOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
-    const std::vector<ConstraintMatrix>& col_cms, const BlockOperator& op);
+BlockDenseOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
+    const std::vector<ConstraintMatrix>& col_cms, const BlockDenseOperator& op);
 
 } // end namespace tbem
 

@@ -1,8 +1,38 @@
 #include "dense_operator.h"
+#include "vectorx.h"
+#include <cassert>
 
 namespace tbem {
 
-VectorX Operator::apply(const VectorX& x) const {
+DenseOperator::DenseOperator(size_t n_rows, size_t n_cols,
+        const std::vector<double>& data):
+    shape{n_rows, n_cols},
+    storage(std::make_shared<std::vector<double>>(data))
+{}
+
+DenseOperator::DenseOperator(size_t n_rows, size_t n_cols):
+    shape{n_rows, n_cols},
+    storage(std::make_shared<std::vector<double>>(n_rows * n_cols))
+{}
+
+DenseOperator::DenseOperator(size_t n_rows, size_t n_cols, double val):
+    shape{n_rows, n_cols},
+    storage(std::make_shared<std::vector<double>>(n_rows * n_cols, val))
+{}
+
+size_t DenseOperator::n_rows() const {
+    return shape.n_rows;
+}
+
+size_t DenseOperator::n_cols() const {
+    return shape.n_cols;
+}
+
+size_t DenseOperator::n_elements() const {
+    return shape.n_rows * shape.n_cols;
+}
+
+VectorX DenseOperator::apply(const VectorX& x) const {
     assert(x.size() == n_cols());
    
     VectorX res(n_rows(), 0.0);
@@ -17,15 +47,33 @@ VectorX Operator::apply(const VectorX& x) const {
     return res;
 }
 
-size_t BlockOperator::n_block_rows() const {
+const DenseOperator::DataT& DenseOperator::data() const {
+    return *storage;
+}
+
+double& DenseOperator::operator[](size_t idx) {
+    return (*storage)[idx];
+}
+
+const double& DenseOperator::operator[](size_t idx) const {
+    return (*storage)[idx];
+}
+
+BlockDenseOperator::BlockDenseOperator(size_t n_block_rows, size_t n_block_cols, 
+        const std::vector<DenseOperator>& ops):
+    shape{n_block_rows, n_block_cols},
+    ops(ops)
+{}
+
+size_t BlockDenseOperator::n_block_rows() const {
     return shape.n_rows;
 }
 
-size_t BlockOperator::n_block_cols() const {
+size_t BlockDenseOperator::n_block_cols() const {
     return shape.n_cols;
 }
 
-size_t BlockOperator::n_total_rows() const {
+size_t BlockDenseOperator::n_total_rows() const {
     size_t n_rows = 0;
     for (size_t d1 = 0; d1 < n_block_rows(); d1++) {
         n_rows += ops[d1 * n_block_cols()].n_rows();
@@ -33,7 +81,7 @@ size_t BlockOperator::n_total_rows() const {
     return n_rows;
 }
 
-size_t BlockOperator::n_total_cols() const {
+size_t BlockDenseOperator::n_total_cols() const {
     size_t n_cols = 0;
     for (size_t d2 = 0; d2 < n_block_cols(); d2++) {
         n_cols += ops[d2].n_cols();
@@ -42,7 +90,7 @@ size_t BlockOperator::n_total_cols() const {
 }
 
     
-BlockVectorX BlockOperator::apply(const BlockVectorX& x) const {
+BlockVectorX BlockDenseOperator::apply(const BlockVectorX& x) const {
     assert(n_block_rows() * x.size() == ops.size());
     assert(n_block_cols() == x.size());
 
@@ -58,8 +106,8 @@ BlockVectorX BlockOperator::apply(const BlockVectorX& x) const {
     return res;
 }
 
-Operator BlockOperator::combine_components() {
-    Operator out(n_total_rows(), n_total_cols());
+DenseOperator BlockDenseOperator::combine_components() {
+    DenseOperator out(n_total_rows(), n_total_cols());
 
     size_t n_rows_so_far = 0;
     for (size_t d1 = 0; d1 < n_block_rows(); d1++) {

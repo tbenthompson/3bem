@@ -1,5 +1,6 @@
 #include "UnitTest++.h"
 #include "constraint_builder.h"
+#include "vectorx.h"
 #include "mesh_gen.h"
 #include "test_shared.h"
 

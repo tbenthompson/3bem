@@ -1,5 +1,5 @@
 #include "UnitTest++.h"
-#include "function.h"
+#include "vectorx.h"
 
 using namespace tbem;
 

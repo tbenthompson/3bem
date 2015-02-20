@@ -2,7 +2,7 @@
 #define __NWQPOISJMNLJSDROIT_BASIS_H
 #include "mesh.h"
 #include "constraint_matrix.h"
-#include "function.h"
+#include "vectorx.h"
 
 namespace tbem {
 

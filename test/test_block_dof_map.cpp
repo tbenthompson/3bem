@@ -1,6 +1,6 @@
 #include "UnitTest++.h"
 #include "block_dof_map.h"
-#include "function.h"
+#include "vectorx.h"
 #include "autocheck/autocheck.hpp"
 namespace ac = autocheck;
 

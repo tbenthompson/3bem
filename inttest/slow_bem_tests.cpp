@@ -4,6 +4,7 @@
 #include "mesh_gen.h"
 #include "laplace_kernels.h"
 #include "test_shared.h"
+#include "vectorx.h"
 
 using namespace tbem;
 

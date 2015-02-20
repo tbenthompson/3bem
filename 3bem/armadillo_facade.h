@@ -6,9 +6,9 @@
 
 namespace tbem {
 
-struct Operator;
-Operator arma_invert(const Operator& op);
-double arma_cond(const Operator& op);
+struct DenseOperator;
+DenseOperator arma_invert(const DenseOperator& op);
+double arma_cond(const DenseOperator& op);
 
 } // end namespace tbem
 

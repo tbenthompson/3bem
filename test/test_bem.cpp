@@ -8,6 +8,7 @@
 #include "test_shared.h"
 #include "laplace_kernels.h"
 #include "elastic_kernels.h"
+#include "vectorx.h"
 
 using namespace tbem;
 struct EvalProb {

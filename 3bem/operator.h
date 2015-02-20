@@ -1,12 +1,9 @@
 #ifndef ADKJASdLL_OPERATOR_H
 #define ADKJASdLL_OPERATOR_H
 
-namespace tbem {
+#include "fwd_vectorx.h"
 
-template <typename T>
-struct InternalVec;
-typedef InternalVec<double> VectorX;
-typedef InternalVec<InternalVec<double>> BlockVectorX;
+namespace tbem {
 
 struct OperatorI {
     virtual size_t n_rows() const = 0;

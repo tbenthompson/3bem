@@ -22,7 +22,7 @@ ConstraintMatrix surf_fault_constraints(const VertexIterator<dim>& surf_it,
 
 template <size_t dim>
 std::vector<double> solve(
-    const BlockOperator& lhs,
+    const BlockDenseOperator& lhs,
     const VectorX& rhs, 
     const BlockDOFMap& dof_map,
     const Mesh<dim>& mesh,

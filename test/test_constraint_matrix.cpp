@@ -1,5 +1,6 @@
 #include "UnitTest++.h"
 #include "constraint_matrix.h"
+#include "vectorx.h"
 
 using namespace tbem;
 
@@ -162,7 +163,7 @@ TEST(CondenseMatrixContinuity) {
     std::vector<double> matrix{
         {1,0,0  ,  0,1,0  ,  0,0,1}
     };
-    auto result = condense_matrix(cm, cm, Operator(3, 3, matrix));
+    auto result = condense_matrix(cm, cm, DenseOperator(3, 3, matrix));
     CHECK_EQUAL(result.n_elements(), 1);
     CHECK_EQUAL(result[0], 3);
 }
@@ -174,7 +175,7 @@ TEST(CondenseMatrixContinuityPartial) {
     std::vector<double> matrix{
         {1,0,0  ,  0,1,0  ,  0,0,1}
     };
-    auto result = condense_matrix(cm, cm, Operator(3, 3, matrix));
+    auto result = condense_matrix(cm, cm, DenseOperator(3, 3, matrix));
     CHECK_EQUAL(result.n_elements(), 4);
     std::vector<double> exact{1, 0, 0, 2};
     CHECK_ARRAY_EQUAL(result.data(), exact, 4);
@@ -187,7 +188,7 @@ TEST(CondenseMatrixBoundaryCondition) {
     std::vector<double> matrix{
         {1,0,  0,1}
     };
-    auto result = condense_matrix(cm, cm, Operator(2, 2, matrix));
+    auto result = condense_matrix(cm, cm, DenseOperator(2, 2, matrix));
     CHECK_EQUAL(result.n_elements(), 1);
     CHECK_EQUAL(result[0], 1.0);
 }
@@ -203,13 +204,13 @@ TEST(CondenseNonSquareMatrixContinuity) {
     std::vector<double> matrix{
         {1,0,0  ,  0,1,0}
     };
-    auto result = condense_matrix(row_cm, col_cm, Operator(2, 3, matrix));
+    auto result = condense_matrix(row_cm, col_cm, DenseOperator(2, 3, matrix));
     CHECK_EQUAL(result.n_elements(), 1);
     CHECK_EQUAL(result[0], 2);
 }
 
-BlockOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
-    const std::vector<ConstraintMatrix>& col_cms, const BlockOperator& op);
+BlockDenseOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
+    const std::vector<ConstraintMatrix>& col_cms, const BlockDenseOperator& op);
 
 int main(int, char const *[])
 {

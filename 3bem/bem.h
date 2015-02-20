@@ -122,18 +122,18 @@ std::vector<typename KT::OperatorType> mesh_to_point_vector(const Problem<dim,KT
     return result;
 }
 
-inline BlockOperator build_operator_shape(size_t n_comp_rows, size_t n_comp_cols,
+inline BlockDenseOperator build_operator_shape(size_t n_comp_rows, size_t n_comp_cols,
     size_t n_rows, size_t n_cols) 
 {
-    std::vector<Operator> ops;
+    std::vector<DenseOperator> ops;
     for (size_t i = 0; i < n_comp_rows * n_comp_cols; i++) {
-        ops.push_back(Operator(n_rows, n_cols, 0.0));
+        ops.push_back(DenseOperator(n_rows, n_cols, 0.0));
     }
     return {n_comp_rows, n_comp_cols, ops}; 
 }
 
 template <size_t n_rows, size_t n_cols> 
-void reshape_to_add(BlockOperator& block_op, size_t idx,
+void reshape_to_add(BlockDenseOperator& block_op, size_t idx,
     const Vec<Vec<double,n_cols>,n_rows>& data) 
 {
     for (size_t d1 = 0; d1 < n_rows; d1++) {
@@ -151,7 +151,7 @@ void reshape_to_add(BlockOperator& block_op, size_t idx,
  * Q_i = \int_{S_{src}} K(x,y) \phi_i(y) dy
  */
 template <size_t dim, typename KT>
-BlockOperator mesh_to_point_operator(const Problem<dim,KT>& p,
+BlockDenseOperator mesh_to_point_operator(const Problem<dim,KT>& p,
     const QuadStrategy<dim>& qs, const ObsPt<dim>& obs) 
 {
     size_t n_out_dofs = dim * p.src_mesh.facets.size();
@@ -170,7 +170,7 @@ BlockOperator mesh_to_point_operator(const Problem<dim,KT>& p,
  * K(x,y) is the kernel function and \phi_i(x) is a basis function.
  */
 template <size_t dim, typename KT>
-BlockOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
+BlockDenseOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
                                      const QuadStrategy<dim>& qs) 
 {
     size_t n_obs_dofs = p.obs_mesh.n_dofs();
@@ -209,7 +209,7 @@ BlockOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
  * This function calculates such integrals using gaussian quadrature.
  */
 template <size_t dim, typename KT>
-BlockOperator mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
+BlockDenseOperator mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
 {
     auto n_obs_dofs = p.obs_mesh.n_dofs();
     auto block_op = build_operator_shape(KT::n_rows, KT::n_cols, n_obs_dofs, n_obs_dofs);

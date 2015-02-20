@@ -1,4 +1,5 @@
 #include "block_dof_map.h"
+#include "vectorx.h"
 
 namespace tbem {
 

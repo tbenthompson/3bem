@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cassert>
-#include "function.h"
+#include "fwd_vectorx.h"
 
 namespace tbem {
 

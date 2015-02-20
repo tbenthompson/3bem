@@ -1,8 +1,9 @@
-#ifndef __rH1JH11LHLHAHAh_FUNCTION_H
-#define __rH1JH11LHLHAHAh_FUNCTION_H
+#ifndef __rH1JH11LHLHAHAh_VEcTORX_H
+#define __rH1JH11LHLHAHAh_VEcTORX_H
 
 #include <vector>
 #include <iosfwd>
+#include "fwd_vectorx.h"
 
 namespace tbem {
 
@@ -51,15 +52,10 @@ struct InternalVec {
     MyType operator*(double rhs);
 
     bool operator==(const MyType& b) const;
-    
 };
-
-typedef InternalVec<double> VectorX;
-typedef InternalVec<VectorX> BlockVectorX;
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const InternalVec<T>& a);
-
 
 } // end namespace tbem
 

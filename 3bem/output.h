@@ -7,7 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include "mesh.h"
-#include "function.h"
+#include "vectorx.h"
 #include "vec_ops.h"
 
 namespace tbem {

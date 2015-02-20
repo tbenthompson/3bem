@@ -1,4 +1,5 @@
 #include "constraint_matrix.h"
+#include "vectorx.h"
 
 namespace tbem {
 
@@ -119,7 +120,7 @@ VectorX condense_vector(const ConstraintMatrix& matrix, const VectorX& all)
 }
 
 void add_entry_with_constraints(const ConstraintMatrix& row_cm, 
-    const ConstraintMatrix& col_cm, Operator& modifiable_matrix,
+    const ConstraintMatrix& col_cm, DenseOperator& modifiable_matrix,
     const MatrixEntry& entry) 
 {
     int constrained_axis;
@@ -157,15 +158,15 @@ void add_entry_with_constraints(const ConstraintMatrix& row_cm,
     }
 }
 
-Operator remove_constrained(const ConstraintMatrix& row_cm,
-    const ConstraintMatrix& col_cm, const Operator& matrix) 
+DenseOperator remove_constrained(const ConstraintMatrix& row_cm,
+    const ConstraintMatrix& col_cm, const DenseOperator& matrix) 
 {
     assert(matrix.n_rows() >= row_cm.size());
     assert(matrix.n_cols() >= col_cm.size());
 
     auto n_rows_out = matrix.n_rows() - row_cm.size();
     auto n_cols_out = matrix.n_cols() - col_cm.size();
-    auto out = Operator(n_rows_out, n_cols_out);
+    auto out = DenseOperator(n_rows_out, n_cols_out);
 
     size_t out_row_idx = 0;
     for (size_t in_row_idx = 0; in_row_idx < matrix.n_rows(); in_row_idx++) {
@@ -189,10 +190,10 @@ Operator remove_constrained(const ConstraintMatrix& row_cm,
     return out;
 }
 
-Operator condense_matrix(const ConstraintMatrix& row_cm,
-    const ConstraintMatrix& col_cm, const Operator& matrix)
+DenseOperator condense_matrix(const ConstraintMatrix& row_cm,
+    const ConstraintMatrix& col_cm, const DenseOperator& matrix)
 {
-    auto condensed = Operator(matrix.n_rows(), matrix.n_cols(), 0.0);
+    auto condensed = DenseOperator(matrix.n_rows(), matrix.n_cols(), 0.0);
 
     for (int row_idx = matrix.n_rows() - 1; row_idx >= 0; --row_idx) {
         for (int col_idx = matrix.n_cols() - 1; col_idx >= 0; --col_idx) {
@@ -211,9 +212,9 @@ Operator condense_matrix(const ConstraintMatrix& row_cm,
     return remove_constrained(row_cm, col_cm, condensed);
 }
 
-BlockOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
-    const std::vector<ConstraintMatrix>& col_cms, const BlockOperator& op) {
-    std::vector<Operator> out_ops;
+BlockDenseOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
+    const std::vector<ConstraintMatrix>& col_cms, const BlockDenseOperator& op) {
+    std::vector<DenseOperator> out_ops;
     for (size_t d1 = 0; d1 < op.n_block_rows(); d1++) {
         for (size_t d2 = 0; d2 < op.n_block_cols(); d2++) {
             out_ops.push_back(
