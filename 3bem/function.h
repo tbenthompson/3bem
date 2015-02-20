@@ -7,18 +7,18 @@
 namespace tbem {
 
 template <typename T>
-struct InternalFnc {
+struct InternalVec {
     typedef T ValueType;
-    typedef InternalFnc<T> MyType;
+    typedef InternalVec<T> MyType;
     typedef std::vector<T> ContainerType;
 
     ContainerType _data;
 
-    InternalFnc(); 
-    explicit InternalFnc(size_t n_elements);
-    InternalFnc(size_t n_elements, const T& value);
-    InternalFnc(const ContainerType& data);
-    InternalFnc(std::initializer_list<T> s);
+    InternalVec(); 
+    explicit InternalVec(size_t n_elements);
+    InternalVec(size_t n_elements, const T& value);
+    InternalVec(const ContainerType& data);
+    InternalVec(std::initializer_list<T> s);
 
     void resize(size_t new_size);
 
@@ -54,11 +54,11 @@ struct InternalFnc {
     
 };
 
-typedef InternalFnc<double> Function;
-typedef InternalFnc<Function> BlockFunction;
+typedef InternalVec<double> Function;
+typedef InternalVec<Function> BlockFunction;
 
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const InternalFnc<T>& a);
+std::ostream& operator<<(std::ostream& os, const InternalVec<T>& a);
 
 
 } // end namespace tbem

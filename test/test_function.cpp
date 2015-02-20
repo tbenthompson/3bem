@@ -10,7 +10,6 @@ struct Data {
     BlockFunction c{{0,0}, {0,0}};
 };
 
-
 TEST_FIXTURE(Data, FunctionSize) {
     CHECK_EQUAL(a.size(), 2);
     CHECK_EQUAL(a[0].size(), 2);
