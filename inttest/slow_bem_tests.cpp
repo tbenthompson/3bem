@@ -25,7 +25,7 @@ TEST(ConstantLaplaceBoundary) {
             auto p = make_problem<3>(sphere, sphere, double_kernel);
             ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
             auto op = mesh_to_point_operator(p, qs, obs);
-            auto result = apply_operator(op, src_strength);
+            auto result = op.apply({src_strength})[0];
             CHECK_CLOSE(result[0], -1.0, 1e-2);
         }
     }
@@ -42,17 +42,17 @@ TEST(GalerkinMatrixConstantLaplace) {
     LaplaceSingle<3> single_kernel;
     auto p_single = make_problem<3>(sphere, sphere, single_kernel);
     auto mat0 = mesh_to_mesh_operator(p_double, qs);
-    auto res0 = apply_operator(mat0, str);
+    auto res0 = mat0.apply({str})[0];
     for (std::size_t i = 0; i < res0.size(); i++) {
         res0[i] = -res0[i];
     }
     auto mat1 = mesh_to_mesh_operator(p_single, qs);
-    auto res1 = apply_operator(mat1, str);
+    auto res1 = mat1.apply({str})[0];
 
     IdentityScalar<3> identity;
     auto p_mass = make_problem<3>(sphere, sphere, identity);
     auto mass_op = mass_operator(p_mass, qs);
-    auto res2 = apply_operator(mass_op, str);
+    auto res2 = mass_op.apply({str})[0];
     CHECK_ARRAY_CLOSE(res0, res2, n_dofs, 3e-2);
     CHECK_ARRAY_CLOSE(res1, res2, n_dofs, 3e-2);
     CHECK_ARRAY_CLOSE(res0, res1, n_dofs, 3e-2);
@@ -127,7 +127,7 @@ TEST(ConstantLaplace2D) {
         for (std::size_t i = 0; i < obs_circle.n_facets(); i++) {
             ObsPt<2> pt = {0.390, obs_circle.facets[i][0], {0,0}, {0,0}}; 
             auto op = mesh_to_point_operator(p, qs, pt);
-            double result = apply_operator(op, u)[0];
+            double result = op.apply({u})[0][0];
             CHECK_CLOSE(result, -7.0, 1e-4);
         }
 
@@ -136,7 +136,7 @@ TEST(ConstantLaplace2D) {
         // mesh, because the new values are for element interactions, not pt
         // interactions. For example, Integral(1)_{0 to 0.2} == 0.2
         auto results_op = mesh_to_mesh_operator(p, qs);
-        auto results = apply_operator(results_op, u);
+        auto results = results_op.apply({u})[0];
         std::vector<double> all_ones(results.size());
         const double integral_of_basis_fnc = 0.5;
         for (size_t j = 0; j < obs_circle.facets.size(); j++) {
@@ -159,7 +159,7 @@ void galerkin_matrix_one_test(const Mesh<dim>& mesh,
     QuadStrategy<dim> qs(2);
 
     auto matrix = mesh_to_mesh_operator(p, qs);
-    auto res = apply_operator(matrix, str); 
+    auto res = matrix.apply({str})[0]; 
     double total = 0.0;
     for (auto r: res) {
         total += r;

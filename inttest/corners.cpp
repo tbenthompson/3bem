@@ -77,9 +77,9 @@ int main() {
             auto both = expand(dof_map, x);
             auto potential = distribute_vector(potential_cm, both[0], n_dofs);
             auto flux = distribute_vector(flux_cm, both[1], n_dofs);
-            auto single_eval = apply_operator(single_op, flux);
-            auto double_eval = apply_operator(double_op, potential);
-            auto mass_eval = apply_operator(mass_op, potential);
+            auto single_eval = single_op.apply({flux})[0];
+            auto double_eval = double_op.apply({potential})[0];
+            auto mass_eval = mass_op.apply({potential})[0];
             auto out = mass_eval;
             for (size_t i = 0; i < out.size(); i++) {
                 out[i] += double_eval[i];
@@ -98,9 +98,9 @@ int main() {
     auto both_soln = expand(dof_map, soln_reduced);
     auto potential_soln = distribute_vector(potential_cm, both_soln[0], n_dofs);
     auto flux_soln = distribute_vector(flux_cm, both_soln[1], n_dofs);
-    auto single_eval = apply_operator(single_op, flux_soln);
-    auto double_eval = apply_operator(double_op, potential_soln);
-    auto mass_eval = apply_operator(mass_op, potential_soln);
+    auto single_eval = single_op.apply({flux_soln})[0];
+    auto double_eval = double_op.apply({potential_soln})[0];
+    auto mass_eval = mass_op.apply({potential_soln})[0];
     for (size_t i = 0;i < single_eval.size(); i++) {
         mass_eval[i] += double_eval[i];
         mass_eval[i] -= single_eval[i];

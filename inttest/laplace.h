@@ -44,14 +44,14 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     LaplaceDouble<dim> double_kernel;
     auto p_double = make_problem<dim>(mesh, mesh, double_kernel);
     auto rhs_double_op = mesh_to_mesh_operator(p_double, qs);
-    auto rhs_double = apply_operator(rhs_double_op, u);
+    auto rhs_double = rhs_double_op.apply({u})[0];
 
     IdentityScalar<dim> identity;
     auto p_mass = make_problem<dim>(mesh, mesh, identity);
     auto mass_op = mass_operator(p_mass, qs);
-    auto rhs_mass = apply_operator(mass_op, u);
+    auto rhs_mass = mass_op.apply({u})[0];
     
-    std::vector<double> rhs_full(mesh.n_dofs());
+    VectorX rhs_full(mesh.n_dofs());
     for (unsigned int i = 0; i < rhs_full.size(); i++){
         rhs_full[i] = rhs_double[i] + rhs_mass[i];
     }
@@ -74,7 +74,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     TIC2
     auto inv_condensed_matrix = arma_invert(condensed_op);
-    auto dudn_solved_subset = apply_operator({1, 1, {inv_condensed_matrix}}, rhs);
+    auto dudn_solved_subset = inv_condensed_matrix.apply(rhs);
     TOC("Solve");
 
     // Get all the constrained DOFs from the reduced DOF vector.
@@ -92,9 +92,9 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
                           zeros<Vec<double,dim>>::make()};
        
         auto double_layer_op = mesh_to_point_operator(p_double, qs, obs);
-        double double_layer = apply_operator(double_layer_op, u)[0];
+        double double_layer = double_layer_op.apply({u})[0][0];
         auto single_layer_op = mesh_to_point_operator(p_single, qs, obs);
-        double single_layer = apply_operator(single_layer_op, dudn)[0];
+        double single_layer = single_layer_op.apply({dudn})[0][0];
         double result = single_layer - double_layer;
         double exact = fnc(obs_pt);
         double error = std::fabs(exact - result);

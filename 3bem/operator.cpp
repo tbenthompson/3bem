@@ -17,17 +17,32 @@ VectorX Operator::apply(const VectorX& x) const {
     return res;
 }
 
-BlockVectorX apply_operator(const BlockOperator& A, const BlockVectorX& x)
-{
-    assert(A.n_comp_rows * x.size() == A.ops.size());
-    assert(A.n_comp_cols == x.size());
+size_t BlockOperator::n_cols() const {
+    size_t n_cols = 0;
+    for (size_t d2 = 0; d2 < n_comp_cols; d2++) {
+        n_cols += ops[d2].n_cols();
+    }
+    return n_cols;
+}
 
-    BlockVectorX res(A.n_comp_rows, VectorX(A.ops[0].n_rows(), 0.0));
-    for (size_t d1 = 0; d1 < A.n_comp_rows; d1++) {
-        for (size_t d2 = 0; d2 < A.n_comp_cols; d2++) {
-            size_t comp_idx = d1 * A.n_comp_cols + d2;
+size_t BlockOperator::n_rows() const {
+    size_t n_rows = 0;
+    for (size_t d1 = 0; d1 < n_comp_rows; d1++) {
+        n_rows += ops[d1 * n_comp_cols].n_rows();
+    }
+    return n_rows;
+}
+    
+BlockVectorX BlockOperator::apply(const BlockVectorX& x) const {
+    assert(n_comp_rows * x.size() == ops.size());
+    assert(n_comp_cols == x.size());
 
-            const auto& op = A.ops[comp_idx];
+    BlockVectorX res(n_comp_rows, VectorX(ops[0].n_rows(), 0.0));
+    for (size_t d1 = 0; d1 < n_comp_rows; d1++) {
+        for (size_t d2 = 0; d2 < n_comp_cols; d2++) {
+            size_t comp_idx = d1 * n_comp_cols + d2;
+
+            const auto& op = ops[comp_idx];
             assert(op.n_rows() * x[d2].size() == op.data().size());
             assert(op.n_cols() == x[d2].size());
 
@@ -37,31 +52,9 @@ BlockVectorX apply_operator(const BlockOperator& A, const BlockVectorX& x)
     return res;
 }
 
-VectorX apply_operator(const BlockOperator& A, const VectorX& x) 
-{
-    assert(A.n_comp_cols == 1 && A.n_comp_rows == 1);
-    return apply_operator(A, BlockVectorX({x}))[0];
-}
-
-size_t total_cols(const BlockOperator& block_op) {
-    size_t n_cols = 0;
-    for (size_t d2 = 0; d2 < block_op.n_comp_cols; d2++) {
-        n_cols += block_op.ops[d2].n_cols();
-    }
-    return n_cols;
-}
-
-size_t total_rows(const BlockOperator& block_op) {
-    size_t n_rows = 0;
-    for (size_t d1 = 0; d1 < block_op.n_comp_rows; d1++) {
-        n_rows += block_op.ops[d1 * block_op.n_comp_cols].n_rows();
-    }
-    return n_rows;
-}
-
-BlockOperator combine_components(const BlockOperator& block_op) {
-    auto n_cols = total_cols(block_op);
-    auto n_rows = total_rows(block_op);
+Operator combine_components(const BlockOperator& block_op) {
+    auto n_cols = block_op.n_cols();
+    auto n_rows = block_op.n_rows();
 
     Operator out(n_rows, n_cols);
 
@@ -89,7 +82,7 @@ BlockOperator combine_components(const BlockOperator& block_op) {
         n_rows_so_far += n_this_comp_rows;
     }
 
-    return {1, 1, {out}};
+    return out;
 }
 
 

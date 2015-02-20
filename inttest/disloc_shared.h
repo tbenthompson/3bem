@@ -39,7 +39,7 @@ std::vector<double> solve(
             for (size_t d = 0; d < dim; d++) {
                 x_vec[d] = distribute_vector(constraint_matrix, x_fncs[d], mesh.n_dofs());
             }
-            auto y_vec = apply_operator(lhs, x_vec);
+            auto y_vec = lhs.apply(x_vec);
             BlockVectorX condensed(dim);
             for (size_t d = 0; d < dim; d++) {
                 condensed[d] = condense_vector(constraint_matrix, y_vec[d]);

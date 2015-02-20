@@ -186,7 +186,7 @@ def fast_tests():
     run_test_set(tests())
 
 def slow_tests():
-    run_test_set(inttests_exec)
+    run_test_set(inttests_exec, True)
     check_slow_tests()
 
 def check_slow_tests():
@@ -198,7 +198,7 @@ def check_slow_tests():
         tools/check_antiplane.py\
     ', shell = True)
 
-def run_test_set(test_names):
+def run_test_set(test_names, print_stdout = False):
     stderr = ''
     n_success = 0
     n_failure = 0
@@ -211,6 +211,8 @@ def run_test_set(test_names):
         )
         p.wait()
         stdout = p.stdout.read()
+        if print_stdout:
+            print(stdout)
         import re
         m = re.search('Success: ([0-9]+) tests passed', stdout)
         if m is not None:

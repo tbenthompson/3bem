@@ -10,7 +10,7 @@ TEST(SimpleMatrixMultiply) {
         1, 1, 
         {Operator(2, 2, {0,1,1,0})}
     };
-    auto res = apply_operator(matrix, std::vector<double>{3,4});
+    auto res = matrix.apply({{3,4}})[0];
     CHECK_EQUAL(res[0], 4);
     CHECK_EQUAL(res[1], 3);
 }
@@ -26,7 +26,7 @@ TEST(SimpleMatrixMultiplyWithComponents) {
         }
     };
     BlockVectorX x({VectorX({3}), VectorX({4})});
-    auto res = apply_operator(matrix, x);
+    auto res = matrix.apply(x);
     CHECK_EQUAL(res[0][0], 4);
     CHECK_EQUAL(res[1][0], 3);
 }
@@ -43,9 +43,9 @@ TEST(CombineComponents) {
     };
     auto combined_op = combine_components(matrix);
     double correct[4] = {0,1,2,3};
-    CHECK_EQUAL(combined_op.ops[0].n_rows(), 2);
-    CHECK_EQUAL(combined_op.ops[0].n_cols(), 2);
-    CHECK_ARRAY_EQUAL(combined_op.ops[0].data(), correct, 4);
+    CHECK_EQUAL(combined_op.n_rows(), 2);
+    CHECK_EQUAL(combined_op.n_cols(), 2);
+    CHECK_ARRAY_EQUAL(combined_op.data(), correct, 4);
 }
 
 TEST(CombineComponents2By2) {
@@ -65,9 +65,9 @@ TEST(CombineComponents2By2) {
         8,9,12,13,
         10,11,14,15
     };
-    CHECK_EQUAL(combined_op.ops[0].n_rows(), 4);
-    CHECK_EQUAL(combined_op.ops[0].n_cols(), 4);
-    CHECK_ARRAY_EQUAL(combined_op.ops[0].data(), correct, 16);
+    CHECK_EQUAL(combined_op.n_rows(), 4);
+    CHECK_EQUAL(combined_op.n_cols(), 4);
+    CHECK_ARRAY_EQUAL(combined_op.data(), correct, 16);
 }
 
 TEST(CombineComponentsNonSquareBlocks) {
@@ -87,9 +87,9 @@ TEST(CombineComponentsNonSquareBlocks) {
         8,9,10,11,
         12,13,14,15
     };
-    CHECK_EQUAL(combined_op.ops[0].n_rows(), 4);
-    CHECK_EQUAL(combined_op.ops[0].n_cols(), 4);
-    CHECK_ARRAY_EQUAL(combined_op.ops[0].data(), correct, 16);
+    CHECK_EQUAL(combined_op.n_rows(), 4);
+    CHECK_EQUAL(combined_op.n_cols(), 4);
+    CHECK_ARRAY_EQUAL(combined_op.data(), correct, 16);
 }
 
 int main(int, char const *[])

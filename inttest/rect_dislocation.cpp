@@ -39,7 +39,7 @@ int main() {
     TIC
     auto p_rhs = make_problem<3>(surface, fault, hyp);
     auto rhs_op = mesh_to_mesh_operator(p_rhs, qs);
-    auto all_dofs_rhs = apply_operator(rhs_op, du);
+    auto all_dofs_rhs = rhs_op.apply(du);
     BlockVectorX condensed{
         condense_vector(constraint_matrix, all_dofs_rhs[0]),
         condense_vector(constraint_matrix, all_dofs_rhs[1]),

@@ -26,7 +26,7 @@ struct EvalProb {
         auto p = make_problem<3>(sphere, sphere, k);
         ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
         auto op = mesh_to_point_operator(p, qs, obs);
-        return apply_operator(op, src_strength)[0];
+        return op.apply({src_strength})[0][0];
     }
 
     Mesh<3> sphere;
@@ -72,7 +72,7 @@ TEST(MassTerm) {
     auto p = make_problem<3>(sphere, sphere, identity);
     QuadStrategy<3> qs(2);
     auto mass_op = mass_operator(p, qs);
-    auto res = apply_operator(mass_op, str);
+    auto res = mass_op.apply({str})[0];
     CHECK_EQUAL(res.size(), sphere.n_dofs());
     double true_area = 0.0;
     for (auto f: sphere.facets) {
@@ -125,7 +125,7 @@ TEST(TensorMassTerm) {
     QuadStrategy<3> qs(2);
     auto mass_op = mass_operator(p, qs);
     CHECK_EQUAL(mass_op.ops.size(), 9);
-    auto res = apply_operator(mass_op, {str});
+    auto res = mass_op.apply({str});
     CHECK_EQUAL(res.size(), 3);
 }
 

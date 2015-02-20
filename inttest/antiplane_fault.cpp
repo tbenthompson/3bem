@@ -44,7 +44,7 @@ void full_space() {
             ObsPt<2> obs = {0.001, x, {0, 1}, {0, -1}};
 
             auto op = mesh_to_point_operator(p_fullspace, qs, obs);
-            double val = apply_operator(op, slip)[0];
+            double val = op.apply({slip})[0][0];
             double exact = std::atan(0.5 / x[0]) / M_PI;
             if (std::fabs(exact - val) > 1e-13 && x[0] != 0) {
                 std::cout << "FAILED Antiplane for x = " << x << std::endl;
@@ -77,7 +77,7 @@ void half_space() {
     auto p_rhs_halfspace = make_problem<2>(surface2, fault, hypersingular_kernel);
 
     auto rhs_op = mesh_to_mesh_operator(p_rhs_halfspace, qs);
-    auto rhs_all_dofs = apply_operator(rhs_op, slip);
+    auto rhs_all_dofs = rhs_op.apply({slip})[0];
     for (std::size_t i = 0; i < rhs_all_dofs.size(); i++) {
         rhs_all_dofs[i] = -rhs_all_dofs[i];
     }
@@ -92,7 +92,7 @@ void half_space() {
     auto soln_reduced = solve_system(rhs, linear_solve_tol,
         [&] (std::vector<double>& x, std::vector<double>& y) {
             auto x_full = distribute_vector(constraint_matrix, x, surface2.n_dofs());
-            auto y_mult = apply_operator(lhs, x_full); 
+            auto y_mult = lhs.apply({x_full})[0]; 
             auto y_temp = condense_vector(constraint_matrix, y_mult);
             std::copy(y_temp.begin(), y_temp.end(), y.begin());
         });
@@ -135,8 +135,8 @@ void half_space() {
             auto eval_fault_op = mesh_to_point_operator(p_disp_fault, qs, obs[0]);
             auto eval_surf_op = mesh_to_point_operator(p_disp_surf, qs, obs[0]);
 
-            double eval_fault = apply_operator(eval_fault_op, slip)[0];
-            double eval_surf = apply_operator(eval_surf_op, soln)[0];
+            double eval_fault = eval_fault_op.apply({slip})[0][0];
+            double eval_surf = eval_surf_op.apply({soln})[0][0];
 
             double eval = eval_surf + eval_fault;
             interior_disp[i * ny + j] = eval;
@@ -151,8 +151,8 @@ void half_space() {
                 auto trac_fault_op = mesh_to_point_operator(p_trac_fault, qs, obs[d]);
                 auto trac_surf_op = mesh_to_point_operator(p_trac_surf, qs, obs[d]);
 
-                eval_fault = apply_operator(trac_fault_op, slip)[0];
-                eval_surf = apply_operator(trac_surf_op, soln)[0];
+                eval_fault = trac_fault_op.apply({slip})[0][0];
+                eval_surf = trac_surf_op.apply({soln})[0][0];
                 eval = eval_surf + eval_fault;
                 interior_trac[d][i * ny + j] = shear_modulus * eval;
             }

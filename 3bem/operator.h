@@ -70,13 +70,13 @@ struct BlockOperator
     const size_t n_comp_rows;
     const size_t n_comp_cols;
     std::vector<Operator> ops;
+
+    size_t n_rows() const;
+    size_t n_cols() const;
+    BlockVectorX apply(const BlockVectorX& x) const;
 };
 
-BlockVectorX apply_operator(const BlockOperator& A, const BlockVectorX& x);
-
-VectorX apply_operator(const BlockOperator& A, const VectorX& x); 
-
-BlockOperator combine_components(const BlockOperator& op);
+Operator combine_components(const BlockOperator& op);
 
 } // end namespace tbem
 
