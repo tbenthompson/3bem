@@ -8,28 +8,23 @@
 
 namespace tbem {
 
-struct OperatorShape {
-    size_t n_rows;
-    size_t n_cols;
-};
-
 struct DenseOperator: public OperatorI {
     typedef std::vector<double> DataT;
     //TODO: Consider changing to unique_ptr
     typedef std::shared_ptr<DataT> OperatorDataPtr;
 
-    OperatorShape shape;
-    OperatorDataPtr storage;
+    const OperatorShape shape;
+    const OperatorDataPtr storage;
 
     DenseOperator(size_t n_rows, size_t n_cols, const std::vector<double>& data);
     DenseOperator(size_t n_rows, size_t n_cols);
     DenseOperator(size_t n_rows, size_t n_cols, double val);
 
-    virtual size_t n_rows() const;
-    virtual size_t n_cols() const;
+    virtual size_t n_rows() const override;
+    virtual size_t n_cols() const override;
     size_t n_elements() const; 
 
-    virtual VectorX apply(const VectorX& x) const;
+    virtual VectorX apply(const VectorX& x) const override;
 
     const DataT& data() const;
     double& operator[] (size_t idx); 
@@ -46,15 +41,14 @@ struct BlockDenseOperator: public BlockOperatorI
 
     DenseOperator combine_components();
 
-    virtual size_t n_block_rows() const;
-    virtual size_t n_block_cols() const;
-    virtual size_t n_total_rows() const;
-    virtual size_t n_total_cols() const;
-    virtual BlockVectorX apply(const BlockVectorX& x) const;
+    virtual size_t n_block_rows() const override;
+    virtual size_t n_block_cols() const override;
+    virtual size_t n_total_rows() const override;
+    virtual size_t n_total_cols() const override;
+    virtual BlockVectorX apply(const BlockVectorX& x) const override;
 };
 
 
-// struct DenseMatrixOperator: public OperatorI;
 // struct MatrixFreeFarfieldOperator: public OperatorI;
 // struct SparseMatrixFMMOperator: public OperatorI;
 // struct MatrixFreeFMMOperator: public OperatorI;

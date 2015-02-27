@@ -8,6 +8,18 @@
 
 namespace tbem {
 
+template <size_t dim>
+inline double unit_facet_area();
+
+template <>
+inline double unit_facet_area<2>() {
+    return 0.5;
+}
+template <>
+inline double unit_facet_area<3>() {
+    return 2.0;
+}
+
 // Map from [-1, 1] to [0, 1].
 inline double from_11_to_01(double x) {
     return 0.5 * x + 0.5;

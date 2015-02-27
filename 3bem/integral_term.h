@@ -29,14 +29,13 @@ struct IntegralTerm {
     const KT& k;
     const ObsPt<dim>& obs;
     const FacetInfo<dim>& src_face;
-    const double appx_pt_face_dist_squared;
 };
 
 template <size_t dim, typename KT>
 IntegralTerm<dim,KT> make_integral_term(const QuadStrategy<dim>& qs,
-        const KT& k, const ObsPt<dim>& obs, const FacetInfo<dim>& src_face,
-        const double appx_pt_face_dist_squared) {
-    return IntegralTerm<dim,KT>{qs, k, obs, src_face, appx_pt_face_dist_squared};
+        const KT& k, const ObsPt<dim>& obs, const FacetInfo<dim>& src_face)
+{
+    return IntegralTerm<dim,KT>{qs, k, obs, src_face};
 }
 
 /* Given observation point information and source face information, the
@@ -149,19 +148,6 @@ Vec<typename KT::OperatorType,dim> compute_as_limit(const IntegralTerm<dim, KT>&
 
     return richardson_limit(near_steps);
 }
-                                          
-
-template <size_t dim, typename KT>
-Vec<typename KT::OperatorType,dim> compute_near_term(const IntegralTerm<dim, KT>& term) {
-    const double singular_threshold = 3.0;
-    if (term.appx_pt_face_dist_squared < 
-            singular_threshold * term.src_face.area_scale) { 
-        return compute_as_limit(term);
-    } else {
-        auto res =  compute_adaptively<dim>(term, term.obs.loc);
-        return res;
-    }
-}
 
 template <size_t dim, typename KT>
 Vec<typename KT::OperatorType,dim> compute_far_term(const IntegralTerm<dim, KT>& term) {
@@ -176,14 +162,36 @@ Vec<typename KT::OperatorType,dim> compute_far_term(const IntegralTerm<dim, KT>&
     return integrals;
 }
 
+/* It may be that the exact distance to an element is not required,
+ * but a low precision approximate distance is useful.
+ * This function simply approximates the distance by the distance from
+ * the given point to each vertex of the element.
+ * A better approximation to the distance to a face might include
+ * the centroid (see appx_face_dist2)
+ */
+template <size_t dim>
+double appx_face_dist2(const Vec<double,dim>& pt,
+                       const std::array<Vec<double,dim>,dim>& vs) {
+    double res = dist2(pt, vs[0]);
+    for (int d = 1; d < dim; d++) {
+        res = std::min(res, dist2(pt, vs[d])); 
+    }
+    return res;
+}
+
 /* Compute the full influence of a source facet on an observation point, given
  * a kernel function/Green's function
  */
 template <size_t dim, typename KT>
 Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term) {
-    if (term.appx_pt_face_dist_squared < 
-            pow(term.qs.far_threshold, 2) * term.src_face.area_scale) {
-        return compute_near_term(term);
+    const double singular_threshold = 3.0;
+    auto appx_dist2 = appx_face_dist2(term.obs.loc, term.src_face.face);
+    if (appx_dist2 < pow(term.qs.far_threshold, 2) * term.src_face.area_scale) {
+        if (appx_dist2 < singular_threshold * term.src_face.area_scale) { 
+            return compute_as_limit(term);
+        } else {
+            return  compute_adaptively<dim>(term, term.obs.loc);
+        }
     } else {
         return compute_far_term(term);
     }

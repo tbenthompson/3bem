@@ -25,7 +25,7 @@ TEST(IntegralDoesntHang) {
         5.5242717280199029e-03,
         {-7.0710678118654746e-01, -7.0710678118654746e-01}
     };
-    auto term = make_integral_term(qs, kernel, pt, facet, 4.7158911450446029e-04);
+    auto term = make_integral_term(qs, kernel, pt, facet);
     compute_term(term);
 }
 

@@ -18,7 +18,7 @@ TEST(IntegralOne) {
     IdentityScalar<2> identity;
     ObsPt<2> obs{0.01, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
     auto facet_info = FacetInfo<2>::build({{{0,0},{1,0}}});
-    auto term = make_integral_term(quad_strategy, identity, obs, facet_info, 1.0);
+    auto term = make_integral_term(quad_strategy, identity, obs, facet_info);
     auto result = compute_term(term);
     CHECK_CLOSE(result[0][0][0], 0.5, 1e-6);
     CHECK_CLOSE(result[1][0][0], 0.5, 1e-6);
@@ -29,10 +29,7 @@ void integral_term_test(const KT& K, double claimed_distance, double exact) {
     QuadStrategy<3> quad_strategy(2);
     ObsPt<3> obs{0.01, {2.0, 2.0, 2.0}, {1.0, 0.0, 0.0}, {0.0, 0.0}};
     auto facet_info = FacetInfo<3>::build({{{0,0,0},{2,0,0},{0,1,0}}});
-    auto term = make_integral_term(
-        quad_strategy, K, obs,
-        facet_info, claimed_distance
-    );
+    auto term = make_integral_term(quad_strategy, K, obs, facet_info);
     auto result = compute_term(term);
     auto est = sum(result); 
     CHECK_CLOSE(est[0][0], exact, 1e-3);
@@ -58,10 +55,20 @@ TEST(IntegralLaplaceDoubleFakeNear) {
     integral_term_test(double_kernel, 1e-12, exact);
 }
 
-TEST(Richardson) {
-    std::vector<double> input = {0.5, 0.3, 0.2, 0.15};
-    double result = richardson_limit(input);
-    CHECK_CLOSE(result, 0.1, 1e-12);
+TEST(RichardsonExtrapolate) {
+    // For n values in a sequence, Richardson extrapolation should be 
+    // exact for polynomial sequences with degree n - 1.
+    size_t n = 4;
+    double error = 1e-6;
+    std::vector<double> x = {1.0, 1.0 / 2, 1.0 / 4, 1.0 / 8};
+    for (size_t i = 1; i < n; i++) {
+        std::vector<double> input;
+        for (size_t j = 0; j < n; j++) {
+            input.push_back(std::pow(x[j], i) - 1.0);
+        }
+        double result = richardson_limit(input);
+        CHECK_CLOSE(result, -1.0, error);
+    }
 }
 
 TEST(RichardsonZeros) {

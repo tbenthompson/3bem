@@ -1,4 +1,5 @@
 CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
+-- Clear out all "inline"
 ---------------------------------------
 
 MILESTONE: HANGING NODES AND COMPLEX GEOMETRIES

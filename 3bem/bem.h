@@ -13,6 +13,18 @@
 
 namespace tbem {
 
+//TODO: More general problem about how to organize the inputs. One idea:
+//-- put kernel, src_mesh, quad_strategy into a single object that specifies
+//the inner integral. Then, call methods for a single obs point (mesh_to_pt) or
+//for a whole observation mesh (mesh_to_mesh). This sounds more appropriate!
+//How to incorporate the mass operator into this point of view?
+
+//TODO: Is factory method the appropriate pattern here?
+//Should each operator factory return an abstract operator interface
+//without any knowledge of what the object's operator type actually is? 
+//or abstract factory?
+
+//TODO: Rename. Maybe IntegralForm? DoubleIntegral
 template <size_t dim, typename KT>
 struct Problem {
     const Mesh<dim>& obs_mesh;
@@ -20,8 +32,9 @@ struct Problem {
     const KT& K;
 };
 
-template <size_t dim, typename KT> Problem<dim,KT> 
-make_problem(const Mesh<dim>& obs_mesh, const Mesh<dim>& src_mesh, const KT& k) 
+template <size_t dim, typename KT> 
+Problem<dim,KT> make_problem(const Mesh<dim>& obs_mesh,
+    const Mesh<dim>& src_mesh, const KT& k) 
 {
     return {obs_mesh, src_mesh, k};
 }
@@ -30,7 +43,6 @@ template <size_t dim>
 struct FacetInfo {
     //The responsibility is on the user to maintain the lifetime of the facet.
     const Facet<dim> face;
-
     const double area_scale;
     const double length_scale;
     const double jacobian;
@@ -39,35 +51,41 @@ struct FacetInfo {
     static FacetInfo<dim> build(const Facet<dim>& facet);
 };
 
-
 template <>
-inline FacetInfo<3> FacetInfo<3>::build(const Facet<3>& facet){
-    const double inv_ref_facet_area = 2.0;
+inline FacetInfo<3> FacetInfo<3>::build(const Facet<3>& facet) {
+    const double inv_ref_facet_area = inv_ref_facet_area<3>();
     auto unscaled_n = unscaled_normal(facet);
     auto area = tri_area(unscaled_n);
     auto length_scale = std::sqrt(area);
-    auto jacobian = area * inv_ref_facet_area;
+    auto jacobian = area * inv_ref_facet_area<3>();
     auto normal = unscaled_n / jacobian;
     return FacetInfo<3>{facet, area, length_scale, jacobian, normal};
 }
 
 template <>
-inline FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet){
-    const double inv_ref_facet_area = 0.5;
+inline FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet) {
+    const double inv_ref_facet_area = inv_ref_facet_area<2>();
     auto unscaled_n = unscaled_normal(facet);
     auto area_scale = hypot2(unscaled_n);
     auto length = std::sqrt(area_scale);
-    auto jacobian = length * inv_ref_facet_area;
+    auto jacobian = length * inv_ref_facet_area<2>();
     auto normal = unscaled_n / length;
     return FacetInfo<2>{facet, area_scale, length, jacobian, normal};
 }
-
 
 template <size_t dim>
 struct ObsPt {
     static ObsPt<dim> from_face(const Vec<double,dim-1>& ref_loc,
                                 const FacetInfo<dim>& obs_face);
 
+    //TODO: len_scale and richardson_dir are abstraction leaks that
+    //should be inside integral_term, being calculated by some kind of
+    //nearest neighbor calculation. This leak is really clearly exhibited
+    //in the code in the interior calculator part of the elastic solver.
+    //Solving this problem properly really requires a decent fast nearest
+    //neighbors algorithm, but for the moment I could just do a brute force
+    //nearest neighbors search and use the same mechanism for determining
+    //len_scale as I do in the interior elastic computation.
     const double len_scale;
     const Vec<double,dim> loc;
     const Vec<double,dim> normal;
@@ -87,22 +105,6 @@ ObsPt<dim> ObsPt<dim>::from_face(const Vec<double,dim-1>& ref_loc,
     };
 }
 
-/* It may be that the exact distance to an element is not required,
- * but a low precision approximate distance is useful.
- * This function simply approximates the distance by the distance from
- * the given point to each vertex of the element.
- * A better approximation to the distance to a face might include
- * the centroid (see appx_face_dist2)
- */
-template <size_t dim>
-double appx_face_dist2(const Vec<double,dim>& pt,
-                       const std::array<Vec<double,dim>,dim>& vs) {
-    double res = dist2(pt, vs[0]);
-    for (int d = 1; d < dim; d++) {
-        res = std::min(res, dist2(pt, vs[d])); 
-    }
-    return res;
-}
 
 template <size_t dim, typename KT>
 std::vector<typename KT::OperatorType> mesh_to_point_vector(const Problem<dim,KT>& p,
@@ -112,8 +114,7 @@ std::vector<typename KT::OperatorType> mesh_to_point_vector(const Problem<dim,KT
     std::vector<typename KT::OperatorType> result(n_out_dofs);
     for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
         auto src_face = FacetInfo<dim>::build(p.src_mesh.facets[i]);
-        const double dist2 = appx_face_dist2<dim>(obs.loc, src_face.face);
-        auto term = make_integral_term(qs, p.K, obs, src_face, dist2);
+        auto term = make_integral_term(qs, p.K, obs, src_face);
         auto integrals = compute_term<dim>(term);
         for (int b = 0; b < dim; b++) {
             result[dim * i + b] = integrals[b];
@@ -150,6 +151,8 @@ void reshape_to_add(BlockDenseOperator& block_op, size_t idx,
  * In other words, this function calculates the vector Q_i where
  * Q_i = \int_{S_{src}} K(x,y) \phi_i(y) dy
  */
+//TODO: Don't pass a Problem, because this function only needs the kernel
+//and the src_mesh.
 template <size_t dim, typename KT>
 BlockDenseOperator mesh_to_point_operator(const Problem<dim,KT>& p,
     const QuadStrategy<dim>& qs, const ObsPt<dim>& obs) 
@@ -175,7 +178,9 @@ BlockDenseOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
 {
     size_t n_obs_dofs = p.obs_mesh.n_dofs();
     size_t n_src_dofs = p.src_mesh.n_dofs();
-    auto block_op = build_operator_shape(KT::n_cols, KT::n_rows, n_obs_dofs, n_src_dofs);
+    auto block_op = build_operator_shape(
+        KT::n_cols, KT::n_rows, n_obs_dofs, n_src_dofs
+    );
 #pragma omp parallel for
     for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);

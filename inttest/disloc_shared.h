@@ -4,6 +4,7 @@
 #include "3bem.h"
 #include "elastic_kernels.h"
 #include "constraint_matrix.h"
+#include "operator.h"
 
 using namespace tbem;
 
@@ -22,12 +23,12 @@ ConstraintMatrix surf_fault_constraints(const VertexIterator<dim>& surf_it,
 
 template <size_t dim>
 std::vector<double> solve(
-    const BlockDenseOperator& lhs,
+    const BlockOperatorI& lhs,
     const VectorX& rhs, 
     const BlockDOFMap& dof_map,
     const Mesh<dim>& mesh,
-    const ConstraintMatrix& constraint_matrix) {
-
+    const ConstraintMatrix& constraint_matrix) 
+{
     size_t count = 0;
     return solve_system(rhs, 1e-5,
         [&] (std::vector<double>& x, std::vector<double>& y) {
@@ -37,7 +38,9 @@ std::vector<double> solve(
             auto x_fncs = expand(dof_map, x);
             BlockVectorX x_vec(dim);
             for (size_t d = 0; d < dim; d++) {
-                x_vec[d] = distribute_vector(constraint_matrix, x_fncs[d], mesh.n_dofs());
+                x_vec[d] = distribute_vector(
+                    constraint_matrix, x_fncs[d], mesh.n_dofs()
+                );
             }
             auto y_vec = lhs.apply(x_vec);
             BlockVectorX condensed(dim);

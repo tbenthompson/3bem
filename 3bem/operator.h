@@ -5,6 +5,11 @@
 
 namespace tbem {
 
+struct OperatorShape {
+    const size_t n_rows;
+    const size_t n_cols;
+};
+
 struct OperatorI {
     virtual size_t n_rows() const = 0;
     virtual size_t n_cols() const = 0;

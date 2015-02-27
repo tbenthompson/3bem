@@ -87,24 +87,24 @@ TEST(MassTerm) {
 }
 
 TEST(FacetInfo2D) {
-    Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{1.0, 0.0}};
+    Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{3.0, 0.0}};
     auto face_info = FacetInfo<2>::build(f);
-    CHECK_EQUAL(face_info.area_scale, 1);
-    CHECK_EQUAL(face_info.length_scale, 1);
-    CHECK_EQUAL(face_info.jacobian, 0.5);
+    CHECK_EQUAL(face_info.area_scale, 9);
+    CHECK_EQUAL(face_info.length_scale, 3);
+    CHECK_EQUAL(face_info.jacobian, 1.5);
     CHECK_EQUAL(face_info.normal, (Vec2<double>{0.0, 1.0}));
 }
 
 TEST(FacetInfo3D) {
     Facet<3> f{
         Vec3<double>{0.0, 0.0, 0.0},
-        Vec3<double>{1.0, 0.0, 0.0},
-        Vec3<double>{0.0, 1.0, 0.0}
+        Vec3<double>{2.0, 0.0, 0.0},
+        Vec3<double>{0.0, 2.0, 0.0}
     };
     auto face_info = FacetInfo<3>::build(f);
-    CHECK_EQUAL(face_info.area_scale, 0.5);
-    CHECK_EQUAL(face_info.length_scale, std::sqrt(1.0 / 2.0));
-    CHECK_EQUAL(face_info.jacobian, 1.0);
+    CHECK_EQUAL(face_info.area_scale, 2.0);
+    CHECK_EQUAL(face_info.length_scale, std::sqrt(2.0));
+    CHECK_EQUAL(face_info.jacobian, 4.0);
     CHECK_EQUAL(face_info.normal, (Vec3<double>{0.0, 0.0, 1.0}));
 }
 

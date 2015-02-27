@@ -106,29 +106,38 @@ BlockVectorX BlockDenseOperator::apply(const BlockVectorX& x) const {
     return res;
 }
 
+void copy_matrix(const DenseOperator& in_op,
+    size_t out_start_row, size_t out_start_col, DenseOperator& out_op) 
+{
+    
+    for (size_t row_idx = 0; row_idx < in_op.n_rows(); row_idx++) {
+        auto out_row_idx = out_start_row + row_idx;
+
+        for (size_t col_idx = 0; col_idx < in_op.n_cols(); col_idx++) {
+            auto out_col_idx = out_start_col + col_idx;
+
+            auto in_element = row_idx * in_op.n_cols() + col_idx;
+            auto out_element = out_row_idx * out_op.n_cols() + out_col_idx;
+            out_op[out_element] = in_op[in_element];
+        }
+    }
+}
+
 DenseOperator BlockDenseOperator::combine_components() {
     DenseOperator out(n_total_rows(), n_total_cols());
 
     size_t n_rows_so_far = 0;
     for (size_t d1 = 0; d1 < n_block_rows(); d1++) {
         auto n_this_comp_rows = ops[d1 * n_block_cols()].n_rows();
-        for (size_t row_idx = 0; row_idx < n_this_comp_rows; row_idx++) {
-            auto out_row_idx = n_rows_so_far + row_idx;
 
-            size_t n_cols_so_far = 0;
-            for (size_t d2 = 0; d2 < n_block_cols(); d2++) {
-                auto in_comp = d1 * n_block_cols() + d2;
+        size_t n_cols_so_far = 0;
+        for (size_t d2 = 0; d2 < n_block_cols(); d2++) {
+            auto in_comp = d1 * n_block_cols() + d2;
+            const auto& op = ops[in_comp];
 
-                const auto& op = ops[in_comp];
-                for (size_t col_idx = 0; col_idx < op.n_cols(); col_idx++) {
-                    auto out_col_idx = n_cols_so_far + col_idx;
+            copy_matrix(op, n_rows_so_far, n_cols_so_far, out);
 
-                    auto in_element = row_idx * op.n_cols() + col_idx;
-                    auto out_element = out_row_idx * n_total_cols() + out_col_idx;
-                    out[out_element] = op[in_element];
-                }
-                n_cols_so_far += op.n_cols();
-            }
+            n_cols_so_far += op.n_cols();
         }
         n_rows_so_far += n_this_comp_rows;
     }
