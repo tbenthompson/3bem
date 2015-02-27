@@ -9,14 +9,14 @@
 namespace tbem {
 
 template <size_t dim>
-inline double unit_facet_area();
+inline double inv_ref_facet_area();
 
 template <>
-inline double unit_facet_area<2>() {
+inline double inv_ref_facet_area<2>() {
     return 0.5;
 }
 template <>
-inline double unit_facet_area<3>() {
+inline double inv_ref_facet_area<3>() {
     return 2.0;
 }
 

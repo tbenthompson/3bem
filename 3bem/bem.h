@@ -53,7 +53,6 @@ struct FacetInfo {
 
 template <>
 inline FacetInfo<3> FacetInfo<3>::build(const Facet<3>& facet) {
-    const double inv_ref_facet_area = inv_ref_facet_area<3>();
     auto unscaled_n = unscaled_normal(facet);
     auto area = tri_area(unscaled_n);
     auto length_scale = std::sqrt(area);
@@ -64,7 +63,6 @@ inline FacetInfo<3> FacetInfo<3>::build(const Facet<3>& facet) {
 
 template <>
 inline FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet) {
-    const double inv_ref_facet_area = inv_ref_facet_area<2>();
     auto unscaled_n = unscaled_normal(facet);
     auto area_scale = hypot2(unscaled_n);
     auto length = std::sqrt(area_scale);

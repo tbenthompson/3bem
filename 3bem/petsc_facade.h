@@ -2,10 +2,18 @@
 #define __JJJJJJJJJJJJJJ_PETSC_INTERFACE_H
 
 #include <functional>
+#include <memory>
 #include <vector>
 #include "vectorx.h"
 
+struct _p_Mat;
+typedef struct _p_Mat* Mat;
+
 namespace tbem {
+
+class PETScMatWrapper {
+     Mat internal;
+};
 
 typedef std::function<void(std::vector<double>& x, std::vector<double>& y)> MatVecFnc;
 
