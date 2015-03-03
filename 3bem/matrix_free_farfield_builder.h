@@ -1,7 +1,7 @@
 #ifndef __78987898789787_MATRIX_FREE_OPERATOR_BUILDER_H
 #define __78987898789787_MATRIX_FREE_OPERATOR_BUILDER_H
 
-#include "matrix_free_operator.h"
+#include "petsc_facade.h"
 #include "dense_operator_builder.h"
 #include "quadrature.h"
 #include "facet_info.h"
@@ -24,7 +24,7 @@ struct MatrixFreeBuilder {
 };
 
 template <size_t dim, typename KT>
-BlockMatrixFreeOperator 
+BlockSparseOperator 
 matrix_free_mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs) {
     auto n_obs_dofs = p.obs_mesh.n_dofs();
     auto n_blocks = KT::n_rows * KT::n_cols;
@@ -54,13 +54,11 @@ matrix_free_mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
         }
     }
 
-    std::vector<MatrixFreeOperator> ops;
+    std::vector<SparseOperator> ops;
     for (size_t i = 0; i < n_blocks; i++) {
-        MatrixFreeOperator::NearfieldPtr nearfield(
-            new PETScSparseMatWrapper(n_obs_dofs, n_obs_dofs, entries[i]));
-        ops.push_back(MatrixFreeOperator(std::move(nearfield)));
+        ops.push_back(SparseOperator(n_obs_dofs, n_obs_dofs, entries[i]));
     }
-    return BlockOperator<MatrixFreeOperator>(KT::n_rows, KT::n_cols, std::move(ops));
+    return BlockOperator<SparseOperator>(KT::n_rows, KT::n_cols, std::move(ops));
 }
 
 }//end namespace tbem

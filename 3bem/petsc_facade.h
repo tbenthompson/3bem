@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include "operator.h"
 #include "fwd_vectorx.h"
 
 struct _p_Mat;
@@ -13,16 +14,19 @@ namespace tbem {
 
 struct MatrixEntry;
 
-struct PETScSparseMatWrapper {
-    PETScSparseMatWrapper(size_t n_rows, size_t n_cols,
+struct SparseOperator: public OperatorI {
+    SparseOperator(size_t n_rows, size_t n_cols,
         const std::vector<MatrixEntry>& entries);
 
-    size_t n_rows() const;
-    size_t n_cols() const;
-    VectorX mat_vec_prod(const VectorX& v) const;
+    virtual size_t n_rows() const;
+    virtual size_t n_cols() const;
+    virtual VectorX apply(const VectorX& v) const;
 
     Mat internal_mat;
 };
+template <typename T>
+struct BlockOperator;
+typedef BlockOperator<SparseOperator> BlockSparseOperator;
 
 typedef std::function<void(std::vector<double>& x, std::vector<double>& y)> MatVecFnc;
 

@@ -11,7 +11,7 @@ struct OperatorShape {
 };
 
 struct OperatorI {
-    typedef std::unique_ptr<OperatorI> Ptr;
+    typedef std::unique_ptr<const OperatorI> Ptr;
 
     virtual size_t n_rows() const = 0;
     virtual size_t n_cols() const = 0;

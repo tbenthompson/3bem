@@ -113,8 +113,8 @@ test_info['petsc'] = dict()
 test_info['petsc']['src'] = 'test/test_petsc'
 test_info['petsc']['lib_srcs'] = ['3bem/petsc_facade']
 test_info['matrix_free_operator'] = dict()
-test_info['matrix_free_operator']['src'] = 'test/test_matrix_free_operator'
-test_info['matrix_free_operator']['lib_srcs'] = ['3bem/matrix_free_operator']
+test_info['matrix_free_operator']['src'] = 'test/test_nearfield_operator'
+test_info['matrix_free_operator']['lib_srcs'] = []
 
 def just_test():
     t = test_info[command_params[0]]

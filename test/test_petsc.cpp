@@ -48,7 +48,7 @@ TEST(Solve2X2) {
 }
 
 struct SparseMatrix {
-    PETScSparseMatWrapper m;
+    SparseOperator m;
     SparseMatrix():m(3, 3, {{0,0,3.0}, {0,1,1.0}, {1,1,-1.0}, {2,0,0.5}}) {}
 };
 
@@ -62,7 +62,7 @@ TEST_FIXTURE(SparseMatrix, NRowsCols) {
 }
 
 TEST_FIXTURE(SparseMatrix, MatVecProduct) {
-    auto res = m.mat_vec_prod({1.0, 1.0, 1.0});
+    auto res = m.apply({1.0, 1.0, 1.0});
     std::vector<double> correct{4.0, -1.0, 0.5};
     CHECK_ARRAY_CLOSE(res, correct, 3, 1e-12);
 }

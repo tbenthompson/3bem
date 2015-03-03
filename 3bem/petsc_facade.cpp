@@ -24,7 +24,7 @@ void init_petsc() {
     PetscInitialize(&argc, &args, (char*)0, "bem code"); 
 }
 
-PETScSparseMatWrapper::PETScSparseMatWrapper(size_t n_rows, size_t n_cols,
+SparseOperator::SparseOperator(size_t n_rows, size_t n_cols,
     const std::vector<MatrixEntry>& entries)
 {
     init_petsc();
@@ -53,15 +53,15 @@ std::pair<int,int> get_matrix_shape(Mat m) {
     return shape;
 }
 
-size_t PETScSparseMatWrapper::n_rows() const {
+size_t SparseOperator::n_rows() const {
     return static_cast<size_t>(get_matrix_shape(internal_mat).first);
 }
 
-size_t PETScSparseMatWrapper::n_cols() const {
+size_t SparseOperator::n_cols() const {
     return static_cast<size_t>(get_matrix_shape(internal_mat).second);
 }
 
-VectorX PETScSparseMatWrapper::mat_vec_prod(const VectorX& v) const {
+VectorX SparseOperator::apply(const VectorX& v) const {
     MPI_Comm comm = PETSC_COMM_WORLD;
 
     Vec x;
