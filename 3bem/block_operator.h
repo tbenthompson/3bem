@@ -1,0 +1,67 @@
+#ifndef __1234567876161_BLOCK_OPERATOR_H
+#define __1234567876161_BLOCK_OPERATOR_H
+
+#include <vector>
+#include <cassert>
+#include "vectorx.h"
+
+namespace tbem {
+
+struct BlockOperatorI {
+    virtual size_t n_block_rows() const = 0;
+    virtual size_t n_block_cols() const = 0;
+    virtual size_t n_total_rows() const = 0;
+    virtual size_t n_total_cols() const = 0;
+    virtual BlockVectorX apply(const BlockVectorX& x) const = 0;
+};
+
+template <typename T>
+struct BlockOperator: public BlockOperatorI {
+    const OperatorShape shape;
+    std::vector<T> ops;
+
+    BlockOperator(size_t n_block_rows, size_t n_block_cols, const std::vector<T>& ops):
+        shape{n_block_rows, n_block_cols},
+        ops(ops)
+    {}
+
+    virtual size_t n_block_rows() const override {return shape.n_rows;}
+    virtual size_t n_block_cols() const override {return shape.n_cols;}
+   
+    virtual size_t n_total_rows() const override {
+        size_t n_rows = 0;
+        for (size_t d1 = 0; d1 < n_block_rows(); d1++) {
+            n_rows += ops[d1 * n_block_cols()].n_rows();
+        }
+        return n_rows;
+    }
+
+    virtual size_t n_total_cols() const override {
+        size_t n_cols = 0;
+        for (size_t d2 = 0; d2 < n_block_cols(); d2++) {
+            n_cols += ops[d2].n_cols();
+        }
+        return n_cols;
+    }
+
+    virtual BlockVectorX apply(const BlockVectorX& x) const override {
+        assert(n_block_rows() * x.size() == ops.size());
+        assert(n_block_cols() == x.size());
+
+        BlockVectorX res(n_block_rows(), VectorX(ops[0].n_rows(), 0.0));
+        for (size_t d1 = 0; d1 < n_block_rows(); d1++) {
+            for (size_t d2 = 0; d2 < n_block_cols(); d2++) {
+                size_t comp_idx = d1 * n_block_cols() + d2;
+
+                const auto& op = ops[comp_idx];
+                res[d1] += op.apply(x[d2]);
+            }
+        }
+        return res;
+    }
+};
+
+
+}//end namespace tbem
+
+#endif

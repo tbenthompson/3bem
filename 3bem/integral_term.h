@@ -179,22 +179,51 @@ double appx_face_dist2(const Vec<double,dim>& pt,
     return res;
 }
 
+enum class FarNearType {
+    Singular,
+    Nearfield,
+    Farfield 
+};
+
+struct FarNearLogic {
+    double far_threshold;
+    double singular_threshold;
+    
+    template <size_t dim>
+    FarNearType decide(const ObsPt<dim>& obs, const FacetInfo<dim>& facet) {
+        auto appx_dist2 = appx_face_dist2(obs.loc, facet.face);
+        bool nearfield = appx_dist2 < pow(far_threshold, 2) * facet.area_scale;
+        if (nearfield) {
+            bool singular = appx_dist2 < singular_threshold * facet.area_scale;
+            if (singular) { 
+                return FarNearType::Singular;
+            } else {
+                return FarNearType::Nearfield;
+            }
+        } else {
+            return FarNearType::Farfield;
+        }
+    }
+};
+
 /* Compute the full influence of a source facet on an observation point, given
  * a kernel function/Green's function
  */
 template <size_t dim, typename KT>
 Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term) {
-    const double singular_threshold = 3.0;
-    auto appx_dist2 = appx_face_dist2(term.obs.loc, term.src_face.face);
-    if (appx_dist2 < pow(term.qs.far_threshold, 2) * term.src_face.area_scale) {
-        if (appx_dist2 < singular_threshold * term.src_face.area_scale) { 
+    FarNearLogic far_near_logic{term.qs.far_threshold, 3.0};
+    switch (far_near_logic.decide(term.obs, term.src_face)) {
+        case FarNearType::Singular:
             return compute_as_limit(term);
-        } else {
-            return  compute_adaptively<dim>(term, term.obs.loc);
-        }
-    } else {
-        return compute_far_term(term);
+            break;
+        case FarNearType::Nearfield:
+            return compute_adaptively<dim>(term, term.obs.loc);
+            break;
+        case FarNearType::Farfield:
+            return compute_far_term(term);
+            break;
     }
+    throw std::exception();
 }
 
 

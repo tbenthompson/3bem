@@ -1,4 +1,5 @@
 #include "dense_operator.h"
+#include "block_operator.h"
 #include "vectorx.h"
 #include <cassert>
 
@@ -59,55 +60,8 @@ const double& DenseOperator::operator[](size_t idx) const {
     return (*storage)[idx];
 }
 
-BlockDenseOperator::BlockDenseOperator(size_t n_block_rows, size_t n_block_cols, 
-        const std::vector<DenseOperator>& ops):
-    shape{n_block_rows, n_block_cols},
-    ops(ops)
-{}
-
-size_t BlockDenseOperator::n_block_rows() const {
-    return shape.n_rows;
-}
-
-size_t BlockDenseOperator::n_block_cols() const {
-    return shape.n_cols;
-}
-
-size_t BlockDenseOperator::n_total_rows() const {
-    size_t n_rows = 0;
-    for (size_t d1 = 0; d1 < n_block_rows(); d1++) {
-        n_rows += ops[d1 * n_block_cols()].n_rows();
-    }
-    return n_rows;
-}
-
-size_t BlockDenseOperator::n_total_cols() const {
-    size_t n_cols = 0;
-    for (size_t d2 = 0; d2 < n_block_cols(); d2++) {
-        n_cols += ops[d2].n_cols();
-    }
-    return n_cols;
-}
-
-    
-BlockVectorX BlockDenseOperator::apply(const BlockVectorX& x) const {
-    assert(n_block_rows() * x.size() == ops.size());
-    assert(n_block_cols() == x.size());
-
-    BlockVectorX res(n_block_rows(), VectorX(ops[0].n_rows(), 0.0));
-    for (size_t d1 = 0; d1 < n_block_rows(); d1++) {
-        for (size_t d2 = 0; d2 < n_block_cols(); d2++) {
-            size_t comp_idx = d1 * n_block_cols() + d2;
-
-            const auto& op = ops[comp_idx];
-            res[d1] += op.apply(x[d2]);
-        }
-    }
-    return res;
-}
-
-void copy_matrix(const DenseOperator& in_op,
-    size_t out_start_row, size_t out_start_col, DenseOperator& out_op) 
+void copy_matrix(const DenseOperator& in_op, size_t out_start_row,
+        size_t out_start_col, DenseOperator& out_op) 
 {
     
     for (size_t row_idx = 0; row_idx < in_op.n_rows(); row_idx++) {
@@ -123,17 +77,18 @@ void copy_matrix(const DenseOperator& in_op,
     }
 }
 
-DenseOperator BlockDenseOperator::combine_components() {
-    DenseOperator out(n_total_rows(), n_total_cols());
+DenseOperator combine_components(const BlockDenseOperator& block) 
+{
+    DenseOperator out(block.n_total_rows(), block.n_total_cols());
 
     size_t n_rows_so_far = 0;
-    for (size_t d1 = 0; d1 < n_block_rows(); d1++) {
-        auto n_this_comp_rows = ops[d1 * n_block_cols()].n_rows();
+    for (size_t d1 = 0; d1 < block.n_block_rows(); d1++) {
+        auto n_this_comp_rows = block.ops[d1 * block.n_block_cols()].n_rows();
 
         size_t n_cols_so_far = 0;
-        for (size_t d2 = 0; d2 < n_block_cols(); d2++) {
-            auto in_comp = d1 * n_block_cols() + d2;
-            const auto& op = ops[in_comp];
+        for (size_t d2 = 0; d2 < block.n_block_cols(); d2++) {
+            auto in_comp = d1 * block.n_block_cols() + d2;
+            const auto& op = block.ops[in_comp];
 
             copy_matrix(op, n_rows_so_far, n_cols_so_far, out);
 
@@ -146,4 +101,4 @@ DenseOperator BlockDenseOperator::combine_components() {
 }
 
 
-} //end namespace tbem
+}//end namespace tbem

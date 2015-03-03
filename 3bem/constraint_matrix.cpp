@@ -1,4 +1,5 @@
 #include "constraint_matrix.h"
+#include "block_operator.h"
 #include "vectorx.h"
 #include "matrix_entry.h"
 

@@ -10,6 +10,7 @@
 #include "integral_term.h"
 #include "identity_kernels.h"
 #include "dense_operator.h"
+#include "block_operator.h"
 
 namespace tbem {
 

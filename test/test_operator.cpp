@@ -1,5 +1,6 @@
 #include "UnitTest++.h"
 #include "dense_operator.h"
+#include "block_operator.h"
 #include "vectorx.h"
 #include "test_shared.h"
 
@@ -41,7 +42,7 @@ TEST(CombineComponents) {
             DenseOperator(1, 1, {3})
         }
     };
-    auto combined_op = matrix.combine_components();
+    auto combined_op = combine_components(matrix);
     double correct[4] = {0,1,2,3};
     CHECK_EQUAL(combined_op.n_rows(), 2);
     CHECK_EQUAL(combined_op.n_cols(), 2);
@@ -58,7 +59,7 @@ TEST(CombineComponents2By2) {
             DenseOperator(2, 2, {12,13,14,15})
         }
     };
-    auto combined_op = matrix.combine_components();
+    auto combined_op = combine_components(matrix);
     double correct[16] = {
         0,1,4,5,
         2,3,6,7,
@@ -80,7 +81,7 @@ TEST(CombineComponentsNonSquareBlocks) {
             DenseOperator(3, 3, {5,6,7,9,10,11,13,14,15})
         }
     };
-    auto combined_op = matrix.combine_components();
+    auto combined_op = combine_components(matrix);
     double correct[16] = {
         0,1,2,3,
         4,5,6,7,

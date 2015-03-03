@@ -31,29 +31,13 @@ struct DenseOperator: public OperatorI {
     const double& operator[] (size_t idx) const;
 };
 
-struct BlockDenseOperator: public BlockOperatorI
-{
-    const OperatorShape shape;
-    std::vector<DenseOperator> ops;
 
-    BlockDenseOperator(size_t n_block_rows, size_t n_block_cols, 
-                       const std::vector<DenseOperator>& ops);
+template <typename T>
+struct BlockOperator;
 
-    DenseOperator combine_components();
+typedef BlockOperator<DenseOperator> BlockDenseOperator;
 
-    virtual size_t n_block_rows() const override;
-    virtual size_t n_block_cols() const override;
-    virtual size_t n_total_rows() const override;
-    virtual size_t n_total_cols() const override;
-    virtual BlockVectorX apply(const BlockVectorX& x) const override;
-};
-
-
-// struct MatrixFreeFarfieldOperator: public OperatorI;
-// struct SparseMatrixFMMOperator: public OperatorI;
-// struct MatrixFreeFMMOperator: public OperatorI;
-// struct BlockOperatorI;
-
+DenseOperator combine_components(const BlockDenseOperator& block);
 
 } // end namespace tbem
 
