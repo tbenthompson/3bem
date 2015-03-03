@@ -1,5 +1,6 @@
 #include "constraint_matrix.h"
 #include "vectorx.h"
+#include "matrix_entry.h"
 
 namespace tbem {
 

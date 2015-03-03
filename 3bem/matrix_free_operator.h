@@ -7,11 +7,11 @@
 
 namespace tbem {
 
-struct PETScMatWrapper;
+struct PETScSparseMatWrapper;
 
 struct MatrixFreeOperator: public OperatorI {
     const OperatorShape shape;
-    std::unique_ptr<PETScMatWrapper> nearfield;
+    std::unique_ptr<PETScSparseMatWrapper> nearfield;
 
     MatrixFreeOperator(size_t n_rows, size_t n_cols);
 

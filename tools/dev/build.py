@@ -115,6 +115,16 @@ def test_function():
     after()
     link_runner([src] + lib_srcs, oname(src), test_link_flags)
 
+def test_petsc():
+    src = 'test/test_petsc'
+    lib_srcs = ['3bem/petsc_facade']
+    compile_flags = cpp_flags + flag_sets['release_flags']
+    compile_runner(src, compile_flags)
+    for s in lib_srcs:
+        compile_runner(s, cpp_flags + flag_sets['release_flags'])
+    after()
+    link_runner([src] + lib_srcs, oname(src), test_link_flags)
+
 def entrypoint(dir):
     save_parameters()
     main(parallel_ok = True, build_dir = dir, jobs = 12)

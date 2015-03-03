@@ -24,12 +24,6 @@ VectorX distribute_vector(const ConstraintMatrix& matrix,
 /* Accepts a full DOF vector and returns the reduced DOF vector.  */
 VectorX condense_vector(const ConstraintMatrix& matrix, const VectorX& all);
 
-struct MatrixEntry 
-{
-    const size_t loc[2];
-    const double value;
-};
-
 DenseOperator condense_matrix(const ConstraintMatrix& row_cm,
     const ConstraintMatrix& col_cm, const DenseOperator& matrix);
 

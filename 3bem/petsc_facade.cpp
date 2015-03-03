@@ -1,9 +1,71 @@
 #include "petsc_facade.h"
 #include "petscksp.h"
+#include "matrix_entry.h"
+#include "vectorx.h"
 #include <algorithm>
 #include <iostream>
 
 namespace tbem {
+
+std::vector<int> build_sparsity_pattern(size_t n_rows, 
+    const std::vector<MatrixEntry>& entries) 
+{
+    std::vector<int> row_nnz(n_rows, 0.0);
+    for (const auto& e: entries) {
+        row_nnz[e.loc[0]] += 1;
+    }
+    return row_nnz;
+}
+
+PETScSparseMatWrapper::PETScSparseMatWrapper(size_t n_rows, size_t n_cols,
+    const std::vector<MatrixEntry>& entries)
+{
+
+    MPI_Comm comm = PETSC_COMM_WORLD;
+    MatCreate(comm, &internal_mat);
+    MatSetType(internal_mat, MATSEQAIJ); 
+    MatSetSizes(internal_mat, PETSC_DECIDE, PETSC_DECIDE, n_rows, n_cols);
+
+    auto sparsity_pattern = build_sparsity_pattern(n_rows, entries);
+    MatSeqAIJSetPreallocation(internal_mat, 0, sparsity_pattern.data());
+
+    for (const auto& e: entries) {
+        int row = e.loc[0];
+        int col = e.loc[1];
+        MatSetValues(internal_mat, 1, &row, 1, &col, &e.value, INSERT_VALUES);
+    }
+
+    MatAssemblyBegin(internal_mat, MAT_FINAL_ASSEMBLY);
+    MatAssemblyEnd(internal_mat, MAT_FINAL_ASSEMBLY);
+}
+
+std::pair<int,int> get_matrix_shape(Mat m) {
+    std::pair<int,int> shape;
+    MatGetSize(m, &shape.first, &shape.second);
+    return shape;
+}
+
+int PETScSparseMatWrapper::n_rows() {
+    return get_matrix_shape(internal_mat).first;
+}
+
+int PETScSparseMatWrapper::n_cols() {
+    return get_matrix_shape(internal_mat).second;
+}
+
+VectorX PETScSparseMatWrapper::mat_vec_prod(const VectorX& v) {
+    MPI_Comm comm = PETSC_COMM_WORLD;
+
+    Vec x;
+    VecCreateMPIWithArray(comm, v.size(), v.size(), PETSC_DECIDE, v.data(), &x);
+
+    VectorX out(n_cols());
+    Vec out_petsc;
+    VecCreateMPIWithArray(comm, out.size(), out.size(), PETSC_DECIDE, out.data(), &out_petsc);
+    MatMult(internal_mat, x, out_petsc);
+
+    return out;
+}
 
 /* Useful for debugging PETSc code.
  */
@@ -90,12 +152,17 @@ void setup_ksp(MPI_Comm comm, KSP& ksp, Mat& mat, double tolerance) {
     CHKERRABORT(comm,ierr);
 }
 
+void init_petsc() {
+    int argc = 0;
+    char** args = new char*[0];
+    //TODO: Remove PetscInitialize from in here. It will be needed outside I think.
+    PetscInitialize(&argc, &args, (char*)0, "bem code"); 
+}
+
 std::vector<double>
 solve_system(const double* rhs, int n_dofs, double tolerance, MatVecFnc fnc) 
 {
-    int argc = 0;
-    char** args = new char*[0];
-    PetscInitialize(&argc, &args, (char*)0, "bem code"); 
+    init_petsc();
 
     PetscErrorCode ierr;
     MPI_Comm comm = PETSC_COMM_WORLD;

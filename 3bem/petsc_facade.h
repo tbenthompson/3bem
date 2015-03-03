@@ -4,15 +4,24 @@
 #include <functional>
 #include <memory>
 #include <vector>
-#include "vectorx.h"
+#include "fwd_vectorx.h"
 
 struct _p_Mat;
 typedef struct _p_Mat* Mat;
 
 namespace tbem {
 
-class PETScMatWrapper {
-     Mat internal;
+struct MatrixEntry;
+
+struct PETScSparseMatWrapper {
+    PETScSparseMatWrapper(size_t n_rows, size_t n_cols,
+        const std::vector<MatrixEntry>& entries);
+
+    int n_rows();
+    int n_cols();
+    VectorX mat_vec_prod(const VectorX& v);
+
+    Mat internal_mat;
 };
 
 typedef std::function<void(std::vector<double>& x, std::vector<double>& y)> MatVecFnc;

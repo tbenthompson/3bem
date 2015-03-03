@@ -1,6 +1,8 @@
 #include "UnitTest++.h"
 #include "petsc_facade.h"
 #include "util.h"
+#include "matrix_entry.h"
+#include "vectorx.h"
 #include <iostream>
 
 using namespace tbem;
@@ -43,6 +45,26 @@ TEST(Solve2X2) {
         (rhs[1] * matrix[0][0] - rhs[0] * matrix[1][0]) / denom,
     };
     CHECK_ARRAY_CLOSE(res, exact, 2, 1e-5);
+}
+
+struct SparseMatrix {
+    PETScSparseMatWrapper m;
+    SparseMatrix():m(3, 3, {{0,0,3.0}, {0,1,1.0}, {1,1,-1.0}, {2,0,0.5}}) {}
+};
+
+TEST_FIXTURE(SparseMatrix, Build) {
+    // Empty because the constructor in the SparseMatrix fixture tests building.
+}
+
+TEST_FIXTURE(SparseMatrix, NRowsCols) {
+    CHECK_EQUAL(m.n_rows(), 3);
+    CHECK_EQUAL(m.n_cols(), 3);
+}
+
+TEST_FIXTURE(SparseMatrix, MatVecProduct) {
+    auto res = m.mat_vec_prod({1.0, 1.0, 1.0});
+    std::vector<double> correct{4.0, -1.0, 0.5};
+    CHECK_ARRAY_CLOSE(res, correct, 3, 1e-12);
 }
 
 int main(int, char const* args[])
