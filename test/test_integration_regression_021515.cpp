@@ -1,7 +1,7 @@
 #include "UnitTest++.h"
 #include "integral_term.h"
 #include "elastic_kernels.h"
-#include "bem.h"
+#include "dense_operator_builder.h"
 
 using namespace tbem;
 

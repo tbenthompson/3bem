@@ -63,7 +63,7 @@ flag_sets['test_coverage_flags'] = test_coverage_flags
 flag_sets['debug_flags'] = debug_flags
 flag_sets['release_flags'] = release_flags
 flag_sets['profile_flags'] = profile_flags
-cpp_flags = base_cpp_flags + flag_sets['release_flags']
+cpp_flags = base_cpp_flags + flag_sets['debug_flags']
 
 lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)
@@ -105,25 +105,25 @@ def build_executables():
 executables = build_executables()
 command_params = []
 
-def test_function():
-    src = 'test/test_function'
-    lib_srcs = ['3bem/function']
-    compile_flags = cpp_flags + flag_sets['release_flags']
-    compile_runner(src, compile_flags)
-    for s in lib_srcs:
-        compile_runner(s, cpp_flags + flag_sets['release_flags'])
-    after()
-    link_runner([src] + lib_srcs, oname(src), test_link_flags)
+test_info = dict()
+test_info['function'] = dict()
+test_info['function']['src'] = 'test/test_function'
+test_info['function']['lib_srcs'] = ['3bem/vectorx']
+test_info['petsc'] = dict()
+test_info['petsc']['src'] = 'test/test_petsc'
+test_info['petsc']['lib_srcs'] = ['3bem/petsc_facade']
+test_info['matrix_free_operator'] = dict()
+test_info['matrix_free_operator']['src'] = 'test/test_matrix_free_operator'
+test_info['matrix_free_operator']['lib_srcs'] = ['3bem/matrix_free_operator']
 
-def test_petsc():
-    src = 'test/test_petsc'
-    lib_srcs = ['3bem/petsc_facade']
-    compile_flags = cpp_flags + flag_sets['release_flags']
-    compile_runner(src, compile_flags)
-    for s in lib_srcs:
-        compile_runner(s, cpp_flags + flag_sets['release_flags'])
+def just_test():
+    t = test_info[command_params[0]]
+    compile_flags = base_cpp_flags + flag_sets['debug_flags']
+    compile_runner(t['src'], compile_flags)
+    for s in t['lib_srcs']:
+        compile_runner(s, base_cpp_flags + flag_sets['debug_flags'])
     after()
-    link_runner([src] + lib_srcs, oname(src), test_link_flags)
+    link_runner([t['src']] + t['lib_srcs'], oname(t['src']), test_link_flags)
 
 def entrypoint(dir):
     save_parameters()

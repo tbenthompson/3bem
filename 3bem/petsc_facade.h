@@ -17,9 +17,9 @@ struct PETScSparseMatWrapper {
     PETScSparseMatWrapper(size_t n_rows, size_t n_cols,
         const std::vector<MatrixEntry>& entries);
 
-    int n_rows();
-    int n_cols();
-    VectorX mat_vec_prod(const VectorX& v);
+    size_t n_rows() const;
+    size_t n_cols() const;
+    VectorX mat_vec_prod(const VectorX& v) const;
 
     Mat internal_mat;
 };

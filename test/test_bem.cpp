@@ -1,5 +1,5 @@
 #include "UnitTest++.h"
-#include "bem.h"
+#include "dense_operator_builder.h"
 #include "numerics.h"
 #include "quadrature.h"
 #include "mesh.h"
@@ -19,7 +19,7 @@ struct EvalProb {
         qs(gauss_order, gauss_order, near_eval, 2.0, 1e-2),
         obs_pt(random_pt3d()),
         obs_n(random_pt3d()),
-        obs_length_scale(get_len_scale<3>(sphere, 0, gauss_order)),
+        obs_length_scale(std::sqrt(tri_area(sphere.facets[0]))),
         src_strength(std::vector<double>(sphere.n_dofs(), 1.0))
     {}
 

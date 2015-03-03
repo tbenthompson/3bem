@@ -2,15 +2,13 @@
 #define __AAAAAAAAA_BEM_H
 
 #include <cassert>
-#include "vec.h"
-#include "numerics.h"
 #include "mesh.h"
-#include "adaptive_quad.h"
-#include "quadrature.h"
 #include "integral_term.h"
 #include "identity_kernels.h"
 #include "dense_operator.h"
 #include "block_operator.h"
+#include "obs_pt.h"
+#include "facet_info.h"
 
 namespace tbem {
 
@@ -31,6 +29,7 @@ struct Problem {
     const Mesh<dim>& obs_mesh;
     const Mesh<dim>& src_mesh;
     const KT& K;
+    //TODO: eventually, need to add in observation basis and source basis?
 };
 
 template <size_t dim, typename KT> 
@@ -39,71 +38,6 @@ Problem<dim,KT> make_problem(const Mesh<dim>& obs_mesh,
 {
     return {obs_mesh, src_mesh, k};
 }
-
-template <size_t dim>
-struct FacetInfo {
-    //The responsibility is on the user to maintain the lifetime of the facet.
-    const Facet<dim> face;
-    const double area_scale;
-    const double length_scale;
-    const double jacobian;
-    const Vec<double,dim> normal;
-
-    static FacetInfo<dim> build(const Facet<dim>& facet);
-};
-
-template <>
-inline FacetInfo<3> FacetInfo<3>::build(const Facet<3>& facet) {
-    auto unscaled_n = unscaled_normal(facet);
-    auto area = tri_area(unscaled_n);
-    auto length_scale = std::sqrt(area);
-    auto jacobian = area * inv_ref_facet_area<3>();
-    auto normal = unscaled_n / jacobian;
-    return FacetInfo<3>{facet, area, length_scale, jacobian, normal};
-}
-
-template <>
-inline FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet) {
-    auto unscaled_n = unscaled_normal(facet);
-    auto area_scale = hypot2(unscaled_n);
-    auto length = std::sqrt(area_scale);
-    auto jacobian = length * inv_ref_facet_area<2>();
-    auto normal = unscaled_n / length;
-    return FacetInfo<2>{facet, area_scale, length, jacobian, normal};
-}
-
-template <size_t dim>
-struct ObsPt {
-    static ObsPt<dim> from_face(const Vec<double,dim-1>& ref_loc,
-                                const FacetInfo<dim>& obs_face);
-
-    //TODO: len_scale and richardson_dir are abstraction leaks that
-    //should be inside integral_term, being calculated by some kind of
-    //nearest neighbor calculation. This leak is really clearly exhibited
-    //in the code in the interior calculator part of the elastic solver.
-    //Solving this problem properly really requires a decent fast nearest
-    //neighbors algorithm, but for the moment I could just do a brute force
-    //nearest neighbors search and use the same mechanism for determining
-    //len_scale as I do in the interior elastic computation.
-    const double len_scale;
-    const Vec<double,dim> loc;
-    const Vec<double,dim> normal;
-    const Vec<double,dim> richardson_dir;
-};
-
-
-template <size_t dim>
-ObsPt<dim> ObsPt<dim>::from_face(const Vec<double,dim-1>& ref_loc,
-                                 const FacetInfo<dim>& obs_face) {
-    const int basis_order = 1;
-    return {
-        obs_face.length_scale / basis_order,
-        ref_to_real(ref_loc, obs_face.face),
-        obs_face.normal,
-        obs_face.normal 
-    };
-}
-
 
 template <size_t dim, typename KT>
 std::vector<typename KT::OperatorType> mesh_to_point_vector(const Problem<dim,KT>& p,
@@ -213,7 +147,7 @@ BlockDenseOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
  * This function calculates such integrals using gaussian quadrature.
  */
 template <size_t dim, typename KT>
-BlockOperatorI mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
+BlockDenseOperator mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
 {
     auto n_obs_dofs = p.obs_mesh.n_dofs();
     auto block_op = build_operator_shape(KT::n_rows, KT::n_cols, n_obs_dofs, n_obs_dofs);
@@ -244,20 +178,6 @@ BlockOperatorI mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& 
     }
 
     return block_op;
-}
-
-template <size_t dim>
-double get_len_scale(Mesh<dim>& mesh, int which_face, int q);
-
-template <>
-inline double get_len_scale<3>(Mesh<3>& mesh, int which_face, int q) {
-    return std::sqrt(tri_area(mesh.facets[which_face])) / q;
-}
-
-template <>
-inline double get_len_scale<2>(Mesh<2>& mesh, int which_face, int q) {
-    return dist(mesh.facets[which_face][1],
-                mesh.facets[which_face][0]) / q;
 }
 
 

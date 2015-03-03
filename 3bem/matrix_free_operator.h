@@ -7,18 +7,28 @@
 
 namespace tbem {
 
+template <typename T>
+struct BlockOperator;
+
 struct PETScSparseMatWrapper;
 
 struct MatrixFreeOperator: public OperatorI {
-    const OperatorShape shape;
-    std::unique_ptr<PETScSparseMatWrapper> nearfield;
+    typedef std::unique_ptr<const PETScSparseMatWrapper> NearfieldPtr;
+    typedef std::function<VectorX(const VectorX&)> FarfieldFunc;
 
-    MatrixFreeOperator(size_t n_rows, size_t n_cols);
+    NearfieldPtr nearfield;
+    const OperatorShape shape;
+    OperatorI::Ptr farfield_op;
+
+    MatrixFreeOperator(NearfieldPtr nearfield);
+    MatrixFreeOperator(NearfieldPtr nearfield, OperatorI::Ptr farfield_op);
 
     virtual size_t n_rows() const override;
     virtual size_t n_cols() const override;
     virtual VectorX apply(const VectorX& x) const override;
 };
+
+typedef BlockOperator<MatrixFreeOperator> BlockMatrixFreeOperator;
 
 } // end namespace tbem
 

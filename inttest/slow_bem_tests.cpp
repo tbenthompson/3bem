@@ -1,5 +1,5 @@
 #include "UnitTest++.h"
-#include "bem.h"
+#include "dense_operator_builder.h"
 #include "quadrature.h"
 #include "mesh_gen.h"
 #include "laplace_kernels.h"
@@ -17,7 +17,7 @@ TEST(ConstantLaplaceBoundary) {
     auto sphere = sphere_mesh(center, r, refine_level);
     QuadStrategy<3> qs(gauss_order, gauss_order, near_eval, 2.0, 1e-3);
     std::vector<double> src_strength(sphere.n_dofs(), 1.0);
-    double obs_length_scale = get_len_scale<3>(sphere, 0, gauss_order);
+    double obs_length_scale = std::sqrt(tri_area(sphere.facets[0]));
     for (auto f: sphere.facets) {
         for (auto v: f) {
             auto obs_pt = v;

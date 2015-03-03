@@ -17,9 +17,17 @@ std::vector<int> build_sparsity_pattern(size_t n_rows,
     return row_nnz;
 }
 
+void init_petsc() {
+    int argc = 0;
+    char** args = new char*[0];
+    //TODO: Remove PetscInitialize from in here. It will be needed outside I think.
+    PetscInitialize(&argc, &args, (char*)0, "bem code"); 
+}
+
 PETScSparseMatWrapper::PETScSparseMatWrapper(size_t n_rows, size_t n_cols,
     const std::vector<MatrixEntry>& entries)
 {
+    init_petsc();
 
     MPI_Comm comm = PETSC_COMM_WORLD;
     MatCreate(comm, &internal_mat);
@@ -32,7 +40,7 @@ PETScSparseMatWrapper::PETScSparseMatWrapper(size_t n_rows, size_t n_cols,
     for (const auto& e: entries) {
         int row = e.loc[0];
         int col = e.loc[1];
-        MatSetValues(internal_mat, 1, &row, 1, &col, &e.value, INSERT_VALUES);
+        MatSetValues(internal_mat, 1, &row, 1, &col, &e.value, ADD_VALUES);
     }
 
     MatAssemblyBegin(internal_mat, MAT_FINAL_ASSEMBLY);
@@ -45,15 +53,15 @@ std::pair<int,int> get_matrix_shape(Mat m) {
     return shape;
 }
 
-int PETScSparseMatWrapper::n_rows() {
-    return get_matrix_shape(internal_mat).first;
+size_t PETScSparseMatWrapper::n_rows() const {
+    return static_cast<size_t>(get_matrix_shape(internal_mat).first);
 }
 
-int PETScSparseMatWrapper::n_cols() {
-    return get_matrix_shape(internal_mat).second;
+size_t PETScSparseMatWrapper::n_cols() const {
+    return static_cast<size_t>(get_matrix_shape(internal_mat).second);
 }
 
-VectorX PETScSparseMatWrapper::mat_vec_prod(const VectorX& v) {
+VectorX PETScSparseMatWrapper::mat_vec_prod(const VectorX& v) const {
     MPI_Comm comm = PETSC_COMM_WORLD;
 
     Vec x;
@@ -150,13 +158,6 @@ void setup_ksp(MPI_Comm comm, KSP& ksp, Mat& mat, double tolerance) {
     CHKERRABORT(comm,ierr);
     ierr = KSPSetTolerances(ksp, tolerance, PETSC_DEFAULT, PETSC_DEFAULT, maxiter);
     CHKERRABORT(comm,ierr);
-}
-
-void init_petsc() {
-    int argc = 0;
-    char** args = new char*[0];
-    //TODO: Remove PetscInitialize from in here. It will be needed outside I think.
-    PetscInitialize(&argc, &args, (char*)0, "bem code"); 
 }
 
 std::vector<double>

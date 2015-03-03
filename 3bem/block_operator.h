@@ -9,11 +9,11 @@
 namespace tbem {
 
 struct BlockOperatorI {
-    virtual size_t n_block_rows() const {throw NotImplemented();};
-    virtual size_t n_block_cols() const {throw NotImplemented();};
-    virtual size_t n_total_rows() const {throw NotImplemented();};
-    virtual size_t n_total_cols() const {throw NotImplemented();};
-    virtual BlockVectorX apply(const BlockVectorX& x) const {throw NotImplemented();};
+    virtual size_t n_block_rows() const = 0;
+    virtual size_t n_block_cols() const = 0;
+    virtual size_t n_total_rows() const = 0;
+    virtual size_t n_total_cols() const = 0;
+    virtual BlockVectorX apply(const BlockVectorX& x) const = 0;
 };
 
 template <typename T>
@@ -21,9 +21,9 @@ struct BlockOperator: public BlockOperatorI {
     const OperatorShape shape;
     std::vector<T> ops;
 
-    BlockOperator(size_t n_block_rows, size_t n_block_cols, const std::vector<T>& ops):
+    BlockOperator(size_t n_block_rows, size_t n_block_cols, std::vector<T> ops):
         shape{n_block_rows, n_block_cols},
-        ops(ops)
+        ops(std::move(ops))
     {}
 
     virtual size_t n_block_rows() const {return shape.n_rows;}

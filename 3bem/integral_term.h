@@ -8,15 +8,10 @@
 #include "quadrature.h"
 #include "adaptive_quad.h"
 #include "numerics.h"
+#include "obs_pt.h"
+#include "facet_info.h"
 
 namespace tbem {
-
-template <size_t dim>
-struct ObsPt;
-template <size_t dim>
-struct FacetInfo;
-template <size_t dim>
-struct QuadStrategy;
 
 /* Data transfer object for computing integral terms. 
  * Values are stored by reference for efficiency's sake.

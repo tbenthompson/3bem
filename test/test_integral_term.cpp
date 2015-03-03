@@ -3,7 +3,7 @@
 #include "laplace_kernels.h"
 #include "elastic_kernels.h"
 #include "identity_kernels.h"
-#include "bem.h"
+#include "dense_operator_builder.h"
 #include "mesh_gen.h"
 
 using namespace tbem;
