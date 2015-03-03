@@ -4,15 +4,16 @@
 #include <vector>
 #include <cassert>
 #include "vectorx.h"
+#include "operator.h"
 
 namespace tbem {
 
 struct BlockOperatorI {
-    virtual size_t n_block_rows() const = 0;
-    virtual size_t n_block_cols() const = 0;
-    virtual size_t n_total_rows() const = 0;
-    virtual size_t n_total_cols() const = 0;
-    virtual BlockVectorX apply(const BlockVectorX& x) const = 0;
+    virtual size_t n_block_rows() const {throw NotImplemented();};
+    virtual size_t n_block_cols() const {throw NotImplemented();};
+    virtual size_t n_total_rows() const {throw NotImplemented();};
+    virtual size_t n_total_cols() const {throw NotImplemented();};
+    virtual BlockVectorX apply(const BlockVectorX& x) const {throw NotImplemented();};
 };
 
 template <typename T>
@@ -25,10 +26,10 @@ struct BlockOperator: public BlockOperatorI {
         ops(ops)
     {}
 
-    virtual size_t n_block_rows() const override {return shape.n_rows;}
-    virtual size_t n_block_cols() const override {return shape.n_cols;}
+    virtual size_t n_block_rows() const {return shape.n_rows;}
+    virtual size_t n_block_cols() const {return shape.n_cols;}
    
-    virtual size_t n_total_rows() const override {
+    virtual size_t n_total_rows() const {
         size_t n_rows = 0;
         for (size_t d1 = 0; d1 < n_block_rows(); d1++) {
             n_rows += ops[d1 * n_block_cols()].n_rows();
@@ -36,7 +37,7 @@ struct BlockOperator: public BlockOperatorI {
         return n_rows;
     }
 
-    virtual size_t n_total_cols() const override {
+    virtual size_t n_total_cols() const {
         size_t n_cols = 0;
         for (size_t d2 = 0; d2 < n_block_cols(); d2++) {
             n_cols += ops[d2].n_cols();
@@ -44,7 +45,7 @@ struct BlockOperator: public BlockOperatorI {
         return n_cols;
     }
 
-    virtual BlockVectorX apply(const BlockVectorX& x) const override {
+    virtual BlockVectorX apply(const BlockVectorX& x) const {
         assert(n_block_rows() * x.size() == ops.size());
         assert(n_block_cols() == x.size());
 

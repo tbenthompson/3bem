@@ -213,7 +213,7 @@ BlockDenseOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
  * This function calculates such integrals using gaussian quadrature.
  */
 template <size_t dim, typename KT>
-BlockDenseOperator mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
+BlockOperatorI mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
 {
     auto n_obs_dofs = p.obs_mesh.n_dofs();
     auto block_op = build_operator_shape(KT::n_rows, KT::n_cols, n_obs_dofs, n_obs_dofs);
