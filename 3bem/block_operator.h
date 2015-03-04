@@ -9,6 +9,8 @@
 namespace tbem {
 
 struct BlockOperatorI {
+    typedef std::unique_ptr<BlockOperatorI> Ptr;
+
     virtual size_t n_block_rows() const = 0;
     virtual size_t n_block_cols() const = 0;
     virtual size_t n_total_rows() const = 0;

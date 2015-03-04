@@ -25,7 +25,7 @@ TEST(MatrixFreeMassOperator) {
     }
 }
 
-TEST(MatrixFreeIntegralOpCreate) {
+TEST(MatrixFreeIntegralOperator) {
     auto m = circle_mesh({0.0, 0.0}, 1.0, 4);
     LaplaceDouble<2> k;
     QuadStrategy<2> qs(2);

@@ -24,32 +24,6 @@ int main() {
     VectorX duxy(fault.n_dofs(), slip);
     BlockVectorX du{duxy, duxy};
 
-    TIC
-    auto p_rhs = make_problem<2>(surface, fault, hyp);
-    auto rhs_op = mesh_to_mesh_operator(p_rhs, qs);
-    auto res = rhs_op.apply(du);
-    auto all_dofs_rhs = rhs_op.apply(du);
-    BlockVectorX condensed{
-        condense_vector(constraint_matrix, all_dofs_rhs[0]),
-        condense_vector(constraint_matrix, all_dofs_rhs[1])
-    };
-    auto dof_map = block_dof_map_from_functions(condensed);
-    auto rhs = concatenate(dof_map, condensed);
-    TOC("Building RHS");
-
-    TIC2
-    auto p_lhs = make_problem<2>(surface, surface, hyp);
-    auto lhs = mesh_to_mesh_operator(p_lhs, qs);
-    TOC("Building LHS matrices");
-
-    auto disp_reduced = solve(lhs, rhs, dof_map, surface, constraint_matrix);
-
-    auto disp_reduced_vec = expand(dof_map, disp_reduced);
-    BlockVectorX soln{
-        distribute_vector(constraint_matrix, disp_reduced_vec[0], surface.n_dofs()),
-        distribute_vector(constraint_matrix, disp_reduced_vec[1], surface.n_dofs())
-    };
-
-    auto file = HDFOutputter("test_out/planestrain_u.hdf5");
-    out_surface(file, surface, soln);
+    DislocationProblem<2> abc(hyp, surface, fault, qs, du);
+    abc.solve();
 }

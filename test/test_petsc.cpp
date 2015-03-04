@@ -67,6 +67,13 @@ TEST_FIXTURE(SparseMatrix, MatVecProduct) {
     CHECK_ARRAY_CLOSE(res, correct, 3, 1e-12);
 }
 
+TEST(NonsquareSparseMatrixMatVecProduct) {
+    SparseOperator m(3, 2, {{0,0,3.0}, {0,1,1.0}, {1,1,-1.0}, {2,0,0.5}});
+    auto res = m.apply({1.0, 1.0});
+    std::vector<double> correct{4.0, -1.0, 0.5};
+    CHECK_ARRAY_CLOSE(res, correct, 3, 1e-12);
+}
+
 int main(int, char const* args[])
 {
     return UnitTest::RunAllTests();

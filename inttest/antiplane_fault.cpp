@@ -76,7 +76,7 @@ void half_space() {
     LaplaceHypersingular<2> hypersingular_kernel;
     auto p_rhs_halfspace = make_problem<2>(surface2, fault, hypersingular_kernel);
 
-    auto rhs_op = mesh_to_mesh_operator(p_rhs_halfspace, qs);
+    auto rhs_op = make_matrix_free(p_rhs_halfspace, qs);
     auto rhs_all_dofs = rhs_op.apply({slip})[0];
     for (std::size_t i = 0; i < rhs_all_dofs.size(); i++) {
         rhs_all_dofs[i] = -rhs_all_dofs[i];
@@ -85,7 +85,7 @@ void half_space() {
 
     // The LHS is the effect of the surface on the surface.
     auto p_lhs_halfspace = make_problem<2>(surface2, surface2, hypersingular_kernel);
-    auto lhs = mesh_to_mesh_operator(p_lhs_halfspace, qs);
+    auto lhs = make_matrix_free(p_lhs_halfspace, qs);
 
     // Solve the linear system.
     double linear_solve_tol = 1e-5;

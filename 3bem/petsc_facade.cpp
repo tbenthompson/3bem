@@ -69,7 +69,7 @@ VectorX SparseOperator::apply(const VectorX& v) const {
     Vec x;
     VecCreateMPIWithArray(comm, v.size(), v.size(), PETSC_DECIDE, v.data(), &x);
 
-    VectorX out(n_cols());
+    VectorX out(n_rows());
     Vec out_petsc;
     VecCreateMPIWithArray(comm, out.size(), out.size(), PETSC_DECIDE, out.data(), &out_petsc);
     MatMult(internal_mat, x, out_petsc);

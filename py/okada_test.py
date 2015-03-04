@@ -30,7 +30,7 @@ def compute_okada(vertices):
 def main(filename, values_dim):
     f = h5py.File(filename)
     facets = f['locations']
-    data = f['values'][:, values_dim]
+    data = f['values' + str(values_dim)][:,0]
     vertices = np.array([
         facets[:, x_index].flatten(),
         facets[:, y_index].flatten(),

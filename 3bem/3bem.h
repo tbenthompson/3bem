@@ -2,7 +2,9 @@
 #define __QQQQQASKJNNNNNALA_3BEM_H
 
 #include "dense_builder.h"
+#include "matrix_free_farfield_builder.h"
 #include "operator.h"
+#include "matrix_entry.h"
 #include "vectorx.h"
 #include "block_dof_map.h"
 #include "mesh.h"

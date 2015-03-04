@@ -26,15 +26,16 @@ BlockSparseOperator build_nearfield(const Problem<dim,KT>& p,
     size_t n_obs_dofs = p.obs_mesh.n_dofs();
     size_t n_src_dofs = p.src_mesh.n_dofs();
     auto n_blocks = KT::n_rows * KT::n_cols;
-    std::vector<std::vector<MatrixEntry>> entries(n_blocks);
 
     auto src_facet_info = get_facet_info(p.src_mesh);
+    std::vector<std::vector<MatrixEntry>> entries(p.obs_mesh.facets.size());
+#pragma omp parallel for
     for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
         for (size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
             auto pt = ObsPt<dim>::from_face(qs.obs_quad[obs_q].x_hat, obs_face);
 
-            std::vector<typename KT::OperatorType> row(n_src_dofs);
+            std::vector<std::pair<size_t,typename KT::OperatorType>> row;
             for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
                 FarNearLogic far_near_logic{qs.far_threshold, 3.0};
                 if (far_near_logic.decide(pt, src_facet_info[i]) 
@@ -44,19 +45,19 @@ BlockSparseOperator build_nearfield(const Problem<dim,KT>& p,
                 auto term = make_integral_term(qs, p.K, pt, src_facet_info[i]);
                 auto integrals = compute_term<dim>(term);
                 for (int b = 0; b < dim; b++) {
-                    row[dim * i + b] = integrals[b];
+                    row.push_back(std::make_pair(dim * i + b, integrals[b]));
                 }
             }
-            assert(row.size() == n_src_dofs);
 
             const auto basis = linear_basis(qs.obs_quad[obs_q].x_hat);
 
             for (int obs_basis_idx = 0; obs_basis_idx < dim; obs_basis_idx++) {
                 int obs_dof = dim * obs_idx + obs_basis_idx;
-                for (size_t src_dof = 0; src_dof < n_src_dofs; src_dof++) {
-                    auto val_to_add = basis[obs_basis_idx] * row[src_dof] *
+                for (const auto& e: row) {
+                    auto val_to_add = basis[obs_basis_idx] * e.second *
                         qs.obs_quad[obs_q].w * obs_face.jacobian;
-                    reshape_to_add(entries, obs_dof, src_dof, val_to_add);
+#pragma omp critical
+                    reshape_to_add(entries, obs_dof, e.first, val_to_add);
                 }
             }
         }
@@ -64,7 +65,7 @@ BlockSparseOperator build_nearfield(const Problem<dim,KT>& p,
 
     std::vector<SparseOperator> ops;
     for (size_t i = 0; i < n_blocks; i++) {
-        ops.push_back(SparseOperator(n_obs_dofs, n_obs_dofs, entries[i]));
+        ops.push_back(SparseOperator(n_obs_dofs, n_src_dofs, entries[i]));
     }
     return BlockSparseOperator(KT::n_rows, KT::n_cols, std::move(ops));
 }
@@ -81,10 +82,10 @@ struct MatrixFreeFarfieldOperator {
 
     BlockVectorX apply(const BlockVectorX& x) {
         size_t n_obs_dofs = p.obs_mesh.n_dofs();
-        size_t n_src_dofs = p.src_mesh.n_dofs();
         BlockVectorX farfield(KT::n_rows, VectorX(n_obs_dofs, 0.0));
 
         auto src_facet_info = get_facet_info(p.src_mesh);
+#pragma omp parallel for
         for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
             auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
             for (size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
