@@ -63,7 +63,7 @@ flag_sets['test_coverage_flags'] = test_coverage_flags
 flag_sets['debug_flags'] = debug_flags
 flag_sets['release_flags'] = release_flags
 flag_sets['profile_flags'] = profile_flags
-cpp_flags = base_cpp_flags + flag_sets['debug_flags']
+cpp_flags = base_cpp_flags + flag_sets['release_flags']
 
 lib_cpp_flags = ['-fPIC']
 lib_cpp_flags.extend(cpp_flags)
@@ -112,9 +112,9 @@ test_info['function']['lib_srcs'] = ['3bem/vectorx']
 test_info['petsc'] = dict()
 test_info['petsc']['src'] = 'test/test_petsc'
 test_info['petsc']['lib_srcs'] = ['3bem/petsc_facade']
-test_info['matrix_free_operator'] = dict()
-test_info['matrix_free_operator']['src'] = 'test/test_nearfield_operator'
-test_info['matrix_free_operator']['lib_srcs'] = []
+test_info['matrix_free'] = dict()
+test_info['matrix_free']['src'] = 'test/test_matrix_free_builder'
+test_info['matrix_free']['lib_srcs'] = []
 
 def just_test():
     t = test_info[command_params[0]]

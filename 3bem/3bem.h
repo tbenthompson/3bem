@@ -1,7 +1,7 @@
 #ifndef __QQQQQASKJNNNNNALA_3BEM_H
 #define __QQQQQASKJNNNNNALA_3BEM_H
 
-#include "dense_operator_builder.h"
+#include "dense_builder.h"
 #include "operator.h"
 #include "vectorx.h"
 #include "block_dof_map.h"

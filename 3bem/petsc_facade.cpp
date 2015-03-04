@@ -7,12 +7,14 @@
 
 namespace tbem {
 
-std::vector<int> build_sparsity_pattern(size_t n_rows, 
+std::vector<int> build_sparsity_pattern(size_t n_rows, size_t n_cols,
     const std::vector<MatrixEntry>& entries) 
 {
     std::vector<int> row_nnz(n_rows, 0.0);
     for (const auto& e: entries) {
-        row_nnz[e.loc[0]] += 1;
+        if ((size_t)row_nnz[e.loc[0]] < n_cols) {
+            row_nnz[e.loc[0]]++;
+        }
     }
     return row_nnz;
 }
@@ -34,7 +36,7 @@ SparseOperator::SparseOperator(size_t n_rows, size_t n_cols,
     MatSetType(internal_mat, MATSEQAIJ); 
     MatSetSizes(internal_mat, PETSC_DECIDE, PETSC_DECIDE, n_rows, n_cols);
 
-    auto sparsity_pattern = build_sparsity_pattern(n_rows, entries);
+    auto sparsity_pattern = build_sparsity_pattern(n_rows, n_cols, entries);
     MatSeqAIJSetPreallocation(internal_mat, 0, sparsity_pattern.data());
 
     for (const auto& e: entries) {

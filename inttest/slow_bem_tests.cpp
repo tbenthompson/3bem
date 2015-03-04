@@ -1,5 +1,5 @@
 #include "UnitTest++.h"
-#include "dense_operator_builder.h"
+#include "dense_builder.h"
 #include "quadrature.h"
 #include "mesh_gen.h"
 #include "laplace_kernels.h"

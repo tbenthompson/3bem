@@ -12,11 +12,9 @@
 
 namespace tbem {
 
-//TODO: More general problem about how to organize the inputs. One idea:
-//-- put kernel, src_mesh, quad_strategy into a single object that specifies
-//the inner integral. Then, call methods for a single obs point (mesh_to_pt) or
-//for a whole observation mesh (mesh_to_mesh). This sounds more appropriate!
-//How to incorporate the mass operator into this point of view?
+//TODO: To REALLY REALLY clean this up, ever, I'm going to need to get rid of the 
+//templating on KT. This may simply involve pushing the templating into a different
+//layer of compilation process.
 
 //TODO: Is factory method the appropriate pattern here?
 //Should each operator factory return an abstract operator interface
@@ -41,13 +39,12 @@ Problem<dim,KT> make_problem(const Mesh<dim>& obs_mesh,
 
 template <size_t dim, typename KT>
 std::vector<typename KT::OperatorType> mesh_to_point_vector(const Problem<dim,KT>& p,
-    const QuadStrategy<dim>& qs, const ObsPt<dim>& obs) 
+    const QuadStrategy<dim>& qs, const ObsPt<dim>& obs, 
+    const std::vector<FacetInfo<dim>>& facet_info) 
 {
-    size_t n_out_dofs = dim * p.src_mesh.facets.size();
-    std::vector<typename KT::OperatorType> result(n_out_dofs);
+    std::vector<typename KT::OperatorType> result(p.src_mesh.n_dofs());
     for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
-        auto src_face = FacetInfo<dim>::build(p.src_mesh.facets[i]);
-        auto term = make_integral_term(qs, p.K, obs, src_face);
+        auto term = make_integral_term(qs, p.K, obs, facet_info[i]);
         auto integrals = compute_term<dim>(term);
         for (int b = 0; b < dim; b++) {
             result[dim * i + b] = integrals[b];
@@ -77,6 +74,15 @@ void reshape_to_add(BlockDenseOperator& block_op, size_t idx,
     }
 }
 
+template <size_t dim>
+std::vector<FacetInfo<dim>> get_facet_info(const Mesh<dim>& m) {
+    std::vector<FacetInfo<dim>> out;
+    for (const auto& f: m.facets) {
+        out.push_back(FacetInfo<dim>::build(f));
+    }
+    return out;
+}
+
 /* Given an unknown function defined in terms of a polynomial basis:
  * u(x) = \sum_i U_i \phi_i(x)
  * Determine the coefficients for the expansion of an integral term in
@@ -91,7 +97,7 @@ BlockDenseOperator mesh_to_point_operator(const Problem<dim,KT>& p,
     const QuadStrategy<dim>& qs, const ObsPt<dim>& obs) 
 {
     size_t n_out_dofs = dim * p.src_mesh.facets.size();
-    auto result = mesh_to_point_vector(p, qs, obs);
+    auto result = mesh_to_point_vector(p, qs, obs, get_facet_info(p.src_mesh));
     auto block_op = build_operator_shape(KT::n_rows, KT::n_cols, 1, n_out_dofs);
     for (size_t i = 0; i < result.size(); i++) {
         reshape_to_add(block_op, i, result[i]);
@@ -114,25 +120,31 @@ BlockDenseOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
     auto block_op = build_operator_shape(
         KT::n_cols, KT::n_rows, n_obs_dofs, n_src_dofs
     );
+    auto src_facet_info = get_facet_info(p.src_mesh);
 #pragma omp parallel for
     for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
+
+        std::vector<Vec<typename KT::OperatorType,dim>> row(n_src_dofs, 
+                zeros<Vec<typename KT::OperatorType,dim>>::make());
         for (size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) {
             auto pt = ObsPt<dim>::from_face(qs.obs_quad[obs_q].x_hat, obs_face);
 
-            const auto row = mesh_to_point_vector(p, qs, pt);
-            assert(row.size() == n_src_dofs);
-
             const auto basis = linear_basis(qs.obs_quad[obs_q].x_hat);
+            auto add_to_row = mesh_to_point_vector(p, qs, pt, src_facet_info);
+            for (size_t dof = 0; dof < n_src_dofs; dof++) {
+                row[dof] += outer_product(basis,
+                    add_to_row[dof] * qs.obs_quad[obs_q].w * obs_face.jacobian);
+            }
+        }
 
-            for (int obs_basis_idx = 0; obs_basis_idx < dim; obs_basis_idx++) {
-                int obs_dof = dim * obs_idx + obs_basis_idx;
-                for (size_t src_dof = 0; src_dof < n_src_dofs; src_dof++) {
-                    auto val_to_add = basis[obs_basis_idx] * row[src_dof] *
-                        qs.obs_quad[obs_q].w * obs_face.jacobian;
-                    auto idx = obs_dof * n_src_dofs + src_dof;
-                    reshape_to_add(block_op, idx, val_to_add);
-                }
+
+        for (int obs_basis_idx = 0; obs_basis_idx < dim; obs_basis_idx++) {
+            int obs_dof = dim * obs_idx + obs_basis_idx;
+            for (size_t src_dof = 0; src_dof < n_src_dofs; src_dof++) {
+                auto val_to_add = row[src_dof][obs_basis_idx];
+                auto idx = obs_dof * n_src_dofs + src_dof;
+                reshape_to_add(block_op, idx, val_to_add);
             }
         }
     }
