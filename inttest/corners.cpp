@@ -48,13 +48,13 @@ int main() {
     LaplaceDouble<2> double_kernel;
     IdentityScalar<2> id_scalar;
 
-    auto p_single = make_problem<2>(surface, surface, single_kernel);
+    auto p_single = make_boundary_integral<2>(surface, surface, single_kernel);
     auto single_op = mesh_to_mesh_operator(p_single, qs);
 
-    auto p_double = make_problem<2>(surface, surface, double_kernel);
+    auto p_double = make_boundary_integral<2>(surface, surface, double_kernel);
     auto double_op = mesh_to_mesh_operator(p_double, qs);
     
-    auto p_mass = make_problem<2>(surface, surface, id_scalar);
+    auto p_mass = make_boundary_integral<2>(surface, surface, id_scalar);
     auto mass_op = mass_operator(p_mass, qs);
 
     std::vector<double> rhs_potential(n_dofs, 0.0);

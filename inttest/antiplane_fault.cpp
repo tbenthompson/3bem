@@ -39,7 +39,7 @@ void full_space() {
     // Interpolate the integral equation onto the y = -0.5 surface
     TIC
     LaplaceDouble<2> double_kernel;
-    auto p_fullspace = make_problem<2>(surface1, fault, double_kernel);
+    auto p_fullspace = make_boundary_integral<2>(surface1, fault, double_kernel);
     auto disp = constrained_interpolate<2>(surface1, [&] (Vec2<double> x) {
             ObsPt<2> obs = {0.001, x, {0, 1}, {0, -1}};
 
@@ -74,7 +74,7 @@ void half_space() {
     TIC
     // The RHS is the effect of the fault on the surface.
     LaplaceHypersingular<2> hypersingular_kernel;
-    auto p_rhs_halfspace = make_problem<2>(surface2, fault, hypersingular_kernel);
+    auto p_rhs_halfspace = make_boundary_integral<2>(surface2, fault, hypersingular_kernel);
 
     auto rhs_op = make_matrix_free(p_rhs_halfspace, qs);
     auto rhs_all_dofs = rhs_op.apply({slip})[0];
@@ -84,7 +84,7 @@ void half_space() {
     auto rhs = condense_vector(constraint_matrix, rhs_all_dofs);
 
     // The LHS is the effect of the surface on the surface.
-    auto p_lhs_halfspace = make_problem<2>(surface2, surface2, hypersingular_kernel);
+    auto p_lhs_halfspace = make_boundary_integral<2>(surface2, surface2, hypersingular_kernel);
     auto lhs = make_matrix_free(p_lhs_halfspace, qs);
 
     // Solve the linear system.
@@ -129,8 +129,8 @@ void half_space() {
                 {0.001, pt, {0, 1}, {0, -1}}
             };
             LaplaceDouble<2> double_kernel;
-            auto p_disp_fault = make_problem<2>(surface2, fault, double_kernel);
-            auto p_disp_surf = make_problem<2>(surface2, surface2, double_kernel);
+            auto p_disp_fault = make_boundary_integral<2>(surface2, fault, double_kernel);
+            auto p_disp_surf = make_boundary_integral<2>(surface2, surface2, double_kernel);
 
             auto eval_fault_op = mesh_to_point_operator(p_disp_fault, qs, obs[0]);
             auto eval_surf_op = mesh_to_point_operator(p_disp_surf, qs, obs[0]);
@@ -142,10 +142,10 @@ void half_space() {
             interior_disp[i * ny + j] = eval;
 
             for (int d = 0; d < 2; d++) {
-                auto p_trac_fault = make_problem<2>(
+                auto p_trac_fault = make_boundary_integral<2>(
                     surface2, fault, hypersingular_kernel
                 );
-                auto p_trac_surf = make_problem<2>(
+                auto p_trac_surf = make_boundary_integral<2>(
                     surface2, surface2, hypersingular_kernel
                 );
                 auto trac_fault_op = mesh_to_point_operator(p_trac_fault, qs, obs[d]);

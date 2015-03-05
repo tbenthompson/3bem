@@ -20,7 +20,7 @@ void reshape_to_add(std::vector<std::vector<MatrixEntry>>& entries,
 }
 
 template <size_t dim, typename KT>
-BlockSparseOperator build_nearfield(const Problem<dim,KT>& p,
+BlockSparseOperator build_nearfield(const BoundaryIntegral<dim,KT>& p,
     const QuadStrategy<dim>& qs) 
 {
     size_t n_obs_dofs = p.obs_mesh.n_dofs();
@@ -72,11 +72,11 @@ BlockSparseOperator build_nearfield(const Problem<dim,KT>& p,
 
 template <size_t dim, typename KT>
 struct MatrixFreeFarfieldOperator {
-    const Problem<dim,KT> p;
+    const BoundaryIntegral<dim,KT> p;
     const QuadStrategy<dim> qs;
     const BlockSparseOperator nearfield;
 
-    MatrixFreeFarfieldOperator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs):
+    MatrixFreeFarfieldOperator(const BoundaryIntegral<dim,KT>& p, const QuadStrategy<dim>& qs):
         p(p), qs(qs), nearfield(build_nearfield(p, qs))
     {}
 
@@ -128,13 +128,13 @@ struct MatrixFreeFarfieldOperator {
 
 template <size_t dim, typename KT>
 MatrixFreeFarfieldOperator<dim,KT>
-make_matrix_free(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs) {
+make_matrix_free(const BoundaryIntegral<dim,KT>& p, const QuadStrategy<dim>& qs) {
     return MatrixFreeFarfieldOperator<dim,KT>(p,qs);
 }
 
 template <size_t dim, typename KT>
 BlockSparseOperator 
-matrix_free_mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs) {
+matrix_free_mass_operator(const BoundaryIntegral<dim,KT>& p, const QuadStrategy<dim>& qs) {
     auto n_obs_dofs = p.obs_mesh.n_dofs();
     auto n_blocks = KT::n_rows * KT::n_cols;
     std::vector<std::vector<MatrixEntry>> entries(n_blocks);

@@ -23,7 +23,7 @@ TEST(ConstantLaplaceBoundary) {
             auto obs_pt = v;
             auto obs_n = -normalized(obs_pt);
             LaplaceDouble<3> double_kernel;
-            auto p = make_problem<3>(sphere, sphere, double_kernel);
+            auto p = make_boundary_integral<3>(sphere, sphere, double_kernel);
             ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
             auto op = mesh_to_point_operator(p, qs, obs);
             auto result = op.apply({src_strength})[0];
@@ -39,9 +39,9 @@ TEST(GalerkinMatrixConstantLaplace) {
 
     QuadStrategy<3> qs(2, 2, 4, 3.0, 1e-3);
     LaplaceDouble<3> double_kernel;
-    auto p_double = make_problem<3>(sphere, sphere, double_kernel);
+    auto p_double = make_boundary_integral<3>(sphere, sphere, double_kernel);
     LaplaceSingle<3> single_kernel;
-    auto p_single = make_problem<3>(sphere, sphere, single_kernel);
+    auto p_single = make_boundary_integral<3>(sphere, sphere, single_kernel);
     auto mat0 = mesh_to_mesh_operator(p_double, qs);
     auto res0 = mat0.apply({str})[0];
     for (std::size_t i = 0; i < res0.size(); i++) {
@@ -51,7 +51,7 @@ TEST(GalerkinMatrixConstantLaplace) {
     auto res1 = mat1.apply({str})[0];
 
     IdentityScalar<3> identity;
-    auto p_mass = make_problem<3>(sphere, sphere, identity);
+    auto p_mass = make_boundary_integral<3>(sphere, sphere, identity);
     auto mass_op = mass_operator(p_mass, qs);
     auto res2 = mass_op.apply({str})[0];
     CHECK_ARRAY_CLOSE(res0, res2, n_dofs, 3e-2);
@@ -122,7 +122,7 @@ TEST(ConstantLaplace2D) {
     std::vector<double> u(src_circle.n_dofs(), 7.0);
     for (double i = 1.0; i < 19.0; i++) {
         Mesh<2> obs_circle = circle_mesh(center, i, refine);
-        auto p = make_problem<2>(obs_circle, src_circle, double_kernel);
+        auto p = make_boundary_integral<2>(obs_circle, src_circle, double_kernel);
 
         // Do it via eval_integral_equation for each vertex.
         for (std::size_t i = 0; i < obs_circle.n_facets(); i++) {
@@ -156,7 +156,7 @@ void galerkin_matrix_one_test(const Mesh<dim>& mesh,
                               double correct) {
     std::vector<double> str(mesh.n_dofs(), 1.0);
     IdentityScalar<dim> identity;
-    auto p = make_problem<dim>(mesh, mesh, identity);
+    auto p = make_boundary_integral<dim>(mesh, mesh, identity);
     QuadStrategy<dim> qs(2);
 
     auto matrix = mesh_to_mesh_operator(p, qs);

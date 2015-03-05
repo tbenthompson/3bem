@@ -14,31 +14,37 @@ namespace tbem {
 
 //TODO: To REALLY REALLY clean this up, ever, I'm going to need to get rid of the 
 //templating on KT. This may simply involve pushing the templating into a different
-//layer of compilation process.
+//layer of compilation process. Or alternatively, I could template on the tensor 
+//rows and columns?
+
+//TODO: Perform the inner integral for each observation point and then apply the
+//galerkin operator?
+
+//TODO: PointSetI - Interface for a bunch of observation points?
 
 //TODO: Is factory method the appropriate pattern here?
 //Should each operator factory return an abstract operator interface
 //without any knowledge of what the object's operator type actually is? 
 //or abstract factory?
 
-//TODO: Rename. Maybe IntegralForm? DoubleIntegral
+struct BasisPlaceholder {};
 template <size_t dim, typename KT>
-struct Problem {
+struct BoundaryIntegral {
     const Mesh<dim>& obs_mesh;
     const Mesh<dim>& src_mesh;
     const KT& K;
-    //TODO: eventually, need to add in observation basis and source basis?
+    const BasisPlaceholder src_basis;
 };
 
 template <size_t dim, typename KT> 
-Problem<dim,KT> make_problem(const Mesh<dim>& obs_mesh,
+BoundaryIntegral<dim,KT> make_boundary_integral(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const KT& k) 
 {
     return {obs_mesh, src_mesh, k};
 }
 
 template <size_t dim, typename KT>
-std::vector<typename KT::OperatorType> mesh_to_point_vector(const Problem<dim,KT>& p,
+std::vector<typename KT::OperatorType> mesh_to_point_vector(const BoundaryIntegral<dim,KT>& p,
     const QuadStrategy<dim>& qs, const ObsPt<dim>& obs, 
     const std::vector<FacetInfo<dim>>& facet_info) 
 {
@@ -90,10 +96,10 @@ std::vector<FacetInfo<dim>> get_facet_info(const Mesh<dim>& m) {
  * In other words, this function calculates the vector Q_i where
  * Q_i = \int_{S_{src}} K(x,y) \phi_i(y) dy
  */
-//TODO: Don't pass a Problem, because this function only needs the kernel
+//TODO: Don't pass a BoundaryIntegral, because this function only needs the kernel
 //and the src_mesh.
 template <size_t dim, typename KT>
-BlockDenseOperator mesh_to_point_operator(const Problem<dim,KT>& p,
+BlockDenseOperator mesh_to_point_operator(const BoundaryIntegral<dim,KT>& p,
     const QuadStrategy<dim>& qs, const ObsPt<dim>& obs) 
 {
     size_t n_out_dofs = dim * p.src_mesh.facets.size();
@@ -112,7 +118,7 @@ BlockDenseOperator mesh_to_point_operator(const Problem<dim,KT>& p,
  * K(x,y) is the kernel function and \phi_i(x) is a basis function.
  */
 template <size_t dim, typename KT>
-BlockDenseOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
+BlockDenseOperator mesh_to_mesh_operator(const BoundaryIntegral<dim,KT>& p,
                                      const QuadStrategy<dim>& qs) 
 {
     size_t n_obs_dofs = p.obs_mesh.n_dofs();
@@ -159,7 +165,7 @@ BlockDenseOperator mesh_to_mesh_operator(const Problem<dim,KT>& p,
  * This function calculates such integrals using gaussian quadrature.
  */
 template <size_t dim, typename KT>
-BlockDenseOperator mass_operator(const Problem<dim,KT>& p, const QuadStrategy<dim>& qs)
+BlockDenseOperator mass_operator(const BoundaryIntegral<dim,KT>& p, const QuadStrategy<dim>& qs)
 {
     auto n_obs_dofs = p.obs_mesh.n_dofs();
     auto block_op = build_operator_shape(KT::n_rows, KT::n_cols, n_obs_dofs, n_obs_dofs);

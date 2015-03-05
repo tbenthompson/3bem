@@ -24,7 +24,7 @@ struct EvalProb {
     {}
 
     double go(const Kernel<3,1,1>& k) {
-        auto p = make_problem<3>(sphere, sphere, k);
+        auto p = make_boundary_integral<3>(sphere, sphere, k);
         ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
         auto op = mesh_to_point_operator(p, qs, obs);
         return op.apply({src_strength})[0][0];
@@ -70,7 +70,7 @@ TEST(MassTerm) {
         }
     }
     IdentityScalar<3> identity;
-    auto p = make_problem<3>(sphere, sphere, identity);
+    auto p = make_boundary_integral<3>(sphere, sphere, identity);
     QuadStrategy<3> qs(2);
     auto mass_op = mass_operator(p, qs);
     auto res = mass_op.apply({str})[0];
@@ -122,7 +122,7 @@ TEST(TensorMassTerm) {
     auto sphere = sphere_mesh({0,0,0}, 1.0, 1);
     BlockVectorX str(3, VectorX(sphere.n_dofs(), 1.0));
     IdentityTensor<3,3,3> identity;
-    auto p = make_problem<3>(sphere, sphere, identity);
+    auto p = make_boundary_integral<3>(sphere, sphere, identity);
     QuadStrategy<3> qs(2);
     auto mass_op = mass_operator(p, qs);
     CHECK_EQUAL(mass_op.ops.size(), 9);
@@ -134,7 +134,7 @@ TEST(MakeProblem) {
     auto sphere1 = sphere_mesh({0,0,0}, 1.0, 0);
     auto sphere2 = sphere_mesh({0,0,0}, 1.0, 1);
     IdentityTensor<3,3,3> identity;
-    auto p = make_problem<3>(sphere1, sphere2, identity);
+    auto p = make_boundary_integral<3>(sphere1, sphere2, identity);
     CHECK_EQUAL(&p.obs_mesh, &sphere1);
     CHECK_EQUAL(&p.src_mesh, &sphere2);
 }

@@ -24,7 +24,7 @@ BlockVectorX make_rhs(const Mesh<dim>& surface, const Mesh<dim>& fault,
         const ConstraintMatrix& constraint_matrix, const QuadStrategy<dim>& qs,
         const ElasticHypersingular<dim>& hyp, const BlockVectorX& du) {
     TIC
-    auto p_rhs = make_problem<dim>(surface, fault, hyp);
+    auto p_rhs = make_boundary_integral<dim>(surface, fault, hyp);
     auto rhs_op = make_matrix_free(p_rhs, qs);
     auto all_dofs_rhs = rhs_op.apply(du);
 
@@ -42,7 +42,7 @@ make_lhs(const ElasticHypersingular<dim>& hyp, const Mesh<dim>& mesh,
     const QuadStrategy<dim>& qs )
 {
     TIC
-    auto p_lhs = make_problem<dim>(mesh, mesh, hyp);
+    auto p_lhs = make_boundary_integral<dim>(mesh, mesh, hyp);
     auto lhs = make_matrix_free(p_lhs, qs);
     TOC("Building LHS matrices");
     return lhs;

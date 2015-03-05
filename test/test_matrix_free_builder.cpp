@@ -15,7 +15,7 @@ TEST(MatrixFreeMassOperator) {
     BlockVectorX in{random_list(m.n_dofs()), random_list(m.n_dofs())};
     IdentityTensor<2,2,2> id;
     QuadStrategy<2> qs(2);
-    auto problem = make_problem(m, m, id);
+    auto problem = make_boundary_integral(m, m, id);
     auto dense_op = mass_operator(problem, qs);
     auto correct = dense_op.apply({in});
     auto mf_op = matrix_free_mass_operator(problem, qs);
@@ -29,7 +29,7 @@ TEST(MatrixFreeIntegralOperator) {
     auto m = circle_mesh({0.0, 0.0}, 1.0, 4);
     LaplaceDouble<2> k;
     QuadStrategy<2> qs(2);
-    auto problem = make_problem(m, m, k);
+    auto problem = make_boundary_integral(m, m, k);
     auto op = make_matrix_free(problem, qs);
     auto dense_op = mesh_to_mesh_operator(problem, qs);
 

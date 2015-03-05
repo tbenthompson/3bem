@@ -42,12 +42,12 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     // This is added to the mass matrix term (u)
     TIC
     LaplaceDouble<dim> double_kernel;
-    auto p_double = make_problem<dim>(mesh, mesh, double_kernel);
+    auto p_double = make_boundary_integral<dim>(mesh, mesh, double_kernel);
     auto rhs_double_op = mesh_to_mesh_operator(p_double, qs);
     auto rhs_double = rhs_double_op.apply({u})[0];
 
     IdentityScalar<dim> identity;
-    auto p_mass = make_problem<dim>(mesh, mesh, identity);
+    auto p_mass = make_boundary_integral<dim>(mesh, mesh, identity);
     auto mass_op = mass_operator(p_mass, qs);
     auto rhs_mass = mass_op.apply({u})[0];
     
@@ -64,7 +64,7 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     // The LHS matrix for a Dirichlet Laplace problem.
     TIC2
     LaplaceSingle<dim> single_kernel;
-    auto p_single = make_problem<dim>(mesh, mesh, single_kernel);
+    auto p_single = make_boundary_integral<dim>(mesh, mesh, single_kernel);
     auto matrix = mesh_to_mesh_operator(p_single, qs);
     TOC("Matrix construct on " + std::to_string(mesh.n_facets()) + " facets");
     TIC2
