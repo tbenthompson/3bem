@@ -22,20 +22,23 @@ template <typename T, size_t dim>
 T integrate(const std::vector<QuadPt<dim>>& qr, 
             const std::function<T(std::array<double,dim>)>& fnc) {
     T integral_val = qr[0].w * fnc(qr[0].x_hat);;
-    for (unsigned int i = 1; i < qr.size(); i++) {
+    for (size_t i = 1; i < qr.size(); i++) {
         integral_val += qr[i].w * fnc(qr[i].x_hat);
     }
     return integral_val;
 }
 
 /* One dimensional quadrature methods */
-QuadRule<1> gauss(unsigned int n);
+QuadRule<1> gauss(size_t n);
+QuadRule<1> sinh_transform(size_t n, double a, double b);
 
 /* Two dimensional quadrature methods */
 QuadRule<2> tensor_product(QuadRule<1> xq, QuadRule<1> yq);
 QuadRule<2> tensor_gauss(int n_pts);
 QuadRule<2> tri_gauss(int n_pts);
 QuadRule<2> square_to_tri(QuadRule<2> square_quad);
+QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double x0,
+    double y0, double b);
 
 template <size_t dim>
 struct QuadStrategy {

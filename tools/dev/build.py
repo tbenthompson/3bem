@@ -115,6 +115,9 @@ test_info['petsc']['lib_srcs'] = ['3bem/petsc_facade']
 test_info['matrix_free'] = dict()
 test_info['matrix_free']['src'] = 'test/test_matrix_free_builder'
 test_info['matrix_free']['lib_srcs'] = []
+test_info['quadrature'] = dict()
+test_info['quadrature']['src'] = 'test/test_quadrature'
+test_info['quadrature']['lib_srcs'] = ['3bem/quadrature']
 
 def just_test():
     t = test_info[command_params[0]]

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 
 #include "UnitTest++.h"
 #include "autocheck/autocheck.hpp"
@@ -162,6 +163,64 @@ TEST(AdaptiveQuadTensor) {
         {{2, 2}}, {{0, 4}}
     }};
     CHECK_ARRAY_CLOSE((double*)(&result[0]), (double*)(&correct[0]), 4, 1e-12);
+}
+
+TEST(SinhTransform) {
+    double acceptable_error = 1e-4;
+    auto n = 10;
+    double a = 0.0;
+    double b = 0.1;
+    auto q = sinh_transform(n, a, b);
+
+    auto fnc = [&](std::array<double,1> x) {
+        // return 1.0 / (std::pow(x[0] - a, 2) + b * b);
+        return std::log(std::pow(x[0] - a, 2) + b * b);
+    };
+
+    auto res = integrate<double,1>(q, fnc);
+
+    auto correct = adaptive_integrate<double>([&](double x) {
+            return fnc({x});
+        }, -1.0, 1.0, acceptable_error);
+
+    CHECK_CLOSE(res, correct, acceptable_error);
+}
+
+TEST(SinhSigmoidal2D) {
+    double acceptable_error = 1e-2;
+    size_t nt = 10;
+    size_t nr = 5;
+    double b = 1e-2;
+    double x0 = 0.2;
+    double y0 = 0.4;
+    double lambda = 1.5;
+    auto q = sinh_sigmoidal_transform(nt, nr, x0, y0, b);
+
+    auto fnc = [&](std::array<double,2> x) {
+        return 1.0 / std::pow(
+            std::pow(x[0] - x0, 2) + std::pow(x[1] - y0, 2) + b * b, lambda
+        );
+    };
+
+    size_t sinh_evals = 0;
+    auto res = integrate<double,2>(q, [&] (Vec<double,2> x_hat) {
+            sinh_evals++;  
+            return fnc(x_hat);
+        });
+
+    size_t adaptive_evals = 0;
+    double adaptive_error = acceptable_error * 1e-1;
+    auto correct = adaptive_integrate<double>([&](double x) {
+            return adaptive_integrate<double>([&](double y) {
+                adaptive_evals++;
+                return fnc({x, y});
+            }, 0.0, 1 - x, adaptive_error);
+        }, 0.0, 1.0, adaptive_error);
+    std::cout << adaptive_evals << " versus " << sinh_evals <<  std::endl;
+
+    auto error = std::fabs(res - correct) / std::fabs(correct);
+    std::cout << std::setprecision(16) << error << std::endl;
+    CHECK_CLOSE(error, 0.0, acceptable_error);
 }
 
 int main(int, char const *[])
