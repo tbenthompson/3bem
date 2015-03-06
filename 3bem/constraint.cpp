@@ -2,8 +2,57 @@
 
 namespace tbem {
 
+bool LinearTerm::operator==(const LinearTerm& other) const 
+{
+    return dof == other.dof && weight == other.weight;
+}
+
+std::ostream& operator<<(std::ostream& os, const LinearTerm& lt) 
+{
+    os << "(" << lt.dof << ", " << lt.weight << ")";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const ConstraintEQ& c) 
+{
+    os << "ConstraintEQ[[";
+    os << "(rhs, " << c.rhs << "), ";
+    for (auto t: c.terms) {
+        os << t << ", ";
+    }
+    os << "]]";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, 
+    const RearrangedConstraintEQ& c) 
+{
+    os << "RearrangedConstraintEQ[[";
+    os << "(constrained_dof=" << c.constrained_dof << ", 1), ";
+    os << "(rhs, " << c.rhs << "), ";
+    for (auto t: c.terms) {
+        os << t << ", ";
+    }
+    os << "]]";
+    return os;
+}
+
+ConstraintEQ boundary_condition(size_t dof, double value) 
+{
+    return {{LinearTerm{dof, 1.0}}, value};
+}
+
+ConstraintEQ continuity_constraint(size_t dof1, size_t dof2) 
+{
+    return {
+        {LinearTerm{dof1, 1.0}, LinearTerm{dof2, -1.0}},
+        0.0
+    };
+}
+
 RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c, 
-                                                  size_t constrained_index) {
+    size_t constrained_index) 
+{
     assert(constrained_index < c.terms.size());
     const auto& constrained_term = c.terms[constrained_index]; 
 
@@ -26,7 +75,8 @@ RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c,
 }
 
 
-size_t find_last_dof_index(const ConstraintEQ& c) {
+size_t find_last_dof_index(const ConstraintEQ& c) 
+{
     auto highest_dof_term = std::max_element(c.terms.begin(), c.terms.end(),
         [&] (const LinearTerm& a, const LinearTerm& b) {
             return a.dof < b.dof;
@@ -35,7 +85,8 @@ size_t find_last_dof_index(const ConstraintEQ& c) {
 }
 
 typedef std::vector<LinearTerm>::const_iterator LinearTermIterator;
-LinearTermIterator find_term_with_dof(const std::vector<LinearTerm>& terms, size_t dof) {
+LinearTermIterator find_term_with_dof(const std::vector<LinearTerm>& terms, size_t dof) 
+{
     return std::find_if(terms.begin(), terms.end(),
         [&] (const LinearTerm& sub_lt) {
             return sub_lt.dof == dof;
@@ -44,7 +95,8 @@ LinearTermIterator find_term_with_dof(const std::vector<LinearTerm>& terms, size
 }
 
 template <typename T>
-bool none_found(const typename T::const_iterator& it, const T& vec) {
+bool none_found(const typename T::const_iterator& it, const T& vec) 
+{
     return it == std::end(vec);
 }
 
@@ -57,7 +109,7 @@ void remove(std::vector<T>& vec, size_t pos)
 }
 
 ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
-                        const RearrangedConstraintEQ& subs_in) 
+    const RearrangedConstraintEQ& subs_in) 
 {
     const auto& constrained_term = c.terms[constrained_dof_index];
     assert(constrained_term.dof == subs_in.constrained_dof);

@@ -23,14 +23,8 @@ struct LinearTerm {
     const size_t dof;
     const double weight;
 
-    bool operator==(const LinearTerm& other) const {
-        return dof == other.dof && weight == other.weight;
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const LinearTerm& lt) {
-        os << "(" << lt.dof << ", " << lt.weight << ")";
-        return os;
-    }
+    bool operator==(const LinearTerm& other) const;
+    friend std::ostream& operator<<(std::ostream& os, const LinearTerm& lt);
 };
 
 /* A constraint is composed of LinearTerms and a right hand side constant.
@@ -45,27 +39,12 @@ struct ConstraintEQ {
     const std::vector<LinearTerm> terms;
     const double rhs;
 
-    friend std::ostream& operator<<(std::ostream& os, const ConstraintEQ& c) {
-        os << "ConstraintEQ[[";
-        os << "(rhs, " << c.rhs << "), ";
-        for (auto t: c.terms) {
-            os << t << ", ";
-        }
-        os << "]]";
-        return os;
-    }
+    friend std::ostream& operator<<(std::ostream& os, const ConstraintEQ& c);
 };
 
-inline ConstraintEQ boundary_condition(size_t dof, double value) {
-    return {{LinearTerm{dof, 1.0}}, value};
-}
+ConstraintEQ boundary_condition(size_t dof, double value);
 
-inline ConstraintEQ continuity_constraint(size_t dof1, size_t dof2) {
-    return {
-        {LinearTerm{dof1, 1.0}, LinearTerm{dof2, -1.0}},
-        0.0
-    };
-}
+ConstraintEQ continuity_constraint(size_t dof1, size_t dof2);
 
 size_t find_last_dof_index(const ConstraintEQ& c);
 
@@ -84,16 +63,7 @@ struct RearrangedConstraintEQ {
     const double rhs;
 
     friend std::ostream& operator<<(std::ostream& os, 
-                                    const RearrangedConstraintEQ& c) {
-        os << "RearrangedConstraintEQ[[";
-        os << "(constrained_dof=" << c.constrained_dof << ", 1), ";
-        os << "(rhs, " << c.rhs << "), ";
-        for (auto t: c.terms) {
-            os << t << ", ";
-        }
-        os << "]]";
-        return os;
-    }
+        const RearrangedConstraintEQ& c);
 };
 
 RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c, 

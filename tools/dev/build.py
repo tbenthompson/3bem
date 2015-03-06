@@ -118,6 +118,12 @@ test_info['matrix_free']['lib_srcs'] = []
 test_info['quadrature'] = dict()
 test_info['quadrature']['src'] = 'test/test_quadrature'
 test_info['quadrature']['lib_srcs'] = ['3bem/quadrature']
+test_info['closest_pt'] = dict()
+test_info['closest_pt']['src'] = 'test/test_closest_pt'
+test_info['closest_pt']['lib_srcs'] = ['3bem/closest_pt']
+test_info['integral_term'] = dict()
+test_info['integral_term']['src'] = 'test/test_integral_term'
+test_info['integral_term']['lib_srcs'] = []
 
 def just_test():
     t = test_info[command_params[0]]

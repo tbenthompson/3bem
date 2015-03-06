@@ -9,6 +9,8 @@
     
 namespace tbem {
 
+// TODO: Can this all be moved to a .cpp file
+
 template <size_t dim>
 bool pts_close(Vec<double,dim> a, Vec<double,dim> b, double eps) {
     return all(fabs(a - b) < eps);

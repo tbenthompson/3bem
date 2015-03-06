@@ -2,6 +2,7 @@
 #include "numerics.h"
 #include <cmath>
 #include <cassert>
+#include <map>
 
 namespace tbem {
 
@@ -34,7 +35,7 @@ QuadRule<1> gauss(size_t n) {
     //Because gaussian quadrature rules are symmetric, I only compute half of
     //the points and then mirror across x = 0.
     const size_t m = (n+1)/2;
-    for (size_t i=0;i < m;i++)
+    for (size_t i = 0; i < m; i++)
     {
         // Initial guess.
         double x = std::cos(M_PI * (i + (3.0/4.0)) / (n + 0.5));
@@ -68,11 +69,23 @@ QuadRule<1> gauss(size_t n) {
     return retval;
 }
 
+//TODO: global variables are bad
+static std::map<int, QuadRule<1>> gauss_rules;
+QuadRule<1> get_gauss(size_t n) {
+    auto gauss_q = gauss_rules.find(n);
+    if (gauss_q != gauss_rules.end()) {
+        return gauss_q->second;
+    } else {
+        gauss_rules.insert(std::make_pair(n, gauss(n)));
+        return gauss_rules.at(n);
+    }
+}
+
 QuadRule<1> sinh_transform(size_t n, double a, double b) 
 {
     auto mu = 0.5 * (std::asinh((1.0 + a) / b) + std::asinh((1.0 - a) / b));
     auto eta = 0.5 * (std::asinh((1.0 + a) / b) - std::asinh((1.0 - a) / b));
-    auto gauss_q = gauss(n);
+    auto gauss_q = get_gauss(n);
     std::vector<QuadPt<1>> q_pts;
     for (size_t i = 0; i < gauss_q.size(); i++) {
         auto s = gauss_q[i].x_hat[0];

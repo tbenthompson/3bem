@@ -38,7 +38,7 @@ BlockSparseOperator build_nearfield(const BoundaryIntegral<dim,KT>& p,
             std::vector<std::pair<size_t,typename KT::OperatorType>> row;
             for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
                 FarNearLogic far_near_logic{qs.far_threshold, 3.0};
-                if (far_near_logic.decide(pt, src_facet_info[i]) 
+                if (far_near_logic.decide(pt.loc, src_facet_info[i]).type 
                         == FarNearType::Farfield) {
                     continue; 
                 }
@@ -94,7 +94,7 @@ struct MatrixFreeFarfieldOperator {
                 typename KT::OutType row = zeros<typename KT::OutType>::make();
                 for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
                     FarNearLogic far_near_logic{qs.far_threshold, 3.0};
-                    if (far_near_logic.decide(pt, src_facet_info[i]) 
+                    if (far_near_logic.decide(pt.loc, src_facet_info[i]).type 
                             != FarNearType::Farfield) {
                         continue; 
                     }

@@ -41,7 +41,11 @@ void full_space() {
     LaplaceDouble<2> double_kernel;
     auto p_fullspace = make_boundary_integral<2>(surface1, fault, double_kernel);
     auto disp = constrained_interpolate<2>(surface1, [&] (Vec2<double> x) {
-            ObsPt<2> obs = {0.001, x, {0, 1}, {0, -1}};
+            Vec<double,2> richardson_dir{1, 0};
+            if (x[0] < 0) {
+                richardson_dir[0] = -1;
+            }
+            ObsPt<2> obs = {0.001, x, {0, 1}, richardson_dir};
 
             auto op = mesh_to_point_operator(p_fullspace, qs, obs);
             double val = op.apply({slip})[0][0];

@@ -10,6 +10,7 @@
 #include "numerics.h"
 #include "obs_pt.h"
 #include "facet_info.h"
+#include "closest_pt.h"
 
 namespace tbem {
 
@@ -25,6 +26,45 @@ struct IntegralTerm {
     const ObsPt<dim>& obs;
     const FacetInfo<dim>& src_face;
 };
+
+enum class FarNearType {
+    Singular,
+    Nearfield,
+    Farfield 
+};
+
+template <size_t dim>
+struct NearestPoint {
+    const Vec<double,dim-1> ref_pt;
+    const Vec<double,dim> pt;
+    const double distance;
+    const FarNearType type;
+};
+
+struct FarNearLogic {
+    double far_threshold;
+    double singular_threshold;
+    
+    template <size_t dim>
+    NearestPoint<dim> decide(const Vec<double,dim>& pt, const FacetInfo<dim>& facet) {
+        auto near_ref_pt = closest_pt_facet(pt, facet.face);
+        auto near_pt = ref_to_real(near_ref_pt, facet.face);
+        auto exact_dist2 = dist2(near_pt, pt);
+        auto appx_dist2 = exact_dist2;//appx_face_dist2(obs.loc, facet.face);
+        bool nearfield = appx_dist2 < pow(far_threshold, 2) * facet.area_scale;
+        if (nearfield) {
+            bool singular = appx_dist2 < singular_threshold * facet.area_scale;
+            if (singular) { 
+                return {near_ref_pt, near_pt, std::sqrt(exact_dist2), FarNearType::Singular};
+            } else {
+                return {near_ref_pt, near_pt, std::sqrt(exact_dist2), FarNearType::Nearfield};
+            }
+        } else {
+            return {near_ref_pt, near_pt, std::sqrt(exact_dist2), FarNearType::Farfield};
+        }
+    }
+};
+
 
 template <size_t dim, typename KT>
 IntegralTerm<dim,KT> make_integral_term(const QuadStrategy<dim>& qs,
@@ -54,22 +94,45 @@ template <size_t dim>
 struct UnitFacetAdaptiveIntegrator {
     template <typename KT>
     Vec<typename KT::OperatorType,dim> 
-    operator()(const IntegralTerm<dim,KT>& term, 
+    operator()(const IntegralTerm<dim,KT>& term, const NearestPoint<dim>& near_pt,
                const Vec<double,dim>& nf_obs_pt);
 };
 
+
+static const auto G = gauss(10);
+inline QuadRule<1> choose_2d_quad(double S, double l, double x0) {
+    assert(l > 0);
+    assert(S > 0);
+    static size_t max_n = 0;
+    if ((l / S) > 1) {
+        return G;
+    }
+    else {
+        size_t n = static_cast<size_t>(10.0 * (1 + std::log(S / l)));
+        max_n = std::max(max_n, n);
+        // std::cout << max_n << std::endl;
+        return sinh_transform(n, x0, l);
+    }
+}
 
 template <>
 struct UnitFacetAdaptiveIntegrator<2> {
     template <typename KT>
     Vec<typename KT::OperatorType,2> operator()(const IntegralTerm<2,KT>& term, 
-                 const Vec<double,2>& nf_obs_pt) {
-        return adaptive_integrate<Vec<typename KT::OperatorType,2>>(
-            [&] (double x_hat) {
-                Vec<double,1> q_pt = {x_hat};
-                return eval_point_influence<2>(q_pt, term.k, term.src_face,
-                                       nf_obs_pt, term.obs.normal);
-            }, -1.0, 1.0, term.qs.near_tol);
+                const NearestPoint<2>& near_pt, const Vec<double,2>& nf_obs_pt) {
+        assert(near_pt.distance > 0);
+        auto S = term.src_face.length_scale;
+        auto l = near_pt.distance;
+        auto q = choose_2d_quad(S, l, near_pt.ref_pt[0]);
+        auto integrals = zeros<Vec<typename KT::OperatorType,2>>::make();
+        for (size_t i = 0; i < q.size(); i++) {
+            integrals += eval_point_influence<2>(
+                            q[i].x_hat,
+                            term.k, term.src_face,
+                            nf_obs_pt, term.obs.normal
+                        ) * q[i].w;
+        }
+        return integrals;
     }
 };
 
@@ -77,8 +140,18 @@ template <>
 struct UnitFacetAdaptiveIntegrator<3> {
     template <typename KT>
     Vec<typename KT::OperatorType,3> operator()(const IntegralTerm<3,KT>& term, 
-                                                const Vec<double,3>& nf_obs_pt) {
-        return adaptive_integrate<Vec<typename KT::OperatorType,3>>(
+            const NearestPoint<3>& near_pt, const Vec<double,3>& nf_obs_pt) {
+        auto q = sinh_sigmoidal_transform(60, 30, near_pt.ref_pt[0],
+            near_pt.ref_pt[1], near_pt.distance);
+        auto integrals = zeros<Vec<typename KT::OperatorType,3>>::make();
+        for (size_t i = 0; i < q.size(); i++) {
+            integrals += eval_point_influence<3>(
+                            q[i].x_hat,
+                            term.k, term.src_face,
+                            nf_obs_pt, term.obs.normal
+                        ) * q[i].w;
+        }
+        auto correct = adaptive_integrate<Vec<typename KT::OperatorType,3>>(
             [&] (double x_hat) {
                 if (x_hat == 1.0) {
                     return zeros<Vec<typename KT::OperatorType,3>>::make();
@@ -90,15 +163,19 @@ struct UnitFacetAdaptiveIntegrator<3> {
                                                  nf_obs_pt, term.obs.normal);
                     }, 0.0, 1 - x_hat, term.qs.near_tol);
             }, 0.0, 1.0, term.qs.near_tol);
+        auto error = fabs(correct - integrals) / correct;
+        // std::cout << error << std::endl;
+        assert(all(error < 1e-4 * ones<Vec<typename KT::OperatorType,3>>::make()));
+        return integrals;
     }
 };
 
 template <size_t dim, typename KT> 
 Vec<typename KT::OperatorType,dim> 
-compute_adaptively(const IntegralTerm<dim, KT>& term,
+compute_nearfield(const IntegralTerm<dim, KT>& term, const NearestPoint<dim>& near_pt,
                    const Vec<double,dim>& nf_obs_pt) {
     UnitFacetAdaptiveIntegrator<dim> integrator;
-    return integrator(term, nf_obs_pt);
+    return integrator(term, near_pt, nf_obs_pt);
 }
 
 template <size_t dim, typename KT>
@@ -132,13 +209,16 @@ T richardson_limit(const std::vector<T>& values) {
 }
 
 template <size_t dim, typename KT> 
-Vec<typename KT::OperatorType,dim> compute_as_limit(const IntegralTerm<dim, KT>& term) {
+Vec<typename KT::OperatorType,dim> compute_as_limit(const IntegralTerm<dim,KT>& term,
+    const NearestPoint<dim>& near_pt) 
+{
     std::vector<Vec<typename KT::OperatorType,dim>> 
         near_steps(term.qs.n_singular_steps);
 
     for (int step_idx = 0; step_idx < term.qs.n_singular_steps; step_idx++) {
         auto step_loc = get_step_loc(term, step_idx);
-        near_steps[step_idx] = compute_adaptively<dim>(term, step_loc);
+        auto shifted_near_pt = FarNearLogic{term.qs.far_threshold, 3.0}.decide(step_loc, term.src_face);
+        near_steps[step_idx] = compute_nearfield<dim>(term, shifted_near_pt, step_loc);
     }
 
     return richardson_limit(near_steps);
@@ -166,53 +246,26 @@ Vec<typename KT::OperatorType,dim> compute_far_term(const IntegralTerm<dim, KT>&
  */
 template <size_t dim>
 double appx_face_dist2(const Vec<double,dim>& pt,
-                       const std::array<Vec<double,dim>,dim>& vs) {
+                       const Vec<Vec<double,dim>,dim>& vs) {
     double res = dist2(pt, vs[0]);
     for (int d = 1; d < dim; d++) {
         res = std::min(res, dist2(pt, vs[d])); 
     }
     return res;
 }
-
-enum class FarNearType {
-    Singular,
-    Nearfield,
-    Farfield 
-};
-
-struct FarNearLogic {
-    double far_threshold;
-    double singular_threshold;
-    
-    template <size_t dim>
-    FarNearType decide(const ObsPt<dim>& obs, const FacetInfo<dim>& facet) {
-        auto appx_dist2 = appx_face_dist2(obs.loc, facet.face);
-        bool nearfield = appx_dist2 < pow(far_threshold, 2) * facet.area_scale;
-        if (nearfield) {
-            bool singular = appx_dist2 < singular_threshold * facet.area_scale;
-            if (singular) { 
-                return FarNearType::Singular;
-            } else {
-                return FarNearType::Nearfield;
-            }
-        } else {
-            return FarNearType::Farfield;
-        }
-    }
-};
-
 /* Compute the full influence of a source facet on an observation point, given
  * a kernel function/Green's function
  */
 template <size_t dim, typename KT>
 Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term) {
     FarNearLogic far_near_logic{term.qs.far_threshold, 3.0};
-    switch (far_near_logic.decide(term.obs, term.src_face)) {
+    auto nearest_pt = far_near_logic.decide(term.obs.loc, term.src_face);
+    switch (nearest_pt.type) {
         case FarNearType::Singular:
-            return compute_as_limit(term);
+            return compute_as_limit(term, nearest_pt);
             break;
         case FarNearType::Nearfield:
-            return compute_adaptively<dim>(term, term.obs.loc);
+            return compute_nearfield<dim>(term, nearest_pt, term.obs.loc);
             break;
         case FarNearType::Farfield:
             return compute_far_term(term);

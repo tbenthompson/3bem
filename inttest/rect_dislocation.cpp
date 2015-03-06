@@ -6,7 +6,7 @@ using namespace tbem;
 
 int main() {
     double surf_width = 4;
-    int refine_surf = 6;
+    int refine_surf = 3;
     double far_threshold = 3.0;
     int near_steps = 5;
     int src_quad_pts = 2;

@@ -5,6 +5,7 @@
 #include "identity_kernels.h"
 #include "dense_builder.h"
 #include "mesh_gen.h"
+#include "test_shared.h"
 
 using namespace tbem;
 
@@ -16,7 +17,7 @@ TEST(IdentityTensor) {
 TEST(IntegralOne) {
     QuadStrategy<2> quad_strategy(2);
     IdentityScalar<2> identity;
-    ObsPt<2> obs{0.01, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
+    ObsPt<2> obs{0.01, {0.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}};
     auto facet_info = FacetInfo<2>::build({{{0,0},{1,0}}});
     auto term = make_integral_term(quad_strategy, identity, obs, facet_info);
     auto result = compute_term(term);

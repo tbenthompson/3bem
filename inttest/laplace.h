@@ -85,24 +85,24 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     auto file = HDFOutputter("test_out/laplace" + std::to_string(dim) + "d.hdf5");
     out_surface<dim>(file, mesh, {dudn_solved});
-
-    for(int i = 0; i < test_interior_pts.size(); i++) {
-        auto obs_pt = test_interior_pts[i]; 
-        ObsPt<dim> obs = {0.001, obs_pt, zeros<Vec<double,dim>>::make(),
-                          zeros<Vec<double,dim>>::make()};
-       
-        auto double_layer_op = mesh_to_point_operator(p_double, qs, obs);
-        double double_layer = double_layer_op.apply({u})[0][0];
-        auto single_layer_op = mesh_to_point_operator(p_single, qs, obs);
-        double single_layer = single_layer_op.apply({dudn})[0][0];
-        double result = single_layer - double_layer;
-        double exact = fnc(obs_pt);
-        double error = std::fabs(exact - result);
-        if (error > 1e-2) {
-            std::cout << "Failed with point: " << obs_pt << std::endl;
-            std::cout << result << " " << exact << std::endl;
-        }
-    }
+// 
+//     for(int i = 0; i < test_interior_pts.size(); i++) {
+//         auto obs_pt = test_interior_pts[i]; 
+//         ObsPt<dim> obs = {0.001, obs_pt, zeros<Vec<double,dim>>::make(),
+//                           zeros<Vec<double,dim>>::make()};
+//        
+//         auto double_layer_op = mesh_to_point_operator(p_double, qs, obs);
+//         double double_layer = double_layer_op.apply({u})[0][0];
+//         auto single_layer_op = mesh_to_point_operator(p_single, qs, obs);
+//         double single_layer = single_layer_op.apply({dudn})[0][0];
+//         double result = single_layer - double_layer;
+//         double exact = fnc(obs_pt);
+//         double error = std::fabs(exact - result);
+//         if (error > 1e-2) {
+//             std::cout << "Failed with point: " << obs_pt << std::endl;
+//             std::cout << result << " " << exact << std::endl;
+//         }
+//     }
 }
 
 #endif

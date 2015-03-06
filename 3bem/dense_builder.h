@@ -27,13 +27,11 @@ namespace tbem {
 //without any knowledge of what the object's operator type actually is? 
 //or abstract factory?
 
-struct BasisPlaceholder {};
 template <size_t dim, typename KT>
 struct BoundaryIntegral {
     const Mesh<dim>& obs_mesh;
     const Mesh<dim>& src_mesh;
     const KT& K;
-    const BasisPlaceholder src_basis;
 };
 
 template <size_t dim, typename KT> 

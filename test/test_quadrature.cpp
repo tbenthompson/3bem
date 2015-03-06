@@ -186,6 +186,31 @@ TEST(SinhTransform) {
     CHECK_CLOSE(res, correct, acceptable_error);
 }
 
+TEST(SinhTransformScaled) {
+    double acceptable_error = 1e-4;
+    auto n = 10;
+    double a = 0.0;
+    double b = 0.00000001;
+    auto q = sinh_transform(n, a, b);
+    double factor = 1;
+    decltype(q) q_scaled;
+    for (const auto& pt: q) {
+        q_scaled.push_back({pt.x_hat / factor, pt.w / factor});
+    }
+
+    auto fnc = [&](std::array<double,1> x) {
+        return std::log(std::pow(x[0] - a, 2) + b * b);
+    };
+
+    auto res = integrate<double,1>(q_scaled, fnc);
+
+    auto correct = adaptive_integrate<double>([&](double x) {
+            return fnc({x});
+        }, -1.0 / factor, 1.0 / factor, acceptable_error);
+
+    CHECK_CLOSE(res, correct, acceptable_error);
+}
+
 TEST(SinhSigmoidal2D) {
     double acceptable_error = 1e-2;
     size_t nt = 10;
@@ -216,10 +241,10 @@ TEST(SinhSigmoidal2D) {
                 return fnc({x, y});
             }, 0.0, 1 - x, adaptive_error);
         }, 0.0, 1.0, adaptive_error);
-    std::cout << adaptive_evals << " versus " << sinh_evals <<  std::endl;
+    // std::cout << adaptive_evals << " versus " << sinh_evals <<  std::endl;
 
     auto error = std::fabs(res - correct) / std::fabs(correct);
-    std::cout << std::setprecision(16) << error << std::endl;
+    // std::cout << std::setprecision(16) << error << std::endl;
     CHECK_CLOSE(error, 0.0, acceptable_error);
 }
 

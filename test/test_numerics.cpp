@@ -98,6 +98,13 @@ TEST(LinearInterpOnes) {
         }, 30, arb);
 }
 
+TEST(RefToRealGradient) {
+    Vec<Vec<double,3>,3> f{{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}};
+    auto result = ref_to_real_gradient({0, 0}, f);
+    Vec<Vec<double,2>,3> correct{{{1, 0}, {0, 1}, {0, 0}}};
+    CHECK_EQUAL(result, correct);
+}
+
 int main(int, char const *[])
 {
     int retval = UnitTest::RunAllTests();

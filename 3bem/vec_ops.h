@@ -18,6 +18,19 @@ void operator+=(Vec1<T>& a, const Vec1<T>& b) {
     a[0] += b[0];
 }
 
+template <typename T, typename F>
+void operator+=(Vec3<T>& a, const F& s) {
+    a[0] += s; a[1] += s; a[2] += s;
+}
+template <typename T, typename F>
+void operator+=(Vec2<T>& a, const F& s) {
+    a[0] += s; a[1] += s;
+}
+template <typename T, typename F>
+void operator+=(Vec1<T>& a, const F& s) {
+    a[0] += s; 
+}
+
 template <typename T>
 void operator-=(Vec3<T>& a, const Vec3<T>& b) {
     a[0] -= b[0]; a[1] -= b[1]; a[2] -= b[2];
@@ -29,6 +42,19 @@ void operator-=(Vec2<T>& a, const Vec2<T>& b) {
 template <typename T>
 void operator-=(Vec1<T>& a, const Vec1<T>& b) {
     a[0] -= b[0];
+}
+
+template <typename T, typename F>
+void operator-=(Vec3<T>& a, const F& s) {
+    a[0] -= s; a[1] -= s; a[2] -= s;
+}
+template <typename T, typename F>
+void operator-=(Vec2<T>& a, const F& s) {
+    a[0] -= s; a[1] -= s;
+}
+template <typename T, typename F>
+void operator-=(Vec1<T>& a, const F& s) {
+    a[0] -= s; 
 }
 
 template <typename T>
@@ -81,9 +107,29 @@ Vec<T,dim> operator+(const Vec<T,dim>& a, const Vec<T,dim>& b) {
     Vec<T,dim> res = a; res += b; return res;
 }
 
+template <typename T, typename F, size_t dim>
+Vec<T,dim> operator+(const Vec<T,dim>& a, const F& s) {
+    Vec<T,dim> res = a; res += s; return res;
+}
+
+template <typename T, typename F, size_t dim>
+Vec<T,dim> operator+(const F& s, const Vec<T,dim>& a) {
+    Vec<T,dim> res = a; res += s; return res;
+}
+
 template <typename T, size_t dim>
 Vec<T,dim> operator-(const Vec<T,dim>& a, const Vec<T,dim>& b) {
     Vec<T,dim> res = a; res -= b; return res;
+}
+
+template <typename T, typename F, size_t dim>
+Vec<T,dim> operator-(const Vec<T,dim>& a, const F& s) {
+    Vec<T,dim> res = a; res -= s; return res;
+}
+
+template <typename T, typename F, size_t dim>
+Vec<T,dim> operator-(const F& s, const Vec<T,dim>& a) {
+    Vec<T,dim> res = a; res -= s; return res;
 }
 
 template <typename T, size_t dim>
@@ -110,6 +156,22 @@ template <typename T, size_t dim>
 Vec<T,dim> operator/(const Vec<T,dim>& a, const T& s) {
     Vec<T,dim> res = a; res /= s; return res;
 }
+
+template <typename T>
+Vec<T,1> operator/(const T& s, const Vec<T,1>& a) {
+    return {s / a[0]};
+}
+
+template <typename T>
+Vec<T,2> operator/(const T& s, const Vec<T,2>& a) {
+    return {s / a[0], s / a[1]};
+}
+
+template <typename T>
+Vec<T,3> operator/(const T& s, const Vec<T,3>& a) {
+    return {s / a[0], s / a[1], s / a[2]};
+}
+
 
 template <typename T, size_t dim>
 std::ostream& operator<<(std::ostream& os, const Vec<T,dim>& a) {
@@ -341,15 +403,15 @@ inline Vec1<bool> operator!=(const Vec1<T>& t, const T& rhs) {
 }
 
 template <typename T>
-inline Vec3<bool> operator<(const Vec3<T>& t, const T& rhs) {
+inline Vec3<bool> operator<(const Vec3<T>& t, double rhs) {
     return {t[0] < rhs, t[1] < rhs, t[2] < rhs};
 }
 template <typename T>
-inline Vec2<bool> operator<(const Vec2<T>& t, const T& rhs) {
+inline Vec2<bool> operator<(const Vec2<T>& t, double rhs) {
     return {t[0] < rhs, t[1] < rhs};
 }
 template <typename T>
-inline Vec1<bool> operator<(const Vec1<T>& t, const T& rhs) {
+inline Vec1<bool> operator<(const Vec1<T>& t, double rhs) {
     return {t[0] < rhs};
 }
 

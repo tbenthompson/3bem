@@ -5,7 +5,8 @@
 
 namespace tbem {
 
-bool is_constrained(const ConstraintMatrix& dof_constraint_map, size_t dof) {
+bool is_constrained(const ConstraintMatrix& dof_constraint_map, size_t dof) 
+{
     const auto& it = dof_constraint_map.find(dof);
     if (it == dof_constraint_map.end()) {
         return false;
@@ -14,7 +15,7 @@ bool is_constrained(const ConstraintMatrix& dof_constraint_map, size_t dof) {
 }
 
 RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
-                                             const ConstraintMatrix& matrix) 
+    const ConstraintMatrix& matrix) 
 {
     if (c.terms.size() == 0) {
         std::string msg = "VectorX: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.";
@@ -51,8 +52,8 @@ ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints)
     return ConstraintMatrix{new_mat};
 };
 
-VectorX
-distribute_vector(const ConstraintMatrix& matrix, const VectorX& in, size_t total_dofs) 
+VectorX distribute_vector(const ConstraintMatrix& matrix,
+    const VectorX& in, size_t total_dofs) 
 {
     std::vector<double> out(total_dofs); 
 
@@ -215,7 +216,8 @@ DenseOperator condense_matrix(const ConstraintMatrix& row_cm,
 }
 
 BlockDenseOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
-    const std::vector<ConstraintMatrix>& col_cms, const BlockDenseOperator& op) {
+    const std::vector<ConstraintMatrix>& col_cms, const BlockDenseOperator& op) 
+{
     std::vector<DenseOperator> out_ops;
     for (size_t d1 = 0; d1 < op.n_block_rows(); d1++) {
         for (size_t d2 = 0; d2 < op.n_block_cols(); d2++) {
