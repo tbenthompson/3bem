@@ -40,7 +40,7 @@ void full_space() {
     TIC
     LaplaceDouble<2> double_kernel;
     auto p_fullspace = make_boundary_integral<2>(surface1, fault, double_kernel);
-    auto disp = constrained_interpolate<2>(surface1, [&] (Vec2<double> x) {
+    auto disp = interpolate<2>(surface1, [&] (Vec2<double> x) {
             Vec<double,2> richardson_dir{1, 0};
             if (x[0] < 0) {
                 richardson_dir[0] = -1;
@@ -54,7 +54,7 @@ void full_space() {
                 std::cout << "FAILED Antiplane for x = " << x << std::endl;
             }
             return val;
-        }, constraint_matrix);
+        });
     TOC("Solve fullspace antiplane strike slip motion")
 
     auto file = HDFOutputter("test_out/antiplane_full_space.hdf5");

@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <iomanip> 
 #include "vec.h"
+#include "kernel.h"
 #include "quadrature.h"
 #include "adaptive_quad.h"
 #include "numerics.h"
@@ -19,10 +20,10 @@ namespace tbem {
  * This means that the responsibility for maintaining their lifetime is on the
  * user.
  */
-template <size_t dim, typename KT>
+template <size_t dim, size_t R, size_t C>
 struct IntegralTerm {
     const QuadStrategy<dim>& qs;
-    const KT& k;
+    const Kernel<dim,R,C>& k;
     const ObsPt<dim>& obs;
     const FacetInfo<dim>& src_face;
 };
@@ -66,20 +67,34 @@ struct FarNearLogic {
 };
 
 
-template <size_t dim, typename KT>
-IntegralTerm<dim,KT> make_integral_term(const QuadStrategy<dim>& qs,
-        const KT& k, const ObsPt<dim>& obs, const FacetInfo<dim>& src_face)
+template <size_t dim, size_t R, size_t C>
+IntegralTerm<dim,R,C> make_integral_term(const QuadStrategy<dim>& qs,
+        const Kernel<dim,R,C>& k, const ObsPt<dim>& obs, const FacetInfo<dim>& src_face)
 {
-    return IntegralTerm<dim,KT>{qs, k, obs, src_face};
+    return IntegralTerm<dim,R,C>{qs, k, obs, src_face};
 }
+
+template <size_t dim, size_t R, size_t C>
+struct IntegrationMethodI {
+    typedef Vec<Vec<Vec<double,C>,R>,dim> OutputType;
+
+    OutputType compute_nearfield(const IntegralTerm<dim,R,C>& term,
+        const NearestPoint<dim>& near_pt);
+
+    OutputType compute_singular(const IntegralTerm<dim,R,C>& term,
+        const NearestPoint<dim>& near_pt);
+
+    OutputType compute_farfield(const IntegralTerm<dim,R,C>& term,
+        const NearestPoint<dim>& near_pt);
+};
 
 /* Given observation point information and source face information, the
  * fucntion evaluates the influence of a single source quadrature point
  * on the observation point.
  */
-template <size_t dim, typename KT>
-Vec<typename KT::OperatorType,dim> eval_point_influence(const Vec<double,dim-1>& x_hat,
-                                  const KT& kernel,
+template <size_t dim, size_t R, size_t C>
+Vec<Vec<Vec<double,C>,R>,dim> eval_point_influence(const Vec<double,dim-1>& x_hat,
+                                  const Kernel<dim,R,C>& kernel,
                                   const FacetInfo<dim>& face,
                                   const Vec<double,dim>& obs_loc,
                                   const Vec<double,dim>& obs_n) {
@@ -92,9 +107,9 @@ Vec<typename KT::OperatorType,dim> eval_point_influence(const Vec<double,dim-1>&
 
 template <size_t dim>
 struct UnitFacetAdaptiveIntegrator {
-    template <typename KT>
-    Vec<typename KT::OperatorType,dim> 
-    operator()(const IntegralTerm<dim,KT>& term, const NearestPoint<dim>& near_pt,
+    template <size_t R, size_t C>
+    Vec<Vec<Vec<double,C>,R>,dim> 
+    operator()(const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& near_pt,
                const Vec<double,dim>& nf_obs_pt);
 };
 
@@ -117,14 +132,14 @@ inline QuadRule<1> choose_2d_quad(double S, double l, double x0) {
 
 template <>
 struct UnitFacetAdaptiveIntegrator<2> {
-    template <typename KT>
-    Vec<typename KT::OperatorType,2> operator()(const IntegralTerm<2,KT>& term, 
+    template <size_t R, size_t C>
+    Vec<Vec<Vec<double,C>,R>,2> operator()(const IntegralTerm<2,R,C>& term, 
                 const NearestPoint<2>& near_pt, const Vec<double,2>& nf_obs_pt) {
         assert(near_pt.distance > 0);
         auto S = term.src_face.length_scale;
         auto l = near_pt.distance;
         auto q = choose_2d_quad(S, l, near_pt.ref_pt[0]);
-        auto integrals = zeros<Vec<typename KT::OperatorType,2>>::make();
+        auto integrals = zeros<Vec<Vec<Vec<double,C>,R>,2>>::make();
         for (size_t i = 0; i < q.size(); i++) {
             integrals += eval_point_influence<2>(
                             q[i].x_hat,
@@ -138,48 +153,48 @@ struct UnitFacetAdaptiveIntegrator<2> {
 
 template <>
 struct UnitFacetAdaptiveIntegrator<3> {
-    template <typename KT>
-    Vec<typename KT::OperatorType,3> operator()(const IntegralTerm<3,KT>& term, 
+    template <size_t R, size_t C>
+    Vec<Vec<Vec<double,C>,R>,3> operator()(const IntegralTerm<3,R,C>& term, 
             const NearestPoint<3>& near_pt, const Vec<double,3>& nf_obs_pt) {
-        auto q = sinh_sigmoidal_transform(60, 30, near_pt.ref_pt[0],
-            near_pt.ref_pt[1], near_pt.distance);
-        auto integrals = zeros<Vec<typename KT::OperatorType,3>>::make();
-        for (size_t i = 0; i < q.size(); i++) {
-            integrals += eval_point_influence<3>(
-                            q[i].x_hat,
-                            term.k, term.src_face,
-                            nf_obs_pt, term.obs.normal
-                        ) * q[i].w;
-        }
-        auto correct = adaptive_integrate<Vec<typename KT::OperatorType,3>>(
+        // auto q = sinh_sigmoidal_transform(60, 30, near_pt.ref_pt[0],
+        //     near_pt.ref_pt[1], near_pt.distance);
+        // auto integrals = zeros<Vec<Vec<Vec<double,C>,R>,3>>::make();
+        // for (size_t i = 0; i < q.size(); i++) {
+        //     integrals += eval_point_influence<3>(
+        //                     q[i].x_hat,
+        //                     term.k, term.src_face,
+        //                     nf_obs_pt, term.obs.normal
+        //                 ) * q[i].w;
+        // }
+        auto correct = adaptive_integrate<Vec<Vec<Vec<double,C>,R>,3>>(
             [&] (double x_hat) {
                 if (x_hat == 1.0) {
-                    return zeros<Vec<typename KT::OperatorType,3>>::make();
+                    return zeros<Vec<Vec<Vec<double,C>,R>,3>>::make();
                 }
-                return adaptive_integrate<Vec<typename KT::OperatorType,3>>(
+                return adaptive_integrate<Vec<Vec<Vec<double,C>,R>,3>>(
                     [&] (double y_hat) {
                         Vec<double,2> q_pt = {x_hat, y_hat};
                         return eval_point_influence<3>(q_pt, term.k, term.src_face,
                                                  nf_obs_pt, term.obs.normal);
                     }, 0.0, 1 - x_hat, term.qs.near_tol);
             }, 0.0, 1.0, term.qs.near_tol);
-        auto error = fabs(correct - integrals) / correct;
-        // std::cout << error << std::endl;
-        assert(all(error < 1e-4 * ones<Vec<typename KT::OperatorType,3>>::make()));
-        return integrals;
+        // auto error = fabs(correct - integrals) / correct;
+        // // std::cout << error << std::endl;
+        // assert(all(error < 1e-4 * ones<Vec<Vec<Vec<double,C>,R>,3>>::make()));
+        return correct;
     }
 };
 
-template <size_t dim, typename KT> 
-Vec<typename KT::OperatorType,dim> 
-compute_nearfield(const IntegralTerm<dim, KT>& term, const NearestPoint<dim>& near_pt,
+template <size_t dim, size_t R, size_t C> 
+Vec<Vec<Vec<double,C>,R>,dim> 
+compute_nearfield(const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& near_pt,
                    const Vec<double,dim>& nf_obs_pt) {
     UnitFacetAdaptiveIntegrator<dim> integrator;
     return integrator(term, near_pt, nf_obs_pt);
 }
 
-template <size_t dim, typename KT>
-Vec<double,dim> get_step_loc(const IntegralTerm<dim,KT>& term, int step_idx) {
+template <size_t dim, size_t R, size_t C>
+Vec<double,dim> get_step_loc(const IntegralTerm<dim,R,C>& term, int step_idx) {
     const double safe_dist_ratio = 5.0;
     double step_distance = safe_dist_ratio * term.obs.len_scale * 
                            term.qs.singular_steps[step_idx];
@@ -208,11 +223,11 @@ T richardson_limit(const std::vector<T>& values) {
     return this_level[0];
 }
 
-template <size_t dim, typename KT> 
-Vec<typename KT::OperatorType,dim> compute_as_limit(const IntegralTerm<dim,KT>& term,
+template <size_t dim, size_t R, size_t C> 
+Vec<Vec<Vec<double,C>,R>,dim> compute_as_limit(const IntegralTerm<dim,R,C>& term,
     const NearestPoint<dim>& near_pt) 
 {
-    std::vector<Vec<typename KT::OperatorType,dim>> 
+    std::vector<Vec<Vec<Vec<double,C>,R>,dim>> 
         near_steps(term.qs.n_singular_steps);
 
     for (int step_idx = 0; step_idx < term.qs.n_singular_steps; step_idx++) {
@@ -224,9 +239,9 @@ Vec<typename KT::OperatorType,dim> compute_as_limit(const IntegralTerm<dim,KT>& 
     return richardson_limit(near_steps);
 }
 
-template <size_t dim, typename KT>
-Vec<typename KT::OperatorType,dim> compute_far_term(const IntegralTerm<dim, KT>& term) {
-    auto integrals = zeros<Vec<typename KT::OperatorType,dim>>::make();
+template <size_t dim, size_t R, size_t C>
+Vec<Vec<Vec<double,C>,R>,dim> compute_far_term(const IntegralTerm<dim,R,C>& term) {
+    auto integrals = zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make();
     for (size_t i = 0; i < term.qs.src_far_quad.size(); i++) {
         integrals += eval_point_influence<dim>(
                         term.qs.src_far_quad[i].x_hat,
@@ -256,8 +271,8 @@ double appx_face_dist2(const Vec<double,dim>& pt,
 /* Compute the full influence of a source facet on an observation point, given
  * a kernel function/Green's function
  */
-template <size_t dim, typename KT>
-Vec<typename KT::OperatorType,dim> compute_term(const IntegralTerm<dim,KT>& term) {
+template <size_t dim, size_t R, size_t C>
+Vec<Vec<Vec<double,C>,R>,dim> compute_term(const IntegralTerm<dim,R,C>& term) {
     FarNearLogic far_near_logic{term.qs.far_threshold, 3.0};
     auto nearest_pt = far_near_logic.decide(term.obs.loc, term.src_face);
     switch (nearest_pt.type) {

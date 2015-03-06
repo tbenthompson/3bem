@@ -76,8 +76,9 @@ QuadRule<1> get_gauss(size_t n) {
     if (gauss_q != gauss_rules.end()) {
         return gauss_q->second;
     } else {
-        gauss_rules.insert(std::make_pair(n, gauss(n)));
-        return gauss_rules.at(n);
+        auto new_rule = gauss(n);
+        gauss_rules.insert(std::make_pair(n, new_rule));
+        return new_rule;
     }
 }
 

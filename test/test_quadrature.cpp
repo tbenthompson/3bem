@@ -165,37 +165,15 @@ TEST(AdaptiveQuadTensor) {
     CHECK_ARRAY_CLOSE((double*)(&result[0]), (double*)(&correct[0]), 4, 1e-12);
 }
 
-TEST(SinhTransform) {
+void test_sinh_transform(double scale_factor) {
     double acceptable_error = 1e-4;
     auto n = 10;
     double a = 0.0;
-    double b = 0.1;
+    double b = 0.00001;
     auto q = sinh_transform(n, a, b);
-
-    auto fnc = [&](std::array<double,1> x) {
-        // return 1.0 / (std::pow(x[0] - a, 2) + b * b);
-        return std::log(std::pow(x[0] - a, 2) + b * b);
-    };
-
-    auto res = integrate<double,1>(q, fnc);
-
-    auto correct = adaptive_integrate<double>([&](double x) {
-            return fnc({x});
-        }, -1.0, 1.0, acceptable_error);
-
-    CHECK_CLOSE(res, correct, acceptable_error);
-}
-
-TEST(SinhTransformScaled) {
-    double acceptable_error = 1e-4;
-    auto n = 10;
-    double a = 0.0;
-    double b = 0.00000001;
-    auto q = sinh_transform(n, a, b);
-    double factor = 1;
     decltype(q) q_scaled;
     for (const auto& pt: q) {
-        q_scaled.push_back({pt.x_hat / factor, pt.w / factor});
+        q_scaled.push_back({pt.x_hat / scale_factor, pt.w / scale_factor});
     }
 
     auto fnc = [&](std::array<double,1> x) {
@@ -206,9 +184,17 @@ TEST(SinhTransformScaled) {
 
     auto correct = adaptive_integrate<double>([&](double x) {
             return fnc({x});
-        }, -1.0 / factor, 1.0 / factor, acceptable_error);
+        }, -1.0 / scale_factor, 1.0 / scale_factor, acceptable_error);
 
     CHECK_CLOSE(res, correct, acceptable_error);
+}
+
+TEST(SinhTransform) {
+    test_sinh_transform(1);
+}
+
+TEST(SinhTransformScaled) {
+    test_sinh_transform(100);
 }
 
 TEST(SinhSigmoidal2D) {

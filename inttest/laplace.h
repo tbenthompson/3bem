@@ -33,8 +33,8 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     auto constraints = convert_to_constraints(continuity);
     auto constraint_matrix = from_constraints(constraints);
 
-    auto u = constrained_interpolate<dim>(mesh, fnc, constraint_matrix);
-    auto dudn = constrained_interpolate<dim>(mesh, deriv, constraint_matrix);
+    auto u = interpolate<dim>(mesh, fnc);
+    auto dudn = interpolate<dim>(mesh, deriv);
 
     // Construct and evaluate the RHS for a Dirichlet Laplace problem:
     // The integral equation is: DoubleLayer(u) + u = SingleLayer(dudn)

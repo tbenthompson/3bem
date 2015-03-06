@@ -202,7 +202,7 @@ def link_runner(sources, exec_name, flags, additional_objs = []):
     run(compiler, '-o', exec_name, objs, flags)
 
 def fast_tests():
-    run_test_set(tests())
+    run_test_set(tests(), print_stdout = True)
 
 def slow_tests():
     run_test_set(inttests_exec, True)
@@ -223,6 +223,8 @@ def run_test_set(test_names, print_stdout = False):
     n_failure = 0
     for test_file in sorted(test_names):
         sys.stdout.flush()
+        if print_stdout:
+            print("Running tests: " + str(test_file))
         p = subprocess.Popen(
             oname(test_file),
             stdout = subprocess.PIPE,
