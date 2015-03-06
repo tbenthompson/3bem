@@ -18,81 +18,15 @@ and whether to do a debug, release, etc build. At some point, the
 sophistication of the command line parsing may need to improve.
 """
 from __future__ import print_function
-from tools.fabricate import *
 
+from tools.dev.util import oname
 import os
-import sys
-import shutil
-import subprocess
-
-from tools.dev.testing import run_fast_tests, run_slow_tests, testing_targets
-from tools.dev.util import files_in_dir, oname
-
-def get_config():
-    build_type = 'debug'
-    if '-r' in command_params:
-        build_type = 'release'
-    petsc_dir = os.environ['PETSC_DIR']
-    petsc_arch = os.environ['PETSC_ARCH']
-
-
-    includes = [
-        './3bem',
-        '../lib/',
-        '../lib/unittest-cpp/UnitTest++',
-        '../lib/autocheck/include',
-        petsc_dir + '/' + petsc_arch + '/include',
-        petsc_dir + '/include'
-    ]
-
-    base_cpp_flags = [
-        '-Wall',
-        '-std=c++11',
-        '-fopenmp',
-        '-DDEBUG=1'
-    ] + ['-I' + loc for loc in includes]
-
-    flag_types = dict()
-    flag_types['debug'] = ['-g', '-Og']
-    flag_types['release'] = ['-Ofast','-ffast-math','-funroll-loops']
-    flag_types['coverage'] = ['--coverage'] + flag_types['debug']
-
-    cpp_flags = base_cpp_flags + flag_types[build_type]
-
-    link_flags = [
-        '--coverage',
-        '-fopenmp',
-        '-lhdf5',
-        '-larmadillo',
-        '-Wl,-rpath=' + petsc_dir + '/' + petsc_arch + '/lib',
-        '-L' + petsc_dir + '/' + petsc_arch + '/lib',
-        '-lpetsc'
-        ]
-
-    lib = dict()
-    lib['cpp_flags'] = cpp_flags + ['-fPIC']
-    lib['link_flags'] = link_flags + ['-shared']
-    lib['sources'] = files_in_dir('3bem', 'cpp')
-    lib['linked_sources'] = []
-    lib['binary_name'] = 'lib3bem.so'
-    lib['priority'] = 0
-
-    build_dir = 'build_' + str(build_type)
-    lib_dep_flags = ['-Wl,-rpath=./' + build_dir, '-L./' + build_dir, '-l3bem']
-
-    c = dict()
-    c['build_dir'] = build_dir
-    c['subdirs'] = ['3bem', 'test', 'inttest']
-    c['compiler'] = 'mpic++'
-    c['targets'] = dict()
-    c['targets']['lib'] = lib
-    c['targets'].update(testing_targets(cpp_flags, link_flags, lib_dep_flags))
-    return c
+from tools.dev.fabricate import run, after
 
 def determine_targets(c):
     targets = dict()
-    if len(command_params) > 0:
-        for entry in command_params:
+    if len(c['command_params']) > 0:
+        for entry in c['command_params']:
             if not entry.startswith('-'):
                 targets[entry] = c['targets'][entry]
     if len(targets) > 0:
@@ -110,8 +44,7 @@ def priority_groupings(targets):
             buckets[p] = [t]
     return buckets
 
-def build():
-    c = get_config()
+def run_build(c):
     targets = determine_targets(c)
     buckets = priority_groupings(targets)
     setup_tree(c)
@@ -156,37 +89,3 @@ def link(c, t):
 
 def link_runner(compiler, binary_path, objs, flags):
     run(compiler, '-o', binary_path, objs, flags)
-
-def fast_tests():
-    run_fast_tests(get_build_dir())
-
-def slow_tests():
-    run_slow_tests()
-
-def lcov():
-    coverage_file = oname('coverage.info')
-    lcov_outdir = oname('lcov_out')
-    after()
-    run('lcov', '--capture', '--directory', build_dir, '--output-file', coverage_file)
-    after()
-    run('genhtml', coverage_file, '--output-directory', lcov_outdir)
-
-def clean():
-    autoclean()
-
-def rebuild():
-    clean()
-    build()
-
-command_params = []
-def save_parameters():
-    if len(sys.argv) > 2:
-        command_params.extend(sys.argv[2:])
-        del sys.argv[2:]
-
-def entrypoint(dir):
-    save_parameters()
-    main(parallel_ok = True, build_dir = dir, jobs = 12)
-
-if __name__ == '__main__':
-    entrypoint()
