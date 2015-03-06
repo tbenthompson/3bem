@@ -169,7 +169,7 @@ void test_sinh_transform(double scale_factor) {
     double acceptable_error = 1e-4;
     auto n = 10;
     double a = 0.0;
-    double b = 0.00001;
+    double b = 0.001;
     auto q = sinh_transform(n, a, b);
     decltype(q) q_scaled;
     for (const auto& pt: q) {

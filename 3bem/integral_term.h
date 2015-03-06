@@ -28,45 +28,6 @@ struct IntegralTerm {
     const FacetInfo<dim>& src_face;
 };
 
-enum class FarNearType {
-    Singular,
-    Nearfield,
-    Farfield 
-};
-
-template <size_t dim>
-struct NearestPoint {
-    const Vec<double,dim-1> ref_pt;
-    const Vec<double,dim> pt;
-    const double distance;
-    const FarNearType type;
-};
-
-struct FarNearLogic {
-    double far_threshold;
-    double singular_threshold;
-    
-    template <size_t dim>
-    NearestPoint<dim> decide(const Vec<double,dim>& pt, const FacetInfo<dim>& facet) {
-        auto near_ref_pt = closest_pt_facet(pt, facet.face);
-        auto near_pt = ref_to_real(near_ref_pt, facet.face);
-        auto exact_dist2 = dist2(near_pt, pt);
-        auto appx_dist2 = exact_dist2;//appx_face_dist2(obs.loc, facet.face);
-        bool nearfield = appx_dist2 < pow(far_threshold, 2) * facet.area_scale;
-        if (nearfield) {
-            bool singular = appx_dist2 < singular_threshold * facet.area_scale;
-            if (singular) { 
-                return {near_ref_pt, near_pt, std::sqrt(exact_dist2), FarNearType::Singular};
-            } else {
-                return {near_ref_pt, near_pt, std::sqrt(exact_dist2), FarNearType::Nearfield};
-            }
-        } else {
-            return {near_ref_pt, near_pt, std::sqrt(exact_dist2), FarNearType::Farfield};
-        }
-    }
-};
-
-
 template <size_t dim, size_t R, size_t C>
 IntegralTerm<dim,R,C> make_integral_term(const QuadStrategy<dim>& qs,
         const Kernel<dim,R,C>& k, const ObsPt<dim>& obs, const FacetInfo<dim>& src_face)
@@ -74,19 +35,6 @@ IntegralTerm<dim,R,C> make_integral_term(const QuadStrategy<dim>& qs,
     return IntegralTerm<dim,R,C>{qs, k, obs, src_face};
 }
 
-template <size_t dim, size_t R, size_t C>
-struct IntegrationMethodI {
-    typedef Vec<Vec<Vec<double,C>,R>,dim> OutputType;
-
-    OutputType compute_nearfield(const IntegralTerm<dim,R,C>& term,
-        const NearestPoint<dim>& near_pt);
-
-    OutputType compute_singular(const IntegralTerm<dim,R,C>& term,
-        const NearestPoint<dim>& near_pt);
-
-    OutputType compute_farfield(const IntegralTerm<dim,R,C>& term,
-        const NearestPoint<dim>& near_pt);
-};
 
 /* Given observation point information and source face information, the
  * fucntion evaluates the influence of a single source quadrature point
@@ -104,6 +52,80 @@ Vec<Vec<Vec<double,C>,R>,dim> eval_point_influence(const Vec<double,dim-1>& x_ha
     const auto kernel_val = kernel(r2, d, face.normal, obs_n);
     return outer_product(linear_basis(x_hat), kernel_val * face.jacobian);
 }
+
+enum class FarNearType {
+    Singular,
+    Nearfield,
+    Farfield 
+};
+
+template <size_t dim>
+struct NearestPoint {
+    const Vec<double,dim-1> ref_pt;
+    const Vec<double,dim> pt;
+    const double distance;
+    const FarNearType type;
+};
+
+template <size_t dim>
+struct FarNearLogic {
+    double far_threshold;
+    double singular_threshold;
+    
+    NearestPoint<dim> decide(const Vec<double,dim>& pt, const FacetInfo<dim>& facet);
+};
+
+template <size_t dim, size_t R, size_t C>
+struct IntegrationMethodI {
+    typedef Vec<Vec<Vec<double,C>,R>,dim> OutputType;
+
+    virtual OutputType compute(const IntegralTerm<dim,R,C>& term,
+        const NearestPoint<dim>& near_pt);
+};
+
+template <size_t dim, size_t R, size_t C>
+struct FixedIntegrate: public IntegrationMethodI<dim,R,C> {
+    typedef Vec<Vec<Vec<double,C>,R>,dim> OutputType;
+
+    const QuadRule<dim-1> q;
+
+    FixedIntegrate(const QuadRule<dim-1>& q):
+        q(q)
+    {}
+
+    virtual OutputType compute(const IntegralTerm<dim,R,C>& term,
+        const NearestPoint<dim>& near_pt) 
+    {
+        auto integrals = zeros<OutputType>::make();
+        for (size_t i = 0; i < term.qs.src_far_quad.size(); i++) {
+            integrals += eval_point_influence<dim>(
+                            term.qs.src_far_quad[i].x_hat,
+                            term.k, term.src_face,
+                            term.obs.loc, term.obs.normal
+                        ) * term.qs.src_far_quad[i].w;
+        }
+        return integrals;
+    }
+};
+
+template <size_t dim, size_t R, size_t C>
+struct AdaptiveIntegrate: public IntegrationMethodI<dim,R,C> {
+
+};
+
+// struct AdaptiveIntegrationMethod: public IntegrationMethodI {
+//     const QuadRule<dim-1> obs_quad;
+//     const QuadRule<dim-1> src_far_quad;
+//     
+//     const double singular_threshold;
+//     const double far_threshold;
+//     const int n_singular_steps;
+//     const std::vector<double> singular_steps;
+//     const double near_tol;
+//     QuadStrategy(int obs_order, int src_far_order, int n_singular_steps,
+//                  double far_threshold, double near_tol);
+// };
+// 
 
 template <size_t dim>
 struct UnitFacetAdaptiveIntegrator {
@@ -232,7 +254,8 @@ Vec<Vec<Vec<double,C>,R>,dim> compute_as_limit(const IntegralTerm<dim,R,C>& term
 
     for (int step_idx = 0; step_idx < term.qs.n_singular_steps; step_idx++) {
         auto step_loc = get_step_loc(term, step_idx);
-        auto shifted_near_pt = FarNearLogic{term.qs.far_threshold, 3.0}.decide(step_loc, term.src_face);
+        auto shifted_near_pt = FarNearLogic<dim>{term.qs.far_threshold, 3.0}
+            .decide(step_loc, term.src_face);
         near_steps[step_idx] = compute_nearfield<dim>(term, shifted_near_pt, step_loc);
     }
 
@@ -273,7 +296,7 @@ double appx_face_dist2(const Vec<double,dim>& pt,
  */
 template <size_t dim, size_t R, size_t C>
 Vec<Vec<Vec<double,C>,R>,dim> compute_term(const IntegralTerm<dim,R,C>& term) {
-    FarNearLogic far_near_logic{term.qs.far_threshold, 3.0};
+    FarNearLogic<dim> far_near_logic{term.qs.far_threshold, 3.0};
     auto nearest_pt = far_near_logic.decide(term.obs.loc, term.src_face);
     switch (nearest_pt.type) {
         case FarNearType::Singular:
