@@ -1,5 +1,5 @@
 .deps
-build/*
+build*/*
 !build/fabricate.py
 archive/*
 lib/*
