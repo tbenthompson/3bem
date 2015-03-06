@@ -1,5 +1,5 @@
 from __future__ import print_function
-from tools.dev.util import files_in_dir, oname
+from tools.build.util import files_in_dir, oname
 import sys
 import subprocess
 import re

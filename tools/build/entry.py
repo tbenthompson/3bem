@@ -1,7 +1,7 @@
-from tools.dev.config import get_config
-from tools.dev.build import run_build
-from tools.dev.testing import run_fast_tests, run_slow_tests
-from tools.dev.fabricate import main
+from tools.build.config import get_config
+from tools.build.build import run_build
+from tools.build.testing import run_fast_tests, run_slow_tests
+from tools.build.fabricate import main
 import sys
 
 def fast_tests():

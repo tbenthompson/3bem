@@ -1,5 +1,5 @@
-from tools.dev.util import files_in_dir
-from tools.dev.testing import testing_targets
+from tools.build.util import files_in_dir
+from tools.build.testing import testing_targets
 import os
 
 def get_config(command_params):

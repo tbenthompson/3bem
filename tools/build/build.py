@@ -19,9 +19,9 @@ sophistication of the command line parsing may need to improve.
 """
 from __future__ import print_function
 
-from tools.dev.util import oname
+from tools.build.util import oname
 import os
-from tools.dev.fabricate import run, after
+from tools.build.fabricate import run, after
 
 def determine_targets(c):
     targets = dict()
