@@ -109,6 +109,57 @@ BlockDenseOperator mesh_to_point_operator(const BoundaryIntegral<dim,KT>& p,
     return block_op;
 }
 
+template <size_t dim>
+std::vector<ObsPt<dim>> collect_obs_pts(const Mesh<dim>& obs_mesh,
+    const QuadRule<dim-1>& obs_quad) 
+{
+    auto facet_info = get_facet_info(obs_mesh);
+
+    auto n_facets = obs_mesh.facets.size();
+    auto n_quad_pts = obs_quad.size();
+    std::vector<ObsPt<dim>> obs_pts;
+    for (size_t facet_idx = 0; facet_idx < n_facets; facet_idx++) {
+        for (size_t pt_idx = 0; pt_idx < n_quad_pts; pt_idx++) {
+            const auto& ref_pt = obs_quad[pt_idx].x_hat;
+            const auto& facet = facet_info[facet_idx];
+            obs_pts.push_back(ObsPt<dim>::from_face(ref_pt, facet));
+        }
+    }
+
+    return obs_pts;
+}
+
+template <size_t dim, typename KT>
+BlockDenseOperator mesh_to_points_operator(const std::vector<ObsPt<dim>>& pts,
+    const Mesh<dim>& src_mesh, const KT& K, const QuadStrategy<dim>& qs) 
+{
+    auto n_pts = pts.size();
+    auto n_src_dofs = src_mesh.n_dofs();
+    auto block_op = build_operator_shape(KT::n_cols, KT::n_rows, n_pts, n_src_dofs);
+    auto facet_info = get_facet_info(src_mesh);
+
+    for (size_t pt_idx = 0; pt_idx < n_pts; pt_idx++) {
+        const auto& pt = pts[pt_idx];
+        for (size_t facet_idx = 0; facet_idx < src_mesh.facets.size(); facet_idx++) {
+            auto term = make_integral_term(qs, K, pt, facet_info[facet_idx]);
+            auto integrals = compute_term<dim>(term);
+            for (int basis_idx = 0; basis_idx < dim; basis_idx++) {
+                auto idx = facet_idx * dim + basis_idx;
+                reshape_to_add(block_op, idx, integrals[basis_idx]);
+            }
+        }
+    }
+    return block_op;
+}
+
+template <size_t dim>
+BlockDenseOperator apply_galerkin(const BlockDenseOperator& op,
+    const Mesh<dim>& obs_mesh, const QuadStrategy<dim>& qs) 
+{
+
+}
+
+
 /* Given a kernel function and two meshes this function calculates the
  * Galerkin boundary element matrix representing the operator 
  * \int_{S_{obs}} \phi_i(x) \int_{S_{src}} K(x,y) \phi_j(y) dy dx
