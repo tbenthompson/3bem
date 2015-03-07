@@ -1,62 +1,48 @@
 from __future__ import print_function
 from tools.build.util import files_in_dir, oname
+from tools.build.test_info import unit_test_info, acceptance_test_info
 import sys
 import subprocess
 import re
 import os
+from copy import copy
 
-test_info = dict()
-test_info['function'] = dict()
-test_info['function']['src'] = 'test_function'
-test_info['function']['lib_srcs'] = ['vectorx']
-test_info['petsc'] = dict()
-test_info['petsc']['src'] = 'test_petsc'
-test_info['petsc']['lib_srcs'] = ['petsc_facade', 'vectorx', 'util']
-test_info['matrix_free'] = dict()
-test_info['matrix_free']['src'] = 'test_matrix_free_builder'
-test_info['matrix_free']['lib_srcs'] = []
-test_info['matrix_free']['link_lib'] = True
-test_info['quadrature'] = dict()
-test_info['quadrature']['src'] = 'test_quadrature'
-test_info['quadrature']['lib_srcs'] = ['quadrature']
-test_info['closest_pt'] = dict()
-test_info['closest_pt']['src'] = 'test_closest_pt'
-test_info['closest_pt']['lib_srcs'] = ['closest_pt']
-test_info['integral_term'] = dict()
-test_info['integral_term']['src'] = 'test_integral_term'
-test_info['integral_term']['lib_srcs'] = []
-
-acctest_info = dict()
-
-def testing_targets(cpp_flags, link_flags, lib_dep_flags):
+def testing_targets(test_info, loc, cpp_flags, link_flags, lib_dep_flags):
     test_link_flags = link_flags + ['-L../lib/unittest-cpp/builds', '-lUnitTest++']
     ts = dict()
     for test_name, test_data in test_info.iteritems():
-        target_link_flags = test_link_flags
+        target_link_flags = copy(test_link_flags)
         if test_data.get('link_lib', False):
             target_link_flags += lib_dep_flags
         target = dict()
         target['cpp_flags'] = cpp_flags
-        target['link_flags'] = test_link_flags
-        target['sources'] = [os.path.join('test', test_data['src'])]
-        target['linked_sources'] =\
-            [os.path.join('3bem', s) for s in test_data['lib_srcs']]
+        target['link_flags'] = target_link_flags
+        target['sources'] = [os.path.join(loc, test_data['src'])]
+        target['sources'] += test_data.get('other_srces', [])
+        target['linked_sources'] = [s for s in test_data['lib_srcs']]
         target['binary_name'] = test_data['src']
         target['priority'] = 1000
         ts[test_name] = target
     return ts
 
+def unit_testing_targets(*args):
+    return testing_targets(unit_test_info, 'test', *args)
+
+def acceptance_testing_targets(*args):
+    return testing_targets(acceptance_test_info, 'acctests', *args)
+
 def tests():
     return files_in_dir("test", "cpp")
 
-def run_fast_tests(build_dir):
-    run_test_set(build_dir, tests())
+def run_unit_tests(c):
+    test_names = [unit_test_info[k]['src'] for k in unit_test_info]
+    run_test_set(c, test_names)
 
-def run_slow_tests(build_dir):
-    run_test_set(inttests_exec, True)
+def run_acceptance_tests(build_dir):
+    run_test_set(build_dir, acceptance_test_info)
     check_slow_tests()
 
-def check_slow_tests():
+def check_acceptance_tests():
     if os.path.exists('tools/__pycache__'):
         shutil.rmtree('tools/__pycache__')
     subprocess.call('\
@@ -65,7 +51,7 @@ def check_slow_tests():
         tools/check_antiplane.py\
     ', shell = True)
 
-def run_test(build_dir, test_file):
+def run_test(build_dir, test_file, n):
     p = subprocess.Popen(
         oname(build_dir, test_file),
         stdout = subprocess.PIPE,
@@ -90,29 +76,26 @@ def interpret_failure(stdout, stderr):
 def interpret_test_results(p, build_dir, test_file, logger):
     stdout = p.stdout.read()
     stderr = p.stderr.read()
-    logger(stdout)
+    logger(stdout.rstrip('\n'))
     if 'Success' in stdout:
         return interpret_success(stdout, stderr)
     if 'FAILURE' in stdout:
         return interpret_failure(stdout, stderr)
 
-def run_test_set(build_dir, test_names, print_stdout = False):
+def run_test_set(c, test_names, print_stdout = False):
     stderr = ''
     n_success = 0
     n_failure = 0
 
-    logger = lambda x: None
-    if print_stdout:
-        logger = lambda x: print(x)
-
     for test_file in sorted(test_names):
-        logger("Running tests: " + str(test_file))
+        c['printer']("\nRunning tests: " + str(test_file))
         sys.stdout.flush()
-        p = run_test(build_dir, test_file)
-        s, f, errors = interpret_test_results(p, build_dir, test_file, logger)
+        p = run_test(c['build_dir'], test_file, 123)
+        s, f, errors = interpret_test_results(p, c['build_dir'], test_file, c['printer'])
         stderr += errors
         n_success += s
         n_failure += f
+        c['printer']('')
 
     print('')
     print(stderr, end='')

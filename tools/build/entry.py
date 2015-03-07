@@ -1,14 +1,14 @@
 from tools.build.config import get_config
 from tools.build.build import run_build
-from tools.build.testing import run_fast_tests, run_slow_tests
+from tools.build.testing import run_unit_tests, run_acceptance_tests
 from tools.build.fabricate import main
 import sys
 
-def fast_tests():
-    run_fast_tests(get_config())
+def unit_tests():
+    run_unit_tests(get_config(command_params))
 
-def slow_tests():
-    run_slow_tests()
+def acceptance_tests():
+    run_acceptance_tests(get_config(command_params))
 
 def lcov():
     coverage_file = oname('coverage.info')

@@ -1,11 +1,15 @@
+from __future__ import print_function
 from tools.build.util import files_in_dir
-from tools.build.testing import testing_targets
+from tools.build.testing import unit_testing_targets, acceptance_testing_targets
 import os
 
 def get_config(command_params):
     build_type = 'debug'
     if '-r' in command_params:
         build_type = 'release'
+    printer = lambda x: None
+    if '-v' in command_params:
+        printer = print
     petsc_dir = os.environ['PETSC_DIR']
     petsc_arch = os.environ['PETSC_ARCH']
 
@@ -56,11 +60,13 @@ def get_config(command_params):
 
     c = dict()
     c['build_dir'] = build_dir
-    c['subdirs'] = ['3bem', 'test', 'inttest']
+    c['subdirs'] = ['3bem', 'test', 'acctests']
     c['compiler'] = 'mpic++'
+    c['command_params'] = command_params
+    c['printer'] = printer
     c['targets'] = dict()
     c['targets']['lib'] = lib
-    c['targets'].update(testing_targets(cpp_flags, link_flags, lib_dep_flags))
-    c['command_params'] = command_params
+    c['targets'].update(unit_testing_targets(cpp_flags, link_flags, lib_dep_flags))
+    c['targets'].update(acceptance_testing_targets(cpp_flags, link_flags, lib_dep_flags))
     return c
 

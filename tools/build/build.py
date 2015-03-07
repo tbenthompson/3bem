@@ -50,12 +50,12 @@ def run_build(c):
     setup_tree(c)
     for b in sorted(buckets.keys()):
         for t in buckets[b]:
-            print('\nCompiling target: ' + t['binary_name'])
+            c['printer']('\nCompiling target: ' + t['binary_name'])
             compile(c, t)
     after()
     for b in sorted(buckets.keys()):
         for t in buckets[b]:
-            print('\nLinking target: ' + t['binary_name'])
+            c['printer']('\nLinking target: ' + t['binary_name'])
             link(c, t)
         after()
 

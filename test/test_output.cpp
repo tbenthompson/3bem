@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "UnitTest++.h"
 #include "output.h"
 #include "mesh_gen.h"
@@ -6,7 +7,12 @@
 using namespace tbem;
 
 TEST(CreateHDFFile) {
-    std::string filename = "build/test_hdf.hdf5";
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+
+    }
+    std::string filepath = cwd;
+    std::string filename = filepath + "/test_out/test_hdf.hdf5";
     std::remove(filename.c_str());
     CHECK(!does_file_exist(filename));
     {
