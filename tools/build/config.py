@@ -64,9 +64,12 @@ def get_config(command_params):
     c['compiler'] = 'mpic++'
     c['command_params'] = command_params
     c['printer'] = printer
+    c['lib_dep_flags'] = lib_dep_flags
+    c['cpp_flags'] = cpp_flags
+    c['link_flags'] = link_flags
     c['targets'] = dict()
     c['targets']['lib'] = lib
-    c['targets'].update(unit_testing_targets(cpp_flags, link_flags, lib_dep_flags))
-    c['targets'].update(acceptance_testing_targets(cpp_flags, link_flags, lib_dep_flags))
+    c['targets'].update(unit_testing_targets(c))
+    c['targets'].update(acceptance_testing_targets(c))
     return c
 

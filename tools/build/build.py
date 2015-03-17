@@ -52,6 +52,7 @@ def run_build(c):
         for t in buckets[b]:
             c['printer']('\nCompiling target: ' + t['binary_name'])
             compile(c, t)
+        after()
     after()
     for b in sorted(buckets.keys()):
         for t in buckets[b]:
@@ -69,17 +70,22 @@ def setup_tree(c):
 
 def compile(c, target):
     for source in target['sources']:
-        compile_runner(c['build_dir'], c['compiler'], source, target['cpp_flags'])
+        compile_runner(c['build_dir'], c['compiler'], source,
+                       target['cpp_flags'])
+    for source in target['linked_sources']:
+        compile_runner(c['build_dir'], c['compiler'], source,
+                       target['linked_sources_flags'])
 
 def compile_runner(build_dir, compiler, source, flags):
-    run(
+    args = [
         compiler,
         '-c',
         source + '.cpp',
         '-o',
         oname(build_dir, source + '.o'),
-        flags
-    )
+    ]
+    args.extend(flags)
+    run(*args)
 
 def link(c, t):
     objs = [oname(c['build_dir'], s + '.o')

@@ -79,24 +79,25 @@ double exact_double(double x, double y) {
 template <typename KT>
 void test_one_segment2d_integration(const KT& k,
                                     std::function<double(double,double)> exact) {
-    auto quad = gauss(15);
+    QuadStrategy<2> qs(15);
     std::array<double, 2> v0 = {-1.0, 0.0};
     std::array<double, 2> v1 = {1.0, 0.0};
     Facet<2> facet{{v0, v1}};
-    auto face = FacetInfo<2>::build(facet);
-    CHECK_EQUAL(face.jacobian, 1.0);
-    CHECK_EQUAL(face.area_scale, 4.0);
+    auto facet_info = FacetInfo<2>::build(facet);
+    CHECK_EQUAL(facet_info.jacobian, 1.0);
+    CHECK_EQUAL(facet_info.area_scale, 4.0);
 
     for (int i = 0; i < 20; i++) {
         for (int j = 0; j < 20; j++) {
             double obs_x = -5.0 + 10 * (i / 19.0);
             double obs_y = -5.0 + 10 * (j / 19.0);
             Vec2<double> obs_loc = {obs_x, obs_y};
-            Vec2<double> obs_normal = {0.0, 0.0};
-            auto result = integrate<Vec1<Vec1<double>>,1>(quad, 
+            Vec2<double> obs_normal = {0.0, 1.0};
+            ObsPt<2> obs{0.001, obs_loc, obs_normal, obs_normal};
+            IntegralTerm<2,KT::n_rows,KT::n_cols> term{k, obs, facet_info};
+            auto result = integrate<Vec1<Vec1<double>>,1>(qs.obs_quad, 
                 [&](const Vec<double,1> x_hat) {
-                    auto eval = eval_point_influence<2>(x_hat, k, face,
-                                                obs_loc, obs_normal);
+                    auto eval = term.eval_point_influence(x_hat);
                     return (eval[0] + eval[1]);
                 });
                     

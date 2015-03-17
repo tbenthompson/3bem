@@ -165,73 +165,157 @@ TEST(AdaptiveQuadTensor) {
     CHECK_ARRAY_CLOSE((double*)(&result[0]), (double*)(&correct[0]), 4, 1e-12);
 }
 
-void test_sinh_transform(double scale_factor) {
-    double acceptable_error = 1e-4;
+double test_sinh_transform(bool iterated, double scale_factor, double a, double b,
+    std::function<double(Vec<double,1>)> f) 
+{
+    double exact_error = 1e-15;
     auto n = 10;
-    double a = 0.0;
-    double b = 0.001;
-    auto q = sinh_transform(n, a, b);
+    auto q = sinh_transform(n, a, b, iterated);
     decltype(q) q_scaled;
     for (const auto& pt: q) {
         q_scaled.push_back({pt.x_hat / scale_factor, pt.w / scale_factor});
     }
 
-    auto fnc = [&](std::array<double,1> x) {
-        return std::log(std::pow(x[0] - a, 2) + b * b);
-    };
-
-    auto res = integrate<double,1>(q_scaled, fnc);
+    auto res = integrate<double,1>(q_scaled, f);
 
     auto correct = adaptive_integrate<double>([&](double x) {
-            return fnc({x});
-        }, -1.0 / scale_factor, 1.0 / scale_factor, acceptable_error);
+            return f({x});
+        }, -1.0 / scale_factor, 1.0 / scale_factor, exact_error);
 
-    CHECK_CLOSE(res, correct, acceptable_error);
+    double error = fabs(res - correct) / fabs(correct);
+    return error;
 }
 
 TEST(SinhTransform) {
-    test_sinh_transform(1);
+    double a = 0.0;
+    double b = 0.001;
+    auto fnc = [&](std::array<double,1> x) {
+        return std::log(std::pow(x[0] - a, 2) + b * b);
+    };
+    CHECK(test_sinh_transform(false, 1, a, b, fnc) < 1e-4);
+}
+
+void ElliotJohnston2007Test(double a, bool iterated, std::vector<double> correct_error,
+    std::function<std::function<double(Vec<double,1>)>(double)> f_builder) {
+    size_t idx = 0;
+    for (int log_b = -1; log_b >= -6; log_b--) {
+        double b = std::pow(10, log_b);
+        auto fnc = f_builder(b);
+        double error = test_sinh_transform(iterated, 1, a, b, fnc);
+        double error_error = fabs(error - correct_error[idx]) / fabs(correct_error[idx]);
+        CHECK_CLOSE(error_error, 0.0, 1e-3);
+        idx++;
+    }
+}
+
+void ElliotJohnston2007I2(bool iterated, std::vector<double> correct_error) {
+    double a = 0.25;
+    ElliotJohnston2007Test(a, iterated, correct_error, 
+        [=](double b) {
+            return [=] (Vec<double,1> xs) {
+                double x = xs[0];
+                return (1 - x * x) / std::sqrt(std::pow(x - a, 2) + b * b);
+            };
+        }
+    );
+}
+
+void ElliotJohnston2007I3(bool iterated, std::vector<double> correct_error) {
+    double a = 0.25;
+    ElliotJohnston2007Test(a, iterated, correct_error, 
+        [=](double b) {
+            return [=] (Vec<double,1> xs) {
+                double x = xs[0];
+                return (1 - x * x) / (std::pow(x - a, 2) + b * b);
+            };
+        }
+    );
+}
+
+TEST(SinhTransformElliotJohnston2007I2NotIterated) {
+    std::vector<double> correct_error = {
+        1.8346e-11, 3.8039e-8, 1.8163e-6, 1.8068e-5, 8.0392e-5, 2.2492e-4
+    };
+    ElliotJohnston2007I2(false, correct_error);
+}
+
+TEST(SinhTransformElliotJohnston2007I2Iterated) {
+    std::vector<double> correct_error = {
+        2.2359e-6, 2.9066e-4, 2.2667e-3, 6.3398e-3, 1.0995e-2, 1.4802e-2
+    };
+    ElliotJohnston2007I2(true, correct_error);
+}
+
+TEST(SinhTransformElliotJohnston2007I3NotIterated) {
+    std::vector<double> correct_error = {
+        3.3753e-6, 4.6976e-3, 4.0194e-2, 1.2006e-1, 2.2969e-1, 3.4904e-1
+    };
+    ElliotJohnston2007I3(false, correct_error);
+}
+
+TEST(SinhTransformElliotJohnston2007I3Iterated) {
+    std::vector<double> correct_error = {
+        4.1270e-9, 8.6692e-7, 8.7829e-6, 3.0635e-5, 7.2012e-5, 1.4502e-4
+    };
+    ElliotJohnston2007I3(true, correct_error);
 }
 
 TEST(SinhTransformScaled) {
-    test_sinh_transform(100);
+    double a = 0.0;
+    double b = 0.001;
+    auto fnc = [&](std::array<double,1> x) {
+        return std::log(std::pow(x[0] - a, 2) + b * b);
+    };
+    CHECK(test_sinh_transform(false, 100, a, b, fnc) < 1e-4);
 }
 
 TEST(SinhSigmoidal2D) {
-    double acceptable_error = 1e-2;
-    size_t nt = 10;
-    size_t nr = 5;
-    double b = 1e-2;
-    double x0 = 0.2;
-    double y0 = 0.4;
-    double lambda = 1.5;
-    auto q = sinh_sigmoidal_transform(nt, nr, x0, y0, b);
-
-    auto fnc = [&](std::array<double,2> x) {
-        return 1.0 / std::pow(
-            std::pow(x[0] - x0, 2) + std::pow(x[1] - y0, 2) + b * b, lambda
-        );
+    size_t nt = 19;
+    size_t nr = 9;
+    std::vector<double> bs;
+    for (int i = 1; i <= 6; i++) {
+        bs.push_back(std::pow(10, -i) / std::sqrt(2));
+    }
+    std::vector<double> x0s = {0.0};
+    std::vector<double> y0s = {0.0};
+    std::vector<std::vector<double>> correct_errors{
+        {1.02e-12, 8.97e-13, 1.14e-12, 1.33e-10, 3.04e-9, 3.44e-8}
     };
+    double lambda = 1.5;
 
-    size_t sinh_evals = 0;
-    auto res = integrate<double,2>(q, [&] (Vec<double,2> x_hat) {
-            sinh_evals++;  
-            return fnc(x_hat);
-        });
+    for (size_t b_idx = 0; b_idx < bs.size(); b_idx++) {
+        double b = bs[b_idx];
+        for (size_t x0_idx = 0; x0_idx < x0s.size(); x0_idx++) {
+            double x0 = x0s[x0_idx];
+            double y0 = y0s[x0_idx];
 
-    size_t adaptive_evals = 0;
-    double adaptive_error = acceptable_error * 1e-1;
-    auto correct = adaptive_integrate<double>([&](double x) {
-            return adaptive_integrate<double>([&](double y) {
-                adaptive_evals++;
-                return fnc({x, y});
-            }, 0.0, 1 - x, adaptive_error);
-        }, 0.0, 1.0, adaptive_error);
-    // std::cout << adaptive_evals << " versus " << sinh_evals <<  std::endl;
+            auto q = sinh_sigmoidal_transform(nt, nr, x0, y0, b, true);
+            auto fnc = [&](std::array<double,2> x) {
+                return 1.0 / std::pow(
+                    std::pow(x[0] - x0, 2) + std::pow(x[1] - y0, 2) + b * b, lambda
+                );
+            };
 
-    auto error = std::fabs(res - correct) / std::fabs(correct);
-    // std::cout << std::setprecision(16) << error << std::endl;
-    CHECK_CLOSE(error, 0.0, acceptable_error);
+
+            auto res = integrate<double,2>(q, [&] (Vec<double,2> x_hat) {
+                    return fnc(x_hat);
+                });
+
+            double exact_error = 1e-9;
+            auto correct = adaptive_integrate<double>([&](double x) {
+                    return adaptive_integrate<double>([=](double y) {
+                        return fnc({x, y});
+                    }, 0.0, 1 - x, exact_error);
+                }, 0.0, 1.0, exact_error);
+
+            auto error = std::fabs(res - correct) / std::fabs(correct);
+            std::cout << std::setprecision(16) << res << " " << correct << std::endl;
+            double correct_error = correct_errors[x0_idx][b_idx];
+            std::cout << error << " " << correct_error << std::endl;
+            double error_error = fabs(error - correct_error) / fabs(correct_error);
+            CHECK_CLOSE(error_error, 0.0, 1e-2);
+        }
+    }
 }
 
 int main(int, char const *[])

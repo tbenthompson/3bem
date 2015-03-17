@@ -12,21 +12,6 @@
 
 namespace tbem {
 
-//TODO: To REALLY REALLY clean this up, ever, I'm going to need to get rid of the 
-//templating on KT. This may simply involve pushing the templating into a different
-//layer of compilation process. Or alternatively, I could template on the tensor 
-//rows and columns?
-
-//TODO: Perform the inner integral for each observation point and then apply the
-//galerkin operator?
-
-//TODO: PointSetI - Interface for a bunch of observation points?
-
-//TODO: Is factory method the appropriate pattern here?
-//Should each operator factory return an abstract operator interface
-//without any knowledge of what the object's operator type actually is? 
-//or abstract factory?
-
 template <size_t dim, typename KT>
 struct BoundaryIntegral {
     const Mesh<dim>& obs_mesh;
@@ -42,14 +27,18 @@ BoundaryIntegral<dim,KT> make_boundary_integral(const Mesh<dim>& obs_mesh,
 }
 
 template <size_t dim, typename KT>
-std::vector<typename KT::OperatorType> mesh_to_point_vector(const BoundaryIntegral<dim,KT>& p,
+std::vector<typename KT::OperatorType> 
+mesh_to_point_vector(const BoundaryIntegral<dim,KT>& p,
     const QuadStrategy<dim>& qs, const ObsPt<dim>& obs, 
     const std::vector<FacetInfo<dim>>& facet_info) 
 {
     std::vector<typename KT::OperatorType> result(p.src_mesh.n_dofs());
+    FarNearLogic<dim> far_near_logic{qs.far_threshold, 1.0};
+    AdaptiveIntegrationMethod<dim,KT::n_rows,KT::n_cols> mthd(qs);
     for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
-        auto term = make_integral_term(qs, p.K, obs, facet_info[i]);
-        auto integrals = compute_term<dim>(term);
+        IntegralTerm<dim,KT::n_rows,KT::n_cols> term{p.K, obs, facet_info[i]};
+        auto nearest_pt = far_near_logic.decide(obs.loc, facet_info[i]);
+        auto integrals = mthd.compute_term(term, nearest_pt);
         for (int b = 0; b < dim; b++) {
             result[dim * i + b] = integrals[b];
         }
@@ -108,57 +97,6 @@ BlockDenseOperator mesh_to_point_operator(const BoundaryIntegral<dim,KT>& p,
     }
     return block_op;
 }
-
-template <size_t dim>
-std::vector<ObsPt<dim>> collect_obs_pts(const Mesh<dim>& obs_mesh,
-    const QuadRule<dim-1>& obs_quad) 
-{
-    auto facet_info = get_facet_info(obs_mesh);
-
-    auto n_facets = obs_mesh.facets.size();
-    auto n_quad_pts = obs_quad.size();
-    std::vector<ObsPt<dim>> obs_pts;
-    for (size_t facet_idx = 0; facet_idx < n_facets; facet_idx++) {
-        for (size_t pt_idx = 0; pt_idx < n_quad_pts; pt_idx++) {
-            const auto& ref_pt = obs_quad[pt_idx].x_hat;
-            const auto& facet = facet_info[facet_idx];
-            obs_pts.push_back(ObsPt<dim>::from_face(ref_pt, facet));
-        }
-    }
-
-    return obs_pts;
-}
-
-template <size_t dim, typename KT>
-BlockDenseOperator mesh_to_points_operator(const std::vector<ObsPt<dim>>& pts,
-    const Mesh<dim>& src_mesh, const KT& K, const QuadStrategy<dim>& qs) 
-{
-    auto n_pts = pts.size();
-    auto n_src_dofs = src_mesh.n_dofs();
-    auto block_op = build_operator_shape(KT::n_cols, KT::n_rows, n_pts, n_src_dofs);
-    auto facet_info = get_facet_info(src_mesh);
-
-    for (size_t pt_idx = 0; pt_idx < n_pts; pt_idx++) {
-        const auto& pt = pts[pt_idx];
-        for (size_t facet_idx = 0; facet_idx < src_mesh.facets.size(); facet_idx++) {
-            auto term = make_integral_term(qs, K, pt, facet_info[facet_idx]);
-            auto integrals = compute_term<dim>(term);
-            for (int basis_idx = 0; basis_idx < dim; basis_idx++) {
-                auto idx = facet_idx * dim + basis_idx;
-                reshape_to_add(block_op, idx, integrals[basis_idx]);
-            }
-        }
-    }
-    return block_op;
-}
-
-template <size_t dim>
-BlockDenseOperator apply_galerkin(const BlockDenseOperator& op,
-    const Mesh<dim>& obs_mesh, const QuadStrategy<dim>& qs) 
-{
-
-}
-
 
 /* Given a kernel function and two meshes this function calculates the
  * Galerkin boundary element matrix representing the operator 

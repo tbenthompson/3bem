@@ -30,7 +30,7 @@ T integrate(const std::vector<QuadPt<dim>>& qr,
 
 /* One dimensional quadrature methods */
 QuadRule<1> gauss(size_t n);
-QuadRule<1> sinh_transform(size_t n, double a, double b);
+QuadRule<1> sinh_transform(size_t n, double a, double b, bool iterated_sinh);
 
 /* Two dimensional quadrature methods */
 QuadRule<2> tensor_product(QuadRule<1> xq, QuadRule<1> yq);
@@ -38,7 +38,7 @@ QuadRule<2> tensor_gauss(int n_pts);
 QuadRule<2> tri_gauss(int n_pts);
 QuadRule<2> square_to_tri(QuadRule<2> square_quad);
 QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double x0,
-    double y0, double b);
+    double y0, double b, bool iterated_sinh);
 
 template <size_t dim>
 struct QuadStrategy {

@@ -3,6 +3,7 @@
 
 #include "mesh.h"
 #include "vec.h"
+#include "numerics.h"
 
 namespace tbem {
 

@@ -69,30 +69,35 @@ QuadRule<1> gauss(size_t n) {
     return retval;
 }
 
-//TODO: global variables are bad
-static std::map<int, QuadRule<1>> gauss_rules;
-QuadRule<1> get_gauss(size_t n) {
-    auto gauss_q = gauss_rules.find(n);
-    if (gauss_q != gauss_rules.end()) {
-        return gauss_q->second;
-    } else {
-        auto new_rule = gauss(n);
-        gauss_rules.insert(std::make_pair(n, new_rule));
-        return new_rule;
-    }
-}
-
-QuadRule<1> sinh_transform(size_t n, double a, double b) 
+QuadRule<1> sinh_transform(size_t n, double a, double b, bool iterated_sinh) 
 {
-    auto mu = 0.5 * (std::asinh((1.0 + a) / b) + std::asinh((1.0 - a) / b));
-    auto eta = 0.5 * (std::asinh((1.0 + a) / b) - std::asinh((1.0 - a) / b));
-    auto gauss_q = get_gauss(n);
+    auto mu_0 = 0.5 * (std::asinh((1.0 + a) / b) + std::asinh((1.0 - a) / b));
+    auto eta_0 = 0.5 * (std::asinh((1.0 + a) / b) - std::asinh((1.0 - a) / b));
+    auto gauss_q = gauss(n);
+    auto start_q = gauss_q;
+    if (iterated_sinh) {
+        start_q.clear();
+        double a_1 = eta_0 / mu_0;
+        double b_1 = M_PI / (2 * mu_0);
+        double mu_1 = 0.5 * 
+            (std::asinh((1.0 + a_1) / b_1) + std::asinh((1.0 - a_1) / b_1));
+        double eta_1 = 0.5 * 
+            (std::asinh((1.0 + a_1) / b_1) - std::asinh((1.0 - a_1) / b_1));
+        for (size_t i = 0; i < gauss_q.size(); i++) {
+            double u = gauss_q[i].x_hat[0];
+            double u_w = gauss_q[i].w;
+            double s = a_1 + b_1 * std::sinh(mu_1 * u - eta_1);
+            double jacobian = b_1 * mu_1 * std::cosh(mu_1 * u - eta_1);
+            double s_w = u_w * jacobian;
+            start_q.push_back({{s}, s_w});
+        }
+    }
     std::vector<QuadPt<1>> q_pts;
-    for (size_t i = 0; i < gauss_q.size(); i++) {
-        auto s = gauss_q[i].x_hat[0];
-        auto x = a + b * std::sinh(mu * s - eta);
-        auto jacobian = b * mu * std::cosh(mu * s - eta);
-        auto w = gauss_q[i].w * jacobian; 
+    for (size_t i = 0; i < start_q.size(); i++) {
+        auto s = start_q[i].x_hat[0];
+        auto x = a + b * std::sinh(mu_0 * s - eta_0);
+        auto jacobian = b * mu_0 * std::cosh(mu_0 * s - eta_0);
+        auto w = start_q[i].w * jacobian; 
         q_pts.push_back({x, w});
     }
     return q_pts;
@@ -151,36 +156,38 @@ QuadRule<2> tri_gauss(int n_pts) {
     return square_to_tri(tensor_gauss(n_pts));
 }
 
-QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double b) {
+QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double b,
+    bool iterated_sinh) 
+{
     auto g1d_theta = gauss(n_theta); 
     QuadRule<1> theta_sigmoidal;
     for (size_t i = 0; i < g1d_theta.size(); i++) {
-        double to_01 = (g1d_theta[i].x_hat[0] + 1.0) / 2.0;
+        double sigma = (g1d_theta[i].x_hat[0] + 1.0) / 2.0;
         double jacobian = 0.5;
-        double to_01_sq = to_01 * to_01;
-        double one_m_to_01_sq = (1.0 - to_01) * (1 - to_01);
-        double sig_transform = to_01_sq / (to_01_sq + one_m_to_01_sq);
-        jacobian *= 2.0 * to_01 * (1 - to_01) / std::pow(to_01_sq + one_m_to_01_sq, 2);
+        double sig_transform = std::pow(sigma, 2) /
+            (std::pow(sigma, 2) + std::pow(1 - sigma, 2));
+        jacobian *= 2.0 * sigma * (1 - sigma) /
+            std::pow(std::pow(sigma, 2) + std::pow(1 - sigma, 2), 2);
         double theta = sig_transform * (M_PI / 2.0);
         jacobian *= (M_PI / 2.0);
         double w = jacobian * g1d_theta[i].w;
         theta_sigmoidal.push_back({{theta}, w});
     }
 
-    auto g1d_r = gauss(n_r); 
+    auto sinh1d = sinh_transform(n_r, -1.0, b, iterated_sinh); 
     QuadRule<2> out;
     for (size_t i = 0; i < theta_sigmoidal.size(); i++) {
         double theta = theta_sigmoidal[i].x_hat[0];
         double w_theta = theta_sigmoidal[i].w;
-        double R_theta = std::sin(M_PI / 4.0) / std::sin(theta + (M_PI / 4.0));
-        double mu = 0.5 * std::asinh(R_theta / b);
-        double eta = -mu;
-        for (size_t j = 0; j < g1d_r.size(); j++) {
-            double s = g1d_r[j].x_hat[0];
-            auto s_w = g1d_r[j].w;
-            double r = b * std::sinh(mu * s - eta);
-            double jacobian = b * mu * std::cosh(mu * s - eta);
-            double w_r = s_w * jacobian;
+        double r1 = 1.0;
+        double alpha = M_PI / 4.0;
+        double R_theta = r1 * std::sin(alpha) / std::sin(theta + alpha);
+
+        for (size_t j = 0; j < sinh1d.size(); j++) {
+            double s = sinh1d[j].x_hat[0];
+            double s_w = sinh1d[j].w;
+            double r = R_theta * (s + 1) / 2.0; 
+            double w_r = s_w * (R_theta / 2.0);
             double w = r * w_theta * w_r;
             double x = r * std::cos(theta);
             double y = r * std::sin(theta);
@@ -193,36 +200,37 @@ QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double b) {
 
 QuadRule<2> transform_to_tri(const QuadRule<2>& q, Vec<Vec<double,3>,3> tri) {
     QuadRule<2> out;
-    auto jacobian = 2.0 * tri_area(tri);
+    double jacobian = 2.0 * tri_area(tri);
     for (const auto& unit_facet_pt: q) {
         auto pt = ref_to_real(unit_facet_pt.x_hat, tri); 
+        assert(pt[2] == 0.0);
         out.push_back({{pt[0], pt[1]}, unit_facet_pt.w * jacobian});
     }
     return out;
 }
 
 QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double x0,
-    double y0, double b) 
+    double y0, double b, bool iterated_sinh) 
 {
     Vec<double,3> pt0{0, 0, 0};
     Vec<double,3> pt1{1, 0, 0};
     Vec<double,3> pt2{0, 1, 0};
     Vec<double,3> singular_pt{x0, y0, 0};
 
-    auto unit_facet_rule = sinh_sigmoidal_transform(n_theta, n_r, b);
+    auto unit_facet_rule = sinh_sigmoidal_transform(n_theta, n_r, b, iterated_sinh);
 
     QuadRule<2> out;
     
     // upper left tri
-    auto ul_pts = transform_to_tri(unit_facet_rule, {singular_pt, pt2, pt0});
+    auto ul_pts = transform_to_tri(unit_facet_rule, {singular_pt, pt0, pt2});
     for (const auto& p: ul_pts) {out.push_back(p);}
 
     // upper right tri
-    auto ur_pts = transform_to_tri(unit_facet_rule, {singular_pt, pt1, pt2});
+    auto ur_pts = transform_to_tri(unit_facet_rule, {singular_pt, pt2, pt1});
     for (const auto& p: ur_pts) {out.push_back(p);}
 
     // lower
-    auto l_pts = transform_to_tri(unit_facet_rule, {singular_pt, pt1, pt0});
+    auto l_pts = transform_to_tri(unit_facet_rule, {singular_pt, pt0, pt1});
     for (const auto& p: l_pts) {out.push_back(p);}
 
     return out;

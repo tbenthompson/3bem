@@ -27,6 +27,7 @@ BlockSparseOperator build_nearfield(const BoundaryIntegral<dim,KT>& p,
     size_t n_src_dofs = p.src_mesh.n_dofs();
     auto n_blocks = KT::n_rows * KT::n_cols;
 
+    AdaptiveIntegrationMethod<dim,KT::n_rows,KT::n_cols> mthd(qs);
     auto src_facet_info = get_facet_info(p.src_mesh);
     std::vector<std::vector<MatrixEntry>> entries(p.obs_mesh.facets.size());
 #pragma omp parallel for
@@ -37,13 +38,15 @@ BlockSparseOperator build_nearfield(const BoundaryIntegral<dim,KT>& p,
 
             std::vector<std::pair<size_t,typename KT::OperatorType>> row;
             for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
-                FarNearLogic<dim> far_near_logic{qs.far_threshold, 3.0};
-                if (far_near_logic.decide(pt.loc, src_facet_info[i]).type 
-                        == FarNearType::Farfield) {
+                FarNearLogic<dim> far_near_logic{qs.far_threshold, 1.0};
+                auto nearest_pt = far_near_logic.decide(pt.loc, src_facet_info[i]);
+                if (nearest_pt.type == FarNearType::Farfield) {
                     continue; 
                 }
-                auto term = make_integral_term(qs, p.K, pt, src_facet_info[i]);
-                auto integrals = compute_term<dim>(term);
+                IntegralTerm<dim,KT::n_rows,KT::n_cols> term{
+                    p.K, pt, src_facet_info[i]
+                };
+                auto integrals = mthd.compute_term(term, nearest_pt);
                 for (int b = 0; b < dim; b++) {
                     row.push_back(std::make_pair(dim * i + b, integrals[b]));
                 }
@@ -84,6 +87,7 @@ struct MatrixFreeFarfieldOperator {
         size_t n_obs_dofs = p.obs_mesh.n_dofs();
         BlockVectorX farfield(KT::n_rows, VectorX(n_obs_dofs, 0.0));
 
+        AdaptiveIntegrationMethod<dim,KT::n_rows,KT::n_cols> mthd(qs);
         auto src_facet_info = get_facet_info(p.src_mesh);
 #pragma omp parallel for
         for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
@@ -93,13 +97,15 @@ struct MatrixFreeFarfieldOperator {
 
                 typename KT::OutType row = zeros<typename KT::OutType>::make();
                 for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
-                    FarNearLogic<dim> far_near_logic{qs.far_threshold, 3.0};
-                    if (far_near_logic.decide(pt.loc, src_facet_info[i]).type 
-                            != FarNearType::Farfield) {
+                    FarNearLogic<dim> far_near_logic{qs.far_threshold, 1.0};
+                    auto nearest_pt = far_near_logic.decide(pt.loc, src_facet_info[i]);
+                    if (nearest_pt.type != FarNearType::Farfield) {
                         continue; 
                     }
-                    auto term = make_integral_term(qs, p.K, pt, src_facet_info[i]);
-                    auto integrals = compute_term<dim>(term);
+                    IntegralTerm<dim,KT::n_rows,KT::n_cols> term{
+                        p.K, pt, src_facet_info[i]
+                    };
+                    auto integrals = mthd.compute_term(term, nearest_pt);
                     for (int b = 0; b < dim; b++) {
                         for (size_t d1 = 0; d1 < KT::n_rows; d1++) {
                             for (size_t d2 = 0; d2 < KT::n_cols; d2++) {

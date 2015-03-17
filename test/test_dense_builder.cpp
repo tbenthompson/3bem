@@ -26,7 +26,7 @@ struct EvalProb {
     double go(const Kernel<3,1,1>& k) {
         auto p = make_boundary_integral<3>(sphere, sphere, k);
         ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
-        auto op = mesh_to_points_operator({obs}, p.src_mesh, p.K, qs);
+        auto op = mesh_to_point_operator(p, qs, obs);
         return op.apply({src_strength})[0][0];
     }
 
@@ -37,16 +37,6 @@ struct EvalProb {
     double obs_length_scale;
     std::vector<double> src_strength;
 }; 
-
-TEST(CollectObsPts) {
-    auto m = line_mesh({-1,0}, {3,0}).refine_repeatedly(1);    
-    auto q = gauss(3);
-    auto res = collect_obs_pts(m, q);
-    CHECK_EQUAL(res.size(), m.facets.size() * q.size());
-    for (size_t i = 0; i < q.size(); i++) {
-        CHECK_CLOSE(res[i].loc[0], q[i].x_hat[0], 1e-15);
-    }
-}
 
 TEST(EvalIntegralEquationSphereSurfaceArea) {
     EvalProb ep(5, 3, 2);

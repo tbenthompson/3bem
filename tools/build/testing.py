@@ -7,29 +7,30 @@ import re
 import os
 from copy import copy
 
-def testing_targets(test_info, loc, cpp_flags, link_flags, lib_dep_flags):
-    test_link_flags = link_flags + ['-L../lib/unittest-cpp/builds', '-lUnitTest++']
+def testing_targets(test_info, loc, c):
+    test_link_flags = c['link_flags'] + ['-L../lib/unittest-cpp/builds', '-lUnitTest++']
     ts = dict()
     for test_name, test_data in test_info.iteritems():
         target_link_flags = copy(test_link_flags)
         if test_data.get('link_lib', False):
-            target_link_flags += lib_dep_flags
+            target_link_flags += c['lib_dep_flags']
         target = dict()
-        target['cpp_flags'] = cpp_flags
+        target['cpp_flags'] = c['cpp_flags']
         target['link_flags'] = target_link_flags
         target['sources'] = [os.path.join(loc, test_data['src'])]
         target['sources'] += test_data.get('other_srces', [])
         target['linked_sources'] = [s for s in test_data['lib_srcs']]
+        target['linked_sources_flags'] = c['targets']['lib']['cpp_flags']
         target['binary_name'] = test_data['src']
         target['priority'] = 1000
         ts[test_name] = target
     return ts
 
-def unit_testing_targets(*args):
-    return testing_targets(unit_test_info, 'test', *args)
+def unit_testing_targets(c):
+    return testing_targets(unit_test_info, 'test', c)
 
-def acceptance_testing_targets(*args):
-    return testing_targets(acceptance_test_info, 'acctests', *args)
+def acceptance_testing_targets(c):
+    return testing_targets(acceptance_test_info, 'acctests', c)
 
 def tests():
     return files_in_dir("test", "cpp")
