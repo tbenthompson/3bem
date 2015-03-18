@@ -269,53 +269,59 @@ TEST(SinhTransformScaled) {
     CHECK(test_sinh_transform(false, 100, a, b, fnc) < 1e-4);
 }
 
-TEST(SinhSigmoidal2D) {
-    size_t nt = 19;
-    size_t nr = 9;
+void test_sinh_sigmoidal(double lambda, size_t nt, size_t nr, double x0, double y0) {
+    std::cout << "PT: (" << x0 << ", " << y0 << ")" << std::endl;
     std::vector<double> bs;
     for (int i = 1; i <= 6; i++) {
-        bs.push_back(std::pow(10, -i) / std::sqrt(2));
+        bs.push_back(std::pow(10, -i));
     }
-    std::vector<double> x0s = {0.0};
-    std::vector<double> y0s = {0.0};
-    std::vector<std::vector<double>> correct_errors{
-        {1.02e-12, 8.97e-13, 1.14e-12, 1.33e-10, 3.04e-9, 3.44e-8}
-    };
-    double lambda = 1.5;
 
     for (size_t b_idx = 0; b_idx < bs.size(); b_idx++) {
         double b = bs[b_idx];
-        for (size_t x0_idx = 0; x0_idx < x0s.size(); x0_idx++) {
-            double x0 = x0s[x0_idx];
-            double y0 = y0s[x0_idx];
+        auto q = sinh_sigmoidal_transform(nt, nr, x0, y0, b, false);
 
-            auto q = sinh_sigmoidal_transform(nt, nr, x0, y0, b, true);
-            auto fnc = [&](std::array<double,2> x) {
-                return 1.0 / std::pow(
-                    std::pow(x[0] - x0, 2) + std::pow(x[1] - y0, 2) + b * b, lambda
-                );
-            };
+        auto res = integrate<double,2>(q, [&] (Vec<double,2> x_hat) {
+                /* return 1.0; */
+                double dx = x_hat[0] - x0;
+                double dy = x_hat[1] - y0;
+                double r2 = dx * dx + dy * dy;
+                // double S = std::asinh(std::sqrt(r2) / b);
+                // return 1.0 / std::pow(b * std::cosh(S), 2 * lambda);
+                return 1.0 / std::pow(r2 + b * b, lambda);
+            });
 
+        double exact_error = 1e-7;
+        auto correct = adaptive_integrate<double>([=](double x) {
+                return adaptive_integrate<double>([=](double y) {
+                    double dx = x - x0;
+                    double dy = y - y0;
+                    return std::pow(dx * dx + dy * dy + b * b, -lambda);
+                }, 0.0, 1 - x, exact_error);
+            }, 0.0, 1.0, exact_error);
 
-            auto res = integrate<double,2>(q, [&] (Vec<double,2> x_hat) {
-                    return fnc(x_hat);
-                });
-
-            double exact_error = 1e-9;
-            auto correct = adaptive_integrate<double>([&](double x) {
-                    return adaptive_integrate<double>([=](double y) {
-                        return fnc({x, y});
-                    }, 0.0, 1 - x, exact_error);
-                }, 0.0, 1.0, exact_error);
-
-            auto error = std::fabs(res - correct) / std::fabs(correct);
-            std::cout << std::setprecision(16) << res << " " << correct << std::endl;
-            double correct_error = correct_errors[x0_idx][b_idx];
-            std::cout << error << " " << correct_error << std::endl;
-            double error_error = fabs(error - correct_error) / fabs(correct_error);
-            CHECK_CLOSE(error_error, 0.0, 1e-2);
-        }
+        auto error = std::fabs(res - correct) / std::fabs(correct);
+        std::cout << correct << " " << res << std::endl;
+        std::cout << error << std::endl;
+        CHECK_CLOSE(error, 0.0, 1e-5);
     }
+}
+
+TEST(SinhSigmoidal2D) {
+    size_t nt = 19;
+    size_t nr = 9;
+    test_sinh_sigmoidal(1.5, nt, nr, 0.0, 0.0);
+    nt = 19;
+    nr = 9;
+    test_sinh_sigmoidal(0.5, nt, nr, 0.2, 0.4);
+    // nt = 25;
+    // nr = 20;
+    // test_sinh_sigmoidal(1.5, nt, nr, 0.1, 0.1);
+    nt = 150;
+    nr = 10;
+    test_sinh_sigmoidal(0.5, nt, nr, 0.1, 0.89);
+    // nt = 25;
+    // nr = 20;
+    // test_sinh_sigmoidal(1.5, nt, nr, 0.4, 0.49);
 }
 
 int main(int, char const *[])

@@ -159,6 +159,41 @@ QuadRule<2> tri_gauss(int n_pts) {
 QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double b,
     bool iterated_sinh) 
 {
+    
+    // auto g1d_theta = gauss(n_theta); 
+    // QuadRule<1> g1d_theta_01;
+    // for (size_t i = 0; i < g1d_theta.size(); i++) {
+    //     double x = (g1d_theta[i].x_hat[0] + 1) / 2.0;
+    //     double w = g1d_theta[i].w / 2.0;
+    //     g1d_theta_01.push_back({{x}, w});
+    // }
+    // auto g1d_r = gauss(n_r);
+    // QuadRule<2> out;
+    // for (size_t i = 0; i < g1d_theta_01.size(); i++) {
+    //     double sigma = g1d_theta_01[i].x_hat[0];
+    //     double sigma_w = g1d_theta_01[i].w;
+    //     double sig_transform = std::pow(sigma, 2) /
+    //         (std::pow(sigma, 2) + std::pow(1 - sigma, 2));
+    //     double theta = sig_transform * (M_PI / 2.0);
+    //     double alpha = M_PI / 4.0;
+    //     const double SQRT2 = 1.414213562373095048801688;
+    //     double R_theta = 1.0 / (SQRT2 * std::sin(theta + alpha));
+    //     double mu_1 = 0.5 * std::asinh(R_theta / b);
+    //     for (size_t j = 0; j < g1d_r.size(); j++) {
+    //         double s = g1d_r[j].x_hat[0];
+    //         double s_w = g1d_r[j].w;
+
+    //         double r = b * std::sinh(mu_1 * (s + 1));
+    //         double jacobian = r;
+    //         jacobian *= 2.0 * sigma * (1 - sigma) /
+    //             std::pow(std::pow(sigma, 2) + std::pow(1 - sigma, 2), 2);
+    //         jacobian *= b * mu_1 * std::cosh(mu_1 * (s + 1));
+    //         jacobian *= M_PI / 2.0;
+    //         double w = sigma_w * s_w * jacobian;
+    //         out.push_back({{r * std::cos(theta),r * std::sin(theta)}, w});
+    //     }
+    // }
+    
     auto g1d_theta = gauss(n_theta); 
     QuadRule<1> theta_sigmoidal;
     for (size_t i = 0; i < g1d_theta.size(); i++) {
@@ -179,16 +214,16 @@ QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double b,
     for (size_t i = 0; i < theta_sigmoidal.size(); i++) {
         double theta = theta_sigmoidal[i].x_hat[0];
         double w_theta = theta_sigmoidal[i].w;
-        double r1 = 1.0;
         double alpha = M_PI / 4.0;
-        double R_theta = r1 * std::sin(alpha) / std::sin(theta + alpha);
+        const double SQRT2 = 1.414213562373095048801688;
+        double R_theta = 1.0 / (SQRT2 * std::sin(theta + alpha));
 
         for (size_t j = 0; j < sinh1d.size(); j++) {
             double s = sinh1d[j].x_hat[0];
             double s_w = sinh1d[j].w;
-            double r = R_theta * (s + 1) / 2.0; 
-            double w_r = s_w * (R_theta / 2.0);
-            double w = r * w_theta * w_r;
+            double r = R_theta * (s + 1.0) / 2.0; 
+            double w_r = r * s_w * (R_theta / 2.0);
+            double w = w_theta * w_r;
             double x = r * std::cos(theta);
             double y = r * std::sin(theta);
             out.push_back({{x, y}, w});
@@ -218,7 +253,6 @@ QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double x0,
     Vec<double,3> singular_pt{x0, y0, 0};
 
     auto unit_facet_rule = sinh_sigmoidal_transform(n_theta, n_r, b, iterated_sinh);
-
     QuadRule<2> out;
     
     // upper left tri
