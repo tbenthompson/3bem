@@ -178,57 +178,43 @@ template struct AdaptiveIntegrationMethod<3,1,1>;
 template struct AdaptiveIntegrationMethod<3,3,3>;
 
 template <size_t dim>
-QuadRule<dim-1> choose_sinh_quad(double S, double l, Vec<double,dim-1> singular_pt);
+struct SinhIntegrator {
+    template <size_t R, size_t C>
+    Vec<Vec<Vec<double,C>,R>,dim> 
+    operator()(double tolerance, const IntegralTerm<dim,R,C>& term,
+        const NearestPoint<dim>& near_pt, const Vec<double,dim>& nf_obs_pt);
+};
 
-static const auto G2d = gauss(10);
 template <>
-inline QuadRule<1> choose_sinh_quad<2>(double S, double l, Vec<double,1> singular_pt) {
-    assert(l > 0);
-    assert(S > 0);
-    if ((l / S) > 1) {
-        return G2d;
+struct SinhIntegrator<2> {
+    template <size_t R, size_t C>
+    Vec<Vec<Vec<double,C>,R>,2> operator()(double tolerance, 
+        const IntegralTerm<2,R,C>& term, const NearestPoint<2>& near_pt,
+        const Vec<double,2>& nf_obs_pt) 
+    {
+        return sinh_sigmoidal_adaptive_integral2d<Vec<Vec<Vec<double,C>,R>,2>>(
+            near_pt.ref_pt[0], near_pt.distance, tolerance,
+            [&] (double x_hat) {
+                Vec<double,1> q_pt = {x_hat};
+                return term.eval_point_influence(q_pt, nf_obs_pt);
+            });
     }
-    else {
-        size_t n = static_cast<size_t>(10.0 * (1 + std::log(S / l)));
-        return sinh_transform(n, singular_pt[0], l, false);
-    }
-}
+};
 
-// static size_t n_q = 0;
-// static size_t n_c = 0;
-static const auto G3d = tri_gauss(5);
 template <>
-inline QuadRule<2> choose_sinh_quad<3>(double S, double l, Vec<double,2> singular_pt) {
-    assert(l > 0);
-    assert(S > 0);
-    if ((l / S) > 0.5) {
-        return G3d;
+struct SinhIntegrator<3> {
+    template <size_t R, size_t C>
+    Vec<Vec<Vec<double,C>,R>,3> operator()(double tolerance, 
+        const IntegralTerm<3,R,C>& term, const NearestPoint<3>& near_pt,
+        const Vec<double,3>& nf_obs_pt) 
+    {
+        return sinh_sigmoidal_adaptive_integral3d<Vec<Vec<Vec<double,C>,R>,3>>(
+            near_pt.ref_pt[0], near_pt.ref_pt[1], near_pt.distance, tolerance,
+            [&] (const Vec<double,2>& x_hat) {
+                return term.eval_point_influence(x_hat, nf_obs_pt);
+            });
     }
-    else {
-        size_t n = static_cast<size_t>(10.0 * (1 + std::log(S / l)));
-        auto q = sinh_sigmoidal_transform(2 * n, n, singular_pt[0], singular_pt[1], l, true);
-        // n_q += q.size();
-        // n_c++;
-        // std::cout << n_q << " " << n_c << std::endl;
-        return q;
-    }
-}
-
-template <size_t dim, size_t R, size_t C>
-Vec<Vec<Vec<double,C>,R>,dim> sinh_integrate(double tolerance, 
-        const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& near_pt,
-        const Vec<double,dim>& nf_obs_pt) 
-{
-    assert(near_pt.distance > 0);
-    auto S = term.src_face.length_scale;
-    auto l = near_pt.distance;
-    auto q = choose_sinh_quad<dim>(S, l, near_pt.ref_pt);
-    auto integrals = zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make();
-    for (size_t i = 0; i < q.size(); i++) {
-        integrals += term.eval_point_influence(q[i].x_hat, nf_obs_pt) * q[i].w;
-    }
-    return integrals;
-}
+};
 
 template <size_t dim, size_t R, size_t C>
 Vec<Vec<Vec<double,C>,R>,dim> 
@@ -241,7 +227,8 @@ SinhIntegrationMethod<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>& te
         auto step_loc = get_step_loc(term.obs, qs.singular_steps[step_idx]);
         auto shifted_near_pt = FarNearLogic<dim>{qs.far_threshold, 1.0}
             .decide(step_loc, term.src_face);
-        steps[step_idx] = sinh_integrate(qs.near_tol, term, shifted_near_pt, step_loc);
+        SinhIntegrator<dim> integrator;
+        steps[step_idx] = integrator(qs.near_tol, term, shifted_near_pt, step_loc);
     }
 
     return richardson_limit(steps);
@@ -252,7 +239,8 @@ Vec<Vec<Vec<double,C>,R>,dim>
 SinhIntegrationMethod<dim,R,C>::compute_nearfield(const IntegralTerm<dim,R,C>& term,
     const NearestPoint<dim>& nearest_pt) const 
 {
-    return sinh_integrate(qs.near_tol, term, nearest_pt, term.obs.loc);
+    SinhIntegrator<dim> integrator;
+    return integrator(qs.near_tol, term, nearest_pt, term.obs.loc);
 }
 
 template <size_t dim, size_t R, size_t C>

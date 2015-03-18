@@ -85,7 +85,7 @@ TEST(IntegralElasticDisplacement) {
 
 template <size_t dim, size_t R, size_t C>
 void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K) {
-    QuadStrategy<dim> qs(2, 2, 8, 3.0, 1e-5);
+    QuadStrategy<dim> qs(2, 2, 8, 3.0, 1e-4);
     AdaptiveIntegrationMethod<dim,R,C> mthd_adapt(qs);
     SinhIntegrationMethod<dim,R,C> mthd_sinh(qs);
 
@@ -95,20 +95,19 @@ void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K) {
 #pragma omp parallel for
     for (size_t ix = 1; ix < 10; ix++) {
         double x = (max_x / 10.0) * ix;
+        if (x == 0.5) continue;
         for (double y_hat = 0.1; y_hat < 1.0; y_hat += 0.1) {
             double y = y_hat * max_y * ((max_x - x) / max_x);
             for (double log_z = 2; log_z > -6; log_z -= 1) {
+                std::cout << Vec<double,3>{x, y, log_z} << std::endl;
                 double z = std::pow(10.0, log_z);
-                ObsPt<3> obs{1.0, {x, y, z}, {0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}};
+                ObsPt<3> obs{0.01, {x, y, z}, {0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}};
                 IntegralTerm<dim,R,C> term{K, obs, facet_info};
                 auto nearest_pt = FarNearLogic<dim>{3.0, 1.0}.decide(obs.loc, facet_info);
                 auto sinh_eval = mthd_sinh.compute_term(term, nearest_pt);
-                auto adapt_eval = mthd_adapt.compute_term(term, nearest_pt);
-                auto error = fabs(sinh_eval - adapt_eval) / fabs(adapt_eval);
-                if (error[0][0][0] > 1e-3) {
-                    std::cout << x << " " << y << " " << z << std::endl;
-                    // CHECK_CLOSE(sinh_eval, adapt_eval, 1e-3);
-                }
+                // auto adapt_eval = mthd_adapt.compute_term(term, nearest_pt);
+                // auto error = fabs(sinh_eval - adapt_eval) / fabs(adapt_eval);
+                // CHECK_CLOSE(sinh_eval, adapt_eval, 1e-3);
             }
         }
     }

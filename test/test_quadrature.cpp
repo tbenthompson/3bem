@@ -165,99 +165,47 @@ TEST(AdaptiveQuadTensor) {
     CHECK_ARRAY_CLOSE((double*)(&result[0]), (double*)(&correct[0]), 4, 1e-12);
 }
 
-double test_sinh_transform(bool iterated, double scale_factor, double a, double b,
-    std::function<double(Vec<double,1>)> f) 
+double test_sinh_transform(double a, double b, std::function<double(Vec<double,1>)> f) 
 {
-    double exact_error = 1e-15;
-    auto n = 10;
-    auto q = sinh_transform(n, a, b, iterated);
-    decltype(q) q_scaled;
-    for (const auto& pt: q) {
-        q_scaled.push_back({pt.x_hat / scale_factor, pt.w / scale_factor});
-    }
+    double tol = 1e-6;
 
-    auto res = integrate<double,1>(q_scaled, f);
-
-    auto correct = adaptive_integrate<double>([&](double x) {
+    static size_t sinh_evals = 0;
+    auto res = sinh_sigmoidal_adaptive_integral2d<double>(a, b, tol, 
+        [&] (double x) {
+            sinh_evals++;
             return f({x});
-        }, -1.0 / scale_factor, 1.0 / scale_factor, exact_error);
+        });
+
+    static size_t simple_evals = 0;
+    auto correct = adaptive_integrate<double>(
+        [&](double x) {
+            simple_evals++;
+            return f({x});
+        }, -1.0, 1.0, tol);
+    // std::cout << sinh_evals << " " << simple_evals << std::endl;
 
     double error = fabs(res - correct) / fabs(correct);
     return error;
 }
 
 TEST(SinhTransform) {
-    double a = 0.0;
-    double b = 0.001;
-    auto fnc = [&](std::array<double,1> x) {
-        return std::log(std::pow(x[0] - a, 2) + b * b);
-    };
-    CHECK(test_sinh_transform(false, 1, a, b, fnc) < 1e-4);
-}
-
-void ElliotJohnston2007Test(double a, bool iterated, std::vector<double> correct_error,
-    std::function<std::function<double(Vec<double,1>)>(double)> f_builder) {
-    size_t idx = 0;
-    for (int log_b = -1; log_b >= -6; log_b--) {
-        double b = std::pow(10, log_b);
-        auto fnc = f_builder(b);
-        double error = test_sinh_transform(iterated, 1, a, b, fnc);
-        double error_error = fabs(error - correct_error[idx]) / fabs(correct_error[idx]);
-        CHECK_CLOSE(error_error, 0.0, 1e-3);
-        idx++;
+    for (double a = -1.0; a <= 1.0; a += 0.25) {
+        for (int i = 1; i < 6; i++) {
+            double b = std::pow(10, -i);
+            auto fnc1 = [&](std::array<double,1> x) {
+                return std::log(std::pow(x[0] - a, 2) + b * b);
+            };
+            CHECK(test_sinh_transform(a, b, fnc1) < 1e-4);
+            auto fnc2 = [&](std::array<double,1> x) {
+                return 1.0 / std::sqrt(std::pow(x[0] - a, 2) + b * b);
+            };
+            CHECK(test_sinh_transform(a, b, fnc2) < 1e-4);
+            auto fnc3 = [&](std::array<double,1> x) {
+                return 1.0 / (std::pow(x[0] - a, 2) + b * b);
+            };
+            CHECK(test_sinh_transform(a, b, fnc3) < 1e-4);
+        }
     }
-}
-
-void ElliotJohnston2007I2(bool iterated, std::vector<double> correct_error) {
-    double a = 0.25;
-    ElliotJohnston2007Test(a, iterated, correct_error, 
-        [=](double b) {
-            return [=] (Vec<double,1> xs) {
-                double x = xs[0];
-                return (1 - x * x) / std::sqrt(std::pow(x - a, 2) + b * b);
-            };
-        }
-    );
-}
-
-void ElliotJohnston2007I3(bool iterated, std::vector<double> correct_error) {
-    double a = 0.25;
-    ElliotJohnston2007Test(a, iterated, correct_error, 
-        [=](double b) {
-            return [=] (Vec<double,1> xs) {
-                double x = xs[0];
-                return (1 - x * x) / (std::pow(x - a, 2) + b * b);
-            };
-        }
-    );
-}
-
-TEST(SinhTransformElliotJohnston2007I2NotIterated) {
-    std::vector<double> correct_error = {
-        1.8346e-11, 3.8039e-8, 1.8163e-6, 1.8068e-5, 8.0392e-5, 2.2492e-4
-    };
-    ElliotJohnston2007I2(false, correct_error);
-}
-
-TEST(SinhTransformElliotJohnston2007I2Iterated) {
-    std::vector<double> correct_error = {
-        2.2359e-6, 2.9066e-4, 2.2667e-3, 6.3398e-3, 1.0995e-2, 1.4802e-2
-    };
-    ElliotJohnston2007I2(true, correct_error);
-}
-
-TEST(SinhTransformElliotJohnston2007I3NotIterated) {
-    std::vector<double> correct_error = {
-        3.3753e-6, 4.6976e-3, 4.0194e-2, 1.2006e-1, 2.2969e-1, 3.4904e-1
-    };
-    ElliotJohnston2007I3(false, correct_error);
-}
-
-TEST(SinhTransformElliotJohnston2007I3Iterated) {
-    std::vector<double> correct_error = {
-        4.1270e-9, 8.6692e-7, 8.7829e-6, 3.0635e-5, 7.2012e-5, 1.4502e-4
-    };
-    ElliotJohnston2007I3(true, correct_error);
 }
 
 TEST(SinhTransformScaled) {
@@ -266,62 +214,54 @@ TEST(SinhTransformScaled) {
     auto fnc = [&](std::array<double,1> x) {
         return std::log(std::pow(x[0] - a, 2) + b * b);
     };
-    CHECK(test_sinh_transform(false, 100, a, b, fnc) < 1e-4);
+    CHECK(test_sinh_transform(a, b, fnc) < 1e-4);
 }
 
-void test_sinh_sigmoidal(double lambda, size_t nt, size_t nr, double x0, double y0) {
-    std::cout << "PT: (" << x0 << ", " << y0 << ")" << std::endl;
-    std::vector<double> bs;
-    for (int i = 1; i <= 6; i++) {
-        bs.push_back(std::pow(10, -i));
-    }
+void test_sinh_sigmoidal(double lambda, double x0, double y0) {
+    // std::cout << "Pt: " << Vec<double,2>{x0, y0} << std::endl;
+    double tol = 1e-7;
+    double base = 10;
+    int n_b = 4;
+    size_t eval_polar = 0;
+    size_t eval_cartesian = 0;
+    for (int b_idx = 1; b_idx < n_b; b_idx++) {
+        double b = std::pow(base, -b_idx);
 
-    for (size_t b_idx = 0; b_idx < bs.size(); b_idx++) {
-        double b = bs[b_idx];
-        auto q = sinh_sigmoidal_transform(nt, nr, x0, y0, b, false);
-
-        auto res = integrate<double,2>(q, [&] (Vec<double,2> x_hat) {
-                /* return 1.0; */
-                double dx = x_hat[0] - x0;
-                double dy = x_hat[1] - y0;
-                double r2 = dx * dx + dy * dy;
-                // double S = std::asinh(std::sqrt(r2) / b);
-                // return 1.0 / std::pow(b * std::cosh(S), 2 * lambda);
-                return 1.0 / std::pow(r2 + b * b, lambda);
+        double res = sinh_sigmoidal_adaptive_integral3d<double>(
+            x0, y0, b, tol,
+            [&] (Vec<double,2> x) {
+                eval_polar++;
+                double dx = x[0] - x0;
+                double dy = x[1] - y0;
+                return std::pow(dx * dx + dy * dy + b * b, -lambda);
             });
 
-        double exact_error = 1e-7;
-        auto correct = adaptive_integrate<double>([=](double x) {
-                return adaptive_integrate<double>([=](double y) {
+        auto correct = adaptive_integrate<double>([&](double x) {
+                return adaptive_integrate<double>([&](double y) {
+                    eval_cartesian++;
                     double dx = x - x0;
                     double dy = y - y0;
                     return std::pow(dx * dx + dy * dy + b * b, -lambda);
-                }, 0.0, 1 - x, exact_error);
-            }, 0.0, 1.0, exact_error);
+                }, 0.0, 1 - x, tol);
+            }, 0.0, 1.0, tol);
+        eval_cartesian++;
 
         auto error = std::fabs(res - correct) / std::fabs(correct);
-        std::cout << correct << " " << res << std::endl;
-        std::cout << error << std::endl;
-        CHECK_CLOSE(error, 0.0, 1e-5);
+        // std::cout << res << " " << correct << std::endl;
+        CHECK_CLOSE(error, 0.0, 100 * tol);
     }
+    // std::cout << eval_cartesian / static_cast<double>(eval_polar) << std::endl;
 }
 
 TEST(SinhSigmoidal2D) {
-    size_t nt = 19;
-    size_t nr = 9;
-    test_sinh_sigmoidal(1.5, nt, nr, 0.0, 0.0);
-    nt = 19;
-    nr = 9;
-    test_sinh_sigmoidal(0.5, nt, nr, 0.2, 0.4);
-    // nt = 25;
-    // nr = 20;
-    // test_sinh_sigmoidal(1.5, nt, nr, 0.1, 0.1);
-    nt = 150;
-    nr = 10;
-    test_sinh_sigmoidal(0.5, nt, nr, 0.1, 0.89);
-    // nt = 25;
-    // nr = 20;
-    // test_sinh_sigmoidal(1.5, nt, nr, 0.4, 0.49);
+    std::vector<Vec<double,2>> pts = {
+        {0.0, 0.0}, {0.2, 0.4}, {0.1, 0.1}, {0.1, 0.75}, {0.4, 0.49}
+    };
+    for (auto p: pts) {
+        for (double lambda: {0.5, 1.0, 1.5}) {
+            test_sinh_sigmoidal(lambda, p[0], p[1]);
+        }
+    }
 }
 
 int main(int, char const *[])
