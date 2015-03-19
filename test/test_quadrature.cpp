@@ -270,29 +270,28 @@ TEST(SinhTransformScaled) {
 }
 
 void test_sinh_sigmoidal(double lambda, size_t nt, size_t nr, double x0, double y0) {
-    std::cout << "PT: (" << x0 << ", " << y0 << ")" << std::endl;
     std::vector<double> bs;
     for (int i = 1; i <= 6; i++) {
         bs.push_back(std::pow(10, -i));
     }
 
+    size_t sinh_eval = 0;
+    size_t adapt_eval = 0;
     for (size_t b_idx = 0; b_idx < bs.size(); b_idx++) {
         double b = bs[b_idx];
         auto q = sinh_sigmoidal_transform(nt, nr, x0, y0, b, false);
 
         auto res = integrate<double,2>(q, [&] (Vec<double,2> x_hat) {
-                /* return 1.0; */
+                sinh_eval++;
                 double dx = x_hat[0] - x0;
                 double dy = x_hat[1] - y0;
-                double r2 = dx * dx + dy * dy;
-                // double S = std::asinh(std::sqrt(r2) / b);
-                // return 1.0 / std::pow(b * std::cosh(S), 2 * lambda);
-                return 1.0 / std::pow(r2 + b * b, lambda);
+                return 1.0 / std::pow(dx * dx + dy * dy + b * b, lambda);
             });
 
         double exact_error = 1e-7;
-        auto correct = adaptive_integrate<double>([=](double x) {
-                return adaptive_integrate<double>([=](double y) {
+        auto correct = adaptive_integrate<double>([&](double x) {
+                return adaptive_integrate<double>([&](double y) {
+                    adapt_eval++;
                     double dx = x - x0;
                     double dy = y - y0;
                     return std::pow(dx * dx + dy * dy + b * b, -lambda);
@@ -300,28 +299,18 @@ void test_sinh_sigmoidal(double lambda, size_t nt, size_t nr, double x0, double 
             }, 0.0, 1.0, exact_error);
 
         auto error = std::fabs(res - correct) / std::fabs(correct);
-        std::cout << correct << " " << res << std::endl;
-        std::cout << error << std::endl;
         CHECK_CLOSE(error, 0.0, 1e-5);
     }
+    std::cout << sinh_eval << " " << adapt_eval << std::endl;
 }
 
 TEST(SinhSigmoidal2D) {
-    size_t nt = 19;
-    size_t nr = 9;
-    test_sinh_sigmoidal(1.5, nt, nr, 0.0, 0.0);
-    nt = 19;
-    nr = 9;
-    test_sinh_sigmoidal(0.5, nt, nr, 0.2, 0.4);
-    // nt = 25;
-    // nr = 20;
-    // test_sinh_sigmoidal(1.5, nt, nr, 0.1, 0.1);
-    nt = 150;
-    nr = 10;
-    test_sinh_sigmoidal(0.5, nt, nr, 0.1, 0.89);
-    // nt = 25;
-    // nr = 20;
-    // test_sinh_sigmoidal(1.5, nt, nr, 0.4, 0.49);
+    TIC
+    test_sinh_sigmoidal(1.5, 25, 25, 0.0, 0.0);
+    test_sinh_sigmoidal(0.5, 19, 9, 0.2, 0.4);
+    test_sinh_sigmoidal(1.0, 30, 20, 0.1, 0.1);
+    test_sinh_sigmoidal(1.5, 70, 30, 0.4, 0.49);
+    TOC("A");
 }
 
 int main(int, char const *[])

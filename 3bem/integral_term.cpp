@@ -194,22 +194,21 @@ inline QuadRule<1> choose_sinh_quad<2>(double S, double l, Vec<double,1> singula
     }
 }
 
-// static size_t n_q = 0;
-// static size_t n_c = 0;
-static const auto G3d = tri_gauss(5);
+static size_t nsinh = 0;
+static const auto G3d = tri_gauss(15);
 template <>
 inline QuadRule<2> choose_sinh_quad<3>(double S, double l, Vec<double,2> singular_pt) {
     assert(l > 0);
     assert(S > 0);
-    if ((l / S) > 0.5) {
+    if ((l / S) > 0.1) {
         return G3d;
     }
     else {
-        size_t n = static_cast<size_t>(10.0 * (1 + std::log(S / l)));
-        auto q = sinh_sigmoidal_transform(2 * n, n, singular_pt[0], singular_pt[1], l, true);
-        // n_q += q.size();
-        // n_c++;
-        // std::cout << n_q << " " << n_c << std::endl;
+        size_t n = static_cast<size_t>(6.0 * (3 + std::log(S / l)));
+        auto q = sinh_sigmoidal_transform(1.5 * n, n, 
+            singular_pt[0], singular_pt[1], l, true);
+        nsinh++;
+        std::cout << nsinh << std::endl;
         return q;
     }
 }

@@ -34,7 +34,7 @@ mesh_to_point_vector(const BoundaryIntegral<dim,KT>& p,
 {
     std::vector<typename KT::OperatorType> result(p.src_mesh.n_dofs());
     FarNearLogic<dim> far_near_logic{qs.far_threshold, 1.0};
-    AdaptiveIntegrationMethod<dim,KT::n_rows,KT::n_cols> mthd(qs);
+    SinhIntegrationMethod<dim,KT::n_rows,KT::n_cols> mthd(qs);
     for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
         IntegralTerm<dim,KT::n_rows,KT::n_cols> term{p.K, obs, facet_info[i]};
         auto nearest_pt = far_near_logic.decide(obs.loc, facet_info[i]);
@@ -114,7 +114,7 @@ BlockDenseOperator mesh_to_mesh_operator(const BoundaryIntegral<dim,KT>& p,
         KT::n_cols, KT::n_rows, n_obs_dofs, n_src_dofs
     );
     auto src_facet_info = get_facet_info(p.src_mesh);
-#pragma omp parallel for
+// #pragma omp parallel for
     for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
 
