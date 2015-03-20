@@ -31,6 +31,7 @@
 #include <limits>
 #include <iostream>
 #include "vec_ops.h"
+#include "numerics.h"
 
 namespace tbem {
 using std::fabs;
@@ -171,6 +172,64 @@ T adaptive_integrate(const F& f, double a,
     return adaptlobstp(f, a, b, fa, fb, err_is);
 }
 
+template <typename T, typename F>
+T sinh_sigmoidal_adaptive_integral2d(double x0, double b,
+    double tol, const F& f)
+{
+    auto mu_0 = 0.5 * (std::asinh((1.0 + x0) / b) + std::asinh((1.0 - x0) / b));
+    auto eta_0 = 0.5 * (std::asinh((1.0 + x0) / b) - std::asinh((1.0 - x0) / b));
+    return adaptive_integrate<T>([&](double s) {
+            double x_hat = x0 + b * std::sinh(mu_0 * s - eta_0); 
+            double jacobian = b * mu_0 * std::cosh(mu_0 * s - eta_0);
+            return jacobian * f(x_hat);
+        }, -1.0, 1.0, tol);
+}
+
+template <typename T, typename F>
+T sinh_sigmoidal_single_tri(double b, double tol,
+    const Vec<Vec<double,3>,3>& tri, const F& f) 
+{
+    double tri_area_jacobian = 2.0 * tri_area(tri);
+    if (tri_area_jacobian == 0.0) {
+        return zeros<T>::make();
+    }
+    constexpr double alpha = M_PI / 4.0;
+    return tri_area_jacobian * adaptive_integrate<T>([&](double sigma) {
+            double theta = (M_PI / 2.0) * sigma;
+            double theta_jacobian = (M_PI / 2.0);
+            double R_theta = std::sin(alpha) / std::sin(theta + alpha);
+            double mu_1 = 0.5 * std::asinh(R_theta / b);
+            return theta_jacobian * adaptive_integrate<T>([=](double s) {
+                double r = b * std::sinh(mu_1 * (s + 1));
+                double x = r * std::cos(theta);
+                double y = r * std::sin(theta);
+                auto pt = ref_to_real({x, y}, tri);
+
+                double polar_to_cartes_jacobian = r;
+                double sinh_jacobian = b * mu_1 * std::cosh(mu_1 * (s + 1));
+                return polar_to_cartes_jacobian * sinh_jacobian * f({pt[0], pt[1]});
+            }, -1.0, 1.0, tol);
+        }, 0.0, 1.0, tol);
+}
+
+template <typename T, typename F>
+T sinh_sigmoidal_adaptive_integral3d(double x0, double y0, double b,
+    double tol, const F& f)
+{
+    Vec<double,3> pt0{0, 0, 0};
+    Vec<double,3> pt1{1, 0, 0};
+    Vec<double,3> pt2{0, 1, 0};
+    Vec<double,3> singular_pt{x0, y0, 0};
+
+    // upper left tri
+    auto eval1 = sinh_sigmoidal_single_tri<T>(b, tol, {singular_pt, pt2, pt0}, f); 
+    // upper right tri                                                       
+    auto eval2 = sinh_sigmoidal_single_tri<T>(b, tol, {singular_pt, pt1, pt2}, f); 
+    // lower                                                                 
+    auto eval3 = sinh_sigmoidal_single_tri<T>(b, tol, {singular_pt, pt0, pt1}, f); 
+
+    return eval1 + eval2 + eval3;
+}
 
 } //END NAMESPACE tbem
 #endif
