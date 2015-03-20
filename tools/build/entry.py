@@ -2,6 +2,7 @@ from tools.build.config import get_config
 from tools.build.build import run_build
 from tools.build.testing import run_unit_tests, run_acceptance_tests
 from tools.build.fabricate import main
+from codegen.main import generate
 import sys
 
 def unit_tests():
@@ -18,7 +19,11 @@ def lcov():
     after()
     run('genhtml', coverage_file, '--output-directory', lcov_outdir)
 
+def codegen():
+    generate()
+
 def build():
+    codegen()
     run_build(get_config(command_params))
 
 def clean():

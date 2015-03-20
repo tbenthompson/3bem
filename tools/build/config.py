@@ -7,6 +7,8 @@ def get_config(command_params):
     build_type = 'debug'
     if '-r' in command_params:
         build_type = 'release'
+    if '-p' in command_params:
+        build_type = 'profile'
     printer = lambda x: None
     if '-v' in command_params:
         printer = print
@@ -33,6 +35,7 @@ def get_config(command_params):
     flag_types = dict()
     flag_types['debug'] = ['-g', '-Og']
     flag_types['release'] = ['-Ofast','-ffast-math','-funroll-loops']
+    flag_types['profile'] = flag_types['release'] + ['-g']
     flag_types['coverage'] = ['--coverage'] + flag_types['debug']
 
     cpp_flags = base_cpp_flags + flag_types[build_type]

@@ -69,12 +69,12 @@ QuadRule<1> gauss(size_t n) {
     return retval;
 }
 
-QuadRule<1> sinh_transform(size_t n, double a, double b, bool iterated_sinh) 
+QuadRule<1> sinh_transform(const QuadRule<1>& gauss_rule, double a,
+    double b, bool iterated_sinh) 
 {
     auto mu_0 = 0.5 * (std::asinh((1.0 + a) / b) + std::asinh((1.0 - a) / b));
     auto eta_0 = 0.5 * (std::asinh((1.0 + a) / b) - std::asinh((1.0 - a) / b));
-    auto gauss_q = gauss(n);
-    auto start_q = gauss_q;
+    auto start_q = gauss_rule;
     if (iterated_sinh) {
         start_q.clear();
         double a_1 = eta_0 / mu_0;
@@ -83,9 +83,9 @@ QuadRule<1> sinh_transform(size_t n, double a, double b, bool iterated_sinh)
             (std::asinh((1.0 + a_1) / b_1) + std::asinh((1.0 - a_1) / b_1));
         double eta_1 = 0.5 * 
             (std::asinh((1.0 + a_1) / b_1) - std::asinh((1.0 - a_1) / b_1));
-        for (size_t i = 0; i < gauss_q.size(); i++) {
-            double u = gauss_q[i].x_hat[0];
-            double u_w = gauss_q[i].w;
+        for (size_t i = 0; i < gauss_rule.size(); i++) {
+            double u = gauss_rule[i].x_hat[0];
+            double u_w = gauss_rule[i].w;
             double s = a_1 + b_1 * std::sinh(mu_1 * u - eta_1);
             double jacobian = b_1 * mu_1 * std::cosh(mu_1 * u - eta_1);
             double s_w = u_w * jacobian;
@@ -101,6 +101,14 @@ QuadRule<1> sinh_transform(size_t n, double a, double b, bool iterated_sinh)
         q_pts.push_back({x, w});
     }
     return q_pts;
+}
+
+std::map<size_t,QuadRule<1>> gauss_set(size_t min, size_t max) {
+    std::map<size_t,QuadRule<1>> out;
+    for(size_t i = min; i < max; i++) {
+        out.insert(std::make_pair(i, gauss(i)));
+    }
+    return out;
 }
 
 /* Produce a 2D tensor product quadrature rule from the product of two
@@ -156,14 +164,13 @@ QuadRule<2> tri_gauss(int n_pts) {
     return square_to_tri(tensor_gauss(n_pts));
 }
 
-QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double b,
-    bool iterated_sinh) 
+QuadRule<2> sinh_sigmoidal_transform(const QuadRule<1>& gauss_theta,
+    const QuadRule<1>& gauss_r, double b, bool iterated_sinh) 
 {
-    auto g1d_theta = gauss(n_theta); 
-    auto sinh1d = sinh_transform(n_r, -1.0, b, iterated_sinh); 
+    auto sinh1d = sinh_transform(gauss_r, -1.0, b, iterated_sinh); 
     QuadRule<2> out;
-    for (size_t i = 0; i < g1d_theta.size(); i++) {
-        double sigma = (g1d_theta[i].x_hat[0] + 1.0) / 2.0;
+    for (size_t i = 0; i < gauss_theta.size(); i++) {
+        double sigma = (gauss_theta[i].x_hat[0] + 1.0) / 2.0;
         double sig_transform = std::pow(sigma, 2) /
             (std::pow(sigma, 2) + std::pow(1 - sigma, 2));
         double theta = sig_transform * (M_PI / 2.0);
@@ -176,7 +183,7 @@ QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double b,
             double s = sinh1d[j].x_hat[0];
             double r = R_theta * (s + 1.0) / 2.0; 
             double r_jacobian = r * (R_theta / 2.0);
-            double w = theta_jacobian * r_jacobian * sinh1d[j].w * g1d_theta[i].w;
+            double w = theta_jacobian * r_jacobian * sinh1d[j].w * gauss_theta[i].w;
             double x = r * std::cos(theta);
             double y = r * std::sin(theta);
             out.push_back({{x, y}, w});
@@ -197,7 +204,8 @@ QuadRule<2> transform_to_tri(const QuadRule<2>& q, Vec<Vec<double,3>,3> tri) {
     return out;
 }
 
-QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double x0,
+QuadRule<2> sinh_sigmoidal_transform(const QuadRule<1>& gauss_theta,
+    const QuadRule<1>& gauss_r, double x0,
     double y0, double b, bool iterated_sinh) 
 {
     Vec<double,3> pt0{0, 0, 0};
@@ -205,7 +213,8 @@ QuadRule<2> sinh_sigmoidal_transform(size_t n_theta, size_t n_r, double x0,
     Vec<double,3> pt2{0, 1, 0};
     Vec<double,3> singular_pt{x0, y0, 0};
 
-    auto unit_facet_rule = sinh_sigmoidal_transform(n_theta, n_r, b, iterated_sinh);
+    auto unit_facet_rule =
+        sinh_sigmoidal_transform(gauss_theta, gauss_r, b, iterated_sinh);
     QuadRule<2> out;
     
     // upper left tri

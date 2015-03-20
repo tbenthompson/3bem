@@ -1,4 +1,5 @@
 #include "laplace.h"
+#include "cg_integration.h"
 
 Vec3<double> center = {5, 0, 0};
 double r = 3.0;
@@ -23,5 +24,5 @@ int main() {
     for (int i = 0; i < n_test_pts; i++) {
         test_pts[i] = random_pt_sphere(center, random_val() * obs_radius);
     }
-    dirichlet_laplace_test<3>(sphere, test_pts, harmonic_u, InvDudn());
+    dirichlet_laplace_test(sphere, test_pts, harmonic_u, InvDudn());
 }

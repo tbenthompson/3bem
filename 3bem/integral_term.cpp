@@ -200,12 +200,12 @@ inline QuadRule<2> choose_sinh_quad<3>(double S, double l, Vec<double,2> singula
     assert(l > 0);
     assert(S > 0);
     if ((l / S) > 0.5) {
-        return G3d;
+        return G3d; 
     }
     else {
         size_t n = static_cast<size_t>(8.0 * (1 + std::log(S / l)));
-        auto q = sinh_sigmoidal_transform(1.5 * n, n, 
-            singular_pt[0], singular_pt[1], l, true);
+        auto q = sinh_sigmoidal_transform(2.0 * n, n, 
+            singular_pt[0], singular_pt[1], l, false);
         return q;
     }
 }

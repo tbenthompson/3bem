@@ -139,4 +139,8 @@ acceptance_test_info['slow_fmm_tests'] = dict()
 acceptance_test_info['slow_fmm_tests']['src'] = 'slow_fmm_tests'
 acceptance_test_info['slow_fmm_tests']['lib_srcs'] = []
 acceptance_test_info['slow_fmm_tests']['link_lib'] = True
+acceptance_test_info['benchmark_sinh'] = dict()
+acceptance_test_info['benchmark_sinh']['src'] = 'benchmark_sinh'
+acceptance_test_info['benchmark_sinh']['lib_srcs'] = ['3bem/quadrature']
+acceptance_test_info['benchmark_sinh']['link_lib'] = False
 
