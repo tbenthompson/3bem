@@ -38,6 +38,15 @@ inline FacetInfo<2> FacetInfo<2>::build(const Facet<2>& facet) {
     return FacetInfo<2>{facet, area_scale, length, jacobian, normal};
 }
 
+template <size_t dim>
+std::vector<FacetInfo<dim>> get_facet_info(const Mesh<dim>& m) {
+    std::vector<FacetInfo<dim>> out;
+    for (const auto& f: m.facets) {
+        out.push_back(FacetInfo<dim>::build(f));
+    }
+    return out;
+}
+
 } //end namespace tbem
 
 #endif

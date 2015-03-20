@@ -94,10 +94,10 @@ void test_one_segment2d_integration(const KT& k,
             Vec2<double> obs_loc = {obs_x, obs_y};
             Vec2<double> obs_normal = {0.0, 1.0};
             ObsPt<2> obs{0.001, obs_loc, obs_normal, obs_normal};
-            IntegralTerm<2,KT::n_rows,KT::n_cols> term{k, obs, facet_info};
+            IntegralTerm<2,KT::n_rows,KT::n_cols> term{obs, facet_info};
             auto result = integrate<Vec1<Vec1<double>>,1>(qs.obs_quad, 
                 [&](const Vec<double,1> x_hat) {
-                    auto eval = term.eval_point_influence(x_hat);
+                    auto eval = term.eval_point_influence(k, x_hat);
                     return (eval[0] + eval[1]);
                 });
                     

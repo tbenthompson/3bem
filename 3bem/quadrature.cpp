@@ -227,7 +227,7 @@ std::vector<double> get_singular_steps(int n_steps) {
     static constexpr double initial_dist = 1.0;
     std::vector<double> dist(n_steps);
     for (int nf = 0; nf < n_steps; nf++) {
-        dist[nf] = initial_dist / (std::pow(2, nf));
+        dist[nf] = initial_dist / (std::pow(2.0, nf));
     }
     return dist;
 }

@@ -16,7 +16,6 @@ namespace tbem {
  */
 template <size_t dim, size_t R, size_t C>
 struct IntegralTerm {
-    const Kernel<dim,R,C>& k;
     const ObsPt<dim>& obs;
     const FacetInfo<dim>& src_face;
 
@@ -24,12 +23,11 @@ struct IntegralTerm {
      * fucntion evaluates the influence of a single source quadrature point
      * on the observation point.
      */
-    Vec<Vec<Vec<double,C>,R>,dim>
-    eval_point_influence(const Vec<double,dim-1>& x_hat,
-        const Vec<double,dim>& moved_obs_loc) const; 
+    Vec<Vec<Vec<double,C>,R>,dim> eval_point_influence(const Kernel<dim,R,C>& k,
+        const Vec<double,dim-1>& x_hat, const Vec<double,dim>& moved_obs_loc) const; 
 
-    Vec<Vec<Vec<double,C>,R>,dim>
-    eval_point_influence(const Vec<double,dim-1>& x_hat) const;
+    Vec<Vec<Vec<double,C>,R>,dim> eval_point_influence(const Kernel<dim,R,C>& k,
+        const Vec<double,dim-1>& x_hat) const; 
 };
 
 enum class FarNearType {
@@ -75,9 +73,10 @@ struct IntegrationMethodI {
 template <size_t dim,size_t R, size_t C>
 struct AdaptiveIntegrationMethod: public IntegrationMethodI<dim,R,C> {
     const QuadStrategy<dim> qs;
+    const Kernel<dim,R,C>& K;
 
-    AdaptiveIntegrationMethod(const QuadStrategy<dim>& qs):
-        qs(qs)
+    AdaptiveIntegrationMethod(const QuadStrategy<dim>& qs, const Kernel<dim,R,C>& K):
+        qs(qs), K(K)
     {}
 
     virtual Vec<Vec<Vec<double,C>,R>,dim>
@@ -94,9 +93,10 @@ template <size_t dim,size_t R, size_t C>
 struct SinhIntegrationMethod: public IntegrationMethodI<dim,R,C> {
     const QuadStrategy<dim> qs;
     const AdaptiveIntegrationMethod<dim,R,C> adaptive;
+    const Kernel<dim,R,C>& K;
 
-    SinhIntegrationMethod(const QuadStrategy<dim>& qs):
-        qs(qs), adaptive(qs)
+    SinhIntegrationMethod(const QuadStrategy<dim>& qs, const Kernel<dim,R,C>& K):
+        qs(qs), adaptive(qs, K), K(K)
     {}
 
     virtual Vec<Vec<Vec<double,C>,R>,dim>

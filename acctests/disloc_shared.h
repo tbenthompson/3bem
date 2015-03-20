@@ -37,7 +37,7 @@ BlockVectorX make_rhs(const Mesh<dim>& surface, const Mesh<dim>& fault,
 }
 
 template <size_t dim>
-MatrixFreeFarfieldOperator<dim,ElasticHypersingular<dim>>
+MatrixFreeFarfieldOperator<dim,dim,dim>
 make_lhs(const ElasticHypersingular<dim>& hyp, const Mesh<dim>& mesh,
     const QuadStrategy<dim>& qs )
 {
@@ -51,7 +51,7 @@ make_lhs(const ElasticHypersingular<dim>& hyp, const Mesh<dim>& mesh,
 
 template <size_t dim>
 struct DislocationProblem {
-    MatrixFreeFarfieldOperator<dim,ElasticHypersingular<dim>> lhs;
+    MatrixFreeFarfieldOperator<dim,dim,dim> lhs;
     ConstraintMatrix constraint_matrix;
     ElasticHypersingular<dim> hyp;
     Mesh<dim> surface;
