@@ -1,5 +1,4 @@
 #include "laplace.h"
-#include "cg_integration.h"
 
 Vec3<double> center = {5, 0, 0};
 double r = 3.0;
@@ -20,9 +19,10 @@ int main() {
     int refine_level = 3;
     int n_test_pts = 100;
     auto sphere = sphere_mesh(center, r, refine_level);
+    auto soln = dirichlet_laplace_test(sphere, harmonic_u, InvDudn());
     std::vector<Vec3<double>> test_pts(n_test_pts);
     for (int i = 0; i < n_test_pts; i++) {
         test_pts[i] = random_pt_sphere(center, random_val() * obs_radius);
     }
-    dirichlet_laplace_test(sphere, test_pts, harmonic_u, InvDudn());
+    check_laplace_interior(soln, test_pts, harmonic_u);
 }

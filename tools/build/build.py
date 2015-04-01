@@ -21,6 +21,7 @@ from __future__ import print_function
 
 from tools.build.util import oname
 import os
+import shutil
 from tools.build.fabricate import run, after
 
 def determine_targets(c):
@@ -59,6 +60,13 @@ def run_build(c):
             c['printer']('\nLinking target: ' + t['binary_name'])
             link(c, t)
         after()
+
+    copy_python_wrapper_to_root(c)
+
+def copy_python_wrapper_to_root(c):
+    pylib_file = c['targets']['python_wrapper']['binary_name']
+    pylib_path = oname(c['build_dir'], pylib_file)
+    shutil.copy(pylib_path, pylib_file)
 
 def setup_tree(c):
     def setup_dir(dirname):

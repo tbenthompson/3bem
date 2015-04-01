@@ -14,7 +14,7 @@ mesh_to_point_vector(const BoundaryIntegral<dim,R,C>& p,
 {
     std::vector<Vec<Vec<double,C>,R>> result(p.src_mesh.n_dofs());
     FarNearLogic<dim> far_near_logic{qs.far_threshold, 1.0};
-    SinhIntegrationMethod<dim,R,C> mthd(qs, p.K);
+    AdaptiveIntegrationMethod<dim,R,C> mthd(qs, p.K);
     for (size_t i = 0; i < p.src_mesh.facets.size(); i++) {
         IntegralTerm<dim,R,C> term{obs, facet_info[i]};
         auto nearest_pt = far_near_logic.decide(obs.loc, facet_info[i]);

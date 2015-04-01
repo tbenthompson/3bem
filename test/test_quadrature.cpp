@@ -170,7 +170,7 @@ double test_sinh_transform(bool iterated, double scale_factor, double a, double 
 {
     double exact_error = 1e-15;
     auto n = 10;
-    auto q = sinh_transform(n, a, b, iterated);
+    auto q = sinh_transform(gauss(n), a, b, iterated);
     decltype(q) q_scaled;
     for (const auto& pt: q) {
         q_scaled.push_back({pt.x_hat / scale_factor, pt.w / scale_factor});
@@ -279,7 +279,7 @@ void test_sinh_sigmoidal(double lambda, size_t nt, size_t nr, double x0, double 
     size_t adapt_eval = 0;
     for (size_t b_idx = 0; b_idx < bs.size(); b_idx++) {
         double b = bs[b_idx];
-        auto q = sinh_sigmoidal_transform(nt, nr, x0, y0, b, false);
+        auto q = sinh_sigmoidal_transform(gauss(nt), gauss(nr), x0, y0, b, false);
 
         auto res = integrate<double,2>(q, [&] (Vec<double,2> x_hat) {
                 sinh_eval++;

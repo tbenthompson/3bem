@@ -190,7 +190,7 @@ inline QuadRule<1> choose_sinh_quad<2>(double S, double l, Vec<double,1> singula
     }
     else {
         size_t n = static_cast<size_t>(10.0 * (1 + std::log(S / l)));
-        return sinh_transform(n, singular_pt[0], l, false);
+        return sinh_transform(gauss(n), singular_pt[0], l, false);
     }
 }
 
@@ -204,7 +204,7 @@ inline QuadRule<2> choose_sinh_quad<3>(double S, double l, Vec<double,2> singula
     }
     else {
         size_t n = static_cast<size_t>(8.0 * (1 + std::log(S / l)));
-        auto q = sinh_sigmoidal_transform(2.0 * n, n, 
+        auto q = sinh_sigmoidal_transform(gauss(2.0 * n), gauss(n), 
             singular_pt[0], singular_pt[1], l, false);
         return q;
     }

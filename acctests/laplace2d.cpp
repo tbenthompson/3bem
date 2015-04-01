@@ -13,6 +13,9 @@ int main() {
     for (int i = 0; i < n_test_pts; i++) {
         test_pts[i] = random_pt_sphere(center, random_val() * obs_radius);
     }
-    dirichlet_laplace_test<2>(circle, test_pts, log_u, LogDudn{center});
-    dirichlet_laplace_test<2>(circle, test_pts, theta_u, ThetaDudn{center});
+
+    auto soln_log = dirichlet_laplace_test<2>(circle, log_u, LogDudn{center});
+    check_laplace_interior(soln_log, test_pts, log_u);
+    auto soln_theta = dirichlet_laplace_test<2>(circle, theta_u, ThetaDudn{center});
+    check_laplace_interior(soln_theta, test_pts, theta_u);
 }

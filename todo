@@ -1,4 +1,9 @@
 CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
+** hanging nodes!
+** crack-tip elements
+** characterize the galerkin BEM for hypersingular kernels
+** characterize the sinh-sigmoidal method
+
 -- Clear out all "inline"
 ---------------------------------------
 

@@ -16,11 +16,16 @@ Vec3<double> random_pt_sphere(Vec3<double> c, double r);
 
 Vec2<double> random_pt_sphere(Vec2<double> c, double r);
 
-template <size_t dim, typename Fnc, typename Deriv>
-void dirichlet_laplace_test(const Mesh<dim>& mesh,
-                      std::vector<Vec<double,dim>> test_interior_pts,
-                      const Fnc& fnc,
-                      const Deriv& deriv) {
+template <size_t dim>
+struct LaplaceSoln {
+    Mesh<dim> mesh;
+    VectorX u;
+    VectorX dudn;
+};
+
+template <size_t dim>
+QuadStrategy<dim> get_qs() 
+{
     double far_threshold = 3.0;
     int near_steps = 8;
     int src_quad_pts = 2;
@@ -28,7 +33,14 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
     double tol = 1e-4;
     QuadStrategy<dim> qs(obs_quad_pts, src_quad_pts,
                          near_steps, far_threshold, tol);
+    return qs;
+}
 
+template <size_t dim, typename Fnc, typename Deriv>
+LaplaceSoln<dim> 
+dirichlet_laplace_test(const Mesh<dim>& mesh, const Fnc& fnc, const Deriv& deriv) 
+{
+    auto qs = get_qs<dim>();
     auto continuity = mesh_continuity(mesh.begin());
     auto constraints = convert_to_constraints(continuity);
     auto constraint_matrix = from_constraints(constraints);
@@ -85,24 +97,40 @@ void dirichlet_laplace_test(const Mesh<dim>& mesh,
 
     auto file = HDFOutputter("test_out/laplace" + std::to_string(dim) + "d.hdf5");
     out_surface<dim>(file, mesh, {dudn_solved});
-// 
-//     for(int i = 0; i < test_interior_pts.size(); i++) {
-//         auto obs_pt = test_interior_pts[i]; 
-//         ObsPt<dim> obs = {0.001, obs_pt, zeros<Vec<double,dim>>::make(),
-//                           zeros<Vec<double,dim>>::make()};
-//        
-//         auto double_layer_op = mesh_to_point_operator(p_double, qs, obs);
-//         double double_layer = double_layer_op.apply({u})[0][0];
-//         auto single_layer_op = mesh_to_point_operator(p_single, qs, obs);
-//         double single_layer = single_layer_op.apply({dudn})[0][0];
-//         double result = single_layer - double_layer;
-//         double exact = fnc(obs_pt);
-//         double error = std::fabs(exact - result);
-//         if (error > 1e-2) {
-//             std::cout << "Failed with point: " << obs_pt << std::endl;
-//             std::cout << result << " " << exact << std::endl;
-//         }
-//     }
+
+    return {mesh, u, dudn_solved};
+}
+
+template <size_t dim, typename Fnc>
+void check_laplace_interior(const LaplaceSoln<dim>& soln, 
+                            const std::vector<Vec<double,dim>>& pts,
+                            Fnc exact_fnc) 
+{
+    LaplaceSingle<dim> single_kernel;
+    LaplaceDouble<dim> double_kernel;
+
+    auto p_single = make_boundary_integral<dim>(soln.mesh, soln.mesh, single_kernel);
+    auto p_double = make_boundary_integral<dim>(soln.mesh, soln.mesh, double_kernel);
+
+    auto qs = get_qs<dim>();
+
+    for(int i = 0; i < pts.size(); i++) {
+        auto obs_pt = pts[i]; 
+        ObsPt<dim> obs = {0.001, obs_pt, zeros<Vec<double,dim>>::make(),
+                          zeros<Vec<double,dim>>::make()};
+       
+        auto double_layer_op = mesh_to_point_operator(p_double, qs, obs);
+        double double_layer = double_layer_op.apply({soln.u})[0][0];
+        auto single_layer_op = mesh_to_point_operator(p_single, qs, obs);
+        double single_layer = single_layer_op.apply({soln.dudn})[0][0];
+        double result = single_layer - double_layer;
+        double exact = exact_fnc(obs_pt);
+        double error = std::fabs(exact - result);
+        if (error > 1e-2) {
+            std::cout << "Failed with point: " << obs_pt << std::endl;
+            std::cout << result << " " << exact << std::endl;
+        }
+    }
 }
 
 #endif

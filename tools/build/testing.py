@@ -22,7 +22,7 @@ def testing_targets(test_info, loc, c):
         target['linked_sources'] = [s for s in test_data['lib_srcs']]
         target['linked_sources_flags'] = c['targets']['lib']['cpp_flags']
         target['binary_name'] = test_data['src']
-        target['priority'] = 1000
+        target['priority'] = 1
         ts[test_name] = target
     return ts
 
@@ -41,7 +41,7 @@ def run_unit_tests(c):
 
 def run_acceptance_tests(build_dir):
     run_test_set(build_dir, acceptance_test_info)
-    check_slow_tests()
+    check_acceptance_tests()
 
 def check_acceptance_tests():
     if os.path.exists('tools/__pycache__'):
@@ -82,6 +82,7 @@ def interpret_test_results(p, build_dir, test_file, logger):
         return interpret_success(stdout, stderr)
     if 'FAILURE' in stdout:
         return interpret_failure(stdout, stderr)
+    return 1, 0, ''
 
 def run_test_set(c, test_names, print_stdout = False):
     stderr = ''

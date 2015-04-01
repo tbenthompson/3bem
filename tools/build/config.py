@@ -22,7 +22,8 @@ def get_config(command_params):
         '../lib/unittest-cpp/UnitTest++',
         '../lib/autocheck/include',
         petsc_dir + '/' + petsc_arch + '/include',
-        petsc_dir + '/include'
+        petsc_dir + '/include',
+        '/usr/include/python2.7'
     ]
 
     base_cpp_flags = [
@@ -47,7 +48,9 @@ def get_config(command_params):
         '-larmadillo',
         '-Wl,-rpath=' + petsc_dir + '/' + petsc_arch + '/lib',
         '-L' + petsc_dir + '/' + petsc_arch + '/lib',
-        '-lpetsc'
+        '-lpetsc',
+        '-lpython2.7',
+        '-lboost_python'
         ]
 
     lib = dict()
@@ -58,12 +61,20 @@ def get_config(command_params):
     lib['binary_name'] = 'lib3bem.so'
     lib['priority'] = 0
 
-    build_dir = 'build_' + str(build_type)
+    python_wrapper = dict()
+    python_wrapper['cpp_flags'] = lib['cpp_flags']
+    python_wrapper['link_flags'] = lib['link_flags']
+    python_wrapper['sources'] = lib['sources'] + files_in_dir('python_wrapper', 'cpp')
+    python_wrapper['linked_sources'] = []
+    python_wrapper['binary_name'] = 'lib3bemPy.so'
+    python_wrapper['priority'] = 2
+
+    build_dir = os.path.join('build', str(build_type))
     lib_dep_flags = ['-Wl,-rpath=./' + build_dir, '-L./' + build_dir, '-l3bem']
 
     c = dict()
     c['build_dir'] = build_dir
-    c['subdirs'] = ['3bem', 'test', 'acctests']
+    c['subdirs'] = ['3bem', 'test', 'acctests', 'python_wrapper']
     c['compiler'] = 'mpic++'
     c['command_params'] = command_params
     c['printer'] = printer
@@ -72,6 +83,7 @@ def get_config(command_params):
     c['link_flags'] = link_flags
     c['targets'] = dict()
     c['targets']['lib'] = lib
+    c['targets']['python_wrapper'] = python_wrapper
     c['targets'].update(unit_testing_targets(c))
     c['targets'].update(acceptance_testing_targets(c))
     return c

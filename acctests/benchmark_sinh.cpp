@@ -17,9 +17,14 @@ double single_tri(const std::function<double(Vec<double,2>)>& f,
     //THIS SECTION: 32ms
     for (size_t j = 0; j < gauss_r.size(); j++) {
         double s = gauss_r[j].x_hat[0];
-        double r = b * std::sinh(mu_0 * (s + 1));
+        double arg = mu_0 * (s + 1);
+        double expneg = std::exp(-arg);
+        double exppos = 1.0 / expneg;
+        double sinh_val = 0.5 * (exppos - expneg);
+        double cosh_val = 0.5 * (exppos + expneg);
+        double r = b * sinh_val;
         r_unscaleds[j] = r;
-        r_jacobians[j] = r * b * mu_0 * std::cosh(mu_0 * (s + 1)) * gauss_r[j].w;
+        r_jacobians[j] = r * b * mu_0 * cosh_val * gauss_r[j].w;
     }
 
     //THIS SECTION: 120ms
@@ -33,7 +38,7 @@ double single_tri(const std::function<double(Vec<double,2>)>& f,
         double theta_jacobian = (M_PI / 2.0) * sigma * (1 - sigma) /
             std::pow(std::pow(sigma, 2) + std::pow(1 - sigma, 2), 2);
         double cos_theta = std::cos(theta);
-        double sin_theta = std::sin(theta);
+        double sin_theta = std::sqrt(1 - cos_theta * cos_theta);
 
         double R_theta = sinquarterpi / std::sin(theta + quarterpi);
         double outer_jacobian = R_theta * tri_jacobian * theta_jacobian * gauss_theta[i].w;
@@ -53,8 +58,6 @@ double single_tri(const std::function<double(Vec<double,2>)>& f,
     return out;
 };
 
-RuleSet sigmoidal_rules(
-
 double sinh_sigmoidal_integrate(const std::function<double(Vec<double,2>)>& f,
     const QuadRule<1>& gauss_theta, const QuadRule<1>& gauss_r, double x0,
     double y0, double b) 
@@ -72,11 +75,12 @@ double sinh_sigmoidal_integrate(const std::function<double(Vec<double,2>)>& f,
 }
 
 int main() {
-    size_t N = 10000;
+    size_t N = 180000;
 
     auto rules = gauss_set(10, 40);
     TIC
     double val = 0.0;
+#pragma omp parallel for
     for(size_t i = 0; i < N; i++) {
         size_t n_q = i % 30 + 10;
         // auto q = sinh_sigmoidal_transform(rules.at(n_q), rules.at(n_q),
