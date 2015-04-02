@@ -1,6 +1,7 @@
 #ifndef __ddddddddddddEQwQWEA_LAPLACE_KERNELS_H
 #define __ddddddddddddEQwQWEA_LAPLACE_KERNELS_H
 
+#include <exception>
 #include "vec_ops.h"
 #include "kernel.h"
 
@@ -29,6 +30,15 @@ struct LaplaceDouble<3>: Kernel<3,1,1>
     Vec1<Vec1<double>> operator()(double r2, const Vec<double,3>& delta,
                       const Vec<double,3>& nsrc, const Vec<double,3>& nobs) const {
         return {{{dot_product(nsrc, delta) / (4 * M_PI * r2 * std::sqrt(r2))}}};
+    }
+};
+
+template <>
+struct LaplaceHypersingular<3>: Kernel<3,1,1>
+{
+    Vec1<Vec1<double>> operator()(double r2, const Vec<double,3>& delta,
+                      const Vec<double,3>& nsrc, const Vec<double,3>& nobs) const {
+        throw std::exception();
     }
 };
 

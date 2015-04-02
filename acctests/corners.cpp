@@ -1,6 +1,5 @@
 #include "3bem.h"
 #include "laplace_kernels.h"
-#include "laplace_solns.h"
 
 using namespace tbem;
 
@@ -16,6 +15,22 @@ ConstraintEQ bc_constraint(const Mesh<2>& mesh, const F& fnc,
         fnc(*dof)
     };
 }
+
+double theta_u(Vec2<double> x) {
+    return std::atan2(x[1], x[0]);
+}
+    
+struct ThetaDudn {
+    const Vec2<double> center;
+    double operator()(Vec2<double> loc) const {
+        auto n = normalized(center - loc);
+        double x = loc[0];
+        double y = loc[1];
+        double dy = 1.0 / (x * (1 + (y * y / (x * x))));
+        double dx = (-y / x) * dy;
+        return dot_product(n, Vec2<double>{dx, dy});
+    }
+};
 
 int main() {
     // Constraints on the end points!

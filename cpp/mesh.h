@@ -15,6 +15,7 @@ template <size_t dim>
 struct Mesh {
     const std::vector<Facet<dim>> facets;
 
+    const Vec<double,dim>& get_vertex(size_t facet_idx, size_t vertex_idx) const;
     size_t n_facets() const;
     size_t n_dofs() const;
 

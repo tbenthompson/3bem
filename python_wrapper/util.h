@@ -31,6 +31,10 @@ void export_util() {
     VectorFromIterable().from_python<std::vector<double>>();
     class_<std::vector<double>>("VectorOfDoubles")
         .def(vector_indexing_suite<std::vector<double>>());
+    class_<std::vector<Vec<double,2>>>("VectorOf2Doubles")
+        .def(vector_indexing_suite<std::vector<Vec<double,2>>>());
+    class_<std::vector<Vec<double,3>>>("VectorOf3Doubles")
+        .def(vector_indexing_suite<std::vector<Vec<double,3>>>());
 
     def("line_mesh", line_mesh);
     def("circle_mesh", circle_mesh);

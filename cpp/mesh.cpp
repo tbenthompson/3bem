@@ -5,6 +5,11 @@
 
 namespace tbem {
 
+template <size_t dim>
+const Vec<double,dim>& Mesh<dim>::get_vertex(size_t facet_idx, size_t vertex_idx) const
+{
+    return facets[facet_idx][vertex_idx];
+}
 
 template <size_t dim>
 size_t Mesh<dim>::n_facets() const {

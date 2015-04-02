@@ -116,16 +116,6 @@ def get_acceptance_test_info(c):
     acceptance_test_info['corners']['src'] = 'corners'
     acceptance_test_info['corners']['lib_srcs'] = []
     acceptance_test_info['corners']['link_lib'] = True
-    acceptance_test_info['laplace2d'] = dict()
-    acceptance_test_info['laplace2d']['src'] = 'laplace2d'
-    acceptance_test_info['laplace2d']['other_srces'] = ['acctests/laplace']
-    acceptance_test_info['laplace2d']['lib_srcs'] = []
-    acceptance_test_info['laplace2d']['link_lib'] = True
-    acceptance_test_info['laplace3d'] = dict()
-    acceptance_test_info['laplace3d']['src'] = 'laplace3d'
-    acceptance_test_info['laplace3d']['other_srces'] = ['acctests/laplace']
-    acceptance_test_info['laplace3d']['lib_srcs'] = []
-    acceptance_test_info['laplace3d']['link_lib'] = True
     acceptance_test_info['planestrain_fault'] = dict()
     acceptance_test_info['planestrain_fault']['src'] = 'planestrain_fault'
     acceptance_test_info['planestrain_fault']['lib_srcs'] = []

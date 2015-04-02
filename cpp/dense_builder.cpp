@@ -62,6 +62,7 @@ BlockDenseOperator mesh_to_points_operator(const BoundaryIntegral<dim,R,C>& p,
 {
     size_t n_out_dofs = dim * p.src_mesh.facets.size();
     auto block_op = build_operator_shape(R, C, obs_pts.size(), n_out_dofs);
+#pragma omp parallel for
     for (size_t pt_idx = 0; pt_idx < obs_pts.size(); pt_idx++) {
         auto pt = obs_pts[pt_idx];
         auto result = mesh_to_point_vector(p, qs, pt, get_facet_info(p.src_mesh));

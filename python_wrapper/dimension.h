@@ -33,6 +33,8 @@ void export_dimension() {
     using namespace tbem;
     class_<VertexIterator<dim>>("VertexIterator", no_init);
     class_<Mesh<dim>>("Mesh")
+        .def("get_vertex", &Mesh<dim>::get_vertex,
+               return_value_policy<reference_existing_object>())
         .def("refine_repeatedly", &Mesh<dim>::refine_repeatedly)
         .def("begin", &Mesh<dim>::begin)
         .def("n_facets", &Mesh<dim>::n_facets)
@@ -41,8 +43,10 @@ void export_dimension() {
 
     class_<QuadStrategy<dim>>("QuadStrategy", init<int,int,int,double,double>());
 
-    class_<OverlapMap<dim>>("OverlapMap"); 
+    class_<OverlapMap<dim>>("OverlapMap")
+        .def("size", &OverlapMap<dim>::size);
     def("mesh_continuity", mesh_continuity<dim>);
+    def("cut_at_intersection", cut_at_intersection<dim>);
 
     def("convert_to_constraints", convert_to_constraints<dim>);
 
@@ -52,6 +56,7 @@ void export_dimension() {
     class_<IdentityScalar<dim>, bases<Kernel<dim,1,1>>>("IdentityScalar");
     class_<LaplaceSingle<dim>, bases<Kernel<dim,1,1>>>("LaplaceSingle");
     class_<LaplaceDouble<dim>, bases<Kernel<dim,1,1>>>("LaplaceDouble");
+    class_<LaplaceHypersingular<dim>, bases<Kernel<dim,1,1>>>("LaplaceHypersingular");
 
     class_<BoundaryIntegral<dim,1,1>>("BoundaryIntegralScalar", no_init);
     def("make_boundary_integral", make_boundary_integral<dim,1,1>);

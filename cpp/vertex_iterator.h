@@ -66,7 +66,7 @@ struct VertexIterator {
     }
 
     const Vec<double,dim>& get_vertex() const {
-        return mesh.facets[facet_idx][vertex_idx];
+        return mesh.get_vertex(facet_idx, vertex_idx);
     }
     
     friend bool operator==(const iterator& a, const iterator& b) {

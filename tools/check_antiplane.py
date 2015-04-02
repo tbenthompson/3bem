@@ -40,6 +40,9 @@ def test_halfspace():
     x = vertices[indices, 0]
     uz = data[indices, 0]
     exact_uz = s * np.arctan(d / x) / np.pi
+    plt.plot(x, uz)
+    plt.plot(x, exact_uz)
+    plt.show()
     np.testing.assert_almost_equal(uz, exact_uz, 1)
 
 def test_halfspace_vol_disp():

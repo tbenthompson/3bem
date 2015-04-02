@@ -70,7 +70,7 @@ def solve(dim, mesh, linear_solver, obs_pts, u_fnc, dudn_fnc):
                     .apply_scalar(u)
     result = np.array(single_int.storage) - np.array(double_int.storage)
 
-    pts = np.array([[p.loc[0], p.loc[1], p.loc[2]] for p in obs_pts])
+    pts = np.array([[p.loc[d] for d in range(dim)] for p in obs_pts])
 
     exact = [u_fnc(p.loc) for p in obs_pts]
     max_interior_error = np.max(np.abs(exact - result))
