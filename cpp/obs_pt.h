@@ -24,6 +24,11 @@ struct ObsPt {
     const Vec<double,dim> loc;
     const Vec<double,dim> normal;
     const Vec<double,dim> richardson_dir;
+
+    ObsPt(double len_scale, const Vec<double,dim>& loc,
+          const Vec<double,dim>& normal, const Vec<double,dim>& richardson_dir):
+        len_scale(len_scale), loc(loc), normal(normal), richardson_dir(richardson_dir)
+    {}
 };
 
 

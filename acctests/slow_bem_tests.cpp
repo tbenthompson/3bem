@@ -25,7 +25,7 @@ TEST(ConstantLaplaceBoundary) {
             LaplaceDouble<3> double_kernel;
             auto p = make_boundary_integral<3>(sphere, sphere, double_kernel);
             ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
-            auto op = mesh_to_point_operator(p, qs, obs);
+            auto op = mesh_to_points_operator(p, qs, {obs});
             auto result = op.apply({src_strength})[0];
             CHECK_CLOSE(result[0], -1.0, 1e-2);
         }
@@ -128,7 +128,7 @@ TEST(ConstantLaplace2D) {
         // Do it via eval_integral_equation for each vertex.
         for (std::size_t i = 0; i < obs_circle.n_facets(); i++) {
             ObsPt<2> pt = {0.390, obs_circle.facets[i][0], {0,0}, {0,0}}; 
-            auto op = mesh_to_point_operator(p, qs, pt);
+            auto op = mesh_to_points_operator(p, qs, {pt});
             double result = op.apply({u})[0][0];
             CHECK_CLOSE(result, -7.0, 1e-4);
         }

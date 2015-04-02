@@ -26,7 +26,7 @@ struct EvalProb {
     double go(const Kernel<3,1,1>& k) {
         auto p = make_boundary_integral<3>(sphere, sphere, k);
         ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
-        auto op = mesh_to_point_operator(p, qs, obs);
+        auto op = mesh_to_points_operator(p, qs, {obs});
         return op.apply({src_strength})[0][0];
     }
 

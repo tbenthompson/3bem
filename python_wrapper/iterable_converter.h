@@ -4,8 +4,6 @@
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
 
-namespace tbem {
-
 struct ArrayFromIterable 
 {
     template <typename T, size_t dim>
@@ -90,7 +88,5 @@ struct VectorFromIterable
             iterator());                      // end
     }
 };
-
-} // end namespace tbem
 
 #endif

@@ -37,8 +37,8 @@ template <size_t dim> struct ObsPt;
 //TODO: Don't pass a BoundaryIntegral, because this function only needs the kernel
 //and the src_mesh.
 template <size_t dim, size_t R, size_t C>
-BlockDenseOperator mesh_to_point_operator(const BoundaryIntegral<dim,R,C>& p,
-    const QuadStrategy<dim>& qs, const ObsPt<dim>& obs);
+BlockDenseOperator mesh_to_points_operator(const BoundaryIntegral<dim,R,C>& p,
+    const QuadStrategy<dim>& qs, const std::vector<ObsPt<dim>>& obs);
 
 /* Given a kernel function and two meshes this function calculates the
  * Galerkin boundary element matrix representing the operator 

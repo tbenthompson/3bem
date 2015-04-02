@@ -47,7 +47,7 @@ void full_space() {
             }
             ObsPt<2> obs = {0.001, x, {0, 1}, richardson_dir};
 
-            auto op = mesh_to_point_operator(p_fullspace, qs, obs);
+            auto op = mesh_to_points_operator(p_fullspace, qs, {obs});
             double val = op.apply({slip})[0][0];
             double exact = std::atan(0.5 / x[0]) / M_PI;
             if (std::fabs(exact - val) > 1e-13 && x[0] != 0) {
@@ -136,8 +136,8 @@ void half_space() {
             auto p_disp_fault = make_boundary_integral<2>(surface2, fault, double_kernel);
             auto p_disp_surf = make_boundary_integral<2>(surface2, surface2, double_kernel);
 
-            auto eval_fault_op = mesh_to_point_operator(p_disp_fault, qs, obs[0]);
-            auto eval_surf_op = mesh_to_point_operator(p_disp_surf, qs, obs[0]);
+            auto eval_fault_op = mesh_to_points_operator(p_disp_fault, qs, {obs[0]});
+            auto eval_surf_op = mesh_to_points_operator(p_disp_surf, qs, {obs[0]});
 
             double eval_fault = eval_fault_op.apply({slip})[0][0];
             double eval_surf = eval_surf_op.apply({soln})[0][0];
@@ -152,8 +152,8 @@ void half_space() {
                 auto p_trac_surf = make_boundary_integral<2>(
                     surface2, surface2, hypersingular_kernel
                 );
-                auto trac_fault_op = mesh_to_point_operator(p_trac_fault, qs, obs[d]);
-                auto trac_surf_op = mesh_to_point_operator(p_trac_surf, qs, obs[d]);
+                auto trac_fault_op = mesh_to_points_operator(p_trac_fault, qs, {obs[d]});
+                auto trac_surf_op = mesh_to_points_operator(p_trac_surf, qs, {obs[d]});
 
                 eval_fault = trac_fault_op.apply({slip})[0][0];
                 eval_surf = trac_surf_op.apply({soln})[0][0];

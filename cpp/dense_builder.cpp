@@ -57,29 +57,34 @@ void reshape_to_add(BlockDenseOperator& block_op, size_t idx,
 //TODO: Don't pass a BoundaryIntegral, because this function only needs the kernel
 //and the src_mesh.
 template <size_t dim, size_t R, size_t C>
-BlockDenseOperator mesh_to_point_operator(const BoundaryIntegral<dim,R,C>& p,
-    const QuadStrategy<dim>& qs, const ObsPt<dim>& obs) 
+BlockDenseOperator mesh_to_points_operator(const BoundaryIntegral<dim,R,C>& p,
+    const QuadStrategy<dim>& qs, const std::vector<ObsPt<dim>>& obs_pts) 
 {
     size_t n_out_dofs = dim * p.src_mesh.facets.size();
-    auto result = mesh_to_point_vector(p, qs, obs, get_facet_info(p.src_mesh));
-    auto block_op = build_operator_shape(R, C, 1, n_out_dofs);
-    for (size_t i = 0; i < result.size(); i++) {
-        reshape_to_add(block_op, i, result[i]);
+    auto block_op = build_operator_shape(R, C, obs_pts.size(), n_out_dofs);
+    for (size_t pt_idx = 0; pt_idx < obs_pts.size(); pt_idx++) {
+        auto pt = obs_pts[pt_idx];
+        auto result = mesh_to_point_vector(p, qs, pt, get_facet_info(p.src_mesh));
+        auto start_idx = pt_idx * n_out_dofs;
+        for (size_t i = 0; i < result.size(); i++) {
+            reshape_to_add(block_op, start_idx + i, result[i]);
+        }
     }
     return block_op;
 }
+
 template 
-BlockDenseOperator mesh_to_point_operator(const BoundaryIntegral<2,1,1>& p,
-    const QuadStrategy<2>& qs, const ObsPt<2>& obs);
+BlockDenseOperator mesh_to_points_operator(const BoundaryIntegral<2,1,1>& p,
+    const QuadStrategy<2>& qs, const std::vector<ObsPt<2>>& obs_pts);
 template 
-BlockDenseOperator mesh_to_point_operator(const BoundaryIntegral<2,2,2>& p,
-    const QuadStrategy<2>& qs, const ObsPt<2>& obs);
+BlockDenseOperator mesh_to_points_operator(const BoundaryIntegral<2,2,2>& p,
+    const QuadStrategy<2>& qs, const std::vector<ObsPt<2>>& obs_pts);
 template 
-BlockDenseOperator mesh_to_point_operator(const BoundaryIntegral<3,1,1>& p,
-    const QuadStrategy<3>& qs, const ObsPt<3>& obs);
+BlockDenseOperator mesh_to_points_operator(const BoundaryIntegral<3,1,1>& p,
+    const QuadStrategy<3>& qs, const std::vector<ObsPt<3>>& obs_pts);
 template 
-BlockDenseOperator mesh_to_point_operator(const BoundaryIntegral<3,3,3>& p,
-    const QuadStrategy<3>& qs, const ObsPt<3>& obs);
+BlockDenseOperator mesh_to_points_operator(const BoundaryIntegral<3,3,3>& p,
+    const QuadStrategy<3>& qs, const std::vector<ObsPt<3>>& obs_pts);
 
 template <size_t dim, size_t R, size_t C>
 BlockDenseOperator

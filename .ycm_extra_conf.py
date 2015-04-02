@@ -7,7 +7,7 @@ import ycm_core
 petsc_dir = os.environ['PETSC_DIR']
 petsc_arch = os.environ['PETSC_ARCH']
 includes = [
-    './3bem',
+    './cpp',
     '../lib/',
     '../lib/unittest-cpp/UnitTest++',
     '../lib/autocheck/include',

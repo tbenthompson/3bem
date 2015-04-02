@@ -2,6 +2,7 @@ from __future__ import print_function
 from tools.build.util import files_in_dir, oname
 from tools.build.test_info import get_unit_test_info, get_acceptance_test_info
 import sys
+import shutil
 import subprocess
 import re
 import os
@@ -36,11 +37,13 @@ def tests():
     return files_in_dir("test", "cpp")
 
 def run_unit_tests(c):
+    unit_test_info = get_unit_test_info(c)
     test_names = [unit_test_info[k]['src'] for k in unit_test_info]
     run_test_set(c, test_names)
 
-def run_acceptance_tests(build_dir):
-    run_test_set(build_dir, acceptance_test_info)
+def run_acceptance_tests(c):
+    acceptance_test_info = get_acceptance_test_info(c)
+    run_test_set(c, acceptance_test_info)
     check_acceptance_tests()
 
 def check_acceptance_tests():
