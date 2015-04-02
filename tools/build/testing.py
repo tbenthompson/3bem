@@ -1,6 +1,6 @@
 from __future__ import print_function
 from tools.build.util import files_in_dir, oname
-from tools.build.test_info import unit_test_info, acceptance_test_info
+from tools.build.test_info import get_unit_test_info, get_acceptance_test_info
 import sys
 import subprocess
 import re
@@ -27,10 +27,10 @@ def testing_targets(test_info, loc, c):
     return ts
 
 def unit_testing_targets(c):
-    return testing_targets(unit_test_info, 'test', c)
+    return testing_targets(get_unit_test_info(c), c['subdirs']['test_dir'], c)
 
 def acceptance_testing_targets(c):
-    return testing_targets(acceptance_test_info, 'acctests', c)
+    return testing_targets(get_acceptance_test_info(c), c['subdirs']['acctest_dir'], c)
 
 def tests():
     return files_in_dir("test", "cpp")

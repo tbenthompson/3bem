@@ -13,7 +13,6 @@ using Facet = Vec<Vec<double,dim>,dim>;
 
 template <size_t dim>
 struct Mesh {
-    //TODO: Consider making this a pointer to the actual data.
     const std::vector<Facet<dim>> facets;
 
     size_t n_facets() const;

@@ -62,6 +62,14 @@ struct BlockOperator: public BlockOperatorI {
         }
         return res;
     }
+
+    VectorX apply_scalar(const VectorX& x) const {
+        return apply({x})[0]; 
+    }
+    
+    const T& get_block(size_t row, size_t col) const {
+        return ops[row * n_block_cols() + col];
+    }
 };
 
 

@@ -23,7 +23,9 @@ void init_petsc() {
     int argc = 0;
     char** args = new char*[0];
     //TODO: Remove PetscInitialize from in here. It will be needed outside I think.
+    std::cout << "INITPETSC" << std::endl;
     PetscInitialize(&argc, &args, (char*)0, "bem code"); 
+    std::cout << "DONEINITPETSC" << std::endl;
 }
 
 SparseOperator::SparseOperator(size_t n_rows, size_t n_cols,

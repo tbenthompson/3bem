@@ -1,7 +1,8 @@
 from tools.build.config import get_config
 from tools.build.build import run_build
 from tools.build.testing import run_unit_tests, run_acceptance_tests
-from tools.build.fabricate import main
+from tools.build.fabricate import main, autoclean
+import pprint
 import sys
 
 def unit_tests():
@@ -17,6 +18,15 @@ def lcov():
     run('lcov', '--capture', '--directory', build_dir, '--output-file', coverage_file)
     after()
     run('genhtml', coverage_file, '--output-directory', lcov_outdir)
+
+def basic_config():
+    c = get_config(command_params)
+    del c['targets']
+    pprint.pprint(c)
+
+def full_config():
+    c = get_config(command_params)
+    pprint.pprint(c)
 
 def build():
     run_build(get_config(command_params))

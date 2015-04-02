@@ -1,5 +1,0 @@
-#!/bin/bash
-git checkout stable
-git pull origin master
-git push origin stable
-python build.py

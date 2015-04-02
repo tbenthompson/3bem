@@ -63,10 +63,7 @@ dirichlet_laplace_test(const Mesh<dim>& mesh, const Fnc& fnc, const Deriv& deriv
     auto mass_op = mass_operator(p_mass, qs);
     auto rhs_mass = mass_op.apply({u})[0];
     
-    VectorX rhs_full(mesh.n_dofs());
-    for (unsigned int i = 0; i < rhs_full.size(); i++){
-        rhs_full[i] = rhs_double[i] + rhs_mass[i];
-    }
+    auto rhs_full = rhs_double + rhs_mass;
 
     // Apply the constraints to the RHS vector to get a condensed vector.
     auto rhs = condense_vector(constraint_matrix, rhs_full);

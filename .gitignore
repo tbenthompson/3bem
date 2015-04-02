@@ -5,6 +5,7 @@ archive/*
 lib/*
 *.so
 *.swp
+*.swo
 *.o
 *.s
 *.pyc

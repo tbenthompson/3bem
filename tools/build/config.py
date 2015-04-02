@@ -14,16 +14,19 @@ def get_config(command_params):
         printer = print
     petsc_dir = os.environ['PETSC_DIR']
     petsc_arch = os.environ['PETSC_ARCH']
+    src_dir = 'cpp'
+    test_dir = 'test'
+    acctest_dir = 'acctests'
+    py_wrap_dir = 'python_wrapper'
 
 
     includes = [
-        './3bem',
+        './' + str(src_dir),
         '../lib/',
         '../lib/unittest-cpp/UnitTest++',
         '../lib/autocheck/include',
         petsc_dir + '/' + petsc_arch + '/include',
         petsc_dir + '/include',
-        '/usr/include/python2.7'
     ]
 
     base_cpp_flags = [
@@ -49,24 +52,22 @@ def get_config(command_params):
         '-Wl,-rpath=' + petsc_dir + '/' + petsc_arch + '/lib',
         '-L' + petsc_dir + '/' + petsc_arch + '/lib',
         '-lpetsc',
-        '-lpython2.7',
-        '-lboost_python'
         ]
 
     lib = dict()
     lib['cpp_flags'] = cpp_flags + ['-fPIC']
     lib['link_flags'] = link_flags + ['-shared']
-    lib['sources'] = files_in_dir('3bem', 'cpp')
+    lib['sources'] = files_in_dir(src_dir, 'cpp')
     lib['linked_sources'] = []
     lib['binary_name'] = 'lib3bem.so'
     lib['priority'] = 0
 
     python_wrapper = dict()
-    python_wrapper['cpp_flags'] = lib['cpp_flags']
-    python_wrapper['link_flags'] = lib['link_flags']
-    python_wrapper['sources'] = lib['sources'] + files_in_dir('python_wrapper', 'cpp')
+    python_wrapper['cpp_flags'] = lib['cpp_flags'] + ['-I/usr/include/python2.7']
+    python_wrapper['link_flags'] = lib['link_flags'] + ['-lpython2.7', '-lboost_python']
+    python_wrapper['sources'] = lib['sources'] + files_in_dir(py_wrap_dir, 'cpp')
     python_wrapper['linked_sources'] = []
-    python_wrapper['binary_name'] = 'lib3bemPy.so'
+    python_wrapper['binary_name'] = 'tbempy.so'
     python_wrapper['priority'] = 2
 
     build_dir = os.path.join('build', str(build_type))
@@ -74,7 +75,12 @@ def get_config(command_params):
 
     c = dict()
     c['build_dir'] = build_dir
-    c['subdirs'] = ['3bem', 'test', 'acctests', 'python_wrapper']
+    c['subdirs'] = dict(
+        src_dir = src_dir,
+        test_dir = test_dir,
+        acctest_dir = acctest_dir,
+        py_wrap_dir = py_wrap_dir
+    )
     c['compiler'] = 'mpic++'
     c['command_params'] = command_params
     c['printer'] = printer
