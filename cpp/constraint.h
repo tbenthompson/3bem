@@ -20,8 +20,8 @@ namespace tbem {
  */
 
 struct LinearTerm {
-    const size_t dof;
-    const double weight;
+    size_t dof;
+    double weight;
 
     bool operator==(const LinearTerm& other) const;
     friend std::ostream& operator<<(std::ostream& os, const LinearTerm& lt);
@@ -36,9 +36,10 @@ struct LinearTerm {
  * ConstraintEQ eqtn{{LinearTerm{0,3}, LinearTerm{1,-1}, LinearTerm{2,4}}, 13.7};
  */
 struct ConstraintEQ {
-    const std::vector<LinearTerm> terms;
-    const double rhs;
+    std::vector<LinearTerm> terms;
+    double rhs;
 
+    bool operator==(const ConstraintEQ& other) const;
     friend std::ostream& operator<<(std::ostream& os, const ConstraintEQ& c);
 };
 

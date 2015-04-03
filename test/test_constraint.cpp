@@ -3,6 +3,13 @@
 
 using namespace tbem;
 
+TEST(ConstraintEquality) {
+    ConstraintEQ eqtn0{{LinearTerm{0,3}, LinearTerm{1,-1}, LinearTerm{2,4}}, 13.7};
+    ConstraintEQ eqtn1{{LinearTerm{1,-1}}, 1.0};
+    CHECK(eqtn0 == eqtn0);
+    CHECK(eqtn1 == eqtn1);
+}
+
 TEST(RearrangeConstraintEQ) {
     ConstraintEQ eqtn{{LinearTerm{0,3}, LinearTerm{1,-1}, LinearTerm{2,4}}, 13.7};
     auto rearranged = isolate_term_on_lhs(eqtn, 2);

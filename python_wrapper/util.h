@@ -29,6 +29,9 @@ void export_util() {
         .def("__getitem__", get_item_from_std_array<double,3>);
 
     VectorFromIterable().from_python<std::vector<double>>();
+    VectorFromIterable().from_python<std::vector<int>>();
+    class_<std::vector<int>>("VectorOfInts")
+        .def(vector_indexing_suite<std::vector<double>>());
     class_<std::vector<double>>("VectorOfDoubles")
         .def(vector_indexing_suite<std::vector<double>>());
     class_<std::vector<Vec<double,2>>>("VectorOf2Doubles")

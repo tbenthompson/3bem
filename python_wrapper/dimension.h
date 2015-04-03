@@ -25,6 +25,18 @@ VectorX interpolate_wrapper(const Mesh<dim>& mesh, const boost::python::object& 
         });
 }
 
+template <size_t dim>
+std::vector<ConstraintEQ> interpolate_bc_constraints_wrapper(
+    const Mesh<dim>& m,
+    const std::vector<int>& which_dofs,
+    const boost::python::object& fnc) 
+{
+    return interpolate_bc_constraints<dim>(m, which_dofs,
+        [&](const Vec<double,dim>& x) {
+            double res = boost::python::extract<double>(fnc(x));
+            return res;
+        });
+}
 }
 
 template <size_t dim>
@@ -49,6 +61,7 @@ void export_dimension() {
     def("cut_at_intersection", cut_at_intersection<dim>);
 
     def("convert_to_constraints", convert_to_constraints<dim>);
+    def("interpolate_bc_constraints", interpolate_bc_constraints_wrapper<dim>);
 
     def("interpolate", interpolate_wrapper<dim>); 
 

@@ -44,10 +44,6 @@ def get_unit_test_info(c):
     unit_test_info['elastic_kernels']['src'] = 'test_elastic_kernels'
     unit_test_info['elastic_kernels']['lib_srcs'] = []
     unit_test_info['elastic_kernels']['link_lib'] = True
-    unit_test_info['fmm'] = dict()
-    unit_test_info['fmm']['src'] = 'test_fmm'
-    unit_test_info['fmm']['lib_srcs'] = []
-    unit_test_info['fmm']['link_lib'] = True
     unit_test_info['function'] = dict()
     unit_test_info['function']['src'] = 'test_function'
     unit_test_info['function']['lib_srcs'] = []
@@ -72,10 +68,6 @@ def get_unit_test_info(c):
     unit_test_info['numerics']['src'] = 'test_numerics'
     unit_test_info['numerics']['lib_srcs'] = []
     unit_test_info['numerics']['link_lib'] = True
-    unit_test_info['octree'] = dict()
-    unit_test_info['octree']['src'] = 'test_octree'
-    unit_test_info['octree']['lib_srcs'] = []
-    unit_test_info['octree']['link_lib'] = True
     unit_test_info['operator'] = dict()
     unit_test_info['operator']['src'] = 'test_operator'
     unit_test_info['operator']['lib_srcs'] = []
@@ -108,10 +100,6 @@ def get_unit_test_info(c):
 
 def get_acceptance_test_info(c):
     acceptance_test_info = dict()
-    acceptance_test_info['antiplane_fault'] = dict()
-    acceptance_test_info['antiplane_fault']['src'] = 'antiplane_fault'
-    acceptance_test_info['antiplane_fault']['lib_srcs'] = []
-    acceptance_test_info['antiplane_fault']['link_lib'] = True
     acceptance_test_info['corners'] = dict()
     acceptance_test_info['corners']['src'] = 'corners'
     acceptance_test_info['corners']['lib_srcs'] = []
@@ -124,17 +112,5 @@ def get_acceptance_test_info(c):
     acceptance_test_info['rect_dislocation']['src'] = 'rect_dislocation'
     acceptance_test_info['rect_dislocation']['lib_srcs'] = []
     acceptance_test_info['rect_dislocation']['link_lib'] = True
-    acceptance_test_info['slow_bem_tests'] = dict()
-    acceptance_test_info['slow_bem_tests']['src'] = 'slow_bem_tests'
-    acceptance_test_info['slow_bem_tests']['lib_srcs'] = []
-    acceptance_test_info['slow_bem_tests']['link_lib'] = True
-    acceptance_test_info['slow_fmm_tests'] = dict()
-    acceptance_test_info['slow_fmm_tests']['src'] = 'slow_fmm_tests'
-    acceptance_test_info['slow_fmm_tests']['lib_srcs'] = []
-    acceptance_test_info['slow_fmm_tests']['link_lib'] = True
-    acceptance_test_info['benchmark_sinh'] = dict()
-    acceptance_test_info['benchmark_sinh']['src'] = 'benchmark_sinh'
-    acceptance_test_info['benchmark_sinh']['lib_srcs'] = [c['subdirs']['src_dir'] + '/quadrature']
-    acceptance_test_info['benchmark_sinh']['link_lib'] = False
     return acceptance_test_info
 

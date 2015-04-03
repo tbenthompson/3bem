@@ -12,6 +12,19 @@ std::ostream& operator<<(std::ostream& os, const LinearTerm& lt)
     os << "(" << lt.dof << ", " << lt.weight << ")";
     return os;
 }
+    
+bool ConstraintEQ::operator==(const ConstraintEQ& other) const 
+{
+    bool equal = other.terms.size() == terms.size();
+    if (!equal) {
+        return false;
+    }
+    for (size_t i = 0; i < terms.size(); i++) {
+        equal = equal && terms[i] == other.terms[i];
+    }
+    equal = equal && (rhs == other.rhs);
+    return equal;
+}
 
 std::ostream& operator<<(std::ostream& os, const ConstraintEQ& c) 
 {

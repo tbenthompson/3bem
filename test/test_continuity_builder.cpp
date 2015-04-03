@@ -110,6 +110,19 @@ TEST(ImposeNeighborBCs) {
     CHECK_EQUAL(constraints[0].rhs, 2.33);
 }
 
+TEST(InterpolateBCConstraints) {
+    auto m0 = line_mesh({-1, 0}, {1, 0});
+    auto cs = interpolate_bc_constraints<2>(m0, range(m0.n_dofs()),
+        [](const Vec<double,2>& x) {
+            return x[0] + 1.0;
+        });
+    CHECK_EQUAL(cs.size(), 2);
+    CHECK_EQUAL(cs[0].terms[0], (LinearTerm{0, 1}));
+    CHECK_EQUAL(cs[0].rhs, 0.0);
+    CHECK_EQUAL(cs[1].terms[0], (LinearTerm{1, 1}));
+    CHECK_EQUAL(cs[1].rhs, 2.0);
+}
+
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();

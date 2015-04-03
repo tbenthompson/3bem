@@ -60,7 +60,6 @@ TEST(Mesh3D) {
     CHECK_CLOSE(sa, 4 * M_PI, 1e-1);
 }
 
-
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();

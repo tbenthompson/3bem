@@ -9,7 +9,7 @@
     
 namespace tbem {
 
-// TODO: Can this all be moved to a .cpp file
+// TODO: This should be moved to a .cpp file
 
 template <size_t dim>
 bool pts_close(Vec<double,dim> a, Vec<double,dim> b, double eps) {
@@ -145,6 +145,22 @@ std::vector<ConstraintEQ> form_neighbor_bcs(
     }
     return constraints;
 }
+
+template <size_t dim>
+std::vector<ConstraintEQ> interpolate_bc_constraints(
+    const Mesh<dim>& m,
+    const std::vector<int>& which_dofs,
+    const std::function<double(const Vec<double,dim>&)>& f) 
+{
+    std::vector<ConstraintEQ> out;
+    for (auto dof: which_dofs) {
+        assert(dof < m.n_dofs());
+        out.push_back(boundary_condition(dof, f(m.get_vertex_from_dof(dof)))); 
+    }
+    return out;
+}
+
+
 
 } //END namespace tbem
 

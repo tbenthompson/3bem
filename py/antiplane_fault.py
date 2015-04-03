@@ -67,12 +67,12 @@ def solve_half_space(slip, fault, surface):
     soln = distribute_vector(constraint_matrix, VectorX(res[0]), surface.n_dofs())
     return soln
 
-def get_vertices_x(surface):
+def get_vertices(surface, component = 0):
     xs = []
     for v in range(2 * surface.n_facets()):
         v_local_idx = v % 2
         f_idx = (v - v_local_idx) / 2
-        xs.append(surface.get_vertex(f_idx, v_local_idx)[0])
+        xs.append(surface.get_vertex(f_idx, v_local_idx)[component])
     return np.array(xs)
 
 def half_space(refine):
@@ -81,7 +81,7 @@ def half_space(refine):
     surface = line_mesh([-50, 0.0], [50, 0.0]).refine_repeatedly(refine)
     soln = solve_half_space(slip, fault, surface)
     soln = np.array(soln.storage)
-    xs = get_vertices_x(surface)
+    xs = get_vertices(surface)
     indices = [i for i in range(len(xs)) if 0 < np.abs(xs[i]) < 10]
     xs = xs[indices]
     exact = np.arctan(1.0 / xs) / np.pi

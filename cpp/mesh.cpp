@@ -12,6 +12,14 @@ const Vec<double,dim>& Mesh<dim>::get_vertex(size_t facet_idx, size_t vertex_idx
 }
 
 template <size_t dim>
+const Vec<double,dim>& Mesh<dim>::get_vertex_from_dof(size_t absolute_index) const
+{
+    auto v_idx = absolute_index % dim;
+    auto f_idx = (absolute_index - v_idx) / dim;
+    return get_vertex(f_idx, v_idx);
+}
+
+template <size_t dim>
 size_t Mesh<dim>::n_facets() const {
     return facets.size();
 }
