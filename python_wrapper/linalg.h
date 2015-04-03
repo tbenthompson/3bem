@@ -14,6 +14,7 @@ template <typename T>
 void export_internal_vec(std::string name) {
     using namespace boost::python;
     class_<T>(name.c_str(), init<std::vector<typename T::ValueType>>())
+        .def(init<size_t,typename T::ValueType>())
         .def_readonly("storage", &T::storage)
         .def("size", &T::size)
         .def(self + self)
@@ -48,6 +49,7 @@ void export_linalg() {
              return_value_policy<reference_existing_object>());
     class_<BlockDenseOperator>("BlockDenseOperator", no_init)
         .def("apply_scalar", &BlockDenseOperator::apply_scalar)
+        .def("apply", &BlockDenseOperator::apply)
         .def("get_block", &BlockDenseOperator::get_block,
              return_value_policy<reference_existing_object>());
 

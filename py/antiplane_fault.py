@@ -1,15 +1,17 @@
 from tbempy import *
 from tbempy.TwoD import *
+from dislocation import *
 import numpy as np
 import scipy.sparse.linalg as sp_la
 import matplotlib.pyplot as plt
 
-def faulted_surface_constraints(surface, fault):
-    continuity = mesh_continuity(surface.begin())
-    cut_continuity = cut_at_intersection(continuity, surface.begin(), fault.begin());
-    constraints = convert_to_constraints(cut_continuity)
-    constraint_matrix = from_constraints(constraints)
-    return constraint_matrix
+def get_vertices(dim, surface, component = 0):
+    xs = []
+    for v in range(dim * surface.n_facets()):
+        v_local_idx = v % dim
+        f_idx = (v - v_local_idx) / dim
+        xs.append(surface.get_vertex(f_idx, v_local_idx)[component])
+    return np.array(xs)
 
 def full_space():
     fault = line_mesh([0, -1], [0, 0])
@@ -40,7 +42,7 @@ def get_qs():
     return QuadStrategy(8, 2, 9, 3.0, 1e-5)
 
 def solve_half_space(slip, fault, surface):
-    constraint_matrix = faulted_surface_constraints(surface, fault)
+    constraint_matrix = faulted_surface_constraints(2, surface, fault)
     qs = get_qs()
 
     hypersingular_kernel = LaplaceHypersingular()
@@ -67,21 +69,13 @@ def solve_half_space(slip, fault, surface):
     soln = distribute_vector(constraint_matrix, VectorX(res[0]), surface.n_dofs())
     return soln
 
-def get_vertices(surface, component = 0):
-    xs = []
-    for v in range(2 * surface.n_facets()):
-        v_local_idx = v % 2
-        f_idx = (v - v_local_idx) / 2
-        xs.append(surface.get_vertex(f_idx, v_local_idx)[component])
-    return np.array(xs)
-
 def half_space(refine):
     fault = line_mesh([0, -1], [0, 0])
     slip = VectorX([1.0] * fault.n_dofs())
     surface = line_mesh([-50, 0.0], [50, 0.0]).refine_repeatedly(refine)
     soln = solve_half_space(slip, fault, surface)
     soln = np.array(soln.storage)
-    xs = get_vertices(surface)
+    xs = get_vertices(2, surface)
     indices = [i for i in range(len(xs)) if 0 < np.abs(xs[i]) < 10]
     xs = xs[indices]
     exact = np.arctan(1.0 / xs) / np.pi

@@ -100,10 +100,6 @@ def get_unit_test_info(c):
 
 def get_acceptance_test_info(c):
     acceptance_test_info = dict()
-    acceptance_test_info['corners'] = dict()
-    acceptance_test_info['corners']['src'] = 'corners'
-    acceptance_test_info['corners']['lib_srcs'] = []
-    acceptance_test_info['corners']['link_lib'] = True
     acceptance_test_info['planestrain_fault'] = dict()
     acceptance_test_info['planestrain_fault']['src'] = 'planestrain_fault'
     acceptance_test_info['planestrain_fault']['lib_srcs'] = []

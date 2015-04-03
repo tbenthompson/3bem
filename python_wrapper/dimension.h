@@ -7,10 +7,13 @@
 #include "constraint_builder.h"
 #include "quadrature.h"
 #include "vertex_iterator.h"
-#include "laplace_kernels.h"
 #include "obs_pt.h"
 #include "dense_builder.h"
+
 #include "identity_kernels.h"
+#include "laplace_kernels.h"
+#include "elastic_kernels.h"
+
 #include "basis.h"
 
 namespace tbem {
@@ -66,15 +69,27 @@ void export_dimension() {
     def("interpolate", interpolate_wrapper<dim>); 
 
     class_<Kernel<dim,1,1>, boost::noncopyable>("Kernel", no_init);
+    class_<Kernel<dim,dim,dim>, boost::noncopyable>("Kernel", no_init);
     class_<IdentityScalar<dim>, bases<Kernel<dim,1,1>>>("IdentityScalar");
     class_<LaplaceSingle<dim>, bases<Kernel<dim,1,1>>>("LaplaceSingle");
     class_<LaplaceDouble<dim>, bases<Kernel<dim,1,1>>>("LaplaceDouble");
     class_<LaplaceHypersingular<dim>, bases<Kernel<dim,1,1>>>("LaplaceHypersingular");
+    class_<ElasticDisplacement<dim>, bases<Kernel<dim,dim,dim>>>(
+        "ElasticDisplacement", init<double,double>());
+    class_<ElasticTraction<dim>, bases<Kernel<dim,dim,dim>>>(
+        "ElasticTraction", init<double,double>());
+    class_<ElasticAdjointTraction<dim>, bases<Kernel<dim,dim,dim>>>(
+        "ElasticAdjointTraction", init<double,double>());
+    class_<ElasticHypersingular<dim>, bases<Kernel<dim,dim,dim>>>(
+        "ElasticHypersingular", init<double,double>());
 
     class_<BoundaryIntegral<dim,1,1>>("BoundaryIntegralScalar", no_init);
+    class_<BoundaryIntegral<dim,dim,dim>>("BoundaryIntegralTensor", no_init);
     def("make_boundary_integral", make_boundary_integral<dim,1,1>);
+    def("make_boundary_integral", make_boundary_integral<dim,dim,dim>);
 
     def("mesh_to_mesh_operator", mesh_to_mesh_operator<dim,1,1>);
+    def("mesh_to_mesh_operator", mesh_to_mesh_operator<dim,dim,dim>);
     class_<ObsPt<dim>>("ObsPt", 
         init<double, Vec<double,dim>, Vec<double,dim>, Vec<double,dim>>())
         .def_readonly("loc", &ObsPt<dim>::loc);
