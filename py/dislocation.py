@@ -21,20 +21,15 @@ def faulted_surface_constraints(dim, surface, fault):
     constraint_matrix = from_constraints(constraints)
     return constraint_matrix
 
-def solve(dim, surface, fault, hyp):
+def solve(dim, surface, fault, hyp, qs, slip):
     linear_solve_tol = 1e-8
     n_dofs = surface.n_dofs()
     tbem = get_tbem(dim)
 
-    qs = tbem.QuadStrategy(2, 2, 5, 3.0, 1e-3)
     cm = faulted_surface_constraints(dim, surface, fault)
 
-    slip = BlockVectorX(dim, VectorX(fault.n_dofs(), 1.0))
-
     p_rhs = tbem.make_boundary_integral(surface, fault, hyp);
-    print("Building RHS operator")
     rhs_op = tbem.mesh_to_mesh_operator(p_rhs, qs);
-    print("Done building RHS operator")
     all_dofs_rhs = rhs_op.apply(slip);
     rhs = BlockVectorX([
         condense_vector(cm, all_dofs_rhs.storage[i]) for i in range(dim)
@@ -44,9 +39,7 @@ def solve(dim, surface, fault, hyp):
     rhs = concatenate(dof_map, rhs)
 
     p_lhs = tbem.make_boundary_integral(surface, surface, hyp);
-    print("Building LHS operator")
     lhs = tbem.mesh_to_mesh_operator(p_lhs, qs);
-    print("Done building LHS operator")
 
     def mv(v):
         vec_v = VectorX(v)
@@ -61,7 +54,6 @@ def solve(dim, surface, fault, hyp):
             for i in range(dim)
         ])
         out = concatenate(dof_map, condensed)
-        print("ITERATION")
         return np.array(out.storage)
 
     np_rhs = np.array(rhs.storage)

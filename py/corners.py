@@ -78,8 +78,9 @@ def test_corners():
     soln_flux = distribute_vector(flux_cm, both_solns.storage[1], surface.n_dofs())
 
     from antiplane_fault import get_vertices
-    xs = get_vertices(2, surface, 0)
-    ys = get_vertices(2, surface, 1)
+    vs = get_vertices(2, surface)
+    xs = vs[:, 0]
+    ys = vs[:, 1]
     exact_pot = np.array([theta_u([x, y]) for x, y in zip(xs, ys)])
     est_pot = np.array(soln_pot.storage)
     exact_flux = np.array([theta_dudn([x, y]) for x, y in zip(xs, ys)])

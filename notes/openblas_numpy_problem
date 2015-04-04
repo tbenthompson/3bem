@@ -1,0 +1,9 @@
+In benchmarking, I found that the same code ran 4 times faster inside a docker container on the same
+machine. Why? The problem didn't show up when I remove an openmp block in the dense operator apply 
+function. In fact, just running that function didn't show any problems either. The problem occurs
+only when scipy.sparse.linalg.gmres is combined with my operator application function and seems
+to have something to do with the costs of context switches for threading. Not sure exactly what.
+pthreads and openblas were linked to numpy and scipy (check with "ldd") outside the docker container but not inside.
+the outside implementation had a much faster np.dot (0.05 sec vs 0.8 sec) because of the parallel
+openblas. But, openblas was causing the big slowdown with the gmres interaction.  
+Problem solved by uninstalling OpenBLAS.
