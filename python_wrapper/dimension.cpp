@@ -10,7 +10,6 @@
 #include "dense_builder.h"
 #include "mass_operator.h"
 
-#include "identity_kernels.h"
 #include "laplace_kernels.h"
 #include "elastic_kernels.h"
 
@@ -71,7 +70,6 @@ void export_dimension() {
 
     class_<Kernel<dim,1,1>, boost::noncopyable>("Kernel", no_init);
     class_<Kernel<dim,dim,dim>, boost::noncopyable>("Kernel", no_init);
-    class_<IdentityScalar<dim>, bases<Kernel<dim,1,1>>>("IdentityScalar");
     class_<LaplaceSingle<dim>, bases<Kernel<dim,1,1>>>("LaplaceSingle");
     class_<LaplaceDouble<dim>, bases<Kernel<dim,1,1>>>("LaplaceDouble");
     class_<LaplaceHypersingular<dim>, bases<Kernel<dim,1,1>>>("LaplaceHypersingular");
@@ -96,7 +94,8 @@ void export_dimension() {
         .def_readonly("loc", &ObsPt<dim>::loc);
     VectorFromIterable().from_python<std::vector<ObsPt<dim>>>();
     def("mesh_to_points_operator", mesh_to_points_operator<dim,1,1>);
-    def("mass_operator", mass_operator<dim,1,1>);
+    def("mass_operator_scalar", mass_operator<dim,1,1>);
+    def("mass_operator_tensor", mass_operator<dim,dim,dim>);
 }
 template void export_dimension<2>();
 template void export_dimension<3>();

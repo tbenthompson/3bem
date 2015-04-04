@@ -19,10 +19,7 @@ TEST(MassTerm) {
             }
         }
     }
-    IdentityScalar<3> identity;
-    auto p = make_boundary_integral<3>(sphere, sphere, identity);
-    QuadStrategy<3> qs(2);
-    auto mass_op = mass_operator(p, qs);
+    auto mass_op = mass_operator<3,1,1>(sphere, 2);
     auto res = mass_op.apply({str})[0];
     CHECK_EQUAL(res.size(), sphere.n_dofs());
     double true_area = 0.0;
@@ -39,12 +36,9 @@ TEST(MassTerm) {
 TEST(TensorMassTerm) {
     auto sphere = sphere_mesh({0,0,0}, 1.0, 1);
     BlockVectorX str(3, VectorX(sphere.n_dofs(), 1.0));
-    IdentityTensor<3,3,3> identity;
-    auto p = make_boundary_integral<3>(sphere, sphere, identity);
-    QuadStrategy<3> qs(2);
-    auto mass_op = mass_operator(p, qs);
-    CHECK_EQUAL(mass_op.ops.size(), 9);
-    auto res = mass_op.apply({str});
+    auto mass_op = mass_operator<3,3,3>(sphere, 2);
+    auto res = mass_op.apply(str);
+    CHECK_EQUAL(mass_op.n_block_rows() * mass_op.n_block_cols(), 9);
     CHECK_EQUAL(res.size(), 3);
 }
 

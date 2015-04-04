@@ -32,7 +32,6 @@ def test_corners():
 
     single_kernel = LaplaceSingle()
     double_kernel = LaplaceDouble()
-    id = IdentityScalar()
 
     single_layer = make_boundary_integral(surface, surface, single_kernel)
     single_op = mesh_to_mesh_operator(single_layer, qs)
@@ -40,8 +39,7 @@ def test_corners():
     double_layer = make_boundary_integral(surface, surface, double_kernel)
     double_op = mesh_to_mesh_operator(double_layer, qs)
 
-    mass = make_boundary_integral(surface, surface, id)
-    mass_op = mass_operator(mass, qs)
+    mass_op = mass_operator_scalar(surface, 2)
 
     all_zeros = VectorX([0.0] * n_dofs)
     condensed = BlockVectorX([
@@ -87,7 +85,6 @@ def test_corners():
     est_flux = np.array(soln_flux.storage)
     error_flux = np.sqrt(np.mean((est_flux - exact_flux) ** 2))
     error_pot = np.sqrt(np.mean((est_pot - exact_pot) ** 2))
-    print((error_flux, error_pot))
     assert(error_flux < 2e-4)
     assert(error_pot < 2e-6)
 

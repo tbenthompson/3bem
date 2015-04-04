@@ -9,6 +9,19 @@ namespace ac = autocheck;
 
 using namespace tbem;
 
+/* A helper function for integrating a given function using a quadrature rule.
+ * Via templating, can be used with 1D, 2D, double, Vec3<double> quadrature.
+ */
+template <typename T, size_t dim>
+T integrate(const std::vector<QuadPt<dim>>& qr, 
+            const std::function<T(std::array<double,dim>)>& fnc) {
+    T integral_val = qr[0].w * fnc(qr[0].x_hat);;
+    for (size_t i = 1; i < qr.size(); i++) {
+        integral_val += qr[i].w * fnc(qr[i].x_hat);
+    }
+    return integral_val;
+}
+
 TEST(GaussQuadrature) {
     auto qr = gauss(4);
     CHECK(qr.size() == 4);
@@ -53,55 +66,6 @@ TEST(GaussExactness) {
             double exact = 2.0 * ((g + 1) % 2);
             return std::fabs(exact - result) < 1e-13;
         }, 30, arb);
-}
-
-TEST(QuadRule2dConstructor) {
-    QuadRule<2> q(10);
-    CHECK_EQUAL(q.size(), 10);
-}
-
-TEST(TensorProduct) {
-    auto g1d = gauss(2);
-    auto g2d = tensor_product(g1d, g1d);
-    double x_hat[4] = {-0.57735, -0.57735, 0.57735, 0.57735};
-    double y_hat[4] = {-0.57735, 0.57735, -0.57735, 0.57735};
-    double weights[4] = {1,1,1,1};
-    for (unsigned int i = 0; i < g2d.size(); i++) {
-        CHECK_CLOSE(g2d[i].x_hat[0], x_hat[i], 1e-4);
-        CHECK_CLOSE(g2d[i].x_hat[1], y_hat[i], 1e-4);
-        CHECK_CLOSE(g2d[i].w, weights[i], 1e-4);
-    }
-}
-
-TEST(TensorProductIntegrate) {
-    auto g2d = tensor_gauss(2);
-    double result = integrate<double,2>(g2d, [](std::array<double,2> x) {
-        return pow(x[0] - 0.5,3) + pow(x[1], 2);
-    });
-    CHECK_CLOSE(result, -(7.0/6), 1e-6);
-}
-
-TEST(TensorProductIntegrate2) {
-    auto g2d = tensor_gauss(35);
-    double result = integrate<double,2>(g2d, [](std::array<double,2> x) {
-        return std::exp(x[0] / (x[1] + 1.1));
-    });
-    CHECK_CLOSE(result, 38.6995, 1e-4);
-}
-
-TEST(IntegrateAreaOfUnitTriangle) {
-    auto q2d = tensor_gauss(2);
-    auto q2d_tri = square_to_tri(q2d);
-    double result = integrate<double,2>(q2d_tri, [](std::array<double,2> x) {return 1.0;});
-    CHECK_CLOSE(result, 0.5, 1e-10);
-}
-
-TEST(IntegrateTriPoly) {
-    auto g2d = tri_gauss(13);
-    double result = integrate<double,2>(g2d, [](std::array<double,2> x) {
-        return pow(x[0],23) + pow(x[1], 19);
-    });
-    CHECK_CLOSE(result, 17. / 4200, 1e-15);
 }
 
 void test_tri_integrate(QuadRule<2> q2d_tri) {

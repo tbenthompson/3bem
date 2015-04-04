@@ -11,7 +11,6 @@ namespace tbem {
 
 struct DenseOperator: public OperatorI {
     typedef std::vector<double> DataT;
-    //TODO: Consider changing to unique_ptr
     typedef std::shared_ptr<DataT> OperatorDataPtr;
 
     const OperatorShape shape;

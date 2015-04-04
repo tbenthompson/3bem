@@ -45,9 +45,7 @@ def solve(dim, mesh, linear_solver, obs_pts, u_fnc, dudn_fnc):
     double_layer = tbem.make_boundary_integral(mesh, mesh, double_kernel)
     rhs_double = tbem.mesh_to_mesh_operator(double_layer, qs).apply_scalar(u)
 
-    identity = tbem.IdentityScalar()
-    mass_integral = tbem.make_boundary_integral(mesh, mesh, identity)
-    rhs_mass = tbem.mass_operator(mass_integral, qs).apply_scalar(u);
+    rhs_mass = tbem.mass_operator_scalar(mesh, 3).apply_scalar(u);
 
     rhs = rhs_double + rhs_mass
     rhs_condensed = condense_vector(constraint_matrix, rhs);

@@ -37,7 +37,6 @@ def test_planestrain():
     uy = soln[1][indices]
     ux_error = np.sqrt(np.mean((ux - exact_ux) ** 2))
     uy_error = np.sqrt(np.mean((uy - exact_uy) ** 2))
-    print((ux_error, uy_error))
     assert(ux_error < 2e-3)
     assert(uy_error < 6e-3)
 

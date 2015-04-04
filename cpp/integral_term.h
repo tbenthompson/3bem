@@ -63,6 +63,8 @@ struct IntegrationMethodI {
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
     compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const = 0;
 
+    virtual QuadRule<dim-1> get_obs_quad() const = 0;
+
     /* Compute the full influence of a source facet on an observation point, given
      * a kernel function/Green's function
      */
@@ -87,6 +89,8 @@ struct AdaptiveIntegrationMethod: public IntegrationMethodI<dim,R,C> {
 
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
     compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
+
+    virtual QuadRule<dim-1> get_obs_quad() const {return qs.obs_quad;}
 };
 
 template <size_t dim,size_t R, size_t C>
@@ -107,6 +111,8 @@ struct SinhIntegrationMethod: public IntegrationMethodI<dim,R,C> {
 
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
     compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
+
+    virtual QuadRule<dim-1> get_obs_quad() const {return qs.obs_quad;}
 };
 
 } //end namespace tbem

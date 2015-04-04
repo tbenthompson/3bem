@@ -18,7 +18,7 @@ def compute_okada(mu, pr, vertices):
         success, u, grad_u = dc3dwrapper(alpha, v, 2.0, 90, [-1.0, 1.0],
                                          [-1.0, 2.0], [-1.0, 0.0, 0.0])
         if success != 0:
-            print "WHOA"
+            pass
         disp[i, :] = u
     return disp
 
@@ -56,13 +56,13 @@ def test_okada():
 
     vmax = 0.2
     opts = dict(shading = 'gouraud', vmin = -vmax, vmax = vmax)
-    plt.figure()
-    plt.tripcolor(vs[:, 0], vs[:, 1], facets, soln[0], **opts)
-    plt.title('est')
-    plt.figure()
-    plt.tripcolor(vs[:, 0], vs[:, 1], facets, exact[:, 0], **opts)
-    plt.title('exact')
-    plt.show()
+    # plt.figure()
+    # plt.tripcolor(vs[:, 0], vs[:, 1], facets, soln[0], **opts)
+    # plt.title('est')
+    # plt.figure()
+    # plt.tripcolor(vs[:, 0], vs[:, 1], facets, exact[:, 0], **opts)
+    # plt.title('exact')
+    # plt.show()
 
 if __name__ == "__main__":
     test_okada()
