@@ -91,18 +91,6 @@ TEST(ObsPtFromFace) {
     CHECK_EQUAL(obs.richardson_dir, obs.normal);
 }
 
-TEST(TensorMassTerm) {
-    auto sphere = sphere_mesh({0,0,0}, 1.0, 1);
-    BlockVectorX str(3, VectorX(sphere.n_dofs(), 1.0));
-    IdentityTensor<3,3,3> identity;
-    auto p = make_boundary_integral<3>(sphere, sphere, identity);
-    QuadStrategy<3> qs(2);
-    auto mass_op = mass_operator(p, qs);
-    CHECK_EQUAL(mass_op.ops.size(), 9);
-    auto res = mass_op.apply({str});
-    CHECK_EQUAL(res.size(), 3);
-}
-
 TEST(MakeProblem) {
     auto sphere1 = sphere_mesh({0,0,0}, 1.0, 0);
     auto sphere2 = sphere_mesh({0,0,0}, 1.0, 1);

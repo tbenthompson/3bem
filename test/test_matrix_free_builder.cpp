@@ -36,6 +36,18 @@ TEST(MassTerm) {
     CHECK_CLOSE(mass_area, (5.0 / 6.0) * true_area, 1e-12);
 }
 
+TEST(TensorMassTerm) {
+    auto sphere = sphere_mesh({0,0,0}, 1.0, 1);
+    BlockVectorX str(3, VectorX(sphere.n_dofs(), 1.0));
+    IdentityTensor<3,3,3> identity;
+    auto p = make_boundary_integral<3>(sphere, sphere, identity);
+    QuadStrategy<3> qs(2);
+    auto mass_op = mass_operator(p, qs);
+    CHECK_EQUAL(mass_op.ops.size(), 9);
+    auto res = mass_op.apply({str});
+    CHECK_EQUAL(res.size(), 3);
+}
+
 TEST(MatrixFreeIntegralOperator) {
     auto m = circle_mesh({0.0, 0.0}, 1.0, 4);
     LaplaceDouble<2> k;

@@ -23,8 +23,8 @@ def compute_okada(mu, pr, vertices):
     return disp
 
 def test_okada():
-    surf_width = 8
-    refine_surf = 6
+    surf_width = 4
+    refine_surf = 3
     fault = rect_mesh(
         [-1, 0, -3.0], [-1, 0, -0.0],
         [1, 0, -0.0], [1, 0, -3.0]

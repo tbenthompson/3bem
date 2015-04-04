@@ -8,6 +8,7 @@
 #include "vertex_iterator.h"
 #include "obs_pt.h"
 #include "dense_builder.h"
+#include "mass_operator.h"
 
 #include "identity_kernels.h"
 #include "laplace_kernels.h"
@@ -97,3 +98,5 @@ void export_dimension() {
     def("mesh_to_points_operator", mesh_to_points_operator<dim,1,1>);
     def("mass_operator", mass_operator<dim,1,1>);
 }
+template void export_dimension<2>();
+template void export_dimension<3>();

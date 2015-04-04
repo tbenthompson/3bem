@@ -4,6 +4,7 @@
 
 #include "vectorx.h"
 #include "dense_operator.h"
+#include "sparse_operator.h"
 #include "block_operator.h"
 #include "block_dof_map.h"
 
@@ -29,6 +30,36 @@ void export_internal_vec(std::string name) {
         .def(-self);
 }
 
+namespace tbem {
+    struct OperatorIWrap: OperatorI, boost::python::wrapper<OperatorI> 
+    {
+        virtual size_t n_rows() const {return this->get_override("n_rows")();}
+        virtual size_t n_cols() const {return this->get_override("n_cols")();}
+
+        virtual VectorX apply(const VectorX& x) const 
+        {
+            return this->get_override("apply")();
+        }
+    };
+
+    struct BlockOperatorIWrap: BlockOperatorI, boost::python::wrapper<BlockOperatorI> 
+    {
+        virtual size_t n_total_rows() const {return this->get_override("n_total_rows")();}
+        virtual size_t n_total_cols() const {return this->get_override("n_total_cols")();}
+        virtual size_t n_block_rows() const {return this->get_override("n_block_rows")();}
+        virtual size_t n_block_cols() const {return this->get_override("n_block_cols")();}
+
+        virtual VectorX apply_scalar(const VectorX& x) const 
+        {
+            return this->get_override("apply_scalar")();
+        }
+        virtual BlockVectorX apply(const BlockVectorX& x) const 
+        {
+            return this->get_override("apply")();
+        }
+    };
+}
+
 void export_linalg() {
     using namespace boost::python;
     using namespace tbem;
@@ -40,14 +71,27 @@ void export_linalg() {
 
     export_internal_vec<BlockVectorX>("BlockVectorX");
 
-    class_<DenseOperator>("DenseOperator", no_init)
-        .def("apply", &DenseOperator::apply)
+    class_<OperatorIWrap, boost::noncopyable>("OperatorI")
+        .def("apply", pure_virtual(&OperatorI::apply))
+        .def("n_rows", pure_virtual(&OperatorI::n_rows))
+        .def("n_cols", pure_virtual(&OperatorI::n_cols));
+    class_<BlockOperatorIWrap, boost::noncopyable>("BlockOperatorI")
+        .def("apply", pure_virtual(&BlockOperatorI::apply))
+        .def("apply_scalar", pure_virtual(&BlockOperatorI::apply_scalar))
+        .def("n_total_rows", pure_virtual(&BlockOperatorI::n_total_rows))
+        .def("n_total_cols", pure_virtual(&BlockOperatorI::n_total_cols))
+        .def("n_block_rows", pure_virtual(&BlockOperatorI::n_block_rows))
+        .def("n_block_cols", pure_virtual(&BlockOperatorI::n_block_cols));
+
+    class_<DenseOperator, bases<OperatorI>>("DenseOperator", no_init)
         .def("data", &DenseOperator::data,
              return_value_policy<reference_existing_object>());
-    class_<BlockDenseOperator>("BlockDenseOperator", no_init)
-        .def("apply_scalar", &BlockDenseOperator::apply_scalar)
-        .def("apply", &BlockDenseOperator::apply)
+    class_<SparseOperator, bases<OperatorI>>("SparseOperator", no_init);
+    class_<BlockDenseOperator, bases<BlockOperatorI>>("BlockDenseOperator", no_init)
         .def("get_block", &BlockDenseOperator::get_block,
+             return_value_policy<reference_existing_object>());
+    class_<BlockSparseOperator, bases<BlockOperatorI>>("BlockSparseOperator", no_init)
+        .def("get_block", &BlockSparseOperator::get_block,
              return_value_policy<reference_existing_object>());
 
     class_<BlockDOFMap>("BlockDOFMap", no_init);
