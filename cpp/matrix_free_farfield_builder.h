@@ -1,12 +1,46 @@
 #ifndef __78987898789787_MATRIX_FREE_OPERATOR_BUILDER_H
 #define __78987898789787_MATRIX_FREE_OPERATOR_BUILDER_H
 
-#include "petsc_facade.h"
 #include "dense_builder.h"
 #include "quadrature.h"
 #include "facet_info.h"
+#include "matrix_entry.h"
 
 namespace tbem {
+
+struct SparseOperator 
+{
+    typedef std::vector<MatrixEntry> DataT;
+
+    const OperatorShape shape;
+    const DataT storage;
+
+    SparseOperator(size_t n_rows, size_t n_cols,
+        const std::vector<MatrixEntry>& entries):
+        shape{n_rows, n_cols},
+        storage(entries)
+    {}
+
+    virtual size_t n_rows() const 
+    {
+        return shape.n_rows; 
+    }
+
+    virtual size_t n_cols() const
+    {
+        return shape.n_cols;
+    }
+
+    virtual VectorX apply(const VectorX& x) const {
+        VectorX out(shape.n_rows, 0.0);
+        for (size_t i = 0; i < storage.size(); i++) {
+            out[storage[i].loc[0]] += storage[i].value * x[storage[i].loc[1]];
+        }
+        return out;
+    }
+};
+
+typedef BlockOperator<SparseOperator> BlockSparseOperator;
 
 template <size_t n_rows, size_t n_cols> 
 void reshape_to_add(std::vector<std::vector<MatrixEntry>>& entries, 

@@ -15,7 +15,6 @@
 
 #include "constraint_matrix.h"
 #include "constraint_builder.h"
-#include "petsc_facade.h"
 
 #include "vec.h"
 #include "util.h"

@@ -1,6 +1,5 @@
 #include "UnitTest++.h"
 #include "matrix_entry.h"
-#include "petsc_facade.h"
 #include "mesh_gen.h"
 #include "util.h"
 #include "identity_kernels.h"

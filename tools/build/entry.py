@@ -1,15 +1,12 @@
 from tools.build.config import get_config
 from tools.build.build import run_build
-from tools.build.testing import run_unit_tests, run_acceptance_tests
+from tools.build.testing import run_unit_tests
 from tools.build.fabricate import main, autoclean
 import pprint
 import sys
 
-def unit_tests():
+def tests():
     run_unit_tests(get_config(command_params))
-
-def acceptance_tests():
-    run_acceptance_tests(get_config(command_params))
 
 def lcov():
     coverage_file = oname('coverage.info')

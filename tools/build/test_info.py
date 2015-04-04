@@ -4,10 +4,6 @@ def get_unit_test_info(c):
     unit_test_info['algs']['src'] = 'test_algs'
     unit_test_info['algs']['lib_srcs'] = []
     unit_test_info['algs']['link_lib'] = True
-    unit_test_info['armadillo'] = dict()
-    unit_test_info['armadillo']['src'] = 'test_armadillo'
-    unit_test_info['armadillo']['lib_srcs'] = []
-    unit_test_info['armadillo']['link_lib'] = True
     unit_test_info['basis'] = dict()
     unit_test_info['basis']['src'] = 'test_basis'
     unit_test_info['basis']['lib_srcs'] = []
@@ -72,14 +68,6 @@ def get_unit_test_info(c):
     unit_test_info['operator']['src'] = 'test_operator'
     unit_test_info['operator']['lib_srcs'] = []
     unit_test_info['operator']['link_lib'] = True
-    unit_test_info['output'] = dict()
-    unit_test_info['output']['src'] = 'test_output'
-    unit_test_info['output']['lib_srcs'] = []
-    unit_test_info['output']['link_lib'] = True
-    unit_test_info['petsc'] = dict()
-    unit_test_info['petsc']['src'] = 'test_petsc'
-    unit_test_info['petsc']['lib_srcs'] = []
-    unit_test_info['petsc']['link_lib'] = True
     unit_test_info['quadrature'] = dict()
     unit_test_info['quadrature']['src'] = 'test_quadrature'
     unit_test_info['quadrature']['lib_srcs'] = [c['subdirs']['src_dir'] + '/quadrature']
@@ -97,16 +85,4 @@ def get_unit_test_info(c):
     unit_test_info['vertex_iterator']['lib_srcs'] = []
     unit_test_info['vertex_iterator']['link_lib'] = True
     return unit_test_info
-
-def get_acceptance_test_info(c):
-    acceptance_test_info = dict()
-    acceptance_test_info['planestrain_fault'] = dict()
-    acceptance_test_info['planestrain_fault']['src'] = 'planestrain_fault'
-    acceptance_test_info['planestrain_fault']['lib_srcs'] = []
-    acceptance_test_info['planestrain_fault']['link_lib'] = True
-    acceptance_test_info['rect_dislocation'] = dict()
-    acceptance_test_info['rect_dislocation']['src'] = 'rect_dislocation'
-    acceptance_test_info['rect_dislocation']['lib_srcs'] = []
-    acceptance_test_info['rect_dislocation']['link_lib'] = True
-    return acceptance_test_info
 

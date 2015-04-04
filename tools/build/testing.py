@@ -1,6 +1,6 @@
 from __future__ import print_function
 from tools.build.util import files_in_dir, oname
-from tools.build.test_info import get_unit_test_info, get_acceptance_test_info
+from tools.build.test_info import get_unit_test_info
 import sys
 import shutil
 import subprocess
@@ -30,9 +30,6 @@ def testing_targets(test_info, loc, c):
 def unit_testing_targets(c):
     return testing_targets(get_unit_test_info(c), c['subdirs']['test_dir'], c)
 
-def acceptance_testing_targets(c):
-    return testing_targets(get_acceptance_test_info(c), c['subdirs']['acctest_dir'], c)
-
 def tests():
     return files_in_dir("test", "cpp")
 
@@ -40,20 +37,6 @@ def run_unit_tests(c):
     unit_test_info = get_unit_test_info(c)
     test_names = [unit_test_info[k]['src'] for k in unit_test_info]
     run_test_set(c, test_names)
-
-def run_acceptance_tests(c):
-    acceptance_test_info = get_acceptance_test_info(c)
-    run_test_set(c, acceptance_test_info)
-    check_acceptance_tests()
-
-def check_acceptance_tests():
-    if os.path.exists('tools/__pycache__'):
-        shutil.rmtree('tools/__pycache__')
-    subprocess.call('\
-        py.test -s \
-        tools/check_planestrain.py \
-        tools/check_antiplane.py\
-    ', shell = True)
 
 def run_test(build_dir, test_file, n):
     p = subprocess.Popen(

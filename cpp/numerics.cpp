@@ -30,7 +30,6 @@ std::vector<double> cheb_polys(double x_hat, int n_max) {
  * for details.
  */
 double s_n(double x_hat, double y_hat, unsigned int n) {
-    assert(n >= 0);
     auto x_cheb = cheb_polys(x_hat, n - 1);
     auto y_cheb = cheb_polys(y_hat, n - 1);
     double result = 0.0;
