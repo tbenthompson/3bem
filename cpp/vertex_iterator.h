@@ -1,6 +1,7 @@
 #ifndef __QWEQASDKJVNS_VERTEX_ITERATOR_H
 #define __QWEQASDKJVNS_VERTEX_ITERATOR_H
 #include <cassert>
+#include <iostream>
 
 #include "mesh.h"
 

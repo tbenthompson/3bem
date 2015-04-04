@@ -1,5 +1,3 @@
-#ifndef __QQQQQQQQQQQQQQQ_UTIL_H
-#define __QQQQQQQQQQQQQQQ_UTIL_H
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <vector>
@@ -44,5 +42,3 @@ void export_util() {
     def("sphere_mesh", sphere_mesh);
     def("rect_mesh", rect_mesh);
 }
-
-#endif

@@ -53,7 +53,6 @@ def get_config(command_params):
     python_wrapper['link_flags'] = lib['link_flags'] + ['-lpython2.7', '-lboost_python']
     python_wrapper['sources'] = files_in_dir(py_wrap_dir, 'cpp')
     python_wrapper['linked_sources'] = lib['sources']
-    python_wrapper['linked_sources_flags'] = lib['cpp_flags']
     python_wrapper['binary_name'] = 'tbempy.so'
     python_wrapper['priority'] = 2
 

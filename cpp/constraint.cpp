@@ -1,4 +1,6 @@
 #include "constraint.h"
+#include <iostream>
+#include <algorithm>
 
 namespace tbem {
 

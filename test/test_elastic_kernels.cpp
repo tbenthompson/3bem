@@ -1,7 +1,6 @@
 #include "UnitTest++.h"
 #include "elastic_kernels.h"
 
-#include <iostream>
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -85,8 +84,6 @@ void test_elastic_kernel(std::string name) {
                                           name, shear_mod, poisson_ratio)[k][j];
         double error = std::fabs(exact - attempt) /
                        ((std::fabs(exact) + std::fabs(attempt)) / 2);
-        // std::cout << "Name: " << name << " k,j,dim:" << k << j << dim << std::endl;
-        // std::cout << attempt << " " << exact << std::endl;
         CHECK_CLOSE(error, 0, 1e-8);
     }
 

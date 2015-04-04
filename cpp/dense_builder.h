@@ -50,16 +50,5 @@ template <size_t dim, size_t R, size_t C>
 BlockDenseOperator mesh_to_mesh_operator(const BoundaryIntegral<dim,R,C>& p,
                                      const QuadStrategy<dim>& qs);
 
-/* In many integral equations, one of the functions of interest appears
- * outside of an integration, possibly as the result of integrating against
- * a delta function. 
- * In a galerkin boundary element formulation, these free terms look like:
- * \int_S \phi_i(x) u(x) dx.
- * This function calculates such integrals using gaussian quadrature.
- */
-template <size_t dim, size_t R, size_t C>
-BlockDenseOperator 
-mass_operator(const BoundaryIntegral<dim,R,C>& p, const QuadStrategy<dim>& qs);
-
 } // END NAMESPACE tbem
 #endif

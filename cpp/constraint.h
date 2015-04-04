@@ -1,9 +1,8 @@
 #ifndef __AAABBBEEEEDDD_CONSTRAINT_H
 #define __AAABBBEEEEDDD_CONSTRAINT_H
 #include <vector>
-#include <iostream>
 #include <cassert>
-#include <algorithm>
+#include <iosfwd>
 #include "numbers.h"
 
 namespace tbem {

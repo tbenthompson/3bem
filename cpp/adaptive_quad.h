@@ -29,7 +29,6 @@
 
 #include <cmath>
 #include <limits>
-#include <iostream>
 #include "vec_ops.h"
 #include "numerics.h"
 
@@ -47,7 +46,6 @@ template <typename T, typename F>
 T adaptlobstp(const F& f, const double a, const double b, 
               const T& fa, const T& fb, const T& is )
 {
-    // std::cout << a << " " << b << std::endl;
     adaptive_quad_n++;
     double m = (a + b) / 2.; 
     double h = (b - a) / 2.;

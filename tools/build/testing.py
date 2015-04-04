@@ -21,7 +21,6 @@ def testing_targets(test_info, loc, c):
         target['sources'] = [os.path.join(loc, test_data['src'])]
         target['sources'] += test_data.get('other_srces', [])
         target['linked_sources'] = [s for s in test_data['lib_srcs']]
-        target['linked_sources_flags'] = c['targets']['lib']['cpp_flags']
         target['binary_name'] = test_data['src']
         target['priority'] = 1
         ts[test_name] = target

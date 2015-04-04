@@ -1,6 +1,5 @@
 #include "numerics.h"
 #include <algorithm>
-#include <iostream>
 #include <cassert>
 
 namespace tbem {

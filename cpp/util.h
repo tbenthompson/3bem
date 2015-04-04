@@ -2,10 +2,7 @@
 #define __TEST_SHARED_H
 
 #include <vector>
-#include <random>
-#include <iostream>
 #include <chrono>
-#include <string>
 #include "vec.h"
 
 namespace tbem {

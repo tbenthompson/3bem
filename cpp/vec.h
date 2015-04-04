@@ -1,10 +1,6 @@
 #ifndef __ASDKJWEORIOQ_VEC_ARRAYS_H 
 #define __ASDKJWEORIOQ_VEC_ARRAYS_H 
 #include <array>
-#include <cmath>
-#include <iostream>
-#include <vector>
-#include "numbers.h"
 
 namespace tbem {
 

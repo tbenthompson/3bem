@@ -1,6 +1,3 @@
-#include <iostream>
-#include <iomanip>
-
 #include "UnitTest++.h"
 #include "autocheck/autocheck.hpp"
 namespace ac = autocheck;
@@ -21,7 +18,6 @@ TEST(GaussQuadrature) {
     for (auto xw: qr) {
         CHECK(std::fabs(xw.x_hat[0]) <= 1);
         wt_sum += xw.w;
-        // std::cout << "x: " << xw.first << "   w: " << xw.second << std::endl;
     }
     CHECK_CLOSE(wt_sum, 2.0, 1e-12);
 
@@ -301,7 +297,6 @@ void test_sinh_sigmoidal(double lambda, size_t nt, size_t nr, double x0, double 
         auto error = std::fabs(res - correct) / std::fabs(correct);
         CHECK_CLOSE(error, 0.0, 1e-5);
     }
-    std::cout << sinh_eval << " " << adapt_eval << std::endl;
 }
 
 TEST(SinhSigmoidal2D) {

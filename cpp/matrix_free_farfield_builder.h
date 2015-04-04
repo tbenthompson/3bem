@@ -4,46 +4,13 @@
 #include "dense_builder.h"
 #include "quadrature.h"
 #include "facet_info.h"
-#include "matrix_entry.h"
+#include "sparse_operator.h"
 
 namespace tbem {
 
-struct SparseOperator 
-{
-    typedef std::vector<MatrixEntry> DataT;
-
-    const OperatorShape shape;
-    const DataT storage;
-
-    SparseOperator(size_t n_rows, size_t n_cols,
-        const std::vector<MatrixEntry>& entries):
-        shape{n_rows, n_cols},
-        storage(entries)
-    {}
-
-    virtual size_t n_rows() const 
-    {
-        return shape.n_rows; 
-    }
-
-    virtual size_t n_cols() const
-    {
-        return shape.n_cols;
-    }
-
-    virtual VectorX apply(const VectorX& x) const {
-        VectorX out(shape.n_rows, 0.0);
-        for (size_t i = 0; i < storage.size(); i++) {
-            out[storage[i].loc[0]] += storage[i].value * x[storage[i].loc[1]];
-        }
-        return out;
-    }
-};
-
-typedef BlockOperator<SparseOperator> BlockSparseOperator;
 
 template <size_t n_rows, size_t n_cols> 
-void reshape_to_add(std::vector<std::vector<MatrixEntry>>& entries, 
+void reshape_to_add(std::vector<std::vector<SparseMatrixEntry>>& entries, 
     size_t row, size_t col, const Vec<Vec<double,n_cols>,n_rows>& data) 
 {
     for (size_t d1 = 0; d1 < n_rows; d1++) {
@@ -63,7 +30,7 @@ BlockSparseOperator build_nearfield(const BoundaryIntegral<dim,R,C>& p,
 
     AdaptiveIntegrationMethod<dim,R,C> mthd(qs, p.K);
     auto src_facet_info = get_facet_info(p.src_mesh);
-    std::vector<std::vector<MatrixEntry>> entries(p.obs_mesh.facets.size());
+    std::vector<std::vector<SparseMatrixEntry>> entries(p.obs_mesh.facets.size());
 #pragma omp parallel for
     for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
@@ -166,45 +133,6 @@ template <size_t dim, size_t R, size_t C>
 MatrixFreeFarfieldOperator<dim,R,C>
 make_matrix_free(const BoundaryIntegral<dim,R,C>& p, const QuadStrategy<dim>& qs) {
     return MatrixFreeFarfieldOperator<dim,R,C>(p,qs);
-}
-
-template <size_t dim, size_t R, size_t C>
-BlockSparseOperator 
-matrix_free_mass_operator(const BoundaryIntegral<dim,R,C>& p, const QuadStrategy<dim>& qs) {
-    auto n_obs_dofs = p.obs_mesh.n_dofs();
-    auto n_blocks = R * C;
-    std::vector<std::vector<MatrixEntry>> entries(n_blocks);
-
-    auto Z = zeros<Vec<double,dim>>::make();
-    auto kernel_val = p.K(0.0, Z, Z, Z);
-    for (size_t obs_idx = 0; obs_idx < p.obs_mesh.facets.size(); obs_idx++) 
-    {
-        auto obs_face = FacetInfo<dim>::build(p.obs_mesh.facets[obs_idx]);
-        for (size_t obs_q = 0; obs_q < qs.obs_quad.size(); obs_q++) 
-        {
-            auto qpt = qs.obs_quad[obs_q];
-            auto basis = linear_basis(qpt.x_hat);
-            auto weight = obs_face.jacobian * qpt.w;
-
-            for (size_t obs_basis_idx = 0; obs_basis_idx < dim; obs_basis_idx++) 
-            {
-                int obs_dof = dim * obs_idx + obs_basis_idx;
-                for (size_t src_basis_idx = 0; src_basis_idx < dim; src_basis_idx++) 
-                {
-                    int src_dof = dim * obs_idx + src_basis_idx;
-                    auto basis_product = basis[obs_basis_idx] * basis[src_basis_idx];
-                    auto entry_value = kernel_val * basis_product * weight;
-                    reshape_to_add(entries, obs_dof, src_dof, entry_value);
-                }
-            }
-        }
-    }
-
-    std::vector<SparseOperator> ops;
-    for (size_t i = 0; i < n_blocks; i++) {
-        ops.push_back(SparseOperator(n_obs_dofs, n_obs_dofs, entries[i]));
-    }
-    return BlockSparseOperator(R, C, std::move(ops));
 }
 
 }//end namespace tbem

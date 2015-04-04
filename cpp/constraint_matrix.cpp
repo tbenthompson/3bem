@@ -1,7 +1,6 @@
 #include "constraint_matrix.h"
 #include "block_operator.h"
 #include "vectorx.h"
-#include "matrix_entry.h"
 
 namespace tbem {
 
@@ -121,6 +120,12 @@ VectorX condense_vector(const ConstraintMatrix& matrix, const VectorX& all)
 
     return out;
 }
+
+struct MatrixEntry 
+{
+    const size_t loc[2];
+    const double value;
+};
 
 void add_entry_with_constraints(const ConstraintMatrix& row_cm, 
     const ConstraintMatrix& col_cm, DenseOperator& modifiable_matrix,

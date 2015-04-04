@@ -1,7 +1,10 @@
 #include <boost/python.hpp>
-#include "util.h"
-#include "linalg.h"
-#include "dimension.h"
+
+void export_util();
+void export_linalg();
+void export_constraints();
+template <size_t dim>
+void export_dimension();
 
 boost::python::scope start_module(std::string name) {
     using namespace boost::python;
@@ -17,6 +20,7 @@ BOOST_PYTHON_MODULE(tbempy)
 
     export_util();
     export_linalg();
+    export_constraints();
 
     {
         scope scope2D = start_module("TwoD");

@@ -8,8 +8,6 @@
 
 namespace tbem {
 
-template <typename T>
-struct BlockOperator;
 
 struct DenseOperator: public OperatorI {
     typedef std::vector<double> DataT;
@@ -34,6 +32,8 @@ struct DenseOperator: public OperatorI {
     const double& operator[] (size_t idx) const;
 };
 
+template <typename T>
+struct BlockOperator;
 typedef BlockOperator<DenseOperator> BlockDenseOperator;
 
 DenseOperator combine_components(const BlockDenseOperator& block);

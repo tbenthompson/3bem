@@ -53,15 +53,14 @@ def run_build(c):
         for t in buckets[b]:
             c['printer']('\nCompiling target: ' + t['binary_name'])
             compile(c, t)
-        after()
     after()
     for b in sorted(buckets.keys()):
         for t in buckets[b]:
             c['printer']('\nLinking target: ' + t['binary_name'])
             link(c, t)
         after()
-
-    copy_python_wrapper_to_py(c)
+    if 'python_wrapper' in targets:
+        copy_python_wrapper_to_py(c)
 
 def copy_python_wrapper_to_py(c):
     pylib_file = c['targets']['python_wrapper']['binary_name']
@@ -81,9 +80,6 @@ def compile(c, target):
     for source in target['sources']:
         compile_runner(c['build_dir'], c['compiler'], source,
                        target['cpp_flags'])
-    for source in target['linked_sources']:
-        compile_runner(c['build_dir'], c['compiler'], source,
-                       target['linked_sources_flags'])
 
 def compile_runner(build_dir, compiler, source, flags):
     args = [

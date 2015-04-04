@@ -1,9 +1,5 @@
 def get_unit_test_info(c):
     unit_test_info = dict()
-    unit_test_info['algs'] = dict()
-    unit_test_info['algs']['src'] = 'test_algs'
-    unit_test_info['algs']['lib_srcs'] = []
-    unit_test_info['algs']['link_lib'] = True
     unit_test_info['basis'] = dict()
     unit_test_info['basis']['src'] = 'test_basis'
     unit_test_info['basis']['lib_srcs'] = []
@@ -32,10 +28,6 @@ def get_unit_test_info(c):
     unit_test_info['dense_builder']['src'] = 'test_dense_builder'
     unit_test_info['dense_builder']['lib_srcs'] = []
     unit_test_info['dense_builder']['link_lib'] = True
-    unit_test_info['direct'] = dict()
-    unit_test_info['direct']['src'] = 'test_direct'
-    unit_test_info['direct']['lib_srcs'] = []
-    unit_test_info['direct']['link_lib'] = True
     unit_test_info['elastic_kernels'] = dict()
     unit_test_info['elastic_kernels']['src'] = 'test_elastic_kernels'
     unit_test_info['elastic_kernels']['lib_srcs'] = []

@@ -2,6 +2,10 @@
 #define __QWEQWEQWEQEWQWEQWE_VEC_OPS_H
 
 #include "vec.h"
+#include <cmath>
+#include <vector>
+#include <iostream>
+#include "numbers.h"
 
 namespace tbem {
 

@@ -8,14 +8,6 @@ CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
 ---------------------------------------
 
 MILESTONE: HANGING NODES AND COMPLEX GEOMETRIES
-S: more flexible build system -- debug vs release vs profile vs test_coverage?
-S: more flexible build system -- compile one test at a time (just use object files?)
-MF: petsc-interface -- return soln instead of copying within the matvecfnc
-DD: Define much much clearer interfaces with the outside world.
--- Maybe restrict the main .h files to outward facing interfaces. I could use _impl.h files for inward facing header files. I could try this with constraints.h
--- figure out all the entry points that the "elastic" code touches the library, reduce the number and judge critically which access is necessary
-S: Consider getting rid of autocheck as a dependency.
--- better random number generation in util.h, maybe separate out to random.h?
 S: Pull some of vec.h out into a separate module "geometry.h"
 NF: Hanging nodes?
 NF: Handle the general case when fault-surface intersection does not occur at a vertex.
@@ -35,23 +27,13 @@ NF: Interface for Operators -- extend with sparse matrix operators and FMMOperat
 NF: Imagine some kind of general purpose "nearfield" structure that can allow a simple O(N) solution to the near neighbors problems in mesh_continuity, apply_discontinuities as well as the FMM tree structure.
 NF: Once FMM-BEM integration is completed, a sparse matrix storage format should be used for the nearfield entries.
 NF: A method that creates a non-matrix based operator that consists of strengths of point sources. First, evaluate this with a direct multiplication interaction.
+NF: FMM!
 NF: Used the FMMOperator to perform an FMM evaluation within an iteration. 
-
-S: Make Box an immutable data type.
-S: Make OctreeCell an immutable data type.
-S: Within FMMInfo::P2M_helper: Extract P2M_cell_cell.
-S: Within FMMInfo::L2P_helper: Extract L2P_cell_cell.
-S: The FMM code requires significant refactoring:(immutable data types, use a recurse and coalesce strategy for accumulating the jobs, get rid of the float_ variables, use a recurse and coalesce strategy for accumulating the multipoles and locals, make sure these modifications don't damage the efficiency, more uniform naming for global, cell-wise, node-wise operations in the FMM application)
-S: Decoupling to allow testing individual pieces of the FMM algorithm.
-S: Extract a get_box or get_single_pt_box function or both from the Octree::build_child function. In general, make that function more testable.
-S: The min_code and max_code may not be necessary in OctreeCell except for construction.
-S: Make Octree an immutable data type. 
 
 --------------------------------------- Unaffiliated tasks
 TESTS(T):
 DESIGN DECISIONS(DD):
 NEW FUNCTIONALITY(NF):
 MODIFIED FUNCTIONALITY(MF):
-S: maybe use armadillo as the backend for operators and functions?
 STRUCTURAL(S):
 OPTIMIZATION(O):

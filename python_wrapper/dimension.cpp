@@ -1,7 +1,6 @@
-#ifndef __ALSDJLJLA_DIMENSION_H
-#define __ALSDJLJLA_DIMENSION_H
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#include "iterable_converter.h"
 
 #include "mesh.h"
 #include "constraint_builder.h"
@@ -40,7 +39,8 @@ std::vector<ConstraintEQ> interpolate_bc_constraints_wrapper(
             return res;
         });
 }
-}
+
+} //end namespace tbem
 
 template <size_t dim>
 void export_dimension() {
@@ -97,4 +97,3 @@ void export_dimension() {
     def("mesh_to_points_operator", mesh_to_points_operator<dim,1,1>);
     def("mass_operator", mass_operator<dim,1,1>);
 }
-#endif
