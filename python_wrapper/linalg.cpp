@@ -7,6 +7,7 @@
 #include "sparse_operator.h"
 #include "block_operator.h"
 #include "block_dof_map.h"
+#include "dense_builder.h"
 
 template <typename T>
 void export_internal_vec(std::string name) {
@@ -44,14 +45,26 @@ namespace tbem {
 
     struct BlockOperatorIWrap: BlockOperatorI, boost::python::wrapper<BlockOperatorI> 
     {
-        virtual size_t n_total_rows() const {return this->get_override("n_total_rows")();}
-        virtual size_t n_total_cols() const {return this->get_override("n_total_cols")();}
-        virtual size_t n_block_rows() const {return this->get_override("n_block_rows")();}
-        virtual size_t n_block_cols() const {return this->get_override("n_block_cols")();}
-
-        virtual VectorX apply_scalar(const VectorX& x) const 
+        virtual size_t n_total_rows() const 
         {
-            return this->get_override("apply_scalar")();
+            return this->get_override("n_total_rows")();
+        }
+        virtual size_t n_total_cols() const 
+        {
+            return this->get_override("n_total_cols")();
+        }
+        virtual size_t n_block_rows() const 
+        {
+            return this->get_override("n_block_rows")();
+        }
+        virtual size_t n_block_cols() const 
+        {
+            return this->get_override("n_block_cols")();
+        }
+
+        virtual VectorX apply(const VectorX& x) const 
+        {
+            return this->get_override("apply")();
         }
         virtual BlockVectorX apply(const BlockVectorX& x) const 
         {
@@ -75,9 +88,13 @@ void export_linalg() {
         .def("apply", pure_virtual(&OperatorI::apply))
         .def("n_rows", pure_virtual(&OperatorI::n_rows))
         .def("n_cols", pure_virtual(&OperatorI::n_cols));
+    BlockVectorX (BlockOperatorI::*apply1)(const BlockVectorX&) const =
+        &BlockOperatorI::apply;
+    VectorX (BlockOperatorI::*apply2)(const VectorX&) const =
+        &BlockOperatorI::apply;
     class_<BlockOperatorIWrap, boost::noncopyable>("BlockOperatorI")
-        .def("apply", pure_virtual(&BlockOperatorI::apply))
-        .def("apply_scalar", pure_virtual(&BlockOperatorI::apply_scalar))
+        .def("apply", pure_virtual(apply1))
+        .def("apply", pure_virtual(apply2))
         .def("n_total_rows", pure_virtual(&BlockOperatorI::n_total_rows))
         .def("n_total_cols", pure_virtual(&BlockOperatorI::n_total_cols))
         .def("n_block_rows", pure_virtual(&BlockOperatorI::n_block_rows))
@@ -93,6 +110,10 @@ void export_linalg() {
     class_<BlockSparseOperator, bases<BlockOperatorI>>("BlockSparseOperator", no_init)
         .def("get_block", &BlockSparseOperator::get_block,
              return_value_policy<reference_existing_object>());
+
+    class_<BlockIntegralOperator, bases<BlockOperatorI>>
+        ("BlockIntegralOperator", no_init);
+
 
     class_<BlockDOFMap>("BlockDOFMap", no_init);
     def("block_dof_map_from_functions", block_dof_map_from_functions);

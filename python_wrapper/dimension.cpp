@@ -9,10 +9,6 @@
 #include "obs_pt.h"
 #include "dense_builder.h"
 #include "mass_operator.h"
-
-#include "laplace_kernels.h"
-#include "elastic_kernels.h"
-
 #include "basis.h"
 
 namespace tbem {
@@ -43,6 +39,11 @@ std::vector<ConstraintEQ> interpolate_bc_constraints_wrapper(
 } //end namespace tbem
 
 template <size_t dim>
+void export_integration();
+template <size_t dim>
+void export_kernels();
+
+template <size_t dim>
 void export_dimension() {
     using namespace boost::python;
     using namespace tbem;
@@ -68,32 +69,19 @@ void export_dimension() {
 
     def("interpolate", interpolate_wrapper<dim>); 
 
-    class_<Kernel<dim,1,1>, boost::noncopyable>("Kernel", no_init);
-    class_<Kernel<dim,dim,dim>, boost::noncopyable>("Kernel", no_init);
-    class_<LaplaceSingle<dim>, bases<Kernel<dim,1,1>>>("LaplaceSingle");
-    class_<LaplaceDouble<dim>, bases<Kernel<dim,1,1>>>("LaplaceDouble");
-    class_<LaplaceHypersingular<dim>, bases<Kernel<dim,1,1>>>("LaplaceHypersingular");
-    class_<ElasticDisplacement<dim>, bases<Kernel<dim,dim,dim>>>(
-        "ElasticDisplacement", init<double,double>());
-    class_<ElasticTraction<dim>, bases<Kernel<dim,dim,dim>>>(
-        "ElasticTraction", init<double,double>());
-    class_<ElasticAdjointTraction<dim>, bases<Kernel<dim,dim,dim>>>(
-        "ElasticAdjointTraction", init<double,double>());
-    class_<ElasticHypersingular<dim>, bases<Kernel<dim,dim,dim>>>(
-        "ElasticHypersingular", init<double,double>());
+    export_kernels<dim>();
+    export_integration<dim>();
 
-    class_<BoundaryIntegral<dim,1,1>>("BoundaryIntegralScalar", no_init);
-    class_<BoundaryIntegral<dim,dim,dim>>("BoundaryIntegralTensor", no_init);
-    def("make_boundary_integral", make_boundary_integral<dim,1,1>);
-    def("make_boundary_integral", make_boundary_integral<dim,dim,dim>);
-
-    def("mesh_to_mesh_operator", mesh_to_mesh_operator<dim,1,1>);
-    def("mesh_to_mesh_operator", mesh_to_mesh_operator<dim,dim,dim>);
+    def("integral_operator", integral_operator<dim,1,1>);
+    def("integral_operator", integral_operator<dim,dim,dim>);
+    def("dense_integral_operator", dense_integral_operator<dim,1,1>);
+    def("dense_integral_operator", dense_integral_operator<dim,dim,dim>);
     class_<ObsPt<dim>>("ObsPt", 
         init<double, Vec<double,dim>, Vec<double,dim>, Vec<double,dim>>())
         .def_readonly("loc", &ObsPt<dim>::loc);
     VectorFromIterable().from_python<std::vector<ObsPt<dim>>>();
     def("mesh_to_points_operator", mesh_to_points_operator<dim,1,1>);
+    class_<BlockMassOperator<dim>, bases<BlockOperatorI>>("BlockMassOperator", no_init);
     def("mass_operator_scalar", mass_operator<dim,1,1>);
     def("mass_operator_tensor", mass_operator<dim,dim,dim>);
 }

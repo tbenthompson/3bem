@@ -3,6 +3,7 @@ CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
 ** crack-tip elements
 ** characterize the galerkin BEM for hypersingular kernels
 ** characterize the sinh-sigmoidal method
+** Storing the kernel by reference in the integration methods is bad. fix.
 
 -- Clear out all "inline"
 ---------------------------------------

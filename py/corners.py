@@ -33,11 +33,11 @@ def test_corners():
     single_kernel = LaplaceSingle()
     double_kernel = LaplaceDouble()
 
-    single_layer = make_boundary_integral(surface, surface, single_kernel)
-    single_op = mesh_to_mesh_operator(single_layer, qs)
+    single_mthd = make_adaptive_integration_mthd(qs, single_kernel)
+    single_op = integral_operator(surface, surface, single_mthd)
 
-    double_layer = make_boundary_integral(surface, surface, double_kernel)
-    double_op = mesh_to_mesh_operator(double_layer, qs)
+    double_mthd = make_adaptive_integration_mthd(qs, double_kernel)
+    double_op = integral_operator(surface, surface, double_mthd)
 
     mass_op = mass_operator_scalar(surface, 2)
 
@@ -54,9 +54,9 @@ def test_corners():
         both = expand(dof_map, vec_v)
         pot = distribute_vector(pot_cm, both.storage[0], surface.n_dofs())
         flux = distribute_vector(flux_cm, both.storage[1], surface.n_dofs())
-        single_eval = single_op.apply_scalar(flux)
-        double_eval = double_op.apply_scalar(pot)
-        mass_eval = mass_op.apply_scalar(pot)
+        single_eval = single_op.apply(flux)
+        double_eval = double_op.apply(pot)
+        mass_eval = mass_op.apply(pot)
         out = mass_eval - single_eval + double_eval
         pot_out = condense_vector(pot_cm, out)
         flux_out = condense_vector(flux_cm, out)

@@ -33,7 +33,7 @@ def full_space():
         obs = ObsPt(0.001, x, [0, 1], richardson_dir)
 
         op = mesh_to_points_operator(double_layer, qs, [obs])
-        val = op.apply_scalar(slip).storage[0]
+        val = op.apply(slip).storage[0]
         exact = np.arctan(0.5 / x[0]) / np.pi
         assert(np.abs(exact - val) < 2e-15)
         return val
@@ -47,19 +47,18 @@ def solve_half_space(slip, fault, surface):
     qs = get_qs()
 
     hypersingular_kernel = LaplaceHypersingular()
-    rhs_integral = make_boundary_integral(surface, fault, hypersingular_kernel)
-    rhs_op = mesh_to_mesh_operator(rhs_integral, qs)
-    rhs = -(rhs_op.apply_scalar(slip))
+    hypersingular_mthd = make_adaptive_integration_mthd(qs, hypersingular_kernel)
+    rhs_op = integral_operator(surface, fault, hypersingular_mthd)
+    rhs = -(rhs_op.apply(slip))
     rhs_condensed = condense_vector(constraint_matrix, rhs)
 
-    lhs_integral = make_boundary_integral(surface, surface, hypersingular_kernel)
-    lhs_op = mesh_to_mesh_operator(lhs_integral, qs)
+    lhs_op = integral_operator(surface, surface, hypersingular_mthd)
 
     np_rhs = np.array(rhs_condensed.storage)
     def mv(v):
         vec_v = VectorX(v)
         distributed = distribute_vector(constraint_matrix, vec_v, surface.n_dofs())
-        applied = lhs_op.apply_scalar(distributed)
+        applied = lhs_op.apply(distributed)
         condensed = condense_vector(constraint_matrix, applied)
         res = np.array(condensed.storage)
         return res
@@ -103,19 +102,16 @@ def half_space_interior(refine):
 
     double_kernel = LaplaceDouble()
     hypersingular_kernel = LaplaceHypersingular()
-    disp_fault = make_boundary_integral(surface, fault, double_kernel)
-    disp_surface = make_boundary_integral(surface, surface, double_kernel)
+    double_mthd = make_adaptive_integration_mthd(qs, double_kernel)
+    hypersingular_mthd = make_adaptive_integration_mthd(qs, hypersingular_kernel)
 
-    disp = mesh_to_points_operator(disp_fault, qs, pts_x).apply_scalar(slip) +\
-           mesh_to_points_operator(disp_surface, qs, pts_x).apply_scalar(soln)
+    disp = mesh_to_points_operator(pts_x, fault, double_mthd).apply(slip) +\
+           mesh_to_points_operator(pts_x, surface, double_mthd).apply(soln)
 
-    hypersingular_kernel = LaplaceHypersingular()
-    trac_fault = make_boundary_integral(surface, fault, hypersingular_kernel)
-    trac_surface = make_boundary_integral(surface, surface, hypersingular_kernel)
-    tracx = mesh_to_points_operator(trac_fault, qs, pts_x).apply_scalar(slip) +\
-           mesh_to_points_operator(trac_surface, qs, pts_x).apply_scalar(soln)
-    tracy = mesh_to_points_operator(trac_fault, qs, pts_y).apply_scalar(slip) +\
-           mesh_to_points_operator(trac_surface, qs, pts_y).apply_scalar(soln)
+    tracx = mesh_to_points_operator(pts_x, fault, hypersingular_mthd).apply(slip) +\
+           mesh_to_points_operator(pts_x, surface, hypersingular_mthd).apply(soln)
+    tracy = mesh_to_points_operator(pts_y, fault, hypersingular_mthd).apply(slip) +\
+           mesh_to_points_operator(pts_y, surface, hypersingular_mthd).apply(soln)
 
     x = np.array([p.loc[0] for p in pts_x])
     y = np.array([p.loc[1] for p in pts_x])

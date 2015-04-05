@@ -17,7 +17,7 @@ TEST(IdentityTensor) {
 TEST(IntegralOne) {
     QuadStrategy<2> qs(2);
     IdentityScalar<2> identity;
-    AdaptiveIntegrationMethod<2,1,1> mthd(qs, identity);
+    auto mthd = make_adaptive_integration_mthd(qs, identity);
     ObsPt<2> obs{0.01, {0.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}};
     auto facet_info = FacetInfo<2>::build({{{0,0},{1,0}}});
     IntegralTerm<2,1,1> term{obs, facet_info};
@@ -51,9 +51,9 @@ void integral_laplace_single(const IntegrationMethodI<3,1,1>& mthd) {
 TEST(IntegralLaplaceSingle) {
     QuadStrategy<3> qs(2);
     LaplaceSingle<3> single_kernel;
-    AdaptiveIntegrationMethod<3,1,1> mthd_adapt(qs, single_kernel);
+    auto mthd_adapt = make_adaptive_integration_mthd(qs, single_kernel);
     integral_laplace_single(mthd_adapt);
-    SinhIntegrationMethod<3,1,1> mthd_sinh(qs, single_kernel);
+    auto mthd_sinh = make_sinh_integration_mthd(qs, single_kernel);
     integral_laplace_single(mthd_sinh);
 }
 
@@ -67,16 +67,16 @@ void integral_laplace_double(const IntegrationMethodI<3,1,1>& mthd) {
 TEST(IntegralLaplaceDouble) {
     QuadStrategy<3> qs(2);
     LaplaceDouble<3> double_kernel;
-    AdaptiveIntegrationMethod<3,1,1> mthd_adapt(qs, double_kernel);
+    auto mthd_adapt = make_adaptive_integration_mthd(qs, double_kernel);
     integral_laplace_double(mthd_adapt);
-    SinhIntegrationMethod<3,1,1> mthd_sinh(qs, double_kernel);
+    auto mthd_sinh = make_sinh_integration_mthd(qs, double_kernel);
     integral_laplace_double(mthd_sinh);
 }
 
 TEST(IntegralElasticDisplacement) {
     ElasticDisplacement<3> k(1.0, 0.25);
     QuadStrategy<3> qs(2);
-    SinhIntegrationMethod<3,3,3> mthd(qs, k);
+    auto mthd = make_sinh_integration_mthd(qs, k);
     integral_term_test(mthd, 20.0, 0.00265);
     integral_term_test(mthd, 1.0, 0.0495);
     integral_term_test(mthd, 1e-1, 0.1607);
@@ -86,8 +86,8 @@ TEST(IntegralElasticDisplacement) {
 template <size_t dim, size_t R, size_t C>
 void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K) {
     QuadStrategy<dim> qs(2, 2, 8, 3.0, 1e-5);
-    AdaptiveIntegrationMethod<dim,R,C> mthd_adapt(qs, K);
-    SinhIntegrationMethod<dim,R,C> mthd_sinh(qs);
+    auto mthd_adapt = make_adaptive_integration_mthd(qs, K);
+    auto mthd_sinh = make_sinh_integration_mthd(qs);
 
     double max_x = 1.0;
     double max_y = 1.0;

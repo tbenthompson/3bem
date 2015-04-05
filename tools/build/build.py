@@ -25,15 +25,22 @@ import shutil
 from tools.build.fabricate import run, after
 
 def determine_targets(c):
+    remove_targets = []
     targets = dict()
     if len(c['command_params']) > 0:
         for entry in c['command_params']:
             if not entry.startswith('-'):
                 targets[entry] = c['targets'][entry]
+            elif len(entry) > 2:
+                name = entry[1:]
+                remove_targets.append(name)
     if len(targets) > 0:
         return targets
     else:
-        return c['targets']
+        all_targets = c['targets']
+        for rem in remove_targets:
+            del all_targets[rem]
+        return all_targets
 
 def priority_groupings(targets):
     buckets = dict()

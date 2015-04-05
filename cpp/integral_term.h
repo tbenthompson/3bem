@@ -63,6 +63,7 @@ struct IntegrationMethodI {
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
     compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const = 0;
 
+    virtual double far_threshold() const = 0;
     virtual QuadRule<dim-1> get_obs_quad() const = 0;
 
     /* Compute the full influence of a source facet on an observation point, given
@@ -90,8 +91,16 @@ struct AdaptiveIntegrationMethod: public IntegrationMethodI<dim,R,C> {
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
     compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
 
+    virtual double far_threshold() const {return qs.far_threshold;}
     virtual QuadRule<dim-1> get_obs_quad() const {return qs.obs_quad;}
 };
+
+template <size_t dim,size_t R, size_t C>
+AdaptiveIntegrationMethod<dim,R,C> make_adaptive_integration_mthd(
+    const QuadStrategy<dim>& qs, const Kernel<dim,R,C>& K) 
+{
+    return AdaptiveIntegrationMethod<dim,R,C>(qs, K);
+}
 
 template <size_t dim,size_t R, size_t C>
 struct SinhIntegrationMethod: public IntegrationMethodI<dim,R,C> {
@@ -112,8 +121,17 @@ struct SinhIntegrationMethod: public IntegrationMethodI<dim,R,C> {
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
     compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
 
+    virtual double far_threshold() const {return qs.far_threshold;}
     virtual QuadRule<dim-1> get_obs_quad() const {return qs.obs_quad;}
 };
+
+template <size_t dim,size_t R, size_t C>
+SinhIntegrationMethod<dim,R,C> make_sinh_integration_mthd(
+    const QuadStrategy<dim>& qs, const Kernel<dim,R,C>& K) 
+{
+    return SinhIntegrationMethod<dim,R,C>(qs, K);
+}
+
 
 } //end namespace tbem
 

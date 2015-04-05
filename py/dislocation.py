@@ -26,11 +26,11 @@ def solve(dim, surface, fault, hyp, qs, slip):
     n_dofs = surface.n_dofs()
     tbem = get_tbem(dim)
 
+    mthd = tbem.make_adaptive_integration_mthd(qs, hyp)
     cm = faulted_surface_constraints(dim, surface, fault)
 
-    p_rhs = tbem.make_boundary_integral(surface, fault, hyp);
-    rhs_op = tbem.mesh_to_mesh_operator(p_rhs, qs);
-    all_dofs_rhs = rhs_op.apply(slip);
+    rhs_op = tbem.integral_operator(surface, fault, mthd)
+    all_dofs_rhs = rhs_op.apply(slip)
     rhs = BlockVectorX([
         condense_vector(cm, all_dofs_rhs.storage[i]) for i in range(dim)
     ])
@@ -38,8 +38,7 @@ def solve(dim, surface, fault, hyp, qs, slip):
     dof_map = block_dof_map_from_functions(rhs)
     rhs = concatenate(dof_map, rhs)
 
-    p_lhs = tbem.make_boundary_integral(surface, surface, hyp);
-    lhs = tbem.mesh_to_mesh_operator(p_lhs, qs);
+    lhs = tbem.integral_operator(surface, surface, mthd)
 
     def mv(v):
         vec_v = VectorX(v)

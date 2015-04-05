@@ -46,7 +46,7 @@ def make_interior_pts(n, center, max_r):
     obs_pts = [ObsPt(0.001, p, n, n) for (p, n) in zip(pts, inward_normal)]
     return pts, obs_pts
 
-def run(linear_solver, refine, u_fnc, dudn_fnc_builder):
+def run(linear_solver, operator_builder, refine, u_fnc, dudn_fnc_builder):
     center = [5.0, 0.0]
     r = 3
     obs_radius = 2.9
@@ -54,14 +54,16 @@ def run(linear_solver, refine, u_fnc, dudn_fnc_builder):
 
     pts, obs_pts = make_interior_pts(100, center, obs_radius)
     circle = circle_mesh(center, r, refine)
-    return solve(2, circle, linear_solver, obs_pts, u_fnc, dudn_fnc_builder(center))
+    return solve(2, circle, linear_solver, operator_builder,
+                 obs_pts, u_fnc, dudn_fnc_builder(center))
 
 def test_convergence():
     es = []
     rs = np.arange(2,8)
     hs = 1.0 / (2 ** rs)
     for refine in rs:
-        es.append(run(solve_iterative, refine, log_u, make_log_dudn)[0])
+        es.append(run(solve_iterative, integral_operator,
+                      refine, log_u, make_log_dudn)[0])
     # plt.loglog(hs, es)
     # plt.show()
     loges = np.log(es)
@@ -73,14 +75,16 @@ def test_convergence():
         assert(r > 1.85)
 
 def test_log_u():
-    for mthd in [solve_direct, solve_iterative]:
-        bdry_error, int_error = run(mthd, 7, log_u, make_log_dudn)
+    for mthd in [(solve_direct, dense_integral_operator),
+                 (solve_iterative, integral_operator)]:
+        bdry_error, int_error = run(mthd[0], mthd[1], 7, log_u, make_log_dudn)
         assert(bdry_error < 1e-5)
         assert(int_error < 2e-5)
 
 def test_theta_u():
-    for mthd in [solve_direct, solve_iterative]:
-        bdry_error, int_error = run(mthd, 7, theta_u, make_theta_dudn)
+    for mthd in [(solve_direct, dense_integral_operator),
+                 (solve_iterative, integral_operator)]:
+        bdry_error, int_error = run(mthd[0], mthd[1], 7, theta_u, make_theta_dudn)
         assert(bdry_error < 1e-5)
         assert(int_error < 2e-5)
 

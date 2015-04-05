@@ -14,7 +14,12 @@ struct BlockOperatorI {
     virtual size_t n_total_rows() const = 0;
     virtual size_t n_total_cols() const = 0;
     virtual BlockVectorX apply(const BlockVectorX& x) const = 0;
-    virtual VectorX apply_scalar(const VectorX& x) const = 0;
+
+    VectorX apply(const VectorX& x) const {
+        assert(n_block_cols() == 1);
+        assert(n_block_rows() == 1);
+        return apply(BlockVectorX{x})[0]; 
+    }
 };
 
 template <typename T>
@@ -60,10 +65,6 @@ struct BlockOperator: public BlockOperatorI {
             }
         }
         return res;
-    }
-
-    VectorX apply_scalar(const VectorX& x) const {
-        return apply({x})[0]; 
     }
     
     const T& get_block(size_t row, size_t col) const {

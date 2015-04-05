@@ -39,24 +39,26 @@ TEST(TensorMassTerm) {
     auto mass_op = mass_operator<3,3,3>(sphere, 2);
     auto res = mass_op.apply(str);
     CHECK_EQUAL(mass_op.n_block_rows() * mass_op.n_block_cols(), 9);
+    CHECK_EQUAL(mass_op.n_total_rows(), 3 * sphere.n_dofs());
+    CHECK_EQUAL(mass_op.galerkin.n_total_cols(), 3 * sphere.n_facets() * 4);
     CHECK_EQUAL(res.size(), 3);
 }
-
-TEST(MatrixFreeIntegralOperator) {
-    auto m = circle_mesh({0.0, 0.0}, 1.0, 4);
-    LaplaceDouble<2> k;
-    QuadStrategy<2> qs(2);
-    auto problem = make_boundary_integral(m, m, k);
-    auto op = make_matrix_free(problem, qs);
-    auto dense_op = mesh_to_mesh_operator(problem, qs);
-
-    BlockVectorX in{random_list(m.n_dofs())};
-    auto to_test = op.apply(in);
-    auto correct = dense_op.apply(in);
-    for (size_t d = 0; d < to_test.size(); d++) {
-        CHECK_ARRAY_CLOSE(correct[d], to_test[d], to_test[d].size(), 1e-12);
-    }
-}
+// 
+// TEST(MatrixFreeIntegralOperator) {
+//     auto m = circle_mesh({0.0, 0.0}, 1.0, 4);
+//     LaplaceDouble<2> k;
+//     QuadStrategy<2> qs(2);
+//     auto problem = make_boundary_integral(m, m, k);
+//     auto op = make_matrix_free(problem, qs);
+//     auto dense_op = dense_integral_operator(problem, qs);
+// 
+//     BlockVectorX in{random_list(m.n_dofs())};
+//     auto to_test = op.apply(in);
+//     auto correct = dense_op.apply(in);
+//     for (size_t d = 0; d < to_test.size(); d++) {
+//         CHECK_ARRAY_CLOSE(correct[d], to_test[d], to_test[d].size(), 1e-12);
+//     }
+// }
 
 int main() {
     return UnitTest::RunAllTests();

@@ -6,6 +6,7 @@
 #include "mesh_gen.h"
 #include "util.h"
 #include "test_shared.h"
+#include "identity_kernels.h"
 #include "laplace_kernels.h"
 #include "elastic_kernels.h"
 #include "vectorx.h"
@@ -24,9 +25,9 @@ struct EvalProb {
     {}
 
     double go(const Kernel<3,1,1>& k) {
-        auto p = make_boundary_integral<3>(sphere, sphere, k);
         ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
-        auto op = mesh_to_points_operator(p, qs, {obs});
+        auto mthd = make_adaptive_integration_mthd(qs, k);
+        auto op = mesh_to_points_operator({obs}, sphere, mthd);
         return op.apply({src_strength})[0][0];
     }
 
@@ -89,15 +90,6 @@ TEST(ObsPtFromFace) {
     CHECK_EQUAL(obs.loc, (Vec2<double>{0.5, 0.5}));
     CHECK_EQUAL(obs.normal, (Vec2<double>{-1.0 / std::sqrt(2), 1.0 / std::sqrt(2)}));
     CHECK_EQUAL(obs.richardson_dir, obs.normal);
-}
-
-TEST(MakeProblem) {
-    auto sphere1 = sphere_mesh({0,0,0}, 1.0, 0);
-    auto sphere2 = sphere_mesh({0,0,0}, 1.0, 1);
-    IdentityTensor<3,3,3> identity;
-    auto p = make_boundary_integral<3>(sphere1, sphere2, identity);
-    CHECK_EQUAL(&p.obs_mesh, &sphere1);
-    CHECK_EQUAL(&p.src_mesh, &sphere2);
 }
 
 int main(int, char const *[])

@@ -23,6 +23,17 @@ inline double inv_ref_facet_area<3>()
     return 2.0;
 }
 
+template <size_t dim>
+double facet_jacobian(const Vec<Vec<double,dim>,dim>& facet);
+template <>
+inline double facet_jacobian<2>(const Vec<Vec<double,2>,2>& facet) {
+    return inv_ref_facet_area<2>() * hypot(unscaled_normal(facet));
+}
+template <>
+inline double facet_jacobian<3>(const Vec<Vec<double,3>,3>& facet) {
+    return inv_ref_facet_area<3>() * tri_area(facet);
+}
+
 // Map from [-1, 1] to [0, 1].
 inline double from_11_to_01(double x) 
 {
