@@ -19,10 +19,10 @@ sophistication of the command line parsing may need to improve.
 """
 from __future__ import print_function
 
-from tools.build.util import oname
+from tools.util import oname
 import os
 import shutil
-from tools.build.fabricate import run, after
+from tools.fabricate import run, after
 
 def determine_targets(c):
     remove_targets = []

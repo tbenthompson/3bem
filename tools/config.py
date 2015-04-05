@@ -1,6 +1,6 @@
 from __future__ import print_function
-from tools.build.util import files_in_dir
-from tools.build.testing import unit_testing_targets
+from tools.util import files_in_dir
+from tools.testing import unit_testing_targets
 import os
 
 def get_config(command_params):

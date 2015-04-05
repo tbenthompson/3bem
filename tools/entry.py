@@ -1,7 +1,7 @@
-from tools.build.config import get_config
-from tools.build.build import run_build
-from tools.build.testing import run_unit_tests
-from tools.build.fabricate import main, autoclean
+from tools.config import get_config
+from tools.build import run_build
+from tools.testing import run_unit_tests
+from tools.fabricate import main, autoclean
 import pprint
 import sys
 

@@ -1,6 +1,6 @@
 from __future__ import print_function
-from tools.build.util import files_in_dir, oname
-from tools.build.test_info import get_unit_test_info
+from tools.util import files_in_dir, oname
+from tools.test_info import get_unit_test_info
 import sys
 import shutil
 import subprocess
