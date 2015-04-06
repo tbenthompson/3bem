@@ -28,7 +28,6 @@ def solve(dim, surface, fault, hyp, qs, slip):
 
     mthd = tbem.make_adaptive_integration_mthd(qs, hyp)
     cm = faulted_surface_constraints(dim, surface, fault)
-
     rhs_op = tbem.integral_operator(surface, fault, mthd)
     all_dofs_rhs = rhs_op.apply(slip)
     rhs = BlockVectorX([

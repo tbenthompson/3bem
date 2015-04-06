@@ -92,7 +92,52 @@ TEST(ObsPtFromFace) {
     CHECK_EQUAL(obs.richardson_dir, obs.normal);
 }
 
+void test_integral_operator(Mesh<2> m1, Mesh<2> m2) 
+{
+    QuadStrategy<2> qs(3);
+    LaplaceDouble<2> k;
+    auto mthd = make_adaptive_integration_mthd(qs, k);
+    VectorX v(random_list(m2.n_dofs()));
+    auto correct = dense_integral_operator(m1, m2, mthd).apply_scalar(v);
+    auto other_op = integral_operator(m1, m2, mthd);
+    auto other = other_op.apply_scalar(v);
+    CHECK_EQUAL(other_op.n_total_rows(), m1.n_dofs());
+    CHECK_EQUAL(other_op.n_total_cols(), m2.n_dofs());
+    CHECK_ARRAY_CLOSE(correct, other, m1.n_dofs(), 1e-12);
+}
+
+TEST(IntegralOperatorSameMesh) {
+    auto m = circle_mesh({0, 0}, 1.0, 5);
+    test_integral_operator(m, m);
+}
+
+TEST(IntegralOperatorDifferentMesh) {
+    auto m1 = circle_mesh({0, 0}, 1.0, 5);
+    auto m2 = circle_mesh({1, 0}, 1.0, 4);
+    test_integral_operator(m1, m2);
+}
+
+TEST(IntegralOperatorTensor) {
+    auto m1 = circle_mesh({0, 0}, 1.0, 5);
+    auto m2 = m1;
+    QuadStrategy<2> qs(3);
+    ElasticHypersingular<2> k(1.0, 0.25);
+    auto mthd = make_adaptive_integration_mthd(qs, k);
+    BlockVectorX v{
+        VectorX(random_list(m2.n_dofs())),
+        VectorX(random_list(m2.n_dofs()))
+    };
+    auto correct = dense_integral_operator(m1, m2, mthd).apply(v);
+    auto other_op = integral_operator(m1, m2, mthd);
+    auto other = other_op.apply(v);
+    CHECK_EQUAL(other_op.n_total_rows(), 2 * m1.n_dofs());
+    CHECK_EQUAL(other_op.n_total_cols(), 2 * m2.n_dofs());
+    CHECK_ARRAY_CLOSE(correct[0], other[0], m1.n_dofs(), 1e-12);
+    CHECK_ARRAY_CLOSE(correct[1], other[1], m1.n_dofs(), 1e-12);
+}
+
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();
+    // return RunOneTest("IntegralOperatorSameMesh");
 }

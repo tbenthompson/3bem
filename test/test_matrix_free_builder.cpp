@@ -42,6 +42,17 @@ TEST(TensorMassTerm) {
     CHECK_EQUAL(mass_op.n_total_rows(), 3 * sphere.n_dofs());
     CHECK_EQUAL(mass_op.galerkin.n_total_cols(), 3 * sphere.n_facets() * 4);
     CHECK_EQUAL(res.size(), 3);
+
+    double true_area = 0.0;
+    for (auto f: sphere.facets) {
+        true_area += tri_area(f);
+    }
+
+    double mass_area = 0.0;
+    for (auto r: res[0]) {
+        mass_area += r;
+    }   
+    CHECK_CLOSE(mass_area, true_area, 1e-12);
 }
 // 
 // TEST(MatrixFreeIntegralOperator) {

@@ -111,10 +111,6 @@ void export_linalg() {
         .def("get_block", &BlockSparseOperator::get_block,
              return_value_policy<reference_existing_object>());
 
-    class_<BlockIntegralOperator, bases<BlockOperatorI>>
-        ("BlockIntegralOperator", no_init);
-
-
     class_<BlockDOFMap>("BlockDOFMap", no_init);
     def("block_dof_map_from_functions", block_dof_map_from_functions);
     def("concatenate", concatenate);

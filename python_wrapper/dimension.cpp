@@ -72,6 +72,9 @@ void export_dimension() {
     export_kernels<dim>();
     export_integration<dim>();
 
+    class_<BlockIntegralOperator<dim>, bases<BlockOperatorI>>
+        ("BlockIntegralOperator", no_init);
+
     def("integral_operator", integral_operator<dim,1,1>);
     def("integral_operator", integral_operator<dim,dim,dim>);
     def("dense_integral_operator", dense_integral_operator<dim,1,1>);

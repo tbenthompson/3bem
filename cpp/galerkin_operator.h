@@ -1,6 +1,7 @@
 #ifndef __LKJLKJK12312111_GALERKIN_OPERATOR_H
 #define __LKJLKJK12312111_GALERKIN_OPERATOR_H
 
+#include "numerics.h"
 #include "block_operator.h"
 #include "mesh.h"
 #include "quadrature.h"
@@ -48,10 +49,8 @@ struct BlockGalerkinOperator: public BlockOperatorI
                 {
                     auto obs_dof = dim * obs_idx + obs_basis_idx;
                     auto entry_value = basis[obs_basis_idx] * weight;
-                    for (size_t d1 = 0; d1 < shape.n_rows; d1++) {
-                        for (size_t d2 = 0; d2 < shape.n_cols; d2++) {
-                            out[d1][obs_dof] += entry_value * x[d2][interp_dof];
-                        }
+                    for (size_t d = 0; d < shape.n_rows; d++) {
+                        out[d][obs_dof] += entry_value * x[d][interp_dof];
                     }
                 }
             }

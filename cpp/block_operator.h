@@ -15,10 +15,13 @@ struct BlockOperatorI {
     virtual size_t n_total_cols() const = 0;
     virtual BlockVectorX apply(const BlockVectorX& x) const = 0;
 
-    VectorX apply(const VectorX& x) const {
+    VectorX apply_scalar(const VectorX& x) const {
         assert(n_block_cols() == 1);
         assert(n_block_rows() == 1);
         return apply(BlockVectorX{x})[0]; 
+    }
+    virtual VectorX apply(const VectorX& x) const {
+        return apply_scalar(x);
     }
 };
 
