@@ -34,7 +34,7 @@ def test_okada():
         VectorX(fault.n_dofs(), 0.0),
         VectorX(fault.n_dofs(), 0.0)
     ])
-    qs = QuadStrategy(2, 2, 5, 3.0, 1e-3)
+    qs = QuadStrategy(2, 5, 3.0, 1e-3)
 
     surface = rect_mesh(
         [-surf_width, -surf_width, 0], [-surf_width, surf_width, 0],
@@ -45,8 +45,8 @@ def test_okada():
     pr = 0.25
     hyp = ElasticHypersingular(mu, pr)
     soln = solve(3, surface, fault, hyp, qs, slip)
-    np.save('okada.npy', soln)
-    # soln = np.load('okada.npy')
+    np.save('okada.dat', soln)
+    # soln = np.load('okada.dat')
 
     vs = get_vertices(3, surface)
     n_v = vs.shape[0]

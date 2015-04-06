@@ -19,7 +19,7 @@ def full_space():
     slip = VectorX([1.0] * fault.n_dofs())
     surface = line_mesh([-10, -0.5], [10, -0.5]).refine_repeatedly(8)
 
-    qs = QuadStrategy(2, 6, 8, 4.0, 1e-13);
+    qs = QuadStrategy(5, 8, 4.0, 1e-13);
 
     double_kernel = LaplaceDouble()
     double_layer = make_boundary_integral(surface, fault, double_kernel)
@@ -40,7 +40,7 @@ def full_space():
     u = interpolate(surface, fnc)
 
 def get_qs():
-    return QuadStrategy(8, 2, 9, 3.0, 1e-5)
+    return QuadStrategy(5, 9, 3.0, 1e-5)
 
 def solve_half_space(slip, fault, surface):
     constraint_matrix = faulted_surface_constraints(2, surface, fault)
@@ -141,7 +141,7 @@ def test_halfspace():
 
 def test_halfspace_interior():
     disp_error, tracx_error, tracy_error = half_space_interior(7)
-    assert(disp_error < 2e-4)
+    assert(disp_error < 3e-4)
     assert(tracx_error < 2e-3)
     assert(tracy_error < 2e-3)
 

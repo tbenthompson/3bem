@@ -37,7 +37,7 @@ QuadRule<2> sinh_sigmoidal_transform(const QuadRule<1>& gauss_theta,
 template <size_t dim>
 struct QuadStrategy {
     QuadStrategy(int obs_order);
-    QuadStrategy(int obs_order, int src_far_order, int n_singular_steps,
+    QuadStrategy(int obs_order, int n_singular_steps,
                  double far_threshold, double near_tol);
 
     const QuadRule<dim-1> obs_quad;

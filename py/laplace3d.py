@@ -38,7 +38,6 @@ def run():
     center = np.array([5.0, 0.0, 0.0])
     r = 3.0
     obs_radius = 2.9
-    qs = QuadStrategy(3, 2, 8, 3.0, 1e-5)
 
     pts, obs_pts = make_interior_pts(2000, center, obs_radius)
     pts = np.array(pts)

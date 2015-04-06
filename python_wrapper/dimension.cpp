@@ -57,7 +57,7 @@ void export_dimension() {
         .def("n_dofs", &Mesh<dim>::n_dofs);
     
 
-    class_<QuadStrategy<dim>>("QuadStrategy", init<int,int,int,double,double>());
+    class_<QuadStrategy<dim>>("QuadStrategy", init<int,int,double,double>());
 
     class_<OverlapMap<dim>>("OverlapMap")
         .def("size", &OverlapMap<dim>::size);

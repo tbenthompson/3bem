@@ -52,7 +52,10 @@ def solve(dim, surface, fault, hyp, qs, slip):
             for i in range(dim)
         ])
         out = concatenate(dof_map, condensed)
+        print("IT:" + str(mv.it))
+        mv.it+=1
         return np.array(out.storage)
+    mv.it = 0
 
     np_rhs = np.array(rhs.storage)
     A = sp_la.LinearOperator((np_rhs.shape[0], np_rhs.shape[0]),

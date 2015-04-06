@@ -39,7 +39,7 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc):
         tbem = tbempy.TwoD
     else:
         tbem = tbempy.ThreeD
-    qs = tbem.QuadStrategy(3, 2, 8, 3.0, 1e-5)
+    qs = tbem.QuadStrategy(3, 8, 3.0, 1e-5)
 
     continuity = tbem.mesh_continuity(mesh.begin())
     constraints = tbem.convert_to_constraints(continuity)

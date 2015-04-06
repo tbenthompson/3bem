@@ -17,7 +17,7 @@ struct EvalProb {
              Vec3<double> center = Vec3<double>{0,0,0},
              double r = 3.0):
         sphere(sphere_mesh(center, r, refine_level)),
-        qs(gauss_order, gauss_order, near_eval, 2.0, 1e-2),
+        qs(gauss_order, near_eval, 2.0, 1e-2),
         obs_pt(random_pt3d()),
         obs_n(random_pt3d()),
         obs_length_scale(std::sqrt(tri_area(sphere.facets[0]))),

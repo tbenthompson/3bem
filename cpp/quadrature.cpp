@@ -243,27 +243,14 @@ std::vector<double> get_singular_steps(int n_steps) {
 
 template <size_t dim>
 QuadStrategy<dim>::QuadStrategy(int obs_order):
-    QuadStrategy(obs_order, obs_order, 8, 3.0, 1e-4)
+    QuadStrategy(obs_order, 8, 3.0, 1e-4)
 {}
 
-template <>
-QuadStrategy<2>::QuadStrategy(int obs_order, int src_far_order, 
-                           int n_singular_steps, double far_threshold,
-                           double near_tol):
-    obs_quad(gauss(obs_order)),
-    src_far_quad(gauss(src_far_order)),
-    far_threshold(far_threshold),
-    n_singular_steps(n_singular_steps),
-    singular_steps(get_singular_steps(n_singular_steps)),
-    near_tol(near_tol)
-{}
-
-template <>
-QuadStrategy<3>::QuadStrategy(int obs_order, int src_far_order, 
-                           int n_singular_steps, double far_threshold,
-                           double near_tol):
-    obs_quad(tri_gauss(obs_order)),
-    src_far_quad(tri_gauss(src_far_order)),
+template <size_t dim>
+QuadStrategy<dim>::QuadStrategy(int obs_order, int n_singular_steps,
+        double far_threshold, double near_tol):
+    obs_quad(gauss_facet<dim>(obs_order)),
+    src_far_quad(gauss_facet<dim>(obs_order + 1)),
     far_threshold(far_threshold),
     n_singular_steps(n_singular_steps),
     singular_steps(get_singular_steps(n_singular_steps)),

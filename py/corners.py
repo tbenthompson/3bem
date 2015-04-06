@@ -11,7 +11,7 @@ def test_corners():
     refine_level = 8;
     linear_solve_tol = 1e-7;
     switch_dof = 500
-    qs = QuadStrategy(4, 4, 10, 3.0, 1e-5);
+    qs = QuadStrategy(4, 10, 3.0, 1e-5);
     surface = circle_mesh(center, r, refine_level);
     n_dofs = surface.n_dofs();
     if switch_dof > n_dofs:
