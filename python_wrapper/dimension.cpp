@@ -8,6 +8,7 @@
 #include "vertex_iterator.h"
 #include "obs_pt.h"
 #include "dense_builder.h"
+#include "integral_operator.h"
 #include "mass_operator.h"
 #include "basis.h"
 
@@ -72,18 +73,24 @@ void export_dimension() {
     export_kernels<dim>();
     export_integration<dim>();
 
-    class_<BlockIntegralOperator<dim>, bases<BlockOperatorI>>
-        ("BlockIntegralOperator", no_init);
+    class_<BlockIntegralOperator<dim,1,1>, bases<BlockOperatorI>>
+        ("BlockIntegralOperatorScalar", no_init);
+    class_<BlockIntegralOperator<dim,dim,dim>, bases<BlockOperatorI>>
+        ("BlockIntegralOperatorTensor", no_init);
 
     def("integral_operator", integral_operator<dim,1,1>);
     def("integral_operator", integral_operator<dim,dim,dim>);
     def("dense_integral_operator", dense_integral_operator<dim,1,1>);
     def("dense_integral_operator", dense_integral_operator<dim,dim,dim>);
+
+    //TODO: don't expose this...??
     class_<ObsPt<dim>>("ObsPt", 
         init<double, Vec<double,dim>, Vec<double,dim>, Vec<double,dim>>())
         .def_readonly("loc", &ObsPt<dim>::loc);
     VectorFromIterable().from_python<std::vector<ObsPt<dim>>>();
     def("mesh_to_points_operator", mesh_to_points_operator<dim,1,1>);
+
+
     class_<BlockMassOperator<dim>, bases<BlockOperatorI>>("BlockMassOperator", no_init);
     def("mass_operator_scalar", mass_operator<dim,1,1>);
     def("mass_operator_tensor", mass_operator<dim,dim,dim>);

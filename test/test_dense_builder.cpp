@@ -1,5 +1,6 @@
 #include "UnitTest++.h"
 #include "dense_builder.h"
+#include "integral_operator.h"
 #include "numerics.h"
 #include "quadrature.h"
 #include "mesh.h"

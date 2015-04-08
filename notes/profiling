@@ -1,3 +1,12 @@
+READ THIS PAPER ON OPTIMIZING THE FMM!!!!
+READ THIS PAPER ON OPTIMIZING THE FMM!!!!
+READ THIS PAPER ON OPTIMIZING THE FMM!!!!
+READ THIS PAPER ON OPTIMIZING THE FMM!!!!
+READ THIS PAPER ON OPTIMIZING THE FMM!!!!
+Optimizing and Tuning the Fast Multipole Method for State-of-the-Art Multicore Architectures
+
+
+
 perf stat gives info on branch prediction successes.
 perf record gives some info on where time was spent using sampling
 perf report shows that info

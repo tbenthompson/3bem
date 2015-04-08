@@ -40,10 +40,10 @@ def get_unit_test_info(c):
     unit_test_info['integral_term']['src'] = 'test_integral_term'
     unit_test_info['integral_term']['lib_srcs'] = [c['subdirs']['src_dir'] + '/integral_term']
     unit_test_info['integral_term']['link_lib'] = True
-    unit_test_info['matrix_free_builder'] = dict()
-    unit_test_info['matrix_free_builder']['src'] = 'test_matrix_free_builder'
-    unit_test_info['matrix_free_builder']['lib_srcs'] = []
-    unit_test_info['matrix_free_builder']['link_lib'] = True
+    unit_test_info['mass_operator'] = dict()
+    unit_test_info['mass_operator']['src'] = 'test_mass_operator'
+    unit_test_info['mass_operator']['lib_srcs'] = []
+    unit_test_info['mass_operator']['link_lib'] = True
     unit_test_info['mesh'] = dict()
     unit_test_info['mesh']['src'] = 'test_mesh'
     unit_test_info['mesh']['lib_srcs'] = []

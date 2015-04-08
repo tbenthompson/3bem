@@ -26,6 +26,12 @@ struct IntegrationMethodIWrap: public IntegrationMethodI<dim,R,C>,
     virtual double far_threshold() const {
         return this->get_override("far_threshold")();
     }
+    virtual const Kernel<dim,R,C>& get_kernel() const {
+        return this->get_override("get_kernel")();
+    }
+    virtual QuadRule<dim-1> get_src_quad() const {
+        return this->get_override("get_src_quad")();
+    }
     virtual QuadRule<dim-1> get_obs_quad() const {
         return this->get_override("get_obs_quad")();
     }
