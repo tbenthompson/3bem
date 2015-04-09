@@ -20,12 +20,13 @@ namespace tbem {
               << time_ms\
               << "ms.\n";
 
-std::array<std::vector<double>,3> three_pts();
-
 std::vector<double> random_list(int N);
-std::array<std::vector<double>,3> random_pts(int N);
-Vec3<double> random_pt3d();
-Vec2<double> random_pt2d();
+
+template <size_t dim>
+Vec<double,dim> random_pt();
+
+template <size_t dim>
+std::vector<Vec<double,dim>> random_pts(size_t N);
 
 } //END namespace tbem
 #endif

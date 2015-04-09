@@ -3,14 +3,6 @@
 
 namespace tbem {
 
-std::array<std::vector<double>,3> three_pts() {
-    std::array<std::vector<double>,3> es;
-    es[0] = {1.0, -1.0, 0.0};
-    es[1] = {2.0, 0.0, -2.0};
-    es[2] = {0.0, -3.0, 3.0};
-    return es;
-}
-
 std::vector<double> random_list(int N) {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -22,28 +14,29 @@ std::vector<double> random_list(int N) {
     return es;
 }
 
-std::array<std::vector<double>,3> random_pts(int N) {
-    std::array<std::vector<double>,3> locs = 
-        {random_list(N), random_list(N), random_list(N)};
-    return locs;
-}
-
-Vec2<double> random_pt2d() {
+template <size_t dim>
+std::vector<Vec<double,dim>> random_pts(size_t N) 
+{
+    std::vector<Vec<double,dim>> out(N);
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0, 1);
-    return {
-        dis(gen), dis(gen)
-    };
+    for (size_t i = 0; i < N; i++) {
+        for (size_t d = 0; d < dim; d++) {
+            out[i][d] = dis(gen);
+        }
+    }
+    return out;
 }
+template std::vector<Vec<double,2>> random_pts<2>(size_t N); 
+template std::vector<Vec<double,3>> random_pts<3>(size_t N);
 
-Vec3<double> random_pt3d() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0, 1);
-    return {
-        dis(gen), dis(gen), dis(gen)
-    };
+template <size_t dim>
+Vec<double,dim> random_pt() 
+{
+    return random_pts<dim>(1)[0];
 }
+template Vec<double,2> random_pt<2>();
+template Vec<double,3> random_pt<3>();
 
 } //END NAMESPACE TBEM
