@@ -1,6 +1,8 @@
 from __future__ import print_function
 from tools.util import files_in_dir
 from tools.testing import unit_testing_targets
+from numpy.distutils.system_info import get_info as np_config_info
+import warnings
 import os
 
 def get_config(command_params):
@@ -16,6 +18,9 @@ def get_config(command_params):
     test_dir = 'test'
     py_wrap_dir = 'python_wrapper'
 
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        blas_lapack_info = np_config_info('lapack_opt', 0)
 
     includes = [
         './' + str(src_dir),
@@ -39,6 +44,8 @@ def get_config(command_params):
     cpp_flags = base_cpp_flags + flag_types[build_type]
 
     link_flags = ['--coverage', '-fopenmp']
+    link_flags.extend(['-L' + l_dir for l_dir in blas_lapack_info['library_dirs']])
+    link_flags.extend(['-l' + library for library in blas_lapack_info['libraries']])
 
     lib = dict()
     lib['cpp_flags'] = cpp_flags + ['-fPIC']

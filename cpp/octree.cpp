@@ -94,7 +94,8 @@ make_child(const Vec<size_t,dim>& idx, const Box<dim>& bounds,
         child_bounds, pts, child_indices, child_level, min_pts_per_cell
     );
     return std::unique_ptr<Octree<dim>>(new Octree<dim>{
-        child_bounds, child_indices, std::move(children), child_level
+        {child_bounds, child_indices, child_level},
+        std::move(children)
     });
 }
 
@@ -117,7 +118,7 @@ build_children(const Box<dim>& bounds,
 }
 
 template <size_t dim>
-std::unique_ptr<Octree<dim>> build_octree(const std::vector<Vec<double,dim>>& pts,
+Octree<dim> build_octree(const std::vector<Vec<double,dim>>& pts,
     size_t min_pts_per_cell)
 {
     auto true_box = Box<dim>::bounding_box(pts);
@@ -127,16 +128,14 @@ std::unique_ptr<Octree<dim>> build_octree(const std::vector<Vec<double,dim>>& pt
     auto children = build_children(
         expanded_box, pts, all_indices, 0, min_pts_per_cell
     );
-    return std::unique_ptr<Octree<dim>>(new Octree<dim>{
-        expanded_box, all_indices, std::move(children), 0
-    });
+    return Octree<dim>{{expanded_box, all_indices, 0}, std::move(children)};
 }
 
 template 
-std::unique_ptr<Octree<2>> build_octree(const std::vector<Vec<double,2>>& pts,
+Octree<2> build_octree(const std::vector<Vec<double,2>>& pts,
     size_t min_pts_per_cell);
 template 
-std::unique_ptr<Octree<3>> build_octree(const std::vector<Vec<double,3>>& pts,
+Octree<3> build_octree(const std::vector<Vec<double,3>>& pts,
     size_t min_pts_per_cell);
 
 } // END namespace tbem

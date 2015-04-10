@@ -32,10 +32,10 @@ def get_unit_test_info(c):
     unit_test_info['elastic_kernels']['src'] = 'test_elastic_kernels'
     unit_test_info['elastic_kernels']['lib_srcs'] = []
     unit_test_info['elastic_kernels']['link_lib'] = True
-    # unit_test_info['fmm'] = dict()
-    # unit_test_info['fmm']['src'] = 'test_fmm'
-    # unit_test_info['fmm']['lib_srcs'] = ['cpp/fmm', 'cpp/octree']
-    # unit_test_info['fmm']['link_lib'] = False
+    unit_test_info['fmm'] = dict()
+    unit_test_info['fmm']['src'] = 'test_fmm'
+    unit_test_info['fmm']['lib_srcs'] = []
+    unit_test_info['fmm']['link_lib'] = True
     unit_test_info['function'] = dict()
     unit_test_info['function']['src'] = 'test_function'
     unit_test_info['function']['lib_srcs'] = []

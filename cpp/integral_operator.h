@@ -32,10 +32,11 @@ BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
                     continue; 
                 }
                 IntegralTerm<dim,R,C> term{pt, src_facet_info[i]};
-                auto integrals = mthd.compute_term(term, nearest_pt) -
-                                mthd.compute_farfield(term, nearest_pt);
+                auto integrals = mthd.compute_term(term, nearest_pt);
+                auto farfield_correction = -mthd.compute_farfield(term, nearest_pt);
+                auto nearfield_term = integrals - farfield_correction;
                 for (int b = 0; b < dim; b++) {
-                    row.push_back(std::make_pair(dim * i + b, integrals[b]));
+                    row.push_back(std::make_pair(dim * i + b, nearfield_term[b]));
                 }
             }
 
@@ -97,51 +98,14 @@ struct BlockIntegralOperator: public BlockOperatorI {
         return near_eval + galerkin_far;
     }
 };
-// 
-// template <size_t dim, size_t R, size_t C>
-// struct NBodyBuilder {
-//     virtual std::unique_ptr<BlockOperatorI> 
-// };
 
-template <size_t dim>
-NBodyData<dim> make_nbody_data(const Mesh<dim>& obs_mesh, const Mesh<dim>& src_mesh,
-    const QuadRule<dim-1>& obs_quad, const QuadRule<dim-1>& src_quad)
-{
-    auto n_obs_dofs = obs_mesh.n_facets() * obs_quad.size();
-    std::vector<Vec<double,dim>> obs_locs(n_obs_dofs);
-    std::vector<Vec<double,dim>> obs_normals(n_obs_dofs);
-    for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) {
-        auto obs_face = FacetInfo<dim>::build(obs_mesh.facets[obs_idx]);
-        for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
-            auto obs_dof = obs_idx * obs_quad.size() + obs_q;
-            obs_normals[obs_dof] = obs_face.normal;
-            obs_locs[obs_dof] = ref_to_real(obs_quad[obs_q].x_hat, obs_face.face);
-        }
-    }
-
-    auto n_src_dofs = src_mesh.n_facets() * src_quad.size();
-    std::vector<Vec<double,dim>> src_locs(n_src_dofs);
-    std::vector<Vec<double,dim>> src_normals(n_src_dofs);
-    std::vector<double> src_weights(n_src_dofs);
-    for (size_t src_idx = 0; src_idx < src_mesh.facets.size(); src_idx++) {
-        auto src_face = FacetInfo<dim>::build(src_mesh.facets[src_idx]);
-        for (size_t src_q = 0; src_q < src_quad.size(); src_q++) {
-            auto src_dof = src_idx * src_quad.size() + src_q;
-            src_weights[src_dof] = src_quad[src_q].w * src_face.jacobian;
-            src_normals[src_dof] = src_face.normal;
-            src_locs[src_dof] = ref_to_real(src_quad[src_q].x_hat, src_face.face);
-        }
-    }
-
-    return NBodyData<dim>{obs_locs, obs_normals, src_locs, src_normals, src_weights};
-}
 
 template <size_t dim, size_t R, size_t C>
 BlockIntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd) {
 
     auto nearfield = galerkin_nearfield(obs_mesh, src_mesh, mthd);
-    auto nbody_data = make_nbody_data(obs_mesh, src_mesh,
+    auto nbody_data = nbody_data_from_bem(obs_mesh, src_mesh,
         mthd.get_obs_quad(), mthd.get_src_quad());
     auto farfield = BlockDirectNBodyOperator<dim,R,C>{nbody_data, mthd.get_kernel()};
 

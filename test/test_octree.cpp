@@ -54,7 +54,7 @@ TEST(CheckLawOfLargeNumbers) {
     auto tree = build_octree(pts, 100);
     TOC("Build " + std::to_string(n));
     for (size_t i = 0; i < 8; i++) {
-        int n_pts = tree->children[i]->indices.size();
+        int n_pts = tree.children[i]->data.indices.size();
         int diff = abs(n_pts - (n / 8));
         CHECK(diff < (n / 32));
     }
@@ -63,18 +63,18 @@ TEST(CheckLawOfLargeNumbers) {
 TEST(SmallOctree) {
     auto es = three_pts();
     auto oct = build_octree(es, 4);
-    CHECK_EQUAL(oct->level, 0);
+    CHECK_EQUAL(oct.data.level, 0);
     for (size_t i = 0; i < 8; i++) {
-        CHECK(oct->children[i] == nullptr);
+        CHECK(oct.children[i] == nullptr);
     }
-    CHECK_EQUAL(oct->indices.size(), 3);
+    CHECK_EQUAL(oct.data.indices.size(), 3);
 }
 
 TEST(NotOneLevel) {
     auto pts = random_pts<3>(1000);
     auto oct = build_octree(pts, 4);
-    CHECK_EQUAL(oct->indices.size(), 1000);
-    CHECK_EQUAL(oct->children[0]->level, 1);
+    CHECK_EQUAL(oct.data.indices.size(), 1000);
+    CHECK_EQUAL(oct.children[0]->data.level, 1);
 }
 
 int main(int, char const *[])

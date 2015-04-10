@@ -23,21 +23,38 @@ public:
     static Box<dim> bounding_box(const std::vector<Vec<double,dim>>& x);
 };
 
-template <size_t dim>
-struct Octree {
+template <size_t dim, typename T>
+struct OctreeData {
     static const size_t split = 2<<(dim-1);
-    typedef std::array<std::unique_ptr<Octree<dim>>,split> ChildrenType;
+    typedef std::array<std::unique_ptr<OctreeData<dim,T>>,split> ChildrenType;
+    const T data;
+    ChildrenType children;
+
+    bool is_leaf() const {
+        for (const auto& p: children) {
+            if (p != nullptr) {
+                return false;
+            }
+        }
+        return true;
+    }
+};
+
+template <size_t dim>
+struct OctreeCell {
     const Box<dim> bounds;
     const std::vector<int> indices;
-    const ChildrenType children;
     const size_t level;
 };
+
+template <size_t dim>
+using Octree = OctreeData<dim,OctreeCell<dim>>;
 
 template <size_t dim>
 Vec<size_t,dim> make_child_idx(size_t i);
 
 template <size_t dim>
-std::unique_ptr<Octree<dim>> build_octree(const std::vector<Vec<double,dim>>& pts,
+Octree<dim> build_octree(const std::vector<Vec<double,dim>>& pts,
     size_t min_pts_per_cell);
 
 } // END namespace tbem
