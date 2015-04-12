@@ -69,4 +69,23 @@ TranslationSurface<3> make_surrounding_surface<3>(size_t expansion_order) {
     return {pts, pts};
 }
 
+template <size_t dim>
+std::vector<Vec<double,dim>> 
+TranslationSurface<dim>::move(const Box<dim>& box, double r_ref) const
+{
+    auto cell_r = hypot(box.half_width);
+    auto out_r = r_ref * cell_r;
+    auto out_center = box.center;
+
+    std::vector<Vec<double,dim>> out_pts(pts.size());
+    for (size_t i = 0; i < pts.size(); i++) {
+        out_pts[i] = out_r * pts[i] + out_center;
+    }
+
+    return out_pts;
+}
+
+template struct TranslationSurface<2>;
+template struct TranslationSurface<3>;
+
 } // END namespace tbem

@@ -8,6 +8,7 @@ CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
 ** link the python via numpy
 ** include the boost python libraries with the code.
 ** Clear out all "inline"
+** consider getting rid of vectorx
 ---------------------------------------
 
 MILESTONE: HANGING NODES AND COMPLEX GEOMETRIES

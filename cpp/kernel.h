@@ -13,7 +13,7 @@ struct Kernel {
     typedef Vec<double,C> InType;
     typedef Vec<Vec<double,C>,R> OperatorType;
 
-    OperatorType operator()(
+    virtual OperatorType operator()(
         const Vec<double,dim>& obs_pt, 
         const Vec<double,dim>& src_pt, 
         const Vec<double,dim>& obs_normal, 
