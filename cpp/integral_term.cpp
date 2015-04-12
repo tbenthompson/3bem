@@ -41,9 +41,7 @@ Vec<Vec<Vec<double,C>,R>,dim> IntegralTerm<dim,R,C>::eval_point_influence(
     const Vec<double,dim>& moved_obs_loc) const 
 {
     const auto src_pt = ref_to_real(x_hat, src_face.face);
-    const auto d = src_pt - moved_obs_loc;
-    const auto r2 = dot_product(d, d);
-    const auto kernel_val = k(r2, d, src_face.normal, obs.normal);
+    auto kernel_val = k(moved_obs_loc, src_pt, obs.normal, src_face.normal);
     return outer_product(linear_basis(x_hat), kernel_val * src_face.jacobian);
 }
 

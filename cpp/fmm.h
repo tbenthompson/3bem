@@ -79,7 +79,7 @@ struct P2MBuilder {
             }
         } else if (src_oct.data.level <= 1) {
             // do nothing
-            return;    
+            // return;    
         } else {
             // mid tree cell
             std::vector<Vec<double,dim>> src_pts;
@@ -101,9 +101,8 @@ struct TreeNBodyOperator {
         BlockVectorX out(R, VectorX(data.obs_locs.size(), 0.0));
         for (size_t i = 0; i < data.obs_locs.size(); i++) {
             for (size_t j = 0; j < data.src_locs.size(); j++) {
-                auto d = data.src_locs[j] - data.obs_locs[i];
-                auto r2 = dot_product(d, d);
-                auto kernel_val = K(r2, d, data.src_normals[j], data.obs_normals[i]);
+                auto kernel_val = K(data.obs_locs[i], data.src_locs[j],
+                    data.obs_normals[i], data.src_normals[j]);
                 auto entry = data.src_weights[j] * kernel_val;
                 for (size_t d1 = 0; d1 < R; d1++) {
                     for (size_t d2 = 0; d2 < C; d2++) {
@@ -129,7 +128,7 @@ TreeNBodyOperator<dim,R,C> make_tree_nbody_operator(const Kernel<dim,R,C>& K,
     double mac)
 {
     auto src_oct = build_octree(data.src_locs, min_pts_per_cell);
-    auto p2m = P2MBuilder<dim,R,C>(K, src_oct, data, expansion_order).build();
+    // auto p2m = P2MBuilder<dim,R,C>(K, src_oct, data, expansion_order).build();
     return {K, data, std::move(src_oct), mac};
 }
 

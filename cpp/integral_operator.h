@@ -33,7 +33,7 @@ BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
                 }
                 IntegralTerm<dim,R,C> term{pt, src_facet_info[i]};
                 auto integrals = mthd.compute_term(term, nearest_pt);
-                auto farfield_correction = -mthd.compute_farfield(term, nearest_pt);
+                auto farfield_correction = mthd.compute_farfield(term, nearest_pt);
                 auto nearfield_term = integrals - farfield_correction;
                 for (int b = 0; b < dim; b++) {
                     row.push_back(std::make_pair(dim * i + b, nearfield_term[b]));

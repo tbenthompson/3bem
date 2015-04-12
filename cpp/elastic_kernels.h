@@ -29,8 +29,8 @@ struct ElasticDisplacement<2>: public Kernel<2,2,2>
         disp_C2(3 - 4 * poisson_ratio)
     {}
 
-    typename Kernel::OperatorType operator()(double r2, const Vec2<double>& delta, 
-        const Vec2<double>& nsrc, const Vec2<double>& nobs) const 
+    typename Kernel::OperatorType call(double r2, const Vec2<double>& delta, 
+        const Vec2<double>& nobs, const Vec2<double>& nsrc) const 
     {
         typename Kernel::OperatorType out;
         double r = std::sqrt(r2);
@@ -55,8 +55,9 @@ struct ElasticTraction<2>: public Kernel<2,2,2>
         trac_C2(1 - 2 * poisson_ratio)
     {}
     
-    Kernel::OperatorType operator()(double r2, const Vec2<double>& delta, 
-                       const Vec2<double>& nsrc, const Vec2<double>& nobs) const {
+    Kernel::OperatorType call(double r2, const Vec2<double>& delta, 
+        const Vec2<double>& nobs, const Vec2<double>& nsrc) const 
+    {
         Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto drdn = dot_product(delta, nsrc) / r;
@@ -84,8 +85,9 @@ struct ElasticAdjointTraction<2>: public Kernel<2,2,2>
         trac_C2(1 - 2 * poisson_ratio)
     {}
     
-    Kernel::OperatorType operator()(double r2, const Vec2<double>& delta, 
-                       const Vec2<double>& nsrc, const Vec2<double>& nobs) const {
+    Kernel::OperatorType call(double r2, const Vec2<double>& delta, 
+        const Vec2<double>& nobs, const Vec2<double>& nsrc) const 
+    {
         Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto drdm = dot_product(delta, nobs) / r;
@@ -115,8 +117,9 @@ struct ElasticHypersingular<2>: public Kernel<2,2,2>
         trac_C2(1 - 2 * poisson_ratio)
     {}
 
-    Kernel::OperatorType operator()(double r2, const Vec2<double>& delta, 
-                       const Vec2<double>& nsrc, const Vec2<double>& nobs) const {
+    Kernel::OperatorType call(double r2, const Vec2<double>& delta, 
+        const Vec2<double>& nobs, const Vec2<double>& nsrc) const 
+    {
         Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto dr = delta / r;
@@ -153,8 +156,9 @@ struct ElasticDisplacement<3>: public Kernel<3,3,3>
         disp_C2(3 - 4 * poisson_ratio)
     {}
 
-    Kernel::OperatorType operator()(double r2, const Vec3<double>& delta, 
-                       const Vec3<double>& nsrc, const Vec3<double>& nobs) const {
+    Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
+        const Vec3<double>& nobs, const Vec3<double>& nsrc) const 
+    {
         Kernel::OperatorType out;
         for (int k = 0; k < 3; k++) {
             for (int j = 0; j < 3; j++) {
@@ -178,8 +182,9 @@ struct ElasticTraction<3>: public Kernel<3,3,3>
         trac_C2(1 - 2 * poisson_ratio)
     {}
     
-    Kernel::OperatorType operator()(double r2, const Vec3<double>& delta, 
-                       const Vec3<double>& nsrc, const Vec3<double>& nobs) const {
+    Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
+        const Vec3<double>& nobs, const Vec3<double>& nsrc) const 
+    {
         Kernel::OperatorType out;
         const double r = std::sqrt(r2);
         const auto drdn = dot_product(delta, nsrc) / r;
@@ -207,8 +212,9 @@ struct ElasticAdjointTraction<3>: public Kernel<3,3,3>
         trac_C2(1 - 2 * poisson_ratio)
     {}
     
-    Kernel::OperatorType operator()(double r2, const Vec3<double>& delta, 
-                       const Vec3<double>& nsrc, const Vec3<double>& nobs) const {
+    Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
+        const Vec3<double>& nobs, const Vec3<double>& nsrc) const 
+    {
         Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto drdm = dot_product(delta, nobs) / r;
@@ -242,8 +248,9 @@ struct ElasticHypersingular<3>: public Kernel<3,3,3>
         hyp_C3(3 * poisson_ratio)
     {}
     
-    Kernel::OperatorType operator()(double r2, const Vec3<double>& delta, 
-                       const Vec3<double>& nsrc, const Vec3<double>& nobs) const {
+    Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
+        const Vec3<double>& nobs, const Vec3<double>& nsrc) const 
+    {
         Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const Vec3<double> dr = delta / r;
