@@ -420,6 +420,7 @@ inline Vec1<bool> operator<(const Vec1<T>& t, const T& rhs) {
 }
 
 inline double max(double x) {return x;}
+inline double max(Vec2<double> x) {return std::max(x[0], x[1]);}
 inline double max(Vec3<double> x) {return std::max(x[0], std::max(x[1], x[2]));}
 
 inline double min(double x) {return x;}

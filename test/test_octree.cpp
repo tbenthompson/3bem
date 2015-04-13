@@ -43,8 +43,14 @@ TEST(MakeChildBox) {
 
 TEST(InBox) {
     Box<3> box{{0,1,0}, {2,2,2}};
-    CHECK(box.in_box({0,2,0}));
-    CHECK(!box.in_box({0,4,0}));
+    CHECK(box.in_box({0,2,0}, {false, false, false}));
+    CHECK(!box.in_box({0,4,0}, {false, false, false}));
+}
+
+TEST(InBoxInclusive) {
+    Box<3> box{{0,1,0}, {2,2,2}};
+    CHECK(box.in_box({0,3,0}, {false, true, false}));
+    CHECK(!box.in_box({0,3,0}, {false, false, false}));
 }
 
 TEST(CheckLawOfLargeNumbers) {
@@ -77,8 +83,63 @@ TEST(NotOneLevel) {
     CHECK_EQUAL(oct.children[0]->data.level, 1);
 }
 
+TEST(OctreePlane) {
+    std::vector<Vec<double,2>> pts;
+    for (size_t i = 0; i < 100; i++) {
+        pts.push_back({static_cast<double>(i), 0.0});
+    }
+    auto oct = build_octree(pts, 1);
+    CHECK(!oct.is_leaf());
+}
+
+template <size_t dim>
+size_t n_pts(const Octree<dim>& cell) {
+    if (cell.is_leaf()) {
+        return cell.data.indices.size();
+    }
+    size_t n_child_pts = 0;
+    for (size_t c = 0; c < Octree<dim>::split; c++) {
+        if (cell.children[c] == nullptr) {
+            continue;
+        }
+        n_child_pts += n_pts(*cell.children[c]);
+    }
+    return n_child_pts;
+}
+
+template <size_t dim>
+void check_n_pts(const Octree<dim>& cell) {
+    CHECK_EQUAL(n_pts(cell), cell.data.indices.size());
+    for (size_t c = 0; c < Octree<dim>::split; c++) {
+        if (cell.children[c] == nullptr) {
+            continue;
+        }
+        if (cell.children[c]->is_leaf()) {
+            continue;
+        }
+        check_n_pts(*cell.children[c]);
+    }
+}
+
+TEST(SumPointsRandom) {
+    auto pts = random_pts<3>(1000);
+    auto oct = build_octree(pts, 4);
+    check_n_pts(oct);
+}
+
+TEST(SumPointsPlane) {
+    size_t n = 100;
+    std::vector<Vec<double,2>> pts;
+    for (size_t i = 0; i < n; i++) {
+        pts.push_back({static_cast<double>(i), 0.0});
+    }
+    auto oct = build_octree(pts, 26);
+    CHECK(n_pts(oct) == n);
+}
+
+
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();
-    // return RunOneTest("NotOneLevel");
+    // return RunOneTest("SumPointsPlane");
 }

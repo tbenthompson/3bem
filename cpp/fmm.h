@@ -8,6 +8,7 @@
 #include "octree.h"
 #include "numbers.h"
 #include "vectorx.h"
+#include "util.h"
 
 namespace tbem {
 
@@ -83,6 +84,9 @@ nbody_matrix(const Kernel<dim,R,C>& K, const NBodyData<dim>& data)
     return op;
 }
 
+static size_t m2p = 0;
+static size_t p2p = 0;
+
 template <size_t dim, size_t R, size_t C>
 struct TreeNBodyOperator {
     typedef OctreeData<dim,std::vector<double>> P2MData;
@@ -92,8 +96,6 @@ struct TreeNBodyOperator {
     const TranslationSurface<dim> surface;
     Octree<dim> src_oct;
     const double mac;
-    std::map<size_t,LUDecomposition> check_to_equiv_ops;
-
     const double d = 0.1;
     const double alpha = 1e-8;
 
@@ -122,7 +124,8 @@ struct TreeNBodyOperator {
     }
 
     std::vector<double> apply_check_to_equiv_operator(const Octree<dim>& cell,
-        const std::vector<double>& x) 
+        const std::vector<double>& x, 
+        std::map<size_t,LUDecomposition> check_to_equiv_ops) const
     {
         if (check_to_equiv_ops.count(cell.data.level) == 0) {
 #pragma omp critical
@@ -201,8 +204,8 @@ struct TreeNBodyOperator {
         return out;
     }
 
-    std::unique_ptr<P2MData> P2M(const Octree<dim>& cell,
-        const BlockVectorX& x) 
+    std::unique_ptr<P2MData> P2M(const Octree<dim>& cell, const BlockVectorX& x,
+        std::map<size_t,LUDecomposition> check_to_equiv_ops) const
     {
         std::vector<double> check_eval;
         typename P2MData::ChildrenType child_P2M;
@@ -210,17 +213,17 @@ struct TreeNBodyOperator {
         if (cell.is_leaf()) {
             check_eval = apply_src_to_check_operator(cell, x);
         } else {
-#pragma omp parallel for
+#pragma omp parallel for if(cell.data.level == 0)
             for (size_t i = 0; i < Octree<dim>::split; i++) {
                 if (cell.children[i] == nullptr) {
                     continue;
                 }
-                child_P2M[i] = P2M(*cell.children[i], x);
+                child_P2M[i] = P2M(*cell.children[i], x, check_to_equiv_ops);
             }
             check_eval = apply_children_to_check_operator(cell, child_P2M);
         }
 
-        auto equiv_srcs = apply_check_to_equiv_operator(cell, check_eval);
+        auto equiv_srcs = apply_check_to_equiv_operator(cell, check_eval, check_to_equiv_ops);
 
         return std::unique_ptr<P2MData>(new P2MData{
             equiv_srcs, std::move(child_P2M)
@@ -274,8 +277,10 @@ struct TreeNBodyOperator {
         const double distance = dist(cell.data.bounds.center, pt);
         const double radius = hypot(cell.data.bounds.half_width); 
         if (distance > mac * radius) {
+            m2p++;
             return M2P(pt, normal, cell, p2m);
         } else if (cell.is_leaf()) {
+            p2p++;
             return P2P(pt, normal, cell, x);
         } else {
             auto out = zeros<Vec<double,R>>::make();
@@ -290,8 +295,9 @@ struct TreeNBodyOperator {
         }
     }
 
-    BlockVectorX apply(const BlockVectorX& x) {
-        const auto p2m = P2M(src_oct, x);
+    BlockVectorX apply(const BlockVectorX& x) const 
+    {
+        const auto p2m = P2M(src_oct, x, {});
 
         BlockVectorX out(R, VectorX(data.obs_locs.size()));
 #pragma omp parallel for
@@ -303,45 +309,11 @@ struct TreeNBodyOperator {
                 out[d1][i] = res[d1];
             }
         }
+        std::cout << m2p << std::endl;
+        std::cout << p2p << std::endl;
         return out;
     }
 };
-
-// void FMMInfo::treecode_process_cell(const OctreeCell& cell, int cell_idx, int pt_idx) {
-//     const double dist_squared = dist2({{obs_oct.elements[0][pt_idx],
-//                                        obs_oct.elements[1][pt_idx],
-//                                        obs_oct.elements[2][pt_idx]}},
-//                                        cell.bounds.center);
-//     const double radius_squared = hypot2(cell.bounds.half_width); 
-//     if (dist_squared > mac2 * radius_squared) {
-//         M2P_cell_pt(cell.bounds, cell_idx, pt_idx);    
-//         return;
-//     } else if (cell.is_leaf) {
-//         P2P_cell_pt(cell, pt_idx);
-//         return;
-//     }
-//     treecode_helper(cell, pt_idx);
-// }
-// 
-// void FMMInfo::treecode_helper(const OctreeCell& cell, int pt_idx) {
-//     for (int c = 0; c < 8; c++) {
-//         const int child_idx = cell.children[c];
-//         if (child_idx == -1) {
-//             continue;
-//         }
-//         const auto child = src_oct.cells[child_idx];
-//         treecode_process_cell(child, child_idx, pt_idx);
-//     }
-// }
-// 
-// void FMMInfo::treecode() {
-//     const int root_idx = src_oct.get_root_index();
-//     const auto root = src_oct.cells[root_idx];
-// #pragma omp parallel for
-//     for(unsigned int i = 0; i < obs_oct.n_elements(); i++) {
-//         treecode_process_cell(root, root_idx, i);
-//     }
-// }
 
 } // END namespace tbem
 #endif

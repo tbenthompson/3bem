@@ -18,7 +18,7 @@ public:
     const Vec<double,dim> center;
     const Vec<double,dim> half_width;
     Box<dim> get_subcell(const Vec<size_t,dim>& idx) const;
-    bool in_box(const Vec<double,dim>& pt) const;
+    bool in_box(const Vec<double,dim>& pt, const Vec<bool,dim>& inclusive) const;
 
     static Box<dim> bounding_box(const std::vector<Vec<double,dim>>& x);
 };

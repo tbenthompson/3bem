@@ -6,9 +6,9 @@ import warnings
 import os
 
 def get_config(command_params):
-    build_type = 'debug'
-    if '-r' in command_params:
-        build_type = 'release'
+    build_type = 'release'
+    if '-d' in command_params:
+        build_type = 'debug'
     if '-p' in command_params:
         build_type = 'profile'
     printer = lambda x: None

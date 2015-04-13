@@ -5,14 +5,6 @@ import scipy.sparse.linalg as sp_la
 import numpy as np
 
 import time
-class Timer:
-    def __init__(self):
-        self.start = time.time()
-    def print_reset(self, comment):
-        print(comment + ": " + str(time.time() - self.start))
-        self.reset()
-    def reset(self):
-        self.start = time.time()
 
 def get_tbem(dim):
     if dim == 2:
@@ -36,15 +28,11 @@ def solve(dim, surface, fault, hyp, qs, slip):
     n_dofs = surface.n_dofs()
     print("Number of dofs: " + str(dim * n_dofs))
     tbem = get_tbem(dim)
-    t = Timer()
 
     mthd = tbem.make_adaptive_integration_mthd(qs, hyp)
     cm = faulted_surface_constraints(dim, surface, fault)
-    t.print_reset("build constraints")
     rhs_op = tbem.integral_operator(surface, fault, mthd)
-    t.print_reset("build rhs op")
     all_dofs_rhs = rhs_op.apply(slip)
-    t.print_reset("apply rhs")
     rhs = BlockVectorX([
         condense_vector(cm, all_dofs_rhs.storage[i]) for i in range(dim)
     ])
@@ -53,29 +41,23 @@ def solve(dim, surface, fault, hyp, qs, slip):
     rhs = concatenate(dof_map, rhs)
 
     lhs = tbem.integral_operator(surface, surface, mthd)
-    t.print_reset("Construct lhs")
 
     def mv(v):
-        t.reset()
         vec_v = VectorX(v)
-        t.print_reset('convert to VectorX')
         both = expand(dof_map, vec_v)
-        t.print_reset('expand')
 
         test = BlockVectorX([
             distribute_vector(cm, both.storage[i], n_dofs)
             for i in range(dim)
         ])
-        t.print_reset('distribute')
+        s = time.time()
         applied = lhs.apply(test)
-        t.print_reset('apply')
+        print("Apply took " + str(time.time() - s))
         condensed = BlockVectorX([
             condense_vector(cm, applied.storage[i])
             for i in range(dim)
         ])
-        t.print_reset('condense')
         out = concatenate(dof_map, condensed)
-        t.print_reset('concatenate')
         print("IT:" + str(mv.it))
         mv.it+=1
         return np.array(out.storage)

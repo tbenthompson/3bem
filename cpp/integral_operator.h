@@ -4,6 +4,7 @@
 #include "galerkin_operator.h"
 #include "interpolation_operator.h"
 #include "nbody_operator.h"
+#include "fmm.h"
 
 namespace tbem {
 
@@ -81,7 +82,7 @@ struct BlockIntegralOperator: public BlockOperatorI {
         const BlockInterpolationOperator<dim>& interp):
         nearfield(nearfield),
         galerkin(galerkin),
-        farfield(farfield),
+        farfield(std::move(farfield)),
         interp(interp)
     {}
 

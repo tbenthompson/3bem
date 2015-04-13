@@ -45,24 +45,24 @@ TEST(MakeSurroundingSurface) {
 } 
 
 TEST(P2M_2D) {
-    auto n = 30000;
+    size_t n = 10000;
     size_t order = 15;
-    LaplaceSingle<2> K;
+    LaplaceHypersingular<2> K;
     auto data = ones_data<2>(n);
-    TreeNBodyOperator<2,1,1> tree(K, data, 100, order, 1.0);
-    TreeNBodyOperator<2,1,1> tree2(K, data, n + 1, order, 2.0);
     BlockVectorX x({VectorX(data.src_weights)});
+    TreeNBodyOperator<2,1,1> tree(K, data, 40, order, 2.5);
     TIC
     auto out = tree.apply(x);
-    TOC("FMM");
-    TIC2 
+    TOC("treecode " + std::to_string(n));
+    TreeNBodyOperator<2,1,1> tree2(K, data, n + 1, order, 2.5);
+    TIC2
     auto out2 = tree2.apply(x);
-    TOC("DIRECT");
-    double sum = 0.0;
-    // for (size_t i = 0; i < n; i++) {
-    //     auto error = std::fabs((out2[0][i] - out[0][i]) / out2[0][i]);
-    //     std::cout << error << std::endl;
-    // }
+    TOC("Direct");
+    for (size_t i = 0; i < n; i++) {
+        // std::cout << out2[0][i] << " " << out[0][i] << std::endl;
+        auto error = std::fabs((out2[0][i] - out[0][i]) / out2[0][i]);
+        // std::cout << error << std::endl;
+    }
 }
 
 // TEST(TreecodeIdentityScalar) {
