@@ -84,5 +84,9 @@ def get_unit_test_info(c):
     unit_test_info['vertex_iterator']['src'] = 'test_vertex_iterator'
     unit_test_info['vertex_iterator']['lib_srcs'] = []
     unit_test_info['vertex_iterator']['link_lib'] = True
+    unit_test_info['nearest_neighbors'] = dict()
+    unit_test_info['nearest_neighbors']['src'] = 'test_nearest_neighbors'
+    unit_test_info['nearest_neighbors']['lib_srcs'] = []
+    unit_test_info['nearest_neighbors']['link_lib'] = True
     return unit_test_info
 

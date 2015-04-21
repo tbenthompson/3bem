@@ -2,7 +2,7 @@
 #include "basis.h"
 #include "mesh.h"
 #include "mesh_gen.h"
-#include "constraint_builder.h"
+#include "continuity_builder.h"
 #include "util.h"
 
 using namespace tbem;

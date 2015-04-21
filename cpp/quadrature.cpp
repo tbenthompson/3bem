@@ -152,7 +152,7 @@ QuadRule<2> square_to_tri(QuadRule<2> square_quad) {
 /* Produces a 2D tensor product gaussian quadrature rule. The number of gauss
  * points in each dimension is the same.
  */
-QuadRule<2> tensor_gauss(int n_pts) {
+QuadRule<2> tensor_gauss(size_t n_pts) {
     auto g1d = gauss(n_pts);
     return tensor_product(g1d, g1d);
 }
@@ -160,7 +160,7 @@ QuadRule<2> tensor_gauss(int n_pts) {
 /* Produces a 2D tensor product gaussian quadrature rule mapped into the unit
  * triangle (0,0)-(1,0)-(0,1).
  */
-QuadRule<2> tri_gauss(int n_pts) {
+QuadRule<2> tri_gauss(size_t n_pts) {
     return square_to_tri(tensor_gauss(n_pts));
 }
 
@@ -232,22 +232,22 @@ QuadRule<2> sinh_sigmoidal_transform(const QuadRule<1>& gauss_theta,
     return out;
 }
 
-std::vector<double> get_singular_steps(int n_steps) {
+std::vector<double> get_singular_steps(size_t n_steps) {
     static constexpr double initial_dist = 1.0;
     std::vector<double> dist(n_steps);
-    for (int nf = 0; nf < n_steps; nf++) {
+    for (size_t nf = 0; nf < n_steps; nf++) {
         dist[nf] = initial_dist / (std::pow(2.0, nf));
     }
     return dist;
 }
 
 template <size_t dim>
-QuadStrategy<dim>::QuadStrategy(int obs_order):
+QuadStrategy<dim>::QuadStrategy(size_t obs_order):
     QuadStrategy(obs_order, 8, 3.0, 1e-4)
 {}
 
 template <size_t dim>
-QuadStrategy<dim>::QuadStrategy(int obs_order, int n_singular_steps,
+QuadStrategy<dim>::QuadStrategy(size_t obs_order, size_t n_singular_steps,
         double far_threshold, double near_tol):
     obs_quad(gauss_facet<dim>(obs_order)),
     src_far_quad(gauss_facet<dim>(obs_order + 1)),

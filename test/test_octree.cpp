@@ -137,6 +137,10 @@ TEST(SumPointsPlane) {
     CHECK(n_pts(oct) == n);
 }
 
+TEST(OctreeIdenticalPoints) {
+    std::vector<Vec<double,3>> es{{1.0, 2.0, 0.0}, {1.0, 2.0, 0.0}};
+    auto oct = build_octree(es, 1);
+}
 
 int main(int, char const *[])
 {

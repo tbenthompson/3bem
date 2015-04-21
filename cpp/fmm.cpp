@@ -42,11 +42,9 @@ TranslationSurface<2> make_surrounding_surface<2>(size_t expansion_order)
     return {pts, pts};
 }
 
-template <>
-TranslationSurface<3> make_surrounding_surface<3>(size_t expansion_order) {
-
+TranslationSurface<3> surrounding_surface_sphere(size_t expansion_order)
+{
     std::vector<Vec<double,3>> pts;
-
     double a = 4 * M_PI / expansion_order;
     double d = std::sqrt(a);
     auto M_theta = static_cast<size_t>(std::round(M_PI / d));
@@ -67,6 +65,12 @@ TranslationSurface<3> make_surrounding_surface<3>(size_t expansion_order) {
     }
 
     return {pts, pts};
+}
+
+template <>
+TranslationSurface<3> make_surrounding_surface<3>(size_t expansion_order) 
+{
+    return surrounding_surface_sphere(expansion_order);
 }
 
 template <size_t dim>

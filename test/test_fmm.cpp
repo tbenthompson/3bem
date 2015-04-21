@@ -1,9 +1,9 @@
 #include "UnitTest++.h"
 #include "fmm.h"
 #include "laplace_kernels.h"
+#include "elastic_kernels.h"
 #include "identity_kernels.h"
-#include "util.h"
-#include "dense_operator.h"
+#include "nbody_operator.h"
 
 using namespace tbem;
 
@@ -20,7 +20,8 @@ TEST(LU) {
 }
 
 template <size_t dim>
-NBodyData<dim> ones_data(size_t n) {
+NBodyData<dim> ones_data(size_t n) 
+{
     auto src_pts = random_pts<dim>(n);
     auto obs_pts = random_pts<dim>(n);
     auto normals = random_pts<dim>(n);
@@ -28,14 +29,8 @@ NBodyData<dim> ones_data(size_t n) {
     return NBodyData<dim>{src_pts, normals, obs_pts, normals, weights};
 }
 
-TEST(SetupTreecode) {
-    auto n = 200;
-    LaplaceSingle<3> K;
-    auto data = ones_data<3>(n);
-    TreeNBodyOperator<3,1,1> tree(K, data, 5, 5, 5);
-}
-
-TEST(MakeSurroundingSurface) {
+TEST(MakeSurroundingSurface) 
+{
     auto surface = make_surrounding_surface<2>(4);
     CHECK_CLOSE(surface.pts[0], (Vec<double,2>{1.0, 0.0}), 1e-12);
     CHECK_CLOSE(surface.pts[1], (Vec<double,2>{0.0, 1.0}), 1e-12);
@@ -44,89 +39,59 @@ TEST(MakeSurroundingSurface) {
     CHECK_CLOSE(surface.normals[1], (Vec<double,2>{0.0, 1.0}), 1e-12);
 } 
 
-TEST(P2M_2D) {
-    size_t n = 10000;
-    size_t order = 15;
-    LaplaceHypersingular<2> K;
-    auto data = ones_data<2>(n);
-    BlockVectorX x({VectorX(data.src_weights)});
-    TreeNBodyOperator<2,1,1> tree(K, data, 40, order, 2.5);
-    TIC
+template <size_t dim, size_t R, size_t C>
+void test_kernel(const Kernel<dim,R,C>& K, size_t order, double allowed_error) 
+{
+    size_t n = 1000;
+    size_t n_per_cell = 40;
+    auto data = ones_data<dim>(n);
+    BlockVectorX x(C, VectorX(data.src_weights));
+    TreeNBodyOperator<dim,R,C> tree(K, data, n_per_cell, order, 3.0);
     auto out = tree.apply(x);
-    TOC("treecode " + std::to_string(n));
-    TreeNBodyOperator<2,1,1> tree2(K, data, n + 1, order, 2.5);
-    TIC2
-    auto out2 = tree2.apply(x);
-    TOC("Direct");
-    for (size_t i = 0; i < n; i++) {
-        // std::cout << out2[0][i] << " " << out[0][i] << std::endl;
-        auto error = std::fabs((out2[0][i] - out[0][i]) / out2[0][i]);
-        // std::cout << error << std::endl;
+
+    BlockDirectNBodyOperator<dim,R,C> exact_op{data, K};
+    auto exact = exact_op.apply(x);
+    for (size_t d = 0; d < R; d++) {
+        for (size_t i = 0; i < n; i++) {
+            auto error = std::fabs((out[d][i] - exact[d][i]) / exact[d][i]);
+            CHECK_CLOSE(error, 0, allowed_error);
+        }
     }
 }
 
-// TEST(TreecodeIdentityScalar) {
-//     int n = 6;
-//     IdentityScalar<3> K;
-//     auto src_pts = random_pts<3>(n);
-//     auto obs_pts = random_pts<3>(n);
-//     auto normals = random_pts<3>(n);
-//     std::vector<double> weights(n, 1.0);
-//     NBodyData<3> data{src_pts, normals, obs_pts, normals, weights};
-//     TreeNBodyOperator<3,1,1> tree(K, data, 5, 5, 5);
-//     VectorX out(data.obs_locs.size(), 1.0);
-//     auto applied = tree.apply({out})[0];
-//     CHECK_ARRAY_CLOSE(applied, (std::vector<double>(n, n)), n, 1e-14);
+TEST(SingleLayer2DFMM) 
+{
+    test_kernel(LaplaceSingle<2>(), 15, 1e-4);
+}
+
+TEST(DoubleLayer2DFMM) 
+{
+    test_kernel(LaplaceDouble<2>(), 45, 1e-4);
+}
+
+TEST(HypersingularLayer2DFMM) 
+{
+    test_kernel(LaplaceDouble<2>(), 50, 1e-4);
+}
+
+TEST(SingleLayer3DFMM) 
+{
+    test_kernel(LaplaceSingle<3>(), 1000, 1e-12);
+}
+
+// TEST(DoubleLayer3DFMM) 
+// {
+//     test_kernel(LaplaceDouble<3>(), 45, 1e-4);
+// }
+// 
+// TEST(HypersingularLayer3DFMM) 
+// {
+//     test_kernel(LaplaceDouble<3>(), 50, 1e-4);
 // }
 
-// TEST(P2M_M2P_OneCell) {
-//     int n = 100;
-//     auto oct = random_pts_tree(n, n+1);
-//     std::vector<double> strength(n, 1.0);
-//     FMMInfo fmm_info(one_kernel, oct, strength, oct, 1, 9.0);
-//     fmm_info.P2M_pts_cell(0);
-//     CHECK_EQUAL(fmm_info.nodes[0].size(), 1);
-//     CHECK_CLOSE(fmm_info.multipole_weights[0], n, 1e-14);
-// 
-//     for(int i = 0; i < n; i++) {
-//         auto cell = fmm_info.src_oct.cells[0];
-//         fmm_info.M2P_cell_pt(cell.bounds, 0, i);
-//         CHECK_CLOSE(fmm_info.obs_effect[i], n, 1e-14);
-//     }
-// }
-
-// 
-// TEST(TreecodeLaplace) {
-//     int n = 200;
-//     auto oct = random_pts_tree(n, 2);
-//     std::vector<double> strength(n, 1.0);
-//     FMMInfo fmm_info(laplace_single, oct, strength, oct, 2, 20.0);
-//     fmm_info.P2M();
-//     fmm_info.treecode();
-//     auto exact = direct_n_body(oct.elements, oct.elements, laplace_single, strength);
-//     std::vector<double> error(n);
-//     for (unsigned int i = 0; i < error.size(); i++) {
-//         error[i] = std::fabs((fmm_info.obs_effect[i] - exact[i]) / exact[i]);
-//     }
-//     std::vector<double> zeros(n, 0.0);
-//     CHECK_ARRAY_CLOSE(error, zeros, n, 1e-2);
-// }
-// 
-// TEST(M2L_Kernel) {
-//     int n = 70;
-//     auto oct = random_pts_tree(n, 1);
-//     auto oct2 = random_pts_tree(n, 1);
-//     std::vector<double> strength(n, 1.0);
-//     FMMInfo fmm_info(one_kernel, oct, strength, oct2, 1, 1.0);
-//     fmm_info.P2M();
-//     for(unsigned int i = 0; i < fmm_info.src_oct.cells.size(); i++) {
-//         auto src_cell =  fmm_info.src_oct.cells[i];
-//         for(unsigned int j = 0; j < fmm_info.obs_oct.cells.size(); j++) {
-//             fmm_info.local_weights[j] = 0.0;
-//             fmm_info.M2L_cell_cell(i, j);
-//             CHECK_EQUAL(fmm_info.local_weights[j], src_cell.end - src_cell.begin);
-//         }
-//     }
+// TEST(ElasticDisplacementFMM)
+// {
+//     test_kernel(ElasticDisplacement<2>(30e9, 0.25), 15, 1e-4);
 // }
 
 int main(int, char const *[])

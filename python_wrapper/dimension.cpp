@@ -3,7 +3,7 @@
 #include "iterable_converter.h"
 
 #include "mesh.h"
-#include "constraint_builder.h"
+#include "continuity_builder.h"
 #include "quadrature.h"
 #include "vertex_iterator.h"
 #include "obs_pt.h"

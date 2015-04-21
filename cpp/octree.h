@@ -19,6 +19,7 @@ public:
     const Vec<double,dim> half_width;
     Box<dim> get_subcell(const Vec<size_t,dim>& idx) const;
     bool in_box(const Vec<double,dim>& pt, const Vec<bool,dim>& inclusive) const;
+    bool in_box_inclusive(const Vec<double,dim>& pt) const;
 
     static Box<dim> bounding_box(const std::vector<Vec<double,dim>>& x);
 };
@@ -43,6 +44,7 @@ struct OctreeData {
 template <size_t dim>
 struct OctreeCell {
     const Box<dim> bounds;
+    const Box<dim> tight_bounds;
     const std::vector<int> indices;
     const size_t level;
 };

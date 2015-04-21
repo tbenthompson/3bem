@@ -297,6 +297,7 @@ struct TreeNBodyOperator {
 
     BlockVectorX apply(const BlockVectorX& x) const 
     {
+        assert(x.size() == C);
         const auto p2m = P2M(src_oct, x, {});
 
         BlockVectorX out(R, VectorX(data.obs_locs.size()));
@@ -309,8 +310,6 @@ struct TreeNBodyOperator {
                 out[d1][i] = res[d1];
             }
         }
-        std::cout << m2p << std::endl;
-        std::cout << p2p << std::endl;
         return out;
     }
 };

@@ -1,4 +1,22 @@
-CURRENT: Bug fixes and ease of use improvements while I work on elastic solver.
+CURRENT: FMM 
+** Imagine some kind of general purpose "nearfield" structure that can allow a simple O(N) solution to the near neighbors problems in mesh_continuity, apply_discontinuities as well as the FMM tree structure.
+** FMM (as opposed to the current treecode)!
+** Centralization the kernel application function
+** Precompute the DAG of FMM operations -- this will allow simple, but powerful  and scalable parallelism -- look at starpu
+** see how the accuracy changes as a function of
+    1) radius of equivalent surface
+    2) radius of check surface
+    3) order of expansion
+    4) multipole acceptance criteria
+** Get the tensor kernels working with FMM
+** 3D fmm tests
+** regularized equiv to check operator (A^T A + \alpha I)
+    (how does the value of alpha change the accuracy?)
+** think about whether the direct treecode inversion algorithm is worthwhile
+
+
+
+MISC:
 ** hanging nodes!
 ** crack-tip elements
 ** characterize the galerkin BEM for hypersingular kernels
@@ -17,20 +35,3 @@ NF: Hanging nodes?
 NF: Handle the general case when fault-surface intersection does not occur at a vertex.
 ---- Linked to hanging nodes in that lots of geometry code needs to be used/written.
 ---- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
-
----------------------------------------
-
-MILESTONE: FMM-BEM INTEGRATION
-DD: BIG: decide whether to use the direct FMM-based inversion methods.
-
-NF: Imagine some kind of general purpose "nearfield" structure that can allow a simple O(N) solution to the near neighbors problems in mesh_continuity, apply_discontinuities as well as the FMM tree structure.
-NF: FMM!
-NF: Use the FMMOperator to perform an FMM evaluation within an iteration. 
-
---------------------------------------- Unaffiliated tasks
-TESTS(T):
-DESIGN DECISIONS(DD):
-NEW FUNCTIONALITY(NF):
-MODIFIED FUNCTIONALITY(MF):
-STRUCTURAL(S):
-OPTIMIZATION(O):
