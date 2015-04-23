@@ -142,8 +142,42 @@ TEST(OctreeIdenticalPoints) {
     auto oct = build_octree(es, 1);
 }
 
+TEST(OctreeVerySimilarPoints) {
+    std::vector<Vec<double,3>> es{
+        {1.0, 2.0, 0.0}, {1.0, 2.0 - 1e-20, 0.0}, {0.0, 0.0, 0.0}
+    };
+    auto oct = build_octree(es, 1);
+}
+
+template <size_t dim>
+size_t count_children(const Octree<dim>& cell) {
+    if (cell.is_leaf()) {
+        return 1;
+    }
+
+    size_t n_c = 0;
+    for (auto& c: cell.children) {
+        if (c == nullptr) {
+            continue;
+        }
+        n_c += 1 + count_children(*c);
+    }
+    return n_c;
+}
+
+TEST(OctreeLine) {
+    size_t n = 10;
+    std::vector<Vec<double,2>> pts;     
+    for (size_t i = 0; i < n; i++) {
+        pts.push_back({static_cast<double>(i), 0});
+        pts.push_back({static_cast<double>(i + 1), 0});
+    }
+
+    auto oct = build_octree(pts, 1);
+    CHECK_EQUAL(count_children(oct), 31); 
+}
+
 int main(int, char const *[])
 {
     return UnitTest::RunAllTests();
-    // return RunOneTest("SumPointsPlane");
 }

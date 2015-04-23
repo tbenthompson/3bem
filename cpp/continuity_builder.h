@@ -6,6 +6,8 @@
 #include "constraint_matrix.h"
 #include "vertex_iterator.h"
 #include "vec_ops.h"
+#include "octree.h"
+#include "nearest_neighbors.h"
     
 namespace tbem {
 
@@ -36,15 +38,18 @@ OverlapMap<dim>
 find_overlapping_vertices(const VertexIterator<dim>& A_begin,
     const VertexIterator<dim>& B_begin, double eps = 1e-15) 
 {
+    std::vector<Vec<double,dim>> target_pts;
+    for (auto B_it = B_begin; !B_it.is_end(); ++B_it) {
+        target_pts.push_back(*B_it);
+    }
+    auto oct = build_octree(target_pts, 1);
+
     std::vector<OverlapPair<dim>> overlaps;
     for (auto A_it = A_begin; !A_it.is_end(); ++A_it) {
         auto A_pt = *A_it;
-        for (auto B_it = B_begin; !B_it.is_end(); ++B_it) {
-            auto B_pt = *B_it;
-            if (pts_not_close(A_pt, B_pt, eps)) {
-                continue;
-            }
-            overlaps.push_back({A_it, B_it});
+        auto ident_pts_indices = identical_points(A_pt, target_pts, oct);
+        for (const auto& idx: ident_pts_indices) {
+            overlaps.push_back({A_it, B_begin + idx});
         }
     }
     return OverlapMap<dim>(overlaps.begin(), overlaps.end());

@@ -83,7 +83,7 @@ Vec<size_t,3> make_child_idx<3>(size_t i);
 
 template <size_t dim>
 typename Octree<dim>::ChildrenType
-build_children(const Box<dim>& bounds, const Box<dim>& tight_bounds,
+build_children(const Box<dim>& bounds, 
     const std::vector<Vec<double,dim>>& pts, const std::vector<int>& indices,
     size_t level, size_t min_pts_per_cell) 
 {
@@ -120,18 +120,17 @@ build_children(const Box<dim>& bounds, const Box<dim>& tight_bounds,
         auto child_bounds = bounds.get_subcell(idx);
 
         std::vector<Vec<double,dim>> tight_pts(child_indices[i].size());
-        for (size_t idx = 0; idx < child_indices[i].size(); idx++) {
-            tight_pts[idx] = pts[idx];
+        for (size_t pt_idx = 0; pt_idx < child_indices[i].size(); pt_idx++) {
+            tight_pts[pt_idx] = pts[child_indices[i][pt_idx]];
         }
         auto tight_bounds = Box<dim>::bounding_box(tight_pts);
 
         typename Octree<dim>::ChildrenType sub_children;
-        if (all(tight_bounds.half_width != 0.0)) {
+        if (any(tight_bounds.half_width != 0.0)) {
             sub_children = build_children(
-                child_bounds, tight_bounds, pts, 
-                child_indices[i], child_level, min_pts_per_cell
+                child_bounds, pts, child_indices[i], child_level, min_pts_per_cell
             );
-        }
+        } 
 
         children[i] = std::unique_ptr<Octree<dim>>(new Octree<dim>{
             {child_bounds, tight_bounds, child_indices[i], child_level},
@@ -152,7 +151,7 @@ Octree<dim> build_octree(const std::vector<Vec<double,dim>>& pts,
     Box<dim> expanded_box{box.center, half_width};
     auto all_indices = range(pts.size());
     auto children = build_children(
-        box, box, pts, all_indices, 0, min_pts_per_cell
+        box, pts, all_indices, 0, min_pts_per_cell
     );
     return Octree<dim>{
         {expanded_box, expanded_box, all_indices, 0},

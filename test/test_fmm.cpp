@@ -76,7 +76,7 @@ TEST(HypersingularLayer2DFMM)
 
 TEST(SingleLayer3DFMM) 
 {
-    test_kernel(LaplaceSingle<3>(), 1000, 1e-12);
+    test_kernel(LaplaceSingle<3>(), 100, 1e-4);
 }
 
 // TEST(DoubleLayer3DFMM) 

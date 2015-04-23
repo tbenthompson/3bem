@@ -428,6 +428,7 @@ inline double min(Vec3<double> x) {return std::min(x[0], std::min(x[1], x[2]));}
 
 inline bool any(bool a) {return a;}
 inline bool any(Vec3<bool> v) {return v[0] || v[1] || v[2];}
+inline bool any(Vec2<bool> v) {return v[0] || v[1];}
 
 inline bool all(bool a) {return a;}
 inline bool all(Vec3<bool> v) {return v[0] && v[1] && v[2];}
