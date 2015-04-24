@@ -84,6 +84,33 @@ nbody_matrix(const Kernel<dim,R,C>& K, const NBodyData<dim>& data)
     return op;
 }
 
+template <size_t dim, size_t R, size_t C>
+std::vector<double>
+nbody_eval(const Kernel<dim,R,C>& K, const NBodyData<dim>& data,
+           const std::vector<double>& x) 
+{
+    std::vector<double> out(R * data.obs_locs.size(), 0.0);
+
+    for (size_t i = 0; i < data.obs_locs.size(); i++) {
+        for (size_t j = 0; j < data.src_locs.size(); j++) {
+            auto kernel_val = data.src_weights[j] * K(
+                data.obs_locs[i], data.src_locs[j],
+                data.obs_normals[i], data.src_normals[j]
+            );
+
+            for (size_t d1 = 0; d1 < R; d1++) {
+                auto row = d1 * data.obs_locs.size() + i;
+                for (size_t d2 = 0; d2 < C; d2++) {
+                    auto col = d2 * data.src_locs.size() + j;
+                    out[row] += kernel_val[d1][d2] * x[col];
+                }
+            }
+        }
+    }
+
+    return out;
+}
+
 static size_t m2p = 0;
 static size_t p2p = 0;
 
@@ -125,14 +152,11 @@ struct TreeNBodyOperator {
 
     std::vector<double> apply_check_to_equiv_operator(const Octree<dim>& cell,
         const std::vector<double>& x, 
-        std::map<size_t,LUDecomposition> check_to_equiv_ops) const
+        std::map<size_t,LUDecomposition>& check_to_equiv_ops) const
     {
-        if (check_to_equiv_ops.count(cell.data.level) == 0) {
 #pragma omp critical
-            {
-                check_to_equiv_ops[cell.data.level] = 
-                    build_check_to_equiv_operator(cell);
-            }
+        if (check_to_equiv_ops.count(cell.data.level) == 0) {
+            check_to_equiv_ops[cell.data.level] = build_check_to_equiv_operator(cell);
         }
         auto op = check_to_equiv_ops[cell.data.level];
         return LU_solve(op, x);
@@ -142,70 +166,72 @@ struct TreeNBodyOperator {
         const BlockVectorX& x) const
     {
         assert(cell.is_leaf());
-        auto check_pts = surface.upward_check_points(cell.data.bounds, d);
-        auto n_check = check_pts.size();
-        std::vector<double> out(R * n_check, 0.0);
-        for (size_t i = 0; i < n_check; i++) {
-            for (auto j: cell.data.indices) {
-                auto kernel_val = K(
-                    check_pts[i], data.src_locs[j],
-                    surface.normals[i], data.src_normals[j]
-                );
+        auto n_src = cell.data.indices.size();
 
-                auto entry = data.src_weights[j] * kernel_val;
-                for (size_t d1 = 0; d1 < R; d1++) {
-                    for (size_t d2 = 0; d2 < C; d2++) {
-                        out[d1 * n_check + i] += entry[d1][d2] * x[d2][j];
-                    }
-                }
+        NBodyData<dim> s2c;
+        s2c.src_locs.resize(n_src);
+        s2c.src_normals.resize(n_src);
+        s2c.src_weights.resize(n_src);
+        s2c.obs_locs = surface.upward_check_points(cell.data.bounds, d);
+        s2c.obs_normals = surface.normals;
+
+        std::vector<double> src_str(n_src * C);
+        for (size_t i = 0; i < n_src; i++) {
+            s2c.src_locs[i] = data.src_locs[cell.data.indices[i]];
+            s2c.src_normals[i] = data.src_normals[cell.data.indices[i]];
+            s2c.src_weights[i] = data.src_weights[cell.data.indices[i]];
+            for (size_t d = 0; d < C; d++) {
+                src_str[d * n_src + i] = x[d][cell.data.indices[i]];
             }
         }
 
-        return out;
+        return nbody_eval(K, s2c, src_str);
     }
 
     std::vector<double> apply_children_to_check_operator(const Octree<dim>& cell,
-        const typename P2MData::ChildrenType& children) const
+        const typename P2MData::ChildrenType& child_p2m) const
     {
         assert(!cell.is_leaf());
+
         auto check_pts = surface.upward_check_points(cell.data.bounds, d);
         auto n_check = check_pts.size();
-        std::vector<double> out(R * check_pts.size(), 0.0);
-        for (size_t i = 0; i < n_check; i++) {
-            for (size_t c = 0; c < Octree<dim>::split; c++) {
-                if (children[c] == nullptr) {
-                    continue;
-                }
-                auto equiv_pts = surface.upward_equiv_points(
-                    cell.children[c]->data.bounds, d);
-                auto equiv_srcs = children[c]->data;
-                auto n_equiv = equiv_pts.size();
+        auto n_equiv = n_check;
 
-                for (size_t j = 0; j < n_equiv; j++) {
-                    auto kernel_val = K(
-                        check_pts[i],
-                        equiv_pts[j],
-                        surface.normals[i], 
-                        surface.normals[j]
-                    );
+        auto n_children = cell.count_children();
+        auto n_src = n_children * n_check;
 
-                    auto entry = data.src_weights[j] * kernel_val;
-                    for (size_t d1 = 0; d1 < R; d1++) {
-                        for (size_t d2 = 0; d2 < C; d2++) {
-                            auto obs_idx = d1 * n_check + i;
-                            auto src_idx = d2 * n_equiv + j;
-                            out[obs_idx] += entry[d1][d2] * equiv_srcs[src_idx];
-                        }
-                    }
+        NBodyData<dim> c2c;
+        c2c.obs_locs = check_pts;
+        c2c.obs_normals = surface.normals;
+        c2c.src_locs.resize(n_src);
+        c2c.src_normals.resize(n_src);
+        c2c.src_weights.resize(n_src);
+
+        std::vector<double> src_str(n_src * C);
+        size_t child_idx = 0;
+        for (size_t c = 0; c < Octree<dim>::split; c++) {
+            auto& child = cell.children[c];
+            if (child == nullptr) {
+                continue;
+            }
+            auto equiv_pts = surface.upward_equiv_points(child->data.bounds, d);
+            for (size_t i = 0; i < n_equiv; i++) {
+                auto idx = child_idx * n_equiv + i;
+                c2c.src_locs[idx] = equiv_pts[i];
+                c2c.src_normals[idx] = surface.normals[i];
+                c2c.src_weights[idx] = 1.0;
+                for (size_t d = 0; d < C; d++) {
+                    src_str[d * n_src + idx] = child_p2m[c]->data[d * n_equiv + i];
                 }
             }
+            child_idx++;
         }
 
-        return out;
+        return nbody_eval(K, c2c, src_str);
     }
 
     std::unique_ptr<P2MData> P2M(const Octree<dim>& cell, const BlockVectorX& x,
-        std::map<size_t,LUDecomposition> check_to_equiv_ops) const
+        std::map<size_t,LUDecomposition>& check_to_equiv_ops) const
     {
         std::vector<double> check_eval;
         typename P2MData::ChildrenType child_P2M;
@@ -223,7 +249,9 @@ struct TreeNBodyOperator {
             check_eval = apply_children_to_check_operator(cell, child_P2M);
         }
 
-        auto equiv_srcs = apply_check_to_equiv_operator(cell, check_eval, check_to_equiv_ops);
+        auto equiv_srcs = apply_check_to_equiv_operator(
+            cell, check_eval, check_to_equiv_ops
+        );
 
         return std::unique_ptr<P2MData>(new P2MData{
             equiv_srcs, std::move(child_P2M)
@@ -298,7 +326,8 @@ struct TreeNBodyOperator {
     BlockVectorX apply(const BlockVectorX& x) const 
     {
         assert(x.size() == C);
-        const auto p2m = P2M(src_oct, x, {});
+        std::map<size_t,LUDecomposition> check_to_equiv;
+        const auto p2m = P2M(src_oct, x, check_to_equiv);
 
         BlockVectorX out(R, VectorX(data.obs_locs.size()));
 #pragma omp parallel for

@@ -9,11 +9,11 @@ namespace tbem {
 
 template <size_t dim>
 struct NBodyData {
-    const std::vector<Vec<double,dim>> obs_locs;
-    const std::vector<Vec<double,dim>> obs_normals;
-    const std::vector<Vec<double,dim>> src_locs;
-    const std::vector<Vec<double,dim>> src_normals;
-    const std::vector<double> src_weights;
+    std::vector<Vec<double,dim>> obs_locs;
+    std::vector<Vec<double,dim>> obs_normals;
+    std::vector<Vec<double,dim>> src_locs;
+    std::vector<Vec<double,dim>> src_normals;
+    std::vector<double> src_weights;
 };
 
 template <size_t dim>

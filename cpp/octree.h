@@ -31,6 +31,16 @@ struct OctreeData {
     const T data;
     ChildrenType children;
 
+    size_t count_children() const {
+        size_t c = 0;
+        for (const auto& p: children) {
+            if (p != nullptr) {
+                c++;
+            }
+        }
+        return c;
+    }
+
     bool is_leaf() const {
         for (const auto& p: children) {
             if (p != nullptr) {
