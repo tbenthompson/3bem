@@ -4,6 +4,7 @@
 #include "elastic_kernels.h"
 #include "identity_kernels.h"
 #include "nbody_operator.h"
+#include "test_shared.h"
 
 using namespace tbem;
 
@@ -42,12 +43,14 @@ TEST(MakeSurroundingSurface)
 template <size_t dim, size_t R, size_t C>
 void test_kernel(const Kernel<dim,R,C>& K, size_t order, double allowed_error) 
 {
-    size_t n = 1000;
-    size_t n_per_cell = 40;
+    size_t n = 10000;
+    size_t n_per_cell = std::max<size_t>(50, order);
     auto data = ones_data<dim>(n);
     BlockVectorX x(C, VectorX(data.src_weights));
-    TreeNBodyOperator<dim,R,C> tree(K, data, n_per_cell, order, 3.0);
+    TreeNBodyOperator<dim,R,C> tree(K, data, n_per_cell, order, 3.5);
+    TIC
     auto out = tree.apply(x);
+    TOC("ABAS");
 
     BlockDirectNBodyOperator<dim,R,C> exact_op{data, K};
     auto exact = exact_op.apply(x);
@@ -66,36 +69,43 @@ TEST(SingleLayer2DFMM)
 
 TEST(DoubleLayer2DFMM) 
 {
-    test_kernel(LaplaceDouble<2>(), 45, 1e-4);
+    test_kernel(LaplaceDouble<2>(), 30, 1e-4);
 }
 
 TEST(HypersingularLayer2DFMM) 
 {
-    test_kernel(LaplaceDouble<2>(), 50, 1e-4);
+    test_kernel(LaplaceDouble<2>(), 30, 1e-4);
 }
 
 TEST(SingleLayer3DFMM) 
 {
-    test_kernel(LaplaceSingle<3>(), 100, 1e-4);
+    test_kernel(LaplaceSingle<3>(), 35, 1e-4);
 }
 
-// TEST(DoubleLayer3DFMM) 
-// {
-//     test_kernel(LaplaceDouble<3>(), 45, 1e-4);
-// }
-// 
-// TEST(HypersingularLayer3DFMM) 
-// {
-//     test_kernel(LaplaceDouble<3>(), 50, 1e-4);
-// }
+TEST(DoubleLayer3DFMM) 
+{
+    test_kernel(LaplaceDouble<3>(), 200, 1e-4);
+}
 
-// TEST(ElasticDisplacementFMM)
-// {
-//     test_kernel(ElasticDisplacement<2>(30e9, 0.25), 15, 1e-4);
-// }
+TEST(HypersingularLayer3DFMM) 
+{
+    test_kernel(LaplaceDouble<3>(), 200, 1e-4);
+}
+
+TEST(ElasticDisplacement2DFMM)
+{
+    test_kernel(ElasticDisplacement<2>(30e9, 0.25), 15, 1e-4);
+}
+TEST(ElasticTraction2DFMM)
+{
+    test_kernel(ElasticTraction<2>(30e9, 0.25), 40, 1e-4);
+}
+TEST(ElasticHypersingular2DFMM)
+{
+    test_kernel(ElasticHypersingular<2>(30e9, 0.25), 40, 1e-4);
+}
 
 int main(int, char const *[])
 {
-    int retval = UnitTest::RunAllTests();
-    return retval;
+    return UnitTest::RunAllTests();
 }

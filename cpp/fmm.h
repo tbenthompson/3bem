@@ -48,7 +48,7 @@ struct TranslationSurface {
     std::vector<Vec<double,dim>> 
     upward_equiv_points(const Box<dim>& box, double d) const
     {
-        auto r_ref = std::sqrt(2) + d;
+        auto r_ref = 0.9;
         return move(box, r_ref);
     }
 };
@@ -70,11 +70,11 @@ nbody_matrix(const Kernel<dim,R,C>& K, const NBodyData<dim>& data)
                 data.obs_normals[i], data.src_normals[j]
             );
 
-            auto pair_idx = i * data.src_locs.size() + j;
             for (size_t d1 = 0; d1 < R; d1++) {
+                auto row = d1 * data.obs_locs.size() + i;
                 for (size_t d2 = 0; d2 < C; d2++) {
-                    auto block_idx = d1 * C + d2;
-                    auto matrix_idx = block_idx * n_pairs + pair_idx;
+                    auto col = d2 * data.src_locs.size() + j;
+                    auto matrix_idx = row * C * data.src_locs.size() + col;
                     op[matrix_idx] = kernel_val[d1][d2];
                 }
             }
