@@ -92,7 +92,6 @@ build_children(const Box<dim>& bounds,
         return std::move(children);
     }
 
-
     std::array<std::vector<int>,Octree<dim>::split> child_indices;
 
     for (size_t i = 0; i < indices.size(); i++) {
@@ -130,7 +129,7 @@ build_children(const Box<dim>& bounds,
             sub_children = build_children(
                 child_bounds, pts, child_indices[i], child_level, min_pts_per_cell
             );
-        } 
+        }
 
         children[i] = std::unique_ptr<Octree<dim>>(new Octree<dim>{
             {child_bounds, tight_bounds, child_indices[i], child_level},

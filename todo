@@ -1,18 +1,18 @@
 CURRENT: FMM 
-** Imagine some kind of general purpose "nearfield" structure that can allow a simple O(N) solution to the near neighbors problems in mesh_continuity, apply_discontinuities as well as the FMM tree structure.
+** nearest_neighbors for point->triangle or triangle->triangle intersection
 ** FMM (as opposed to the current treecode)!
 ** Centralization the kernel application function
+** move obs, src loop into the kernel functions
 ** Precompute the DAG of FMM operations -- this will allow simple, but powerful  and scalable parallelism -- look at starpu
 ** see how the accuracy changes as a function of
     1) radius of equivalent surface
     2) radius of check surface
     3) order of expansion
     4) multipole acceptance criteria
-** Get the tensor kernels working with FMM
-** 3D fmm tests
 ** regularized equiv to check operator (A^T A + \alpha I)
     (how does the value of alpha change the accuracy?)
 ** think about whether the direct treecode inversion algorithm is worthwhile
+** condition numbers for the inversions in the fmm implementation
 
 
 
@@ -27,6 +27,7 @@ MISC:
 ** include the boost python libraries with the code.
 ** Clear out all "inline"
 ** consider getting rid of vectorx
+** use iterators for traversing point sets?
 ---------------------------------------
 
 MILESTONE: HANGING NODES AND COMPLEX GEOMETRIES

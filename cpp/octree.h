@@ -40,6 +40,16 @@ struct OctreeData {
         }
         return c;
     }
+    
+    size_t count_children_recursive() const {
+        size_t c = 0;
+        for (const auto& p: children) {
+            if (p != nullptr) {
+                c += 1 + p->count_children_recursive();
+            }
+        }
+        return c;
+    }
 
     bool is_leaf() const {
         for (const auto& p: children) {
