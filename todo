@@ -1,23 +1,29 @@
 CURRENT: FMM 
 ** nearest_neighbors for point->triangle or triangle->triangle intersection
 ** FMM (as opposed to the current treecode)!
-** Centralization the kernel application function
 ** move obs, src loop into the kernel functions
 ** Precompute the DAG of FMM operations -- this will allow simple, but powerful  and scalable parallelism -- look at starpu
-** see how the accuracy changes as a function of
+** think about whether the direct treecode inversion algorithm is worthwhile
+
+** SVD equiv to check
+-- use Eigen
+** regularized equiv to check operator (A^T A + \alpha I)
+    (how does the value of alpha change the accuracy?)
+
+** debug the occasional failure of the fmm algorithm?!
+
+** move unittest-cpp and autocheck inside the repository
+
+MISC:
+** see how FMM accuracy changes as a function of
     1) radius of equivalent surface
     2) radius of check surface
     3) order of expansion
     4) multipole acceptance criteria
-** regularized equiv to check operator (A^T A + \alpha I)
-    (how does the value of alpha change the accuracy?)
-** think about whether the direct treecode inversion algorithm is worthwhile
-** condition numbers for the inversions in the fmm implementation
-
-
-
-MISC:
 ** hanging nodes!
+** Handle the general case when fault-surface intersection does not occur at a vertex.
+-- Linked to hanging nodes in that lots of geometry code needs to be used/written.
+-- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
 ** crack-tip elements
 ** characterize the galerkin BEM for hypersingular kernels
 ** characterize the sinh-sigmoidal method
@@ -32,7 +38,3 @@ MISC:
 
 MILESTONE: HANGING NODES AND COMPLEX GEOMETRIES
 S: Pull some of vec.h out into a separate module "geometry.h"
-NF: Hanging nodes?
-NF: Handle the general case when fault-surface intersection does not occur at a vertex.
----- Linked to hanging nodes in that lots of geometry code needs to be used/written.
----- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)

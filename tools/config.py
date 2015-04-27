@@ -18,14 +18,11 @@ def get_config(command_params):
     test_dir = 'test'
     py_wrap_dir = 'python_wrapper'
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        blas_lapack_info = np_config_info('lapack_opt', 0)
-
     includes = [
         './' + str(src_dir),
         '../lib/unittest-cpp/UnitTest++',
-        '../lib/autocheck/include'
+        '../lib/autocheck/include',
+        './lib/eigen'
     ]
 
     base_cpp_flags = [
@@ -44,8 +41,6 @@ def get_config(command_params):
     cpp_flags = base_cpp_flags + flag_types[build_type]
 
     link_flags = ['--coverage', '-fopenmp']
-    link_flags.extend(['-L' + l_dir for l_dir in blas_lapack_info['library_dirs']])
-    link_flags.extend(['-l' + library for library in blas_lapack_info['libraries']])
 
     lib = dict()
     lib['cpp_flags'] = cpp_flags + ['-fPIC']

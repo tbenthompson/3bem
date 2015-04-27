@@ -29,10 +29,10 @@ def determine_targets(c):
     targets = dict()
     if len(c['command_params']) > 0:
         for entry in c['command_params']:
-            if not entry.startswith('-'):
+            if not entry.startswith('--'):
                 targets[entry] = c['targets'][entry]
-            elif len(entry) > 2:
-                name = entry[1:]
+            elif len(entry) > 3:
+                name = entry[2:]
                 remove_targets.append(name)
     if len(targets) > 0:
         return targets

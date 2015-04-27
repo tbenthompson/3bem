@@ -8,18 +8,6 @@
 
 using namespace tbem;
 
-TEST(LU) {
-    std::vector<double> matrix{
-        2, 1, -1, 0.5
-    };
-    auto lu = LU_decompose(matrix);
-    auto soln = LU_solve(lu, {1,1});
-    std::vector<double> correct{
-        -0.25, 1.5
-    };
-    CHECK_ARRAY_CLOSE(soln, correct, 2, 1e-14);
-}
-
 template <size_t dim>
 NBodyData<dim> ones_data(size_t n) 
 {
@@ -43,22 +31,25 @@ TEST(MakeSurroundingSurface)
 template <size_t dim, size_t R, size_t C>
 void test_kernel(const Kernel<dim,R,C>& K, size_t order, double allowed_error) 
 {
-    size_t n = 100000;
-    size_t n_per_cell = std::max<size_t>(25, order);
+    size_t n = 2000;
+    size_t n_per_cell = std::max<size_t>(50, order);
     auto data = ones_data<dim>(n);
     BlockVectorX x(C, VectorX(data.src_weights));
-    FMMOperator<dim,R,C> tree(K, data, {3.0, order, n_per_cell, 0.1});
-    std::cout << tree.src_oct.count_children_recursive() << std::endl;
+    FMMOperator<dim,R,C> tree(K, data, {3.5, order, n_per_cell, 0.1});
     TIC
     auto out = tree.apply(x);
-    TOC("ABAS");
+    TOC("FMM");
 
     BlockDirectNBodyOperator<dim,R,C> exact_op{data, K};
     auto exact = exact_op.apply(x);
     for (size_t d = 0; d < R; d++) {
         for (size_t i = 0; i < n; i++) {
             auto error = std::fabs((out[d][i] - exact[d][i]) / exact[d][i]);
-            // CHECK_CLOSE(error, 0, allowed_error);
+            if (error > allowed_error) {
+                std::cout << out[d][i] << " " << exact[d][i] << std::endl;
+                std::cout << data.obs_locs[i] << std::endl;
+            }
+            CHECK_CLOSE(error, 0, allowed_error);
         }
     }
 }
@@ -80,7 +71,7 @@ TEST(HypersingularLayer2DFMM)
 
 TEST(SingleLayer3DFMM) 
 {
-    test_kernel(LaplaceSingle<3>(), 8, 1e-4);
+    test_kernel(LaplaceSingle<3>(), 35, 1e-4);
 }
 
 TEST(DoubleLayer3DFMM) 
@@ -103,7 +94,5 @@ TEST(ElasticHypersingular2DFMM)
 
 int main(int, char const *[])
 {
-    // return UnitTest::RunAllTests();
-    // RunOneTest("SingleLayer2DFMM");
-    RunOneTest("SingleLayer3DFMM");
+    return UnitTest::RunAllTests();
 }

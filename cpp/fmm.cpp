@@ -1,30 +1,6 @@
 #include "fmm.h"
 
 namespace tbem {
-LUDecomposition LU_decompose(const std::vector<double>& matrix) 
-{
-    int n = std::sqrt(matrix.size()); 
-    std::vector<double> A = matrix;
-    std::vector<int> pivots(n);
-    int info;
-    dgetrf_(&n, &n, A.data(), &n, pivots.data(), &info);
-    return {A, pivots};
-}
-
-std::vector<double> LU_solve(LUDecomposition& lu,
-    const std::vector<double>& b) 
-{
-    std::vector<double> x = b;
-    int n = b.size(); 
-    int n_rhs = 1;
-    int info;
-    // type = 'T' means that we solve A^T x = b rather than Ax = b. This is good
-    // because blas operates on column major data while this code sticks to 
-    // row major data.
-    char type = 'T';
-    dgetrs_(&type, &n, &n_rhs, lu.LU.data(), &n, lu.pivots.data(), x.data(), &n, &info);
-    return x;
-}
 
 template <>
 TranslationSurface<2> make_surrounding_surface<2>(size_t expansion_order) 
@@ -172,7 +148,10 @@ void FMMOperator<dim,R,C>::build_check_to_equiv(const Octree<dim>& cell,
             equiv_pts, surface.normals, {}
         });
 
-        created_ops.push_back(LU_decompose(op));
+        auto lu = LU_decompose(op);
+        auto cond = condition_number(op);
+        std::cout << cond << std::endl;
+        created_ops.push_back(std::move(lu));
     }
 
     for (const auto& c: cell.children) {
@@ -278,7 +257,7 @@ FMMOperator<dim,R,C>::P2M(const Octree<dim>& cell, const BlockVectorX& x,
         check_eval = apply_children_to_check(cell, child_P2M);
     }
 
-    auto matrix = check_to_equiv_ops[cell.data.level];
+    auto& matrix = check_to_equiv_ops[cell.data.level];
     auto equiv_srcs = LU_solve(matrix, check_eval);
 
     return std::unique_ptr<P2MData<dim>>(new P2MData<dim>{

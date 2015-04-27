@@ -10,27 +10,9 @@
 #include "numbers.h"
 #include "vectorx.h"
 #include "util.h"
+#include "blas_wrapper.h"
 
 namespace tbem {
-
-extern "C" void dgetrf_(int* dim1, int* dim2, double* a, int* lda, int* ipiv,
-    int* info);
-extern "C" void dgetrs_(char* TRANS, int* N, int* NRHS, double* A, int* LDA,
-    int* IPIV, double* B, int* LDB, int* INFO);
-
-struct LUDecomposition {
-    std::vector<double> LU;
-    std::vector<int> pivots;
-};
-LUDecomposition LU_decompose(const std::vector<double>& matrix);
-std::vector<double> LU_solve(LUDecomposition& lu, const std::vector<double>& b);
-
-// TODO: Deal with the normal equations
-// struct NormalEqtns {
-//     LUDecomposition LU_ATA;
-//     std::vector<double> AT;
-// };
-// std::vector<double> form_regularized_normal_eqtns(const std::vector<double>& matrix);
 
 template <size_t dim>
 struct TranslationSurface {
@@ -56,7 +38,7 @@ struct TranslationSurface {
 template <size_t dim>
 TranslationSurface<dim> make_surrounding_surface(size_t expansion_order);
 
-typedef std::vector<LUDecomposition> CheckToEquiv;
+typedef std::vector<LUPtr> CheckToEquiv;
 template <size_t dim>
 using P2MData = OctreeData<dim,std::vector<double>>;
 
@@ -135,10 +117,8 @@ struct FMMOperator {
     BlockVectorX execute_tasks(const FMMTasks<dim>& tasks, const BlockVectorX& x) const
     {
         BlockVectorX out(R, VectorX(data.obs_locs.size(), 0.0));
-
-        TIC
-        std::cout << tasks.p2ps.size() << std::endl;
         std::cout << tasks.m2ps.size() << std::endl;
+
         // label cells
         std::map<size_t,size_t> p2p_cell_map;
         size_t next_cell = 0;
@@ -171,25 +151,20 @@ struct FMMOperator {
             auto cell_key = m2p.obs_cell.data.indices[0];
             m2p_sorted[m2p_cell_map[cell_key]].push_back(m2p);
         }
-        TOC("Sort tasks");
 
-        TIC2
 #pragma omp parallel for 
         for (size_t i = 0; i < p2p_sorted.size(); i++) {
             for (const auto& t: p2p_sorted[i]) {
                 P2P(out, t.obs_cell, t.src_cell, x);
             }
         }
-        TOC("P2P execute");
 
-        TIC2
 #pragma omp parallel for
         for (size_t i = 0; i < m2p_sorted.size(); i++) {
             for (const auto& t: m2p_sorted[i]) {
                 M2P(out, t.obs_cell, t.src_cell, t.p2m);
             }
         }
-        TOC("M2P execute");
 
         return out;
     }
@@ -200,21 +175,15 @@ struct FMMOperator {
         int original_nested = omp_get_nested();
         omp_set_nested(1);
 
-        TIC
         CheckToEquiv check_to_equiv;
         build_check_to_equiv(src_oct, check_to_equiv);
 
         const auto p2m = P2M(src_oct, x, check_to_equiv);
-        TOC("P2M");
 
 
-        TIC2
         FMMTasks<dim> tasks;
         dual_tree(obs_oct, src_oct, *p2m, tasks);
-        TOC("Traversal");
-        TIC2
         auto out = execute_tasks(tasks, x);
-        TOC("Execute");
 
         omp_set_nested(original_nested);
         return out;
