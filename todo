@@ -7,8 +7,6 @@ CURRENT: FMM
 
 ** SVD equiv to check
 -- Eigen SVD is obscenely slow. See what else is out there!
-** regularized equiv to check operator (A^T A + \alpha I)
-    (how does the value of alpha change the accuracy?)
 
 ** debug the occasional failure of the fmm algorithm?!
 

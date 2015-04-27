@@ -26,7 +26,7 @@ template <size_t dim>
 Vec<double,dim> random_pt();
 
 template <size_t dim>
-std::vector<Vec<double,dim>> random_pts(size_t N);
+std::vector<Vec<double,dim>> random_pts(size_t N, double a = 0, double b = 1);
 
 } //END namespace tbem
 #endif
