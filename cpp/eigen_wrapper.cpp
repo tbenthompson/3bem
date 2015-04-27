@@ -1,6 +1,5 @@
-#include "blas_wrapper.h"
+#include "eigen_wrapper.h"
 #include <cmath>
-#include <iostream>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 

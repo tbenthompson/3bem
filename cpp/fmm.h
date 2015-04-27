@@ -10,7 +10,7 @@
 #include "numbers.h"
 #include "vectorx.h"
 #include "util.h"
-#include "blas_wrapper.h"
+#include "eigen_wrapper.h"
 
 namespace tbem {
 

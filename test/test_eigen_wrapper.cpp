@@ -1,5 +1,5 @@
 #include "UnitTest++.h"
-#include "blas_wrapper.h"
+#include "eigen_wrapper.h"
 
 using namespace tbem;
 
