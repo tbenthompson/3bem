@@ -148,10 +148,12 @@ void FMMOperator<dim,R,C>::build_check_to_equiv(const Octree<dim>& cell,
             equiv_pts, surface.normals, {}
         });
 
-        auto lu = LU_decompose(op);
-        auto cond = condition_number(op);
+        auto svd = svd_decompose(op);
+        //TODO: SVD THRESHOLDING!
+        set_threshold(svd, 1e-10);
+        auto cond = condition_number(svd);
         std::cout << cond << std::endl;
-        created_ops.push_back(std::move(lu));
+        created_ops.push_back(std::move(svd));
     }
 
     for (const auto& c: cell.children) {
@@ -257,8 +259,8 @@ FMMOperator<dim,R,C>::P2M(const Octree<dim>& cell, const BlockVectorX& x,
         check_eval = apply_children_to_check(cell, child_P2M);
     }
 
-    auto& matrix = check_to_equiv_ops[cell.data.level];
-    auto equiv_srcs = LU_solve(matrix, check_eval);
+    auto& svd = check_to_equiv_ops[cell.data.level];
+    auto equiv_srcs = svd_solve(svd, check_eval);
 
     return std::unique_ptr<P2MData<dim>>(new P2MData<dim>{
         equiv_srcs, std::move(child_P2M)

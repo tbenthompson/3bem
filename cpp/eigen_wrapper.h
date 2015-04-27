@@ -12,16 +12,21 @@ struct LUDeleter {
 };
 typedef std::unique_ptr<LU,LUDeleter> LUPtr;
 
-LUPtr LU_decompose(const std::vector<double>& matrix);
-std::vector<double> LU_solve(const LUPtr& lu, const std::vector<double>& b);
-double condition_number(const std::vector<double>& matrix); 
+/* Construct an LU decomposition assuming a square matrix. */
+LUPtr lu_decompose(const std::vector<double>& matrix);
+std::vector<double> lu_solve(const LUPtr& lu, const std::vector<double>& b);
 
-struct SVD {
-    
+struct SVD;
+struct SVDDeleter {
+    void operator()(SVD* thing);
 };
+typedef std::unique_ptr<SVD,SVDDeleter> SVDPtr;
 
-/* Form the SVD. Assumes a square matrix. */
-SVD svd_decompose(const std::vector<double>& matrix);
+/* Construct an SVD decomposition assuming a square matrix */
+SVDPtr svd_decompose(const std::vector<double>& matrix);
+void set_threshold(const SVDPtr& svd, double threshold);
+std::vector<double> svd_solve(const SVDPtr& svd, const std::vector<double>& b);
+double condition_number(const SVDPtr& svd); 
 
 } // end namespace tbem
 

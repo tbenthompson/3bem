@@ -16,7 +16,7 @@ void LUDeleter::operator()(LU* thing) {
 }
 
 
-LUPtr LU_decompose(const std::vector<double>& matrix) 
+LUPtr lu_decompose(const std::vector<double>& matrix) 
 {
     int n = std::sqrt(matrix.size()); 
     Eigen::Map<const EigenMatrix> eigen_mat(matrix.data(), n, n);
@@ -24,26 +24,48 @@ LUPtr LU_decompose(const std::vector<double>& matrix)
     return LUPtr(new LU{decomp});
 }
 
-std::vector<double> LU_solve(const LUPtr& lu, const std::vector<double>& b) 
+std::vector<double> lu_solve(const LUPtr& lu, const std::vector<double>& b) 
 {
     Eigen::Map<const Eigen::VectorXd> eigen_b(b.data(), lu->lu.cols());
     Eigen::VectorXd soln = lu->lu.solve(eigen_b);
     return std::vector<double>(soln.data(), soln.data() + lu->lu.rows());
 }
 
-double condition_number(const std::vector<double>& matrix) 
+struct SVD {
+    Eigen::JacobiSVD<EigenMatrix> svd;
+};
+
+void SVDDeleter::operator()(SVD* thing) {
+    delete thing;
+}
+
+SVDPtr svd_decompose(const std::vector<double>& matrix) 
 {
     int n = std::sqrt(matrix.size()); 
     Eigen::Map<const EigenMatrix> eigen_mat(matrix.data(), n, n);
-    Eigen::JacobiSVD<EigenMatrix> svd(eigen_mat);
-    auto first = svd.singularValues()[0];
-    auto last = svd.singularValues()[eigen_mat.rows() - 1];
-    return first / last;
+    Eigen::JacobiSVD<EigenMatrix> svd(
+        eigen_mat, Eigen::ComputeThinU | Eigen::ComputeThinV
+    );
+    return SVDPtr(new SVD{svd});
 }
 
-SVD svd_decompose(const std::vector<double>& matrix) 
+void set_threshold(const SVDPtr& svd, double threshold) 
 {
-    char* jobz; 
+    svd->svd.setThreshold(threshold);
+}
+
+std::vector<double> svd_solve(const SVDPtr& svd, const std::vector<double>& b)
+{
+    Eigen::Map<const Eigen::VectorXd> eigen_b(b.data(), svd->svd.cols());
+    Eigen::VectorXd soln = svd->svd.solve(eigen_b);
+    return std::vector<double>(soln.data(), soln.data() + svd->svd.rows());
+}
+
+double condition_number(const SVDPtr& svd)
+{
+    auto first = svd->svd.singularValues()[0];
+    auto last = svd->svd.singularValues()[svd->svd.rows() - 1];
+    return first / last;
 }
 
 }// end namespace tbem

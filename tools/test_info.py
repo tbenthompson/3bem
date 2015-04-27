@@ -5,7 +5,8 @@ def get_unit_test_info(c):
     unit_test_info['basis']['link_lib'] = True
     unit_test_info['eigen_wrapper'] = dict()
     unit_test_info['eigen_wrapper']['src'] = 'test_eigen_wrapper'
-    unit_test_info['eigen_wrapper']['link_lib'] = True
+    unit_test_info['eigen_wrapper']['lib_srcs'] = ['cpp/eigen_wrapper']
+    unit_test_info['eigen_wrapper']['link_lib'] = False
     unit_test_info['block_dof_map'] = dict()
     unit_test_info['block_dof_map']['src'] = 'test_block_dof_map'
     unit_test_info['block_dof_map']['link_lib'] = True

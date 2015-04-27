@@ -22,25 +22,35 @@ from __future__ import print_function
 from tools.util import oname
 import os
 import shutil
+import sys
+import copy
 from tools.fabricate import run, after
 
-def determine_targets(c):
+def determine_removed_targets(c):
     remove_targets = []
-    targets = dict()
-    if len(c['command_params']) > 0:
-        for entry in c['command_params']:
-            if not entry.startswith('--'):
-                targets[entry] = c['targets'][entry]
-            elif len(entry) > 3:
-                name = entry[2:]
-                remove_targets.append(name)
-    if len(targets) > 0:
-        return targets
+    for entry in c['command_params']:
+        if entry.startswith('--'):
+            name = entry[2:]
+            remove_targets.append(name)
+    return remove_targets
+
+def determine_targets(c):
+    remove_targets = determine_removed_targets(c)
+    target = None
+    for entry in c['command_params']:
+        if entry.startswith('+'):
+            if target is not None:
+                print("Specify only one target or build all targets.")
+                sys.exit()
+            target = entry[1:]
+
+    if target is not None:
+        return dict(target = c['targets'][target]), True
     else:
         all_targets = c['targets']
         for rem in remove_targets:
             del all_targets[rem]
-        return all_targets
+        return all_targets, False
 
 def priority_groupings(targets):
     buckets = dict()
@@ -53,13 +63,13 @@ def priority_groupings(targets):
     return buckets
 
 def run_build(c):
-    targets = determine_targets(c)
+    targets, one_target = determine_targets(c)
     buckets = priority_groupings(targets)
     setup_tree(c)
     for b in sorted(buckets.keys()):
         for t in buckets[b]:
             c['printer']('\nCompiling target: ' + t['binary_name'])
-            compile(c, t)
+            compile(c, t, one_target)
     after()
     for b in sorted(buckets.keys()):
         for t in buckets[b]:
@@ -83,8 +93,11 @@ def setup_tree(c):
     for k in c['subdirs']:
         setup_dir(os.path.join(c['build_dir'], c['subdirs'][k]))
 
-def compile(c, target):
-    for source in target['sources']:
+def compile(c, target, one_target):
+    to_compile = copy.copy(target['sources'])
+    if one_target:
+        to_compile.extend(target['linked_sources'])
+    for source in to_compile:
         compile_runner(c['build_dir'], c['compiler'], source,
                        target['cpp_flags'])
 
@@ -100,8 +113,8 @@ def compile_runner(build_dir, compiler, source, flags):
     run(*args)
 
 def link(c, t):
-    objs = [oname(c['build_dir'], s + '.o')
-        for s in t['sources'] + t['linked_sources']]
+    obj_raw_names = t['sources'] + t['linked_sources']
+    objs = [oname(c['build_dir'], s + '.o') for s in obj_raw_names]
     binary_path = oname(c['build_dir'], t['binary_name'])
     link_runner(c['compiler'], binary_path, objs, t['link_flags'])
 

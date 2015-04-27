@@ -29,13 +29,12 @@ TEST(MakeSurroundingSurface)
 } 
 
 template <size_t dim, size_t R, size_t C>
-void test_kernel(const Kernel<dim,R,C>& K, size_t order, double allowed_error) 
+void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
+    size_t order, double allowed_error) 
 {
-    size_t n = 2000;
     size_t n_per_cell = std::max<size_t>(50, order);
-    auto data = ones_data<dim>(n);
     BlockVectorX x(C, VectorX(data.src_weights));
-    FMMOperator<dim,R,C> tree(K, data, {3.5, order, n_per_cell, 0.1});
+    FMMOperator<dim,R,C> tree(K, data, {3.5, order, n_per_cell, 0.05});
     TIC
     auto out = tree.apply(x);
     TOC("FMM");
@@ -43,7 +42,7 @@ void test_kernel(const Kernel<dim,R,C>& K, size_t order, double allowed_error)
     BlockDirectNBodyOperator<dim,R,C> exact_op{data, K};
     auto exact = exact_op.apply(x);
     for (size_t d = 0; d < R; d++) {
-        for (size_t i = 0; i < n; i++) {
+        for (size_t i = 0; i < data.obs_locs.size(); i++) {
             auto error = std::fabs((out[d][i] - exact[d][i]) / exact[d][i]);
             if (error > allowed_error) {
                 std::cout << out[d][i] << " " << exact[d][i] << std::endl;
@@ -52,6 +51,29 @@ void test_kernel(const Kernel<dim,R,C>& K, size_t order, double allowed_error)
             CHECK_CLOSE(error, 0, allowed_error);
         }
     }
+}
+
+
+template <size_t dim, size_t R, size_t C>
+void test_kernel(const Kernel<dim,R,C>& K, size_t order, double allowed_error) 
+{
+    size_t n = 2000;
+    auto data = ones_data<dim>(n);
+    return test_kernel(data, K, order, allowed_error);    
+}
+
+TEST(Farfield) 
+{
+    size_t n = 2000;
+    auto src_pts = random_pts<2>(n);
+    auto obs_pts = random_pts<2>(n);
+    for (size_t i = 0; i < n; i++) {
+        obs_pts[i][0] += 4.0;
+    }
+    auto normals = random_pts<2>(n);
+    std::vector<double> weights(n, 1.0);
+    NBodyData<2> data{src_pts, normals, obs_pts, normals, weights};
+    test_kernel(data, LaplaceDouble<2>(), 26, 1e-4);
 }
 
 TEST(SingleLayer2DFMM) 
@@ -94,5 +116,6 @@ TEST(ElasticHypersingular2DFMM)
 
 int main(int, char const *[])
 {
-    return UnitTest::RunAllTests();
+    // return UnitTest::RunAllTests();
+    return RunOneTest("Farfield");
 }

@@ -31,14 +31,14 @@ struct TranslationSurface {
     std::vector<Vec<double,dim>> 
     upward_equiv_points(const Box<dim>& box, double d) const
     {
-        auto r_ref = 0.9;
+        auto r_ref = std::sqrt(2) + d;
         return move(box, r_ref);
     }
 };
 template <size_t dim>
 TranslationSurface<dim> make_surrounding_surface(size_t expansion_order);
 
-typedef std::vector<LUPtr> CheckToEquiv;
+typedef std::vector<SVDPtr> CheckToEquiv;
 template <size_t dim>
 using P2MData = OctreeData<dim,std::vector<double>>;
 
