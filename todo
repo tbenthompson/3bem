@@ -32,6 +32,8 @@ MISC:
 ** Clear out all "inline"
 ** consider getting rid of vectorx
 ** use iterators for traversing point sets?
+** turn some of the stuff in basis and numerics into a "Basis" class
+** move continuity builder stuff to cpp file
 
 BETTER BUILD SYSTEM:
 ** test the build system on mac, windows, a fresh ubuntu, odyssey/meade02

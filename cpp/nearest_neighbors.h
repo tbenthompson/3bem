@@ -4,6 +4,7 @@
 #include <cassert>
 #include "octree.h"
 #include "vec_ops.h"
+#include "geometry.h"
 
 namespace tbem {
 

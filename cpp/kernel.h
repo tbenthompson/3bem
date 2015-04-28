@@ -2,6 +2,7 @@
 #define __NMMMNBNBBHSKSKS_KERNEL_H
 
 #include "vec_ops.h"
+#include "geometry.h"
 
 namespace tbem {
 

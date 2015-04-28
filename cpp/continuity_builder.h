@@ -6,6 +6,7 @@
 #include "constraint_matrix.h"
 #include "vertex_iterator.h"
 #include "vec_ops.h"
+#include "geometry.h"
 #include "octree.h"
 #include "nearest_neighbors.h"
     

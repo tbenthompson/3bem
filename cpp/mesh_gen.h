@@ -1,9 +1,10 @@
 #ifndef __BKJSLDFLJHLERW_MESH_GEN_H
 #define __BKJSLDFLJHLERW_MESH_GEN_H
-#include "mesh.h"
-#include "vec_ops.h"
+#include "vec.h"
 
 namespace tbem {
+
+template <size_t dim> struct Mesh;
 
 Mesh<3> sphere_mesh(const Vec3<double>& center, double radius, int refinements);
 Mesh<3> rect_mesh(const Vec3<double>& lower_left, const Vec3<double>& upper_left,

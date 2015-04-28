@@ -1,5 +1,7 @@
 #include "mesh_gen.h"
-#include "vec.h"
+#include "mesh.h"
+#include "vec_ops.h"
+#include "geometry.h"
 
 namespace tbem {
 

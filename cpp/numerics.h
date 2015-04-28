@@ -5,6 +5,7 @@
 #include <cmath>
 #include <functional>
 #include "vec_ops.h"
+#include "geometry.h"
 
 namespace tbem {
 
@@ -108,13 +109,6 @@ inline Vec3<Vec2<double>> ref_to_real_gradient(const Vec<double,2>& x_hat,
     }};
 }
  
-
-std::vector<double> cheb_polys(double x_hat, int n_max);
-double s_n(double x_hat, double y_hat, unsigned int n);
-double s_n_fast(double x_hat, double y_hat, unsigned int n);
-std::vector<double> cheb_pts_first_kind(unsigned int n_pts);
-std::pair<double, double> legendre_and_n_minus_1(unsigned int n, double x);
-
 } //END NAMESPACE tbem
 
 #endif
