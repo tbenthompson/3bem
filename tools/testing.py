@@ -10,13 +10,18 @@ from copy import copy
 
 def testing_targets(test_info, loc, c):
     test_link_flags = c['link_flags'] + ['-L../lib/unittest-cpp/builds', '-lUnitTest++']
+    test_include_dirs = [
+        '../lib/unittest-cpp/UnitTest++',
+        '../lib/autocheck/include',
+    ]
     ts = dict()
     for test_name, test_data in test_info.iteritems():
         target_link_flags = copy(test_link_flags)
         if test_data.get('link_lib', False):
             target_link_flags += c['lib_dep_flags']
+        test_cpp_flags = c['cpp_flags'] + ['-I' + d for d in test_include_dirs]
         target = dict()
-        target['cpp_flags'] = c['cpp_flags']
+        target['cpp_flags'] = test_cpp_flags
         target['link_flags'] = target_link_flags
         target['sources'] = [os.path.join(loc, test_data['src'])]
         target['linked_sources'] = [s for s in test_data.get('lib_srcs', [])]

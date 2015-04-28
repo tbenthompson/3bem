@@ -31,7 +31,7 @@ struct TranslationSurface {
     std::vector<Vec<double,dim>> 
     upward_equiv_points(const Box<dim>& box, double d) const
     {
-        auto r_ref = 0.5; //std::sqrt(2) + d;
+        auto r_ref = 0.3; //std::sqrt(2) + d;
         return move(box, r_ref);
     }
 };
@@ -41,6 +41,8 @@ TranslationSurface<dim> make_surrounding_surface(size_t expansion_order);
 typedef std::vector<SVDPtr> CheckToEquiv;
 template <size_t dim>
 using P2MData = OctreeData<dim,std::vector<double>>;
+template <size_t dim>
+using L2PData = P2MData<dim>;
 
 struct FMMConfig {
     const double mac;
@@ -61,6 +63,15 @@ struct M2PTask
 };
 
 template <size_t dim>
+struct M2LTask
+{
+    const Octree<dim>& obs_cell;
+    const Octree<dim>& src_cell;
+    const P2MData<dim>& p2m;
+    const L2PData<dim>& l2p;
+};
+
+template <size_t dim>
 struct P2PTask
 {
     const Octree<dim>& obs_cell;
@@ -71,6 +82,7 @@ template <size_t dim>
 struct FMMTasks 
 {
     std::vector<M2PTask<dim>> m2ps;
+    std::vector<M2LTask<dim>> m2ls;
     std::vector<P2PTask<dim>> p2ps;
 };
 
@@ -102,6 +114,9 @@ struct FMMOperator {
         const Octree<dim>& src_cell, const BlockVectorX& x) const;
 
     void M2P(BlockVectorX& out, const Octree<dim>& obs_cell,
+        const Octree<dim>& src_cell, const P2MData<dim>& p2m) const;
+
+    void M2L(L2PData<dim>& l2p, const Octree<dim>& obs_cell,
         const Octree<dim>& src_cell, const P2MData<dim>& p2m) const;
 
     void dual_tree(const Octree<dim>& obs_cell,

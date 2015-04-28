@@ -28,6 +28,36 @@ TEST(MakeSurroundingSurface)
     CHECK_CLOSE(surface.normals[1], (Vec<double,2>{0.0, 1.0}), 1e-12);
 } 
 
+template <size_t dim>
+void check_identity_p2m(const Octree<dim>& cell, const P2MData<dim>& p2m) 
+{
+    CHECK_EQUAL(cell.data.indices.size(), p2m.data[0]);
+    for (size_t c = 0; c < Octree<dim>::split; c++) {
+        if (cell.children[c] == nullptr) {
+            continue;
+        }
+        check_identity_p2m(*cell.children[c], *p2m.children[c]);
+    }
+}
+
+TEST(IdentityP2M) 
+{
+    size_t n = 500;
+    BlockVectorX x(1, VectorX(n, 1.0));
+    std::vector<double> weights(n, 1.0);
+    NBodyData<2> data{
+        random_pts<2>(n, 1, 2), random_pts<2>(n, -1, 1),
+        random_pts<2>(n, -1, 1), random_pts<2>(n, -1, 1),
+        weights
+    };
+    IdentityScalar<2> K;
+    FMMOperator<2,1,1> tree(K, data, {0.3, 1, 1, 0.05});
+    CheckToEquiv check_to_equiv;
+    tree.build_check_to_equiv(tree.src_oct, check_to_equiv);
+    auto p2m = tree.P2M(tree.src_oct, x, check_to_equiv);
+    check_identity_p2m(tree.src_oct, *p2m);
+}
+
 template <size_t dim, size_t R, size_t C>
 void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
     size_t order, double allowed_error) 
@@ -62,101 +92,52 @@ void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
 template <size_t dim, size_t R, size_t C>
 void test_kernel(const Kernel<dim,R,C>& K, size_t order, double allowed_error) 
 {
-    size_t n = 4000;
+    size_t n = 10000;
     auto data = ones_data<dim>(n);
     return test_kernel(data, K, order, allowed_error);    
 }
 
-TEST(Farfield) 
-{
-    size_t n = 500;
-    size_t iters = 50;
-    for (size_t i = 0; i < iters; i++) {
-        std::vector<Vec<double,2>> src_pts(n);
-        std::vector<Vec<double,2>> src_normals(n);
-        for (size_t i = 0; i < n; i++) {
-            src_pts[i] = {static_cast<double>(i) / static_cast<double>(n) - 0.5, 0.0};
-            src_normals[i] = {0.0, 1.0};
-        }
-
-        auto obs_pts = random_pts<2>(n, 0.5, 0.6);
-        auto normals = random_pts<2>(n, -1, 1);
-        for (size_t i = 0; i < n; i++) {
-            // obs_pts[i] = normalized(obs_pts[i]) * 4;
-            normals[i] = normalized(normals[i]);
-        }
-        std::vector<double> weights(n, 1.0);
-        NBodyData<2> data{obs_pts, normals, src_pts, src_normals, weights};
-        test_kernel(data, IdentityScalar<2>(), 27, 1e-4);
-    }
-}
-
-template <size_t dim>
-void check_identity_p2m(const Octree<dim>& cell, const P2MData<dim>& p2m) 
-{
-    CHECK_EQUAL(cell.data.indices.size(), p2m.data[0]);
-    for (size_t c = 0; c < Octree<dim>::split; c++) {
-        if (cell.children[c] == nullptr) {
-            continue;
-        }
-        check_identity_p2m(*cell.children[c], *p2m.children[c]);
-    }
-}
-
 TEST(IdentityFMM) 
 {
-    size_t n = 500;
-    BlockVectorX x(1, VectorX(n, 1.0));
-    std::vector<double> weights(n, 1.0);
-    NBodyData<2> data{random_pts<2>(n, 1, 2), random_pts<2>(n, -1, 1),
-        random_pts<2>(n, -1, 1), random_pts<2>(n, -1, 1),
-        weights
-    };
-    IdentityScalar<2> K;
-    FMMOperator<2,1,1> tree(K, data, {0.3, 1, 1, 0.05});
-    CheckToEquiv check_to_equiv;
-    tree.build_check_to_equiv(tree.src_oct, check_to_equiv);
-    auto p2m = tree.P2M(tree.src_oct, x, check_to_equiv);
-    check_identity_p2m(tree.src_oct, *p2m);
     test_kernel(IdentityScalar<2>(), 1, 1e-4);
 }
 
 TEST(SingleLayer2DFMM) 
 {
-    test_kernel(LaplaceSingle<2>(), 15, 1e-4);
+    test_kernel(LaplaceSingle<2>(), 10, 1e-4);
 }
 
 TEST(DoubleLayer2DFMM) 
 {
-    test_kernel(LaplaceDouble<2>(), 30, 1e-4);
+    test_kernel(LaplaceDouble<2>(), 20, 1e-4);
 }
 
 TEST(HypersingularLayer2DFMM) 
 {
-    test_kernel(LaplaceHypersingular<2>(), 30, 1e-4);
+    test_kernel(LaplaceHypersingular<2>(), 20, 1e-4);
 }
 
 TEST(SingleLayer3DFMM) 
 {
-    test_kernel(LaplaceSingle<3>(), 65, 1e-4);
+    test_kernel(LaplaceSingle<3>(), 20, 1e-4);
 }
 
 TEST(DoubleLayer3DFMM) 
 {
-    test_kernel(LaplaceDouble<3>(), 200, 1e-4);
+    test_kernel(LaplaceDouble<3>(), 80, 1e-4);
 }
 
 TEST(ElasticDisplacement2DFMM)
 {
-    test_kernel(ElasticDisplacement<2>(30e9, 0.25), 25, 1e-4);
+    test_kernel(ElasticDisplacement<2>(30e9, 0.25), 10, 1e-4);
 }
 TEST(ElasticTraction2DFMM)
 {
-    test_kernel(ElasticTraction<2>(30e9, 0.25), 40, 1e-4);
+    test_kernel(ElasticTraction<2>(30e9, 0.25), 30, 1e-4);
 }
 TEST(ElasticHypersingular2DFMM)
 {
-    test_kernel(ElasticHypersingular<2>(30e9, 0.25), 40, 1e-4);
+    test_kernel(ElasticHypersingular<2>(30e9, 0.25), 25, 1e-4);
 }
 
 int main(int, char const *[])

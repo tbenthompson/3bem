@@ -1,5 +1,4 @@
 CURRENT: FMM 
-** nearest_neighbors for point->triangle or triangle->triangle intersection
 ** FMM (as opposed to the current treecode)!
 ** move obs, src loop into the kernel functions
 ** Precompute the DAG of FMM operations -- this will allow simple, but powerful  and scalable parallelism -- look at starpu
@@ -18,20 +17,25 @@ MISC:
     2) radius of check surface
     3) order of expansion
     4) multipole acceptance criteria
+
 ** hanging nodes!
+** nearest_neighbors for point->triangle or triangle->triangle intersection
 ** Handle the general case when fault-surface intersection does not occur at a vertex.
 -- Linked to hanging nodes in that lots of geometry code needs to be used/written.
 -- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
+
 ** crack-tip elements
 ** characterize the galerkin BEM for hypersingular kernels
 ** characterize the sinh-sigmoidal method
 ** get rid of non-block operators and rename "Block___" to "___"
 ** Storing the kernel by reference in the integration methods is bad. fix.
-** link the python via numpy
-** include the boost python libraries with the code.
 ** Clear out all "inline"
 ** consider getting rid of vectorx
 ** use iterators for traversing point sets?
+
+BETTER BUILD SYSTEM:
+** test the build system on mac, windows, a fresh ubuntu, odyssey/meade02
+** kill the boost dependency, replace with cython wrappers
 ---------------------------------------
 
 MILESTONE: HANGING NODES AND COMPLEX GEOMETRIES

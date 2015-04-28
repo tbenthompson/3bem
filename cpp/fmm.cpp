@@ -271,6 +271,33 @@ FMMOperator<dim,R,C>::P2M(const Octree<dim>& cell, const BlockVectorX& x,
 }
 
 template <size_t dim, size_t R, size_t C>
+void FMMOperator<dim,R,C>::M2L(L2PData<dim>& l2p, const Octree<dim>& obs_cell,
+    const Octree<dim>& src_cell, const P2MData<dim>& p2m) const 
+{
+    // auto equiv_pts = surface.upward_equiv_points(src_cell.data.bounds, config.d);
+    // auto n_equiv = equiv_pts.size();
+    // NBodyData<dim> m2l;
+    // m2p.src_locs = equiv_pts;
+    // m2p.src_normals = surface.normals;
+    // m2p.src_weights = std::vector<double>(equiv_pts.size(), 1.0);
+    // auto n_obs = obs_cell.data.indices.size();
+    // m2p.obs_locs.resize(n_obs);
+    // m2p.obs_normals.resize(n_obs);
+    // for (size_t i = 0; i < n_obs; i++) {
+    //     m2p.obs_locs[i] = data.obs_locs[obs_cell.data.indices[i]];
+    //     m2p.obs_normals[i] = data.obs_normals[obs_cell.data.indices[i]];
+    // }
+
+    // auto res = nbody_eval(K, m2p, p2m.data);
+
+    // for (size_t i = 0; i < n_obs; i++) {
+    //     for (size_t d = 0; d < R; d++) {
+    //         out[d][obs_cell.data.indices[i]] += res[d * n_obs + i];
+    //     }
+    // }
+}
+
+template <size_t dim, size_t R, size_t C>
 void FMMOperator<dim,R,C>::M2P(BlockVectorX& out, const Octree<dim>& obs_cell,
     const Octree<dim>& src_cell, const P2MData<dim>& p2m) const 
 {
@@ -344,14 +371,20 @@ void FMMOperator<dim,R,C>::dual_tree(const Octree<dim>& obs_cell,
     double r_max = std::max(r_src, r_obs);
     double r_min = std::min(r_src, r_obs);
     auto sep = hypot(obs_cell.data.bounds.center - src_cell.data.bounds.center);
-    if ((r_max + config.mac * r_min <= config.mac * sep) && obs_cell.is_leaf()) {
-        tasks.m2ps.push_back({obs_cell, src_cell, p2m});
-        return;
-    }
+    if (obs_cell.is_leaf()) {
+        if (r_max + config.mac * r_min <= config.mac * sep) {
+            if (src_cell.data.indices.size() <= p2m.data.size()) {
+                tasks.p2ps.push_back({obs_cell, src_cell});
+                return;
+            }
+            tasks.m2ps.push_back({obs_cell, src_cell, p2m});
+            return;
+        }
 
-    if (src_cell.is_leaf() && obs_cell.is_leaf()) {
-        tasks.p2ps.push_back({obs_cell, src_cell});
-        return;
+        if (src_cell.is_leaf()) {
+            tasks.p2ps.push_back({obs_cell, src_cell});
+            return;
+        }
     }
 
     bool src_is_shallower = obs_cell.data.level > src_cell.data.level;
@@ -380,9 +413,6 @@ BlockVectorX FMMOperator<dim,R,C>::execute_tasks(
     const FMMTasks<dim>& tasks, const BlockVectorX& x) const
 {
     BlockVectorX out(R, VectorX(data.obs_locs.size(), 0.0));
-
-    std::cout << "# of M2P tasks: " << tasks.m2ps.size() << std::endl;
-    std::cout << "# of P2P tasks: " << tasks.p2ps.size() << std::endl;
 
     // label cells
     std::map<size_t,size_t> p2p_cell_map;
@@ -442,13 +472,20 @@ BlockVectorX FMMOperator<dim,R,C>::apply(const BlockVectorX& x) const
     omp_set_nested(1);
 
     CheckToEquiv check_to_equiv;
+    TIC
     build_check_to_equiv(src_oct, check_to_equiv);
+    TOC("Build C2E");
+    TIC2
     const auto p2m = P2M(src_oct, x, check_to_equiv);
+    TOC("P2M");
 
-
+    TIC2
     FMMTasks<dim> tasks;
     dual_tree(obs_oct, src_oct, *p2m, tasks);
+    TOC("DTT");
+    TIC2
     auto out = execute_tasks(tasks, x);
+    TOC("Execute");
 
     omp_set_nested(original_nested);
     return out;
