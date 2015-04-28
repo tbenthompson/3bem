@@ -12,7 +12,6 @@ def testing_targets(test_info, loc, c):
     test_link_flags = c['link_flags'] + ['-L../lib/unittest-cpp/builds', '-lUnitTest++']
     test_include_dirs = [
         '../lib/unittest-cpp/UnitTest++',
-        '../lib/autocheck/include',
     ]
     ts = dict()
     for test_name, test_data in test_info.iteritems():

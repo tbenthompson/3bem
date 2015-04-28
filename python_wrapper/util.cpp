@@ -4,6 +4,7 @@
 #include "iterable_converter.h"
 
 #include "mesh_gen.h"
+#include "mesh.h"
 
 template <typename T, size_t dim> 
 T get_item_from_std_array(const std::array<T,dim>& A, const boost::python::object& o) 

@@ -1,5 +1,5 @@
 from distutils.core import setup, Extension
-from tools.config import includes, base_cpp_flags, cpp_flag_types
+from tools.config import include_dirs, base_cpp_flags, cpp_flag_types
 from tools.util import files_in_dir
 
 lib_srces = files_in_dir('cpp', 'cpp')
@@ -8,6 +8,7 @@ tbempy_srces = lib_srces + wrapper_srces
 tbempy_srces = [s + '.cpp' for s in tbempy_srces]
 includes = ['./cpp', './lib/eigen']
 cpp_flags = base_cpp_flags + cpp_flag_types['release']
+cpp_flags += ['-Wno-unused-variable']
 libs = [
     'boost_python'
 ]
@@ -19,8 +20,9 @@ tbempy = Extension(
     sources = tbempy_srces,
     include_dirs = includes,
     libraries = libs,
-    extra_compile_args = base_cpp_flags,
-    extra_link_args = link_args
+    extra_compile_args = cpp_flags,
+    extra_link_args = link_args,
+    language = 'c++'
 )
 
 setup(

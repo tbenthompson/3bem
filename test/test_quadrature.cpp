@@ -1,7 +1,4 @@
 #include "UnitTest++.h"
-#include "autocheck/autocheck.hpp"
-namespace ac = autocheck;
-
 #include "util.h"
 #include "numerics.h"
 #include "quadrature.h"
@@ -51,21 +48,19 @@ TEST(GaussQuadrature) {
 }
 
 TEST(GaussExactness) {
-    auto genint = ac::fix(250, ac::generator<unsigned int>());
-    auto arb = ac::make_arbitrary(genint);
-    ac::check<unsigned int>(
-        [](unsigned int n) {
-            if (n == 0) {
-                return true;
-            }
-            int g = 2 * n - 1;
-            auto q = gauss(n);
-            double result = integrate<double,1>(q, [&](std::array<double,1> x) {
-                    return (g + 1) * pow(x[0], g);
-                });
-            double exact = 2.0 * ((g + 1) % 2);
-            return std::fabs(exact - result) < 1e-13;
-        }, 30, arb);
+    for (size_t i = 0; i < 250; i++) {
+        size_t n = random<size_t>(0, 250);
+        if (n == 0) {
+            continue;
+        }
+        int g = 2 * n - 1;
+        auto q = gauss(n);
+        double result = integrate<double,1>(q, [&](std::array<double,1> x) {
+                return (g + 1) * pow(x[0], g);
+            });
+        double exact = 2.0 * ((g + 1) % 2);
+        CHECK(std::fabs(exact - result) < 1e-13);
+    }
 }
 
 void test_tri_integrate(QuadRule<2> q2d_tri) {

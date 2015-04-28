@@ -1,15 +1,11 @@
 CURRENT: FMM 
 ** FMM (as opposed to the current treecode)!
 ** move obs, src loop into the kernel functions
-** Precompute the DAG of FMM operations -- this will allow simple, but powerful  and scalable parallelism -- look at starpu
-** think about whether the direct treecode inversion algorithm is worthwhile
-
-** SVD equiv to check
--- Eigen SVD is obscenely slow. See what else is out there!
-
-** debug the occasional failure of the fmm algorithm?!
-
-** move unittest-cpp and autocheck inside the repository
+** sse/avx implementation of kernel functions
+Eigen SVD is obscenely slow. See what else is out there! 
+Use blas?
+How is the Armadillo SVD?
+** move unittest-cpp inside the repository
 
 MISC:
 ** see how FMM accuracy changes as a function of
@@ -30,7 +26,7 @@ MISC:
 ** get rid of non-block operators and rename "Block___" to "___"
 ** Storing the kernel by reference in the integration methods is bad. fix.
 ** Clear out all "inline"
-** consider getting rid of vectorx
+** consider getting rid of vectorx, or replacing with a facade over Eigen? or over numpy?
 ** use iterators for traversing point sets?
 ** turn some of the stuff in basis and numerics into a "Basis" class
 ** move continuity builder stuff to cpp file
@@ -38,7 +34,3 @@ MISC:
 BETTER BUILD SYSTEM:
 ** test the build system on mac, windows, a fresh ubuntu, odyssey/meade02
 ** kill the boost dependency, replace with cython wrappers
----------------------------------------
-
-MILESTONE: HANGING NODES AND COMPLEX GEOMETRIES
-S: Pull some of vec.h out into a separate module "geometry.h"

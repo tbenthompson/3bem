@@ -1,8 +1,8 @@
 #include "UnitTest++.h"
 #include "block_dof_map.h"
 #include "vectorx.h"
-#include "autocheck/autocheck.hpp"
-namespace ac = autocheck;
+#include "util.h"
+#include <cmath>
 
 using namespace tbem;
 
@@ -53,7 +53,7 @@ bool expand_concat_identity(const std::vector<std::vector<double>>& A) {
             return false;
         }
         for (size_t j = 0; j < A[i].size(); j++) {
-            if (fabs(A[i][j] - expanded[i][j]) > 1e-12) {
+            if (std::fabs(A[i][j] - expanded[i][j]) > 1e-12) {
                 return false;
             }
         }
@@ -62,7 +62,14 @@ bool expand_concat_identity(const std::vector<std::vector<double>>& A) {
 }
 
 TEST(ExpandConcatProperty) {
-    ac::check<std::vector<std::vector<double>>>(expand_concat_identity);
+    for (size_t i = 0; i < 100; i++) {
+        auto inner_size = random<size_t>(0, 10);
+        std::vector<std::vector<double>> input;
+        for (size_t j = 0; j < inner_size; j++) {
+            input.push_back(random_list(random<size_t>(0, 10)));
+        }
+        expand_concat_identity(input);
+    }
 }
 
 int main(int, char const *[])

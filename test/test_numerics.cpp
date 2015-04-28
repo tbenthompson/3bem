@@ -1,7 +1,4 @@
 #include "UnitTest++.h"
-#include "autocheck/autocheck.hpp"
-namespace ac = autocheck;
-
 #include "numerics.h"
 #include "numbers.h"
 #include <iostream>
@@ -11,15 +8,15 @@ using namespace tbem;
 
 
 TEST(LinearMapping) {
-    auto gen100 = ac::fix(100, ac::generator<double>());
-    auto arb = ac::make_arbitrary(gen100, gen100, gen100);
-    ac::check<double, double, double>(
-        [](double real, double v0, double v1) {
-            double ref = real_to_ref(real, v0, v1);
-            std::array<Vec2<double>,2> locs = {{{v0,0}, {v1,0}}};
-            double real2 = ref_to_real({ref}, locs)[0];
-            return std::fabs(real - real2) < 1e-11;
-        }, 100, arb);
+    for (size_t i = 0; i < 100; i++) {
+        double real = random<double>(0, 100);
+        double v0 = random<double>(0, 100);
+        double v1 = random<double>(0, 100);
+        double ref = real_to_ref(real, v0, v1);
+        std::array<Vec2<double>,2> locs = {{{v0,0}, {v1,0}}};
+        double real2 = ref_to_real({ref}, locs)[0];
+        CHECK(std::fabs(real - real2) < 1e-11);
+    }
 }
 
 TEST(AreaTri) {
@@ -39,14 +36,13 @@ TEST(LinearInterp) {
 }
 
 TEST(LinearInterpOnes) {
-    auto gen1 = ac::fix(1, ac::generator<double>());
-    auto arb = ac::make_arbitrary(gen1, gen1);
-    ac::check<double, double>(
-        [](double x_hat, double y_hat) {
-            double result = linear_interp<3>({x_hat, y_hat}, {1,1,1});
-            double exact = 1.0;
-            return std::fabs(result - exact) < 1e-12;
-        }, 30, arb);
+    for (size_t i = 0; i < 30; i++) {
+        double x_hat = random<double>(0, 1);
+        double y_hat = random<double>(0, 1);
+        double result = linear_interp<3>({x_hat, y_hat}, {1,1,1});
+        double exact = 1.0;
+        CHECK(std::fabs(result - exact) < 1e-12);
+    }
 }
 
 TEST(RefToRealGradient) {

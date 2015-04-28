@@ -28,6 +28,25 @@ std::vector<Vec<double,dim>> random_pts(size_t N, double a, double b)
     }
     return out;
 }
+
+template <>
+double random<double>(double min, double max) 
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(min, max);
+    return dis(gen);
+}
+
+template <>
+size_t random<size_t>(size_t min, size_t max) 
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<size_t> dis(min, max);
+    return dis(gen);
+}
+
 template std::vector<Vec<double,2>> random_pts<2>(size_t N, double a, double b); 
 template std::vector<Vec<double,3>> random_pts<3>(size_t N, double a, double b);
 

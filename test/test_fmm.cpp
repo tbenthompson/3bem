@@ -92,7 +92,7 @@ void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
 template <size_t dim, size_t R, size_t C>
 void test_kernel(const Kernel<dim,R,C>& K, size_t order, double allowed_error) 
 {
-    size_t n = 10000;
+    size_t n = 4000;
     auto data = ones_data<dim>(n);
     return test_kernel(data, K, order, allowed_error);    
 }

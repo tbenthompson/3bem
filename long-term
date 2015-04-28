@@ -46,3 +46,9 @@
 --- think about this more, write a note, positives? negatives? cost?
 --- http://szelei.me/code-generator/
 --- http://eli.thegreenplace.net/2011/07/03/parsing-c-in-python-with-clang/
+
+- Think about whether the direct treecode inversion algorithm is worthwhile
+-- Avoids any problems with preconditioning while allowing the solution of large
+   BEM problems... 
+-- Going to be a tough route. Lots of code. Hard to parallelize. Super intense stuff...
+-- Precompute the DAG of FMM/direct inversion operations -- this will allow simple, but powerful  and scalable parallelism -- look at starpu for a runtime system

@@ -25,6 +25,9 @@ std::vector<double> random_list(int N);
 template <size_t dim>
 Vec<double,dim> random_pt();
 
+template <typename T>
+T random(T min, T max);
+
 template <size_t dim>
 std::vector<Vec<double,dim>> random_pts(size_t N, double a = 0, double b = 1);
 
