@@ -1,20 +1,19 @@
-#include "UnitTest++.h"
+#include "catch.hpp"
 #include "integral_term.h"
 #include "laplace_kernels.h"
 #include "elastic_kernels.h"
 #include "identity_kernels.h"
-#include "test_shared.h"
 #include "util.h"
 #include "richardson.h"
 
 using namespace tbem;
 
-TEST(IdentityTensor) {
+TEST_CASE("IdentityTensor", "[integral_term]") {
     IdentityTensor<3,3,3> K;
     (void)K;
 }
 
-TEST(IntegralOne) {
+TEST_CASE("IntegralOne", "[integral_term]") {
     QuadStrategy<2> qs(2);
     IdentityScalar<2> identity;
     auto mthd = make_adaptive_integration_mthd(qs, identity);
@@ -23,8 +22,8 @@ TEST(IntegralOne) {
     IntegralTerm<2,1,1> term{obs, facet_info};
     NearestPoint<2> nearest_pt{{0.0}, {0.0, 0.0}, 0.0, FarNearType::Farfield};
     auto result = mthd.compute_term(term, nearest_pt);
-    CHECK_CLOSE(result[0][0][0], 0.5, 1e-6);
-    CHECK_CLOSE(result[1][0][0], 0.5, 1e-6);
+    REQUIRE_CLOSE(result[0][0][0], 0.5, 1e-6);
+    REQUIRE_CLOSE(result[1][0][0], 0.5, 1e-6);
 }
 
 template <size_t dim, size_t R, size_t C>
@@ -38,7 +37,7 @@ void integral_term_test(const IntegrationMethodI<dim,R,C>& mthd,
     auto nearest_pt = FarNearLogic<3>{3.0, 1.0}.decide(obs.loc, facet_info);
     auto result = mthd.compute_term(term, nearest_pt);
     auto est = sum(result); 
-    CHECK_CLOSE(est[0][0], exact, 1e-3);
+    REQUIRE_CLOSE(est[0][0], exact, 1e-3);
 }
 
 void integral_laplace_single(const IntegrationMethodI<3,1,1>& mthd) {
@@ -48,7 +47,7 @@ void integral_laplace_single(const IntegrationMethodI<3,1,1>& mthd) {
     integral_term_test(mthd, 1e-6, 0.235);
 }
 
-TEST(IntegralLaplaceSingle) {
+TEST_CASE("IntegralLaplaceSingle", "[integral_term]") {
     QuadStrategy<3> qs(2);
     LaplaceSingle<3> single_kernel;
     auto mthd_adapt = make_adaptive_integration_mthd(qs, single_kernel);
@@ -64,7 +63,7 @@ void integral_laplace_double(const IntegrationMethodI<3,1,1>& mthd) {
     integral_term_test(mthd, 1e-6, -0.500);
 }
 
-TEST(IntegralLaplaceDouble) {
+TEST_CASE("IntegralLaplaceDouble", "[integral_term]") {
     QuadStrategy<3> qs(2);
     LaplaceDouble<3> double_kernel;
     auto mthd_adapt = make_adaptive_integration_mthd(qs, double_kernel);
@@ -73,7 +72,7 @@ TEST(IntegralLaplaceDouble) {
     integral_laplace_double(mthd_sinh);
 }
 
-TEST(IntegralElasticDisplacement) {
+TEST_CASE("IntegralElasticDisplacement", "[integral_term]") {
     ElasticDisplacement<3> k(1.0, 0.25);
     QuadStrategy<3> qs(2);
     auto mthd = make_sinh_integration_mthd(qs, k);
@@ -107,34 +106,32 @@ void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K) {
                 auto error = fabs(sinh_eval - adapt_eval) / fabs(adapt_eval);
                 if (error[0][0][0] > 1e-3) {
                     std::cout << x << " " << y << " " << z << std::endl;
-                    // CHECK_CLOSE(sinh_eval, adapt_eval, 1e-3);
+                    // REQUIRE_CLOSE(sinh_eval, adapt_eval, 1e-3);
                 }
             }
         }
     }
 }
 
-TEST(SinhSufficientAccuracy) {
+TEST_CASE("SinhSufficientAccuracy", "[integral_term]") {
     // sinh_sufficient_accuracy(LaplaceSingle<3>());
     // sinh_sufficient_accuracy(ElasticTraction<3>(1.0, 0.25));
     /* sinh_sufficient_accuracy(ElasticHypersingular<3>(1.0, 0.25)); */
 }
 
-TEST(TensorKernel) {
+TEST_CASE("TensorKernel", "[integral_term]") {
     ElasticDisplacement<2> k(1.0, 0.25);
     QuadStrategy<2> qs(2);
     auto facet_info = FacetInfo<2>::build({{{-1.0, 0.0}, {1.0, 0.0}}});
     ObsPt<2> obs{0.1, {0.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}};
     IntegralTerm<2,2,2> term{obs, facet_info};
     auto result = term.eval_point_influence(k, {0.0});
-    CHECK_CLOSE(result[0][1][1], 0.0265258, 1e-6);
-    CHECK_CLOSE(result[1][1][1], 0.0265258, 1e-6);
-    CHECK_EQUAL(result[0][0][0], 0.0); CHECK_EQUAL(result[0][0][1], 0.0);
-    CHECK_EQUAL(result[0][1][0], 0.0); CHECK_EQUAL(result[1][0][0], 0.0);
-    CHECK_EQUAL(result[1][0][1], 0.0); CHECK_EQUAL(result[1][1][0], 0.0);
-}
-
-int main(int, char const *[])
-{
-    return UnitTest::RunAllTests();
+    REQUIRE_CLOSE(result[0][1][1], 0.0265258, 1e-6);
+    REQUIRE_CLOSE(result[1][1][1], 0.0265258, 1e-6);
+    REQUIRE(result[0][0][0] == 0.0);
+    REQUIRE(result[0][0][1] == 0.0);
+    REQUIRE(result[0][1][0] == 0.0);
+    REQUIRE(result[1][0][0] == 0.0);
+    REQUIRE(result[1][0][1] == 0.0);
+    REQUIRE(result[1][1][0] == 0.0);
 }

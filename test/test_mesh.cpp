@@ -1,4 +1,4 @@
-#include "UnitTest++.h"
+#include "catch.hpp"
 #include "util.h"
 #include "numerics.h"
 #include "mesh.h"
@@ -14,36 +14,36 @@ double perimeter(Mesh<2> m) {
     return p;
 }
 
-TEST(CallRefineWithNoFacetsToRefine) {
+TEST_CASE("CallRefineWithNoFacetsToRefine", "[mesh]") {
     Mesh<3> mf1{{Facet<3>{{0.0, 1.0, 2.0}}}};
     mf1.refine({});
 }
 
-TEST(Refine2DMesh) {
+TEST_CASE("Refine2DMesh", "[mesh]") {
     auto m2 = circle_mesh({0,0}, 1.0, 3);
     double length = perimeter(m2);
-    CHECK_EQUAL(m2.n_facets(), 32);
-    CHECK_CLOSE(length, 2 * M_PI, 1e-1);
+    REQUIRE(m2.n_facets() == 32);
+    REQUIRE_CLOSE(length, 2 * M_PI, 1e-1);
 }
 
-TEST(RefineSubset) {
+TEST_CASE("RefineSubset", "[mesh]") {
     auto m2 = line_mesh({0,0}, {1,0}).refine({0}).refine({0});
-    CHECK_EQUAL(m2.n_facets(), 3);
-    CHECK_EQUAL(m2.facets[1][0], (Vec2<double>{0.25,0.0}));
+    REQUIRE(m2.n_facets() == 3);
+    REQUIRE(m2.facets[1][0] == (Vec2<double>{0.25,0.0}));
 }
 
 
-TEST(CircleMesh) {
+TEST_CASE("CircleMesh", "[mesh]") {
     std::array<double, 2> center = {20.0, 0.0};
     auto src_circle = circle_mesh(center, 19.0, 4);
-    CHECK_CLOSE(src_circle.facets[16][0][0], 20.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[32][0][0], 1.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[48][0][0], 20.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[0][0][0], 39.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[16][0][1], 19.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[32][0][1], 0.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[48][0][1], -19.0, 1e-4);
-    CHECK_CLOSE(src_circle.facets[0][0][1], 0.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[16][0][0], 20.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[32][0][0], 1.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[48][0][0], 20.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[0][0][0], 39.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[16][0][1], 19.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[32][0][1], 0.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[48][0][1], -19.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[0][0][1], 0.0, 1e-4);
 }
 
 double surface_area(Mesh<3> m) {
@@ -54,13 +54,8 @@ double surface_area(Mesh<3> m) {
     return sa;
 }
 
-TEST(Mesh3D) {
+TEST_CASE("Mesh3D", "[mesh]") {
     auto m = sphere_mesh({0,0,0}, 1.0, 4); 
     double sa = surface_area(m);
-    CHECK_CLOSE(sa, 4 * M_PI, 1e-1);
-}
-
-int main(int, char const *[])
-{
-    return UnitTest::RunAllTests();
+    REQUIRE_CLOSE(sa, 4 * M_PI, 1e-1);
 }

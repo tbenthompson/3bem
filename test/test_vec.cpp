@@ -1,4 +1,4 @@
-#include "UnitTest++.h"
+#include "catch.hpp"
 #include "vec.h"
 #include "numerics.h"
 #include "util.h"
@@ -10,110 +10,121 @@ struct Data {
     Vec3<double> b = {{2.0, 0.5, -1.0}};
 };
 
-TEST_FIXTURE(Data, VecAdd) {
-    auto c = a + b; 
-    b += a;
-    double exact[3] = {3.0, 1.5, 1.0};
-    CHECK_ARRAY_CLOSE(c, exact, 3, 1e-12);
-    CHECK_ARRAY_CLOSE(b, exact, 3, 1e-12);
+TEST_CASE("VecOperations", "[vec]") 
+{
+    Vec3<double> a = {{1.0, 1.0, 2.0}};
+    Vec3<double> b = {{2.0, 0.5, -1.0}};
+
+    SECTION("Add") {
+        auto c = a + b; 
+        b += a;
+        Vec<double,3> exact{3.0, 1.5, 1.0};
+        REQUIRE_CLOSE(b, exact, 1e-12);
+        REQUIRE_CLOSE(c, exact, 1e-12);
+    }
+
+    SECTION("Sub") {
+        auto c = a - b; 
+        Vec<double,3> exact{-1.0, 0.5, 3.0};
+        REQUIRE_CLOSE(c, exact, 1e-12);
+    }
+    
+    SECTION("Mul") {
+        auto c = a * b; 
+        Vec<double,3> exact{2.0, 0.5, -2.0};
+        REQUIRE_CLOSE(c, exact, 1e-12);
+    }
+
+    SECTION("Div") {
+        auto c = a / b; 
+        Vec<double,3> exact{0.5, 2.0, -2.0};
+        REQUIRE_CLOSE(c, exact, 1e-12);
+    }
+
+    SECTION("Norm") {
+        auto c = normalized(b);
+        normalize(b);
+        double m = std::sqrt(5.25);
+        Vec<double,3> exact{2 / m, 0.5 / m, -1 / m};
+        REQUIRE_CLOSE(b, exact, 1e-6);
+        REQUIRE_CLOSE(c, exact, 1e-6);
+    }
+
+    SECTION("Negate") {
+        auto c = -b;
+        Vec<double,3> exact{-2.0, -0.5, 1.0};
+        REQUIRE_CLOSE(c, exact, 1e-6);
+    }
+
+    SECTION("Cross") {
+        auto c = cross(a, b);
+        Vec<double,3> exact{-2, 5, -1.5};
+        REQUIRE_CLOSE(c, exact, 1e-6);
+    }
 }
 
-TEST_FIXTURE(Data, VecSub) {
-    auto c = a - b; 
-    double exact[3] = {-1.0, 0.5, 3.0};
-    CHECK_ARRAY_CLOSE(c, exact, 3, 1e-12);
-}
 
-TEST_FIXTURE(Data, VecMul) {
-    auto c = a * b; 
-    double exact[3] = {2.0, 0.5, -2.0};
-    CHECK_ARRAY_CLOSE(c, exact, 3, 1e-12);
-}
 
-TEST_FIXTURE(Data, VecDiv) {
-    auto c = a / b; 
-    double exact[3] = {0.5, 2.0, -2.0};
-    CHECK_ARRAY_CLOSE(c, exact, 3, 1e-12);
-}
 
-TEST_FIXTURE(Data, VecNorm) {
-    auto c = normalized(b);
-    normalize(b);
-    double m = std::sqrt(5.25);
-    double exact[3] = {2 / m, 0.5 / m, -1 / m};
-    CHECK_ARRAY_CLOSE(b, exact, 3, 1e-6);
-    CHECK_ARRAY_CLOSE(c, exact, 3, 1e-6);
-}
-
-TEST_FIXTURE(Data, VecNegate) {
-    auto c = -b;
-    double exact[3] = {-2.0, -0.5, 1.0};
-    CHECK_ARRAY_CLOSE(c, exact, 3, 1e-6);
-}
-
-TEST_FIXTURE(Data, VecCross) {
-    auto c = cross(a, b);
-    double exact[3] = {-2, 5, -1.5};
-    CHECK_ARRAY_CLOSE(c, exact, 3, 1e-6);
-}
-
-TEST(VecPrint) {
+TEST_CASE("VecPrint", "[vec]") {
     Vec3<double> a = {1.0, 2.0, 3.0};
     std::stringstream output_buf;
     output_buf << a;
-    CHECK_EQUAL(output_buf.str(), "(1, 2, 3)");
+    REQUIRE(output_buf.str() == "(1, 2, 3)");
 }
 
-TEST(WhichSidePT3D) {
+TEST_CASE("WhichSidePT3D", "[vec]") {
     auto val = which_side_point<3>({{{0,0,0}, {1,0,0}, {0,1,0}}}, {0,0,-1});
-    CHECK_EQUAL(val, BEHIND);
+    REQUIRE(val == BEHIND);
     val = which_side_point<3>({{{0,0,0}, {1,0,0}, {0,1,0}}}, {0,0,1});
-    CHECK_EQUAL(val, FRONT);
+    REQUIRE(val == FRONT);
     val = which_side_point<3>({{{0,0,0}, {1,0,0}, {0,1,0}}}, {0,0,0});
-    CHECK_EQUAL(val, INTERSECT);
+    REQUIRE(val == INTERSECT);
 }
 
-TEST(WhichSidePT2D) {
+TEST_CASE("WhichSidePT2D", "[vec]") {
     auto val = which_side_point<2>({{{0,0}, {1,0}}}, {0,-1});
-    CHECK_EQUAL(val, BEHIND);
+    REQUIRE(val == BEHIND);
     val = which_side_point<2>({{{0,0}, {1,0}}}, {0,1});
-    CHECK_EQUAL(val, FRONT);
+    REQUIRE(val == FRONT);
     val = which_side_point<2>({{{0,0}, {1,0}}}, {0,0});
-    CHECK_EQUAL(val, INTERSECT);
+    REQUIRE(val == INTERSECT);
 }
 
-TEST(SegmentSide) {
-    CHECK_EQUAL(facet_side<2>({FRONT, BEHIND}), INTERSECT);
-    CHECK_EQUAL(facet_side<2>({FRONT, FRONT}), FRONT);
-    CHECK_EQUAL(facet_side<2>({FRONT, INTERSECT}), FRONT);
+TEST_CASE("SegmentSide", "[vec]") {
+    REQUIRE(facet_side<2>({FRONT, BEHIND}) == INTERSECT);
+    REQUIRE(facet_side<2>({FRONT, FRONT}) == FRONT);
+    REQUIRE(facet_side<2>({FRONT, INTERSECT}) == FRONT);
 }
 
-TEST(TriSide) {
-    CHECK_EQUAL(facet_side<3>({FRONT, FRONT, FRONT}), FRONT);
-    CHECK_EQUAL(facet_side<3>({INTERSECT, FRONT, FRONT}), FRONT);
-    CHECK_EQUAL(facet_side<3>({INTERSECT, INTERSECT, FRONT}), FRONT);
-    CHECK_EQUAL(facet_side<3>({BEHIND, INTERSECT, BEHIND}), BEHIND);
+TEST_CASE("TriSide", "[vec]") {
+    REQUIRE(facet_side<3>({FRONT, FRONT, FRONT}) == FRONT);
+    REQUIRE(facet_side<3>({INTERSECT, FRONT, FRONT}) == FRONT);
+    REQUIRE(facet_side<3>({INTERSECT, INTERSECT, FRONT}) == FRONT);
+    REQUIRE(facet_side<3>({BEHIND, INTERSECT, BEHIND}) == BEHIND);
 }
 
-TEST(OuterProductVectorVal) {
-    CHECK_EQUAL((outer_product<double>(Vec<double,2>{1.0, 1.0}, 0.5)), 
-                (Vec2<double>{0.5, 0.5}));
+TEST_CASE("OuterProductVectorVal", "[vec]") {
+    auto outer = outer_product<double>(Vec<double,2>{1.0, 1.0}, 0.5);
+    Vec2<double> exact{0.5, 0.5};
+    REQUIRE(outer == exact);
 }
 
-TEST(OuterProductVectorVal3D) {
-    CHECK_EQUAL((outer_product<double>(Vec<double,3>{1.0, 1.0, -2.0}, 0.5)), 
-                (Vec3<double>{0.5, 0.5, -1.0}));
+TEST_CASE("OuterProductVectorVal3D", "[vec]") {
+    auto outer = outer_product<double>(Vec<double,3>{1.0, 1.0, -2.0}, 0.5);
+    Vec3<double> exact{0.5, 0.5, -1.0};
+    REQUIRE(outer == exact);
 }
 
-TEST(OuterProductVectorVector) {
+TEST_CASE("OuterProductVectorVector", "[vec]") {
     Vec2<double> K = {1.0, 1.0};
     Vec2<double> x = {3.0, 4.0};
     auto result = outer_product(K, x);
     Vec2<Vec2<double>> correct{{{3.0, 4.0}, {3.0, 4.0}}};
-    CHECK_EQUAL(result, correct);
+    REQUIRE(result == correct);
 }
 
-TEST(OuterProductTensorVector) {
+TEST_CASE("OuterProductTensorVector", "[vec]") {
     Vec2<Vec2<double>> right{{{3.0, 0.0}, {0.0,4.0}}};
     Vec2<double> left = {1.0, 1.0};
     Vec2<Vec2<Vec2<double>>> correct{{
@@ -121,10 +132,10 @@ TEST(OuterProductTensorVector) {
         {{{3.0, 0.0}, {0.0, 4.0}}}
     }};
     auto result = outer_product(left, right);
-    CHECK_EQUAL(result, correct);
+    REQUIRE(result == correct);
 }
 
-TEST(OuterProductTensorVector3d) {
+TEST_CASE("OuterProductTensorVector3d", "[vec]") {
     Vec3<Vec3<double>> right{{
         {3.0, 0.0, 1.0}, {0.0, 4.0, -2.0}, {0.5, 7.0, -3.0}
     }};
@@ -135,41 +146,37 @@ TEST(OuterProductTensorVector3d) {
         {{{3.0, 0.0, 1.0}, {0.0, 4.0, -2.0}, {0.5, 7.0, -3.0}}}
     }};
     auto result = outer_product(left, right);
-    CHECK_EQUAL(result, correct);
+    REQUIRE(result == correct);
 }
 
-TEST(InnerProductVecVec) {
+TEST_CASE("InnerProductVecVec", "[vec]") {
     Vec2<double> right{{3.0, 4.0}};
     Vec2<double> left = {1.0, 1.0};
     double correct = 7.0;
     auto result = dot_product(left, right);
-    CHECK_EQUAL(result, correct);
+    REQUIRE(result == correct);
 }
 
-TEST(ZerosTensor) {
+TEST_CASE("ZerosTensor", "[vec]") {
     auto z = zeros<Vec2<Vec2<double>>>::make();
     Vec2<Vec2<double>> c{{{0.0, 0.0}, {0.0, 0.0}}};
-    CHECK_EQUAL(z, c);
+    REQUIRE(z == c);
 }
 
-TEST(OnesTensor) {
+TEST_CASE("OnesTensor", "[vec]") {
     auto z = ones<Vec2<Vec2<double>>>::make();
     Vec2<Vec2<double>> c{{{1.0, 1.0}, {1.0, 1.0}}};
-    CHECK_EQUAL(z, c);
+    REQUIRE(z == c);
 }
 
-TEST(ConstantTensor) {
+TEST_CASE("ConstantTensor", "[vec]") {
     auto z = constant<Vec2<Vec2<double>>>::make(2.2);
     Vec2<Vec2<double>> c{{{2.2, 2.2}, {2.2, 2.2}}};
-    CHECK_EQUAL(z, c);
+    REQUIRE(z == c);
 }
 
-TEST(Inequality) {
+TEST_CASE("Inequality", "[vec]") {
     Vec2<double> a{1, 0};
     auto res = a < 0.5;
-    CHECK_EQUAL(res, (Vec2<bool>{false, true}));
-}
-
-int main() {
-    return UnitTest::RunAllTests();
+    REQUIRE(res == (Vec2<bool>{false, true}));
 }

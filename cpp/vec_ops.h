@@ -260,6 +260,19 @@ inline Vec1<bool> operator<(const Vec1<T>& t, const T& rhs) {
     return {t[0] < rhs};
 }
 
+template <typename T>
+inline Vec3<bool> operator>(const Vec3<T>& t, const T& rhs) {
+    return {t[0] > rhs, t[1] > rhs, t[2] > rhs};
+}
+template <typename T>
+inline Vec2<bool> operator>(const Vec2<T>& t, const T& rhs) {
+    return {t[0] > rhs, t[1] > rhs};
+}
+template <typename T>
+inline Vec1<bool> operator>(const Vec1<T>& t, const T& rhs) {
+    return {t[0] > rhs};
+}
+
 inline double max(double x) {return x;}
 inline double max(Vec2<double> x) {return std::max(x[0], x[1]);}
 inline double max(Vec3<double> x) {return std::max(x[0], std::max(x[1], x[2]));}

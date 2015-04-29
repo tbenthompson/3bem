@@ -1,4 +1,4 @@
-#include "UnitTest++.h"
+#include "catch.hpp"
 #include "dense_builder.h"
 #include "integral_operator.h"
 #include "numerics.h"
@@ -6,7 +6,6 @@
 #include "mesh.h"
 #include "mesh_gen.h"
 #include "util.h"
-#include "test_shared.h"
 #include "identity_kernels.h"
 #include "laplace_kernels.h"
 #include "elastic_kernels.h"
@@ -40,57 +39,57 @@ struct EvalProb {
     std::vector<double> src_strength;
 }; 
 
-TEST(EvalIntegralEquationSphereSurfaceArea) {
+TEST_CASE("EvalIntegralEquationSphereSurfaceArea", "[dense_builder]") {
     EvalProb ep(5, 3, 2);
     IdentityScalar<3> identity;
     double result = ep.go(identity);
     double exact_surf_area = 4*M_PI*9;
-    CHECK_CLOSE(result, exact_surf_area, 1e-1);
+    REQUIRE_CLOSE(result, exact_surf_area, 1e-1);
 }
 
-TEST(ConstantLaplace) {
+TEST_CASE("ConstantLaplace", "[dense_builder]") {
     EvalProb ep(5, 3, 2);
     LaplaceDouble<3> double_kernel;
     double result = ep.go(double_kernel);
-    CHECK_CLOSE(result, -1.0, 1e-3);
+    REQUIRE_CLOSE(result, -1.0, 1e-3);
 }
 
-TEST(MatrixRowVsEval) {
+TEST_CASE("MatrixRowVsEval", "[dense_builder]") {
     EvalProb ep(4, 3, 2);
     double result = ep.go(LaplaceDouble<3>());
-    CHECK_CLOSE(result, -1.0, 1e-3);
+    REQUIRE_CLOSE(result, -1.0, 1e-3);
 }
 
-TEST(FacetInfo2D) {
+TEST_CASE("FacetInfo2D", "[dense_builder]") {
     Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{3.0, 0.0}};
     auto face_info = FacetInfo<2>::build(f);
-    CHECK_EQUAL(face_info.area_scale, 9);
-    CHECK_EQUAL(face_info.length_scale, 3);
-    CHECK_EQUAL(face_info.jacobian, 1.5);
-    CHECK_EQUAL(face_info.normal, (Vec2<double>{0.0, 1.0}));
+    REQUIRE(face_info.area_scale == 9);
+    REQUIRE(face_info.length_scale == 3);
+    REQUIRE(face_info.jacobian == 1.5);
+    REQUIRE(face_info.normal == (Vec2<double>{0.0, 1.0}));
 }
 
-TEST(FacetInfo3D) {
+TEST_CASE("FacetInfo3D", "[dense_builder]") {
     Facet<3> f{
         Vec3<double>{0.0, 0.0, 0.0},
         Vec3<double>{2.0, 0.0, 0.0},
         Vec3<double>{0.0, 2.0, 0.0}
     };
     auto face_info = FacetInfo<3>::build(f);
-    CHECK_EQUAL(face_info.area_scale, 2.0);
-    CHECK_EQUAL(face_info.length_scale, std::sqrt(2.0));
-    CHECK_EQUAL(face_info.jacobian, 4.0);
-    CHECK_EQUAL(face_info.normal, (Vec3<double>{0.0, 0.0, 1.0}));
+    REQUIRE(face_info.area_scale == 2.0);
+    REQUIRE(face_info.length_scale == std::sqrt(2.0));
+    REQUIRE(face_info.jacobian == 4.0);
+    REQUIRE(face_info.normal == (Vec3<double>{0.0, 0.0, 1.0}));
 }
 
-TEST(ObsPtFromFace) {
+TEST_CASE("ObsPtFromFace", "[dense_builder]") {
     Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{1.0, 1.0}};
     auto face_info = FacetInfo<2>::build(f);
     auto obs = ObsPt<2>::from_face({0}, face_info);
-    CHECK_EQUAL(obs.len_scale, std::sqrt(2));
-    CHECK_EQUAL(obs.loc, (Vec2<double>{0.5, 0.5}));
-    CHECK_EQUAL(obs.normal, (Vec2<double>{-1.0 / std::sqrt(2), 1.0 / std::sqrt(2)}));
-    CHECK_EQUAL(obs.richardson_dir, obs.normal);
+    REQUIRE(obs.len_scale == std::sqrt(2));
+    REQUIRE(obs.loc == (Vec2<double>{0.5, 0.5}));
+    REQUIRE(obs.normal == (Vec2<double>{-1.0 / std::sqrt(2), 1.0 / std::sqrt(2)}));
+    REQUIRE(obs.richardson_dir == obs.normal);
 }
 
 void test_integral_operator(Mesh<2> m1, Mesh<2> m2) 
@@ -102,23 +101,23 @@ void test_integral_operator(Mesh<2> m1, Mesh<2> m2)
     auto correct = dense_integral_operator(m1, m2, mthd).apply_scalar(v);
     auto other_op = integral_operator(m1, m2, mthd);
     auto other = other_op.apply_scalar(v);
-    CHECK_EQUAL(other_op.n_total_rows(), m1.n_dofs());
-    CHECK_EQUAL(other_op.n_total_cols(), m2.n_dofs());
-    CHECK_ARRAY_CLOSE(correct, other, m1.n_dofs(), 1e-12);
+    REQUIRE(other_op.n_total_rows() == m1.n_dofs());
+    REQUIRE(other_op.n_total_cols() == m2.n_dofs());
+    REQUIRE_ARRAY_CLOSE(correct, other, m1.n_dofs(), 1e-12);
 }
 
-TEST(IntegralOperatorSameMesh) {
+TEST_CASE("IntegralOperatorSameMesh", "[dense_builder]") {
     auto m = circle_mesh({0, 0}, 1.0, 5);
     test_integral_operator(m, m);
 }
 
-TEST(IntegralOperatorDifferentMesh) {
+TEST_CASE("IntegralOperatorDifferentMesh", "[dense_builder]") {
     auto m1 = circle_mesh({0, 0}, 1.0, 5);
     auto m2 = circle_mesh({1, 0}, 1.0, 4);
     test_integral_operator(m1, m2);
 }
 
-TEST(IntegralOperatorTensor) {
+TEST_CASE("IntegralOperatorTensor", "[dense_builder]") {
     auto m1 = circle_mesh({0, 0}, 1.0, 5);
     auto m2 = m1;
     QuadStrategy<2> qs(3);
@@ -131,14 +130,8 @@ TEST(IntegralOperatorTensor) {
     auto correct = dense_integral_operator(m1, m2, mthd).apply(v);
     auto other_op = integral_operator(m1, m2, mthd);
     auto other = other_op.apply(v);
-    CHECK_EQUAL(other_op.n_total_rows(), 2 * m1.n_dofs());
-    CHECK_EQUAL(other_op.n_total_cols(), 2 * m2.n_dofs());
-    CHECK_ARRAY_CLOSE(correct[0], other[0], m1.n_dofs(), 1e-12);
-    CHECK_ARRAY_CLOSE(correct[1], other[1], m1.n_dofs(), 1e-12);
-}
-
-int main(int, char const *[])
-{
-    return UnitTest::RunAllTests();
-    // return RunOneTest("IntegralOperatorSameMesh");
+    REQUIRE(other_op.n_total_rows() == 2 * m1.n_dofs());
+    REQUIRE(other_op.n_total_cols() == 2 * m2.n_dofs());
+    REQUIRE_ARRAY_CLOSE(correct[0], other[0], m1.n_dofs(), 1e-12);
+    REQUIRE_ARRAY_CLOSE(correct[1], other[1], m1.n_dofs(), 1e-12);
 }

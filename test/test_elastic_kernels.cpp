@@ -1,4 +1,4 @@
-#include "UnitTest++.h"
+#include "catch.hpp"
 #include "elastic_kernels.h"
 
 #include <fstream>
@@ -54,7 +54,7 @@ void test_elastic_kernel(std::string name) {
     std::string line;
     std::string filename = "test/test_data_elastic" + std::to_string(dim);
     test_data.open(filename, std::ios::in);
-    CHECK(test_data.is_open()); 
+    REQUIRE(test_data.is_open()); 
     
     while (std::getline(test_data, line)) {
         std::vector<std::string> es;
@@ -82,45 +82,40 @@ void test_elastic_kernel(std::string name) {
                                           name, shear_mod, poisson_ratio)[k][j];
         double error = std::fabs(exact - attempt) /
                        ((std::fabs(exact) + std::fabs(attempt)) / 2);
-        CHECK_CLOSE(error, 0, 1e-8);
+        REQUIRE_CLOSE(error, 0, 1e-8);
     }
 
     test_data.close();
 }
 
-TEST(TestElasticTensorKernels2DDisplacement) {
+TEST_CASE("TestElasticTensorKernels2DDisplacement", "[elastic_kernels]") {
     test_elastic_kernel<2>("disp");
 }
 
-TEST(TestElasticTensorKernels2DTraction) {
+TEST_CASE("TestElasticTensorKernels2DTraction", "[elastic_kernels]") {
     test_elastic_kernel<2>("trac");
 }
 
-TEST(TestElasticTensorKernels2DAdjointTraction) {
+TEST_CASE("TestElasticTensorKernels2DAdjointTraction", "[elastic_kernels]") {
     test_elastic_kernel<2>("adj_trac");
 }
 
-TEST(TestElasticTensorKernels2DHypersingular) {
+TEST_CASE("TestElasticTensorKernels2DHypersingular", "[elastic_kernels]") {
     test_elastic_kernel<2>("hyp");
 }
 
-TEST(TestElasticTensorKernels3DDisplacement) {
+TEST_CASE("TestElasticTensorKernels3DDisplacement", "[elastic_kernels]") {
     test_elastic_kernel<3>("disp");
 }
 
-TEST(TestElasticTensorKernels3DTraction) {
+TEST_CASE("TestElasticTensorKernels3DTraction", "[elastic_kernels]") {
     test_elastic_kernel<3>("trac");
 }
 
-TEST(TestElasticTensorKernels3DAdjointTraction) {
+TEST_CASE("TestElasticTensorKernels3DAdjointTraction", "[elastic_kernels]") {
     test_elastic_kernel<3>("adj_trac");
 }
 
-TEST(TestElasticTensorKernels3DHypersingular) {
+TEST_CASE("TestElasticTensorKernels3DHypersingular", "[elastic_kernels]") {
     test_elastic_kernel<3>("hyp");
-}
-
-int main(int, char const *[])
-{
-    return UnitTest::RunAllTests();
 }

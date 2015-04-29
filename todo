@@ -1,6 +1,5 @@
 CURRENT: FMM 
-** FMM
-** replace unittest-cpp with Catch (header only!)
+** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
 ** replace boost with cython
 ** Redo elastic solver
 ** tbempy python package and tbempy_elastic python package
@@ -26,7 +25,7 @@ Use blas SVD
 ** characterize the galerkin BEM for hypersingular kernels
 ** characterize the sinh-sigmoidal method
 ** get rid of non-block operators and rename "Block___" to "___"
-** Storing the kernel by reference in the integration methods is bad. fix.
+** replace references to the kernel by unique_ptr to the kernel
 ** Clear out all "inline"
 ** consider getting rid of vectorx, or replacing with a facade over Eigen? or over numpy?
 ** use iterators for traversing point sets?

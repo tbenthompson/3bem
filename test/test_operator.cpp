@@ -1,22 +1,21 @@
-#include "UnitTest++.h"
+#include "catch.hpp"
 #include "dense_operator.h"
 #include "block_operator.h"
 #include "vectorx.h"
-#include "test_shared.h"
 
 using namespace tbem;
 
-TEST(SimpleMatrixMultiply) {
+TEST_CASE("SimpleMatrixMultiply", "[operator]") {
     BlockDenseOperator matrix{
         1, 1, 
         {DenseOperator(2, 2, {0,1,1,0})}
     };
     auto res = matrix.apply({{3,4}})[0];
-    CHECK_EQUAL(res[0], 4);
-    CHECK_EQUAL(res[1], 3);
+    REQUIRE(res[0] == 4);
+    REQUIRE(res[1] == 3);
 }
 
-TEST(SimpleMatrixMultiplyWithComponents) {
+TEST_CASE("SimpleMatrixMultiplyWithComponents", "[operator]") {
     BlockDenseOperator matrix{
         2,2,
         {
@@ -28,11 +27,11 @@ TEST(SimpleMatrixMultiplyWithComponents) {
     };
     BlockVectorX x({VectorX({3}), VectorX({4})});
     auto res = matrix.apply(x);
-    CHECK_EQUAL(res[0][0], 4);
-    CHECK_EQUAL(res[1][0], 3);
+    REQUIRE(res[0][0] == 4);
+    REQUIRE(res[1][0] == 3);
 }
 
-TEST(CombineComponents) {
+TEST_CASE("CombineComponents", "[operator]") {
     BlockDenseOperator matrix{
         2,2,
         {
@@ -44,12 +43,12 @@ TEST(CombineComponents) {
     };
     auto combined_op = combine_components(matrix);
     double correct[4] = {0,1,2,3};
-    CHECK_EQUAL(combined_op.n_rows(), 2);
-    CHECK_EQUAL(combined_op.n_cols(), 2);
-    CHECK_ARRAY_EQUAL(combined_op.data(), correct, 4);
+    REQUIRE(combined_op.n_rows() == 2);
+    REQUIRE(combined_op.n_cols() == 2);
+    REQUIRE_ARRAY_EQUAL(combined_op.data(), correct, 4);
 }
 
-TEST(CombineComponents2By2) {
+TEST_CASE("CombineComponents2By2", "[operator]") {
     BlockDenseOperator matrix{
         2, 2,
         {
@@ -66,12 +65,12 @@ TEST(CombineComponents2By2) {
         8,9,12,13,
         10,11,14,15
     };
-    CHECK_EQUAL(combined_op.n_rows(), 4);
-    CHECK_EQUAL(combined_op.n_cols(), 4);
-    CHECK_ARRAY_EQUAL(combined_op.data(), correct, 16);
+    REQUIRE(combined_op.n_rows() == 4);
+    REQUIRE(combined_op.n_cols() == 4);
+    REQUIRE_ARRAY_EQUAL(combined_op.data(), correct, 16);
 }
 
-TEST(CombineComponentsNonSquareBlocks) {
+TEST_CASE("CombineComponentsNonSquareBlocks", "[operator]") {
     BlockDenseOperator matrix{
         2, 2,
         {
@@ -88,12 +87,7 @@ TEST(CombineComponentsNonSquareBlocks) {
         8,9,10,11,
         12,13,14,15
     };
-    CHECK_EQUAL(combined_op.n_rows(), 4);
-    CHECK_EQUAL(combined_op.n_cols(), 4);
-    CHECK_ARRAY_EQUAL(combined_op.data(), correct, 16);
-}
-
-int main(int, char const *[])
-{
-    return UnitTest::RunAllTests();
+    REQUIRE(combined_op.n_rows() == 4);
+    REQUIRE(combined_op.n_cols() == 4);
+    REQUIRE_ARRAY_EQUAL(combined_op.data(), correct, 16);
 }

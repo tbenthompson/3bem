@@ -2,7 +2,6 @@
 build*/*
 !build/fabricate.py
 archive/*
-lib/*
 *.so
 *.swp
 *.swo

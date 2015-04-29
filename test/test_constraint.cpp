@@ -1,39 +1,39 @@
-#include "UnitTest++.h"
+#include "catch.hpp"
 #include "constraint.h"
 
 using namespace tbem;
 
-TEST(ConstraintEquality) {
+TEST_CASE("ConstraintEquality", "[constraint]") {
     ConstraintEQ eqtn0{{LinearTerm{0,3}, LinearTerm{1,-1}, LinearTerm{2,4}}, 13.7};
     ConstraintEQ eqtn1{{LinearTerm{1,-1}}, 1.0};
     CHECK(eqtn0 == eqtn0);
     CHECK(eqtn1 == eqtn1);
 }
 
-TEST(RearrangeConstraintEQ) {
+TEST_CASE("RearrangeConstraintEQ", "[constraint]") {
     ConstraintEQ eqtn{{LinearTerm{0,3}, LinearTerm{1,-1}, LinearTerm{2,4}}, 13.7};
     auto rearranged = isolate_term_on_lhs(eqtn, 2);
-    CHECK_EQUAL(rearranged.constrained_dof, 2);
-    CHECK_EQUAL(rearranged.rhs, 13.7 / 4);
-    CHECK_EQUAL(rearranged.terms[0], (LinearTerm{0, -3.0 / 4}));
-    CHECK_EQUAL(rearranged.terms[1], (LinearTerm{1, 1.0 / 4}));
+    REQUIRE(rearranged.constrained_dof == 2);
+    REQUIRE(rearranged.rhs == 13.7 / 4);
+    REQUIRE(rearranged.terms[0] == (LinearTerm{0, -3.0 / 4}));
+    REQUIRE(rearranged.terms[1] == (LinearTerm{1, 1.0 / 4}));
 }
 
-TEST(FindLastDOFIndex) {
+TEST_CASE("FindLastDOFIndex", "[constraint]") {
     ConstraintEQ eqtn{{LinearTerm{0,3}, LinearTerm{2,4}, LinearTerm{1,-1}}, 13.7};
     int index = find_last_dof_index(eqtn);
-    CHECK_EQUAL(index, 1);
+    REQUIRE(index == 1);
 }
 
-TEST(FilterZeroTerms) {
+TEST_CASE("FilterZeroTerms", "[constraint]") {
     auto term0 = LinearTerm{1,1};
     auto term1 = LinearTerm{0,0};
     auto term2 = LinearTerm{2,2};
     ConstraintEQ c{{term0, term1, term2}, 2.0};
     auto result = filter_zero_terms(c);
-    CHECK_EQUAL(result.terms.size(), 2);
-    CHECK_EQUAL(result.terms[0], term0);
-    CHECK_EQUAL(result.terms[1], term2);
+    REQUIRE(result.terms.size() == 2);
+    REQUIRE(result.terms[0] == term0);
+    REQUIRE(result.terms[1] == term2);
 }
 
 void subs_test(const ConstraintEQ& subs_victim,
@@ -41,49 +41,44 @@ void subs_test(const ConstraintEQ& subs_victim,
                const ConstraintEQ& correct) {
     auto in_rearranged = isolate_term_on_lhs(subs_in, 0);
     auto result = substitute(subs_victim, 0, in_rearranged);
-    CHECK_EQUAL(result.terms.size(), correct.terms.size());
+    REQUIRE(result.terms.size() == correct.terms.size());
     for (size_t i = 0; i < correct.terms.size(); i++) {
-        CHECK_EQUAL(result.terms[i], correct.terms[i]);
+        REQUIRE(result.terms[i] == correct.terms[i]);
     }
-    CHECK_EQUAL(result.rhs, correct.rhs);
+    REQUIRE(result.rhs == correct.rhs);
 }
 
-TEST(SubstituteRHS) {
+TEST_CASE("SubstituteRHS", "[constraint]") {
     ConstraintEQ eqtn0{{LinearTerm{1,1}, LinearTerm{3,1}}, 4.0};
     ConstraintEQ eqtn1{{LinearTerm{1,1}}, 2.0};
     ConstraintEQ correct{{LinearTerm{3,1}}, 2.0};
     subs_test(eqtn0, eqtn1, correct);
 }
 
-TEST(SubstituteRHSNegation) {
+TEST_CASE("SubstituteRHSNegation", "[constraint]") {
     ConstraintEQ eqtn0{{LinearTerm{1,1}, LinearTerm{3,1}}, 4.0};
     ConstraintEQ eqtn1{{LinearTerm{1,-1}}, 2.0};
     ConstraintEQ correct{{LinearTerm{3,1}}, 6.0};
     subs_test(eqtn0, eqtn1, correct);
 }
 
-TEST(SubstituteWithTerms) {
+TEST_CASE("SubstituteWithTerms", "[constraint]") {
     ConstraintEQ eqtn0{{LinearTerm{1,1}, LinearTerm{3,1}}, 4.0};
     ConstraintEQ eqtn1{{LinearTerm{1,1}, LinearTerm{2,-3}}, 0.0};
     ConstraintEQ correct{{LinearTerm{3,1}, LinearTerm{2,3}}, 4.0};
     subs_test(eqtn0, eqtn1, correct);
 }
 
-TEST(SubstituteWithTermsNegation) {
+TEST_CASE("SubstituteWithTermsNegation", "[constraint]") {
     ConstraintEQ eqtn0{{LinearTerm{1,-1}, LinearTerm{3,1}}, 4.0};
     ConstraintEQ eqtn1{{LinearTerm{1,1}, LinearTerm{2,-3}}, 0.0};
     ConstraintEQ correct{{LinearTerm{3,1}, LinearTerm{2,-3}}, 4.0};
     subs_test(eqtn0, eqtn1, correct);
 }
 
-TEST(SubstituteWithTermsAddToPreexistingTerm) {
+TEST_CASE("SubstituteWithTermsAddToPreexistingTerm", "[constraint]") {
     ConstraintEQ eqtn0{{LinearTerm{1,1}, LinearTerm{3,1}}, 4.0};
     ConstraintEQ eqtn1{{LinearTerm{1,1}, LinearTerm{3,-3}}, 0.0};
     ConstraintEQ correct{{LinearTerm{3,4}}, 4.0};
     subs_test(eqtn0, eqtn1, correct);
-}
-
-int main(int, char const *[])
-{
-    return UnitTest::RunAllTests();
 }

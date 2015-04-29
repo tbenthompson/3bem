@@ -1,4 +1,4 @@
-#include "UnitTest++.h"
+#include "catch.hpp"
 #include "richardson.h"
 
 using namespace tbem;
@@ -19,15 +19,11 @@ void richardson_test(double ratio) {
             input.push_back(std::pow(x[j], i) - 1.0);
         }
         double result = richardson_limit(ratio, input);
-        CHECK_CLOSE(result, -1.0, allowed_error);
+        REQUIRE_CLOSE(result, -1.0, allowed_error);
     }
 }
 
-TEST(RichardsonExtrapolate) {
+TEST_CASE("RichardsonExtrapolate", "[richardson]") {
     richardson_test(2.0);
     richardson_test(10.0);
-}
-
-int main() {
-    return UnitTest::RunAllTests();
 }

@@ -38,7 +38,7 @@ struct TranslationSurface {
     std::vector<Vec<double,dim>> 
     downward_check_points(const Box<dim>& box, double d) const
     {
-        auto r_ref = std::sqrt(2) + d;
+        auto r_ref = 0.3; //std::sqrt(2) + d;
         return move(box, r_ref);
     }
 

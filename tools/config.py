@@ -13,7 +13,7 @@ src_dir = 'cpp'
 test_dir = 'test'
 py_wrap_dir = 'python_wrapper'
 
-include_dirs = ['./' + str(src_dir), './lib/eigen']
+include_dirs = ['./' + str(src_dir), './lib', './lib/eigen']
 include_flags = include(include_dirs)
 
 base_cpp_flags = ['-Wextra', '-std=c++11', '-fopenmp', '-DDEBUG=1']

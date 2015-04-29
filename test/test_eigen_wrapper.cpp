@@ -1,9 +1,10 @@
-#include "UnitTest++.h"
+#include "catch.hpp"
 #include "eigen_wrapper.h"
 
 using namespace tbem;
 
-TEST(LU) {
+TEST_CASE("LU solve", "[eigen_wrapper]") 
+{
     std::vector<double> matrix{
         2, 1, -1, 0.5
     };
@@ -12,10 +13,11 @@ TEST(LU) {
     std::vector<double> correct{
         -0.25, 1.5
     };
-    CHECK_ARRAY_CLOSE(soln, correct, 2, 1e-14);
+    REQUIRE_ARRAY_CLOSE(soln, correct, 2, 1e-14);
 }
 
-TEST(SVDSolve) {
+TEST_CASE("SVD solve", "[eigen_wrapper]") 
+{
     std::vector<double> matrix{
         2, 1, -1, 0.5
     };
@@ -24,18 +26,15 @@ TEST(SVDSolve) {
     std::vector<double> correct{
         -0.25, 1.5
     };
-    CHECK_ARRAY_CLOSE(soln, correct, 2, 1e-14);
+    REQUIRE_ARRAY_CLOSE(soln, correct, 2, 1e-14);
 }
 
-TEST(ConditionNumber) {
+TEST_CASE("Condition number", "[eigen_wrapper]") 
+{
     std::vector<double> matrix{
         2, 1, -1, 0.5
     };
     auto svd = svd_decompose(matrix);
     double cond = condition_number(svd);
-    CHECK_CLOSE(cond, 2.7630857945186595, 1e-12);
-}
-
-int main() {
-    return UnitTest::RunAllTests();
+    REQUIRE(cond == Approx(2.7630857945186595).epsilon(1e-12));
 }
