@@ -3,13 +3,13 @@
 namespace tbem {
 
 template <>
-TranslationSurface<2> make_surrounding_surface<2>(size_t expansion_order) 
+TranslationSurface<2> make_surrounding_surface<2>(size_t order) 
 {
     std::vector<Vec<double,2>> pts;
     std::vector<Vec<double,2>> normals;
 
-    auto theta = linspace(0, 2 * M_PI, expansion_order + 1);
-    for (size_t i = 0; i < expansion_order; i++) {
+    auto theta = linspace(0, 2 * M_PI, order + 1);
+    for (size_t i = 0; i < order; i++) {
         Vec<double,2> pt{std::cos(theta[i]), std::sin(theta[i])}; 
         Vec<double,2> normal = -pt;
         pts.push_back(pt);
@@ -18,10 +18,10 @@ TranslationSurface<2> make_surrounding_surface<2>(size_t expansion_order)
     return {pts, pts};
 }
 
-TranslationSurface<3> surrounding_surface_sphere(size_t expansion_order)
+TranslationSurface<3> surrounding_surface_sphere(size_t order)
 {
     std::vector<Vec<double,3>> pts;
-    double a = 4 * M_PI / expansion_order;
+    double a = 4 * M_PI / order;
     double d = std::sqrt(a);
     auto M_theta = static_cast<size_t>(std::round(M_PI / d));
     double d_theta = M_PI / M_theta;
@@ -44,9 +44,9 @@ TranslationSurface<3> surrounding_surface_sphere(size_t expansion_order)
 }
 
 template <>
-TranslationSurface<3> make_surrounding_surface<3>(size_t expansion_order) 
+TranslationSurface<3> make_surrounding_surface<3>(size_t order) 
 {
-    return surrounding_surface_sphere(expansion_order);
+    return surrounding_surface_sphere(order);
 }
 
 template <size_t dim>
@@ -100,10 +100,9 @@ nbody_matrix(const Kernel<dim,R,C>& K, const NBodyData<dim>& data)
 template <size_t dim, size_t R, size_t C>
 std::vector<double>
 nbody_eval(const Kernel<dim,R,C>& K, const NBodyData<dim>& data,
-           const std::vector<double>& x) 
+           double const* x) 
 {
     std::vector<double> out(R * data.obs_locs.size(), 0.0);
-
     for (size_t i = 0; i < data.obs_locs.size(); i++) {
         for (size_t j = 0; j < data.src_locs.size(); j++) {
             auto kernel_val = data.src_weights[j] * K(
@@ -129,50 +128,62 @@ FMMOperator<dim,R,C>::FMMOperator(const Kernel<dim,R,C>& K,
     const NBodyData<dim>& data, const FMMConfig& config):
     K(K),
     data(data),
-    surface(make_surrounding_surface<dim>(config.expansion_order)),
+    surface(make_surrounding_surface<dim>(config.order)),
     src_oct(build_octree(data.src_locs, config.min_pts_per_cell)),
     obs_oct(build_octree(data.obs_locs, config.min_pts_per_cell)),
     config(config)
 {}
 
+
+template <size_t dim, size_t R, size_t C>
+SVDPtr svd_inverse_nbody(const Kernel<dim,R,C>& K, const NBodyData<dim>& data) 
+{
+    auto op = nbody_matrix(K, data);
+    auto svd = svd_decompose(op);
+    //TODO: SVD THRESHOLDING!
+    // In some cases, the equivalent surface to check surface operator
+    // is poorly conditioned. In this case, truncate the singular values 
+    // to solve a regularized least squares version of the problem.
+    set_threshold(svd, 1e-10);
+    // auto cond = condition_number(svd);
+    // assert(cond < 1e10);
+    return std::move(svd);
+}
+
 template <size_t dim, size_t R, size_t C>
 void FMMOperator<dim,R,C>::build_check_to_equiv(const Octree<dim>& cell, 
-    CheckToEquiv& created_ops) const
+    CheckToEquiv& up_ops, CheckToEquiv& down_ops) const
 {
-    if (created_ops.size() == cell.data.level) {
-        auto check_pts = surface.upward_check_points(cell.data.bounds, config.d);
-        auto equiv_pts = surface.upward_equiv_points(cell.data.bounds, config.d);
+    if (up_ops.size() == cell.data.level) {
+        NBodyData<dim> up_data{
+            surface.upward_check_points(cell.data.bounds, config.d), surface.normals,
+            surface.upward_equiv_points(cell.data.bounds, config.d), surface.normals,
+            {}
+        };
 
-        auto op = nbody_matrix(K, {
-            check_pts, surface.normals,
-            equiv_pts, surface.normals, {}
-        });
+        up_ops.push_back(svd_inverse_nbody(K, up_data));
 
-        auto svd = svd_decompose(op);
-        //TODO: SVD THRESHOLDING!
-        // In some cases, the equivalent surface to check surface operator
-        // is poorly conditioned. In this case, truncate the singular values 
-        // to solve a regularized least squares version of the problem.
-        set_threshold(svd, 1e-10);
-        auto cond = condition_number(svd);
-        // assert(cond < 1e9);
-        created_ops.push_back(std::move(svd));
+        NBodyData<dim> down_data{
+            surface.downward_check_points(cell.data.bounds, config.d), surface.normals,
+            surface.downward_equiv_points(cell.data.bounds, config.d), surface.normals,
+            {}
+        };
+        down_ops.push_back(svd_inverse_nbody(K, down_data));
     }
 
     for (const auto& c: cell.children) {
         if (c == nullptr) {
             continue;
         }
-        build_check_to_equiv(*c, created_ops);
+        build_check_to_equiv(*c, up_ops, down_ops);
     }
 }
 
 template <size_t dim, size_t R, size_t C>
-std::vector<double> 
-FMMOperator<dim,R,C>::apply_src_to_check(const Octree<dim>& cell,
-    const BlockVectorX& x) const
+void FMMOperator<dim,R,C>::P2M(const Octree<dim>& cell,
+    const SVDPtr& check_to_equiv, const BlockVectorX& x,
+    double* parent_multipoles) const
 {
-    assert(cell.is_leaf());
     auto n_src = cell.data.indices.size();
 
     NBodyData<dim> s2c;
@@ -192,22 +203,26 @@ FMMOperator<dim,R,C>::apply_src_to_check(const Octree<dim>& cell,
         }
     }
 
-    return nbody_eval(K, s2c, src_str);
+    auto check_eval = nbody_eval(K, s2c, src_str.data());
+    auto equiv_srcs = svd_solve(check_to_equiv, check_eval);
+
+#pragma omp critical
+    for (size_t i = 0; i < R * config.order; i++) {
+        parent_multipoles[i] = equiv_srcs[i];
+    }
 }
 
 template <size_t dim, size_t R, size_t C>
-std::vector<double>
-FMMOperator<dim,R,C>::apply_children_to_check(const Octree<dim>& cell,
-    const typename P2MData<dim>::ChildrenType& child_p2m) const
+void FMMOperator<dim,R,C>::M2M(const Octree<dim>& cell,
+    const SVDPtr& check_to_equiv, std::vector<double*>& child_multipoles,
+    double* parent_multipoles) const
 {
     assert(!cell.is_leaf());
 
     auto check_pts = surface.upward_check_points(cell.data.bounds, config.d);
-    auto n_check = check_pts.size();
-    auto n_equiv = n_check;
 
-    auto n_children = cell.count_children();
-    auto n_src = n_children * n_check;
+    auto n_children = cell.n_immediate_children();
+    auto n_src = n_children * config.order;
 
     NBodyData<dim> c2c;
     c2c.obs_locs = check_pts;
@@ -224,109 +239,31 @@ FMMOperator<dim,R,C>::apply_children_to_check(const Octree<dim>& cell,
             continue;
         }
         auto equiv_pts = surface.upward_equiv_points(child->data.bounds, config.d);
-        for (size_t i = 0; i < n_equiv; i++) {
-            auto idx = child_idx * n_equiv + i;
+        for (size_t i = 0; i < config.order; i++) {
+            auto idx = child_idx * config.order + i;
             c2c.src_locs[idx] = equiv_pts[i];
             c2c.src_normals[idx] = surface.normals[i];
             c2c.src_weights[idx] = 1.0;
             for (size_t d = 0; d < C; d++) {
-                src_str[d * n_src + idx] = child_p2m[c]->data[d * n_equiv + i];
+                src_str[d * n_src + idx] = child_multipoles[c][d * config.order + i];
             }
         }
         child_idx++;
     }
 
-    return nbody_eval(K, c2c, src_str);
-}
+    auto check_eval = nbody_eval(K, c2c, src_str.data());
+    auto equiv_srcs = svd_solve(check_to_equiv, check_eval);
 
-template <size_t dim, size_t R, size_t C>
-std::unique_ptr<P2MData<dim>> 
-FMMOperator<dim,R,C>::P2M(const Octree<dim>& cell, const BlockVectorX& x,
-    CheckToEquiv& check_to_equiv_ops) const
-{
-    std::vector<double> check_eval;
-    typename P2MData<dim>::ChildrenType child_P2M;
-
-    if (cell.is_leaf()) {
-        //leaf P2M
-        check_eval = apply_src_to_check(cell, x);
-    } else {
-        //recurse and then M2M
-#pragma omp parallel for if(cell.data.level <= 0)
-        for (size_t i = 0; i < Octree<dim>::split; i++) {
-            if (cell.children[i] == nullptr) {
-                continue;
-            }
-            child_P2M[i] = P2M(*cell.children[i], x, check_to_equiv_ops);
-        }
-        check_eval = apply_children_to_check(cell, child_P2M);
-    }
-
-    auto& svd = check_to_equiv_ops[cell.data.level];
-    auto equiv_srcs = svd_solve(svd, check_eval);
-
-    return std::unique_ptr<P2MData<dim>>(new P2MData<dim>{
-        equiv_srcs, std::move(child_P2M)
-    });
-}
-
-template <size_t dim, size_t R, size_t C>
-void FMMOperator<dim,R,C>::M2L(L2PData<dim>& l2p, const Octree<dim>& obs_cell,
-    const Octree<dim>& src_cell, const P2MData<dim>& p2m) const 
-{
-    // auto equiv_pts = surface.upward_equiv_points(src_cell.data.bounds, config.d);
-    // auto n_equiv = equiv_pts.size();
-    // NBodyData<dim> m2l;
-    // m2p.src_locs = equiv_pts;
-    // m2p.src_normals = surface.normals;
-    // m2p.src_weights = std::vector<double>(equiv_pts.size(), 1.0);
-    // auto n_obs = obs_cell.data.indices.size();
-    // m2p.obs_locs.resize(n_obs);
-    // m2p.obs_normals.resize(n_obs);
-    // for (size_t i = 0; i < n_obs; i++) {
-    //     m2p.obs_locs[i] = data.obs_locs[obs_cell.data.indices[i]];
-    //     m2p.obs_normals[i] = data.obs_normals[obs_cell.data.indices[i]];
-    // }
-
-    // auto res = nbody_eval(K, m2p, p2m.data);
-
-    // for (size_t i = 0; i < n_obs; i++) {
-    //     for (size_t d = 0; d < R; d++) {
-    //         out[d][obs_cell.data.indices[i]] += res[d * n_obs + i];
-    //     }
-    // }
-}
-
-template <size_t dim, size_t R, size_t C>
-void FMMOperator<dim,R,C>::M2P(BlockVectorX& out, const Octree<dim>& obs_cell,
-    const Octree<dim>& src_cell, const P2MData<dim>& p2m) const 
-{
-    auto equiv_pts = surface.upward_equiv_points(src_cell.data.bounds, config.d);
-    auto n_equiv = equiv_pts.size();
-    NBodyData<dim> m2p;
-    m2p.src_locs = equiv_pts;
-    m2p.src_normals = surface.normals;
-    m2p.src_weights = std::vector<double>(equiv_pts.size(), 1.0);
-    auto n_obs = obs_cell.data.indices.size();
-    m2p.obs_locs.resize(n_obs);
-    m2p.obs_normals.resize(n_obs);
-    for (size_t i = 0; i < n_obs; i++) {
-        m2p.obs_locs[i] = data.obs_locs[obs_cell.data.indices[i]];
-        m2p.obs_normals[i] = data.obs_normals[obs_cell.data.indices[i]];
-    }
-
-    auto res = nbody_eval(K, m2p, p2m.data);
-
-    for (size_t i = 0; i < n_obs; i++) {
-        for (size_t d = 0; d < R; d++) {
-            out[d][obs_cell.data.indices[i]] += res[d * n_obs + i];
-        }
+#pragma omp critical
+    for (size_t i = 0; i < R * config.order; i++) {
+        parent_multipoles[i] = equiv_srcs[i];
     }
 }
 
+
 template <size_t dim, size_t R, size_t C>
-void FMMOperator<dim,R,C>::P2P(BlockVectorX& out, const Octree<dim>& obs_cell,
-    const Octree<dim>& src_cell, const BlockVectorX& x) const 
+void FMMOperator<dim,R,C>::P2P(const Octree<dim>& obs_cell,
+    const Octree<dim>& src_cell, const BlockVectorX& x, BlockVectorX& out) const 
 {
     auto n_src = src_cell.data.indices.size();
     auto n_obs = obs_cell.data.indices.size();
@@ -352,39 +289,362 @@ void FMMOperator<dim,R,C>::P2P(BlockVectorX& out, const Octree<dim>& obs_cell,
         p2p.obs_normals[i] = data.obs_normals[obs_cell.data.indices[i]];
     }
 
-    auto res = nbody_eval(K, p2p, src_str);
+    auto res = nbody_eval(K, p2p, src_str.data());
 
     for (size_t i = 0; i < n_obs; i++) {
         for (size_t d = 0; d < R; d++) {
+            #pragma omp atomic
             out[d][obs_cell.data.indices[i]] += res[d * n_obs + i];
         }
     }
 }
 
 template <size_t dim, size_t R, size_t C>
-void FMMOperator<dim,R,C>::dual_tree(const Octree<dim>& obs_cell,
-    const Octree<dim>& src_cell, const P2MData<dim>& p2m,
+void FMMOperator<dim,R,C>::P2L(const Octree<dim>& obs_cell,
+    const Octree<dim>& src_cell, const SVDPtr& check_to_equiv,
+    const BlockVectorX& x, double* locals) const
+{
+    //TODO: This is almost identical to the P2M operator.
+    auto n_src = src_cell.data.indices.size();
+
+    NBodyData<dim> s2c;
+    s2c.src_locs.resize(n_src);
+    s2c.src_normals.resize(n_src);
+    s2c.src_weights.resize(n_src);
+
+    s2c.obs_locs = surface.downward_check_points(obs_cell.data.bounds, config.d);
+    s2c.obs_normals = surface.normals;
+
+    std::vector<double> src_str(n_src * C);
+    for (size_t i = 0; i < n_src; i++) {
+        s2c.src_locs[i] = data.src_locs[src_cell.data.indices[i]];
+        s2c.src_normals[i] = data.src_normals[src_cell.data.indices[i]];
+        s2c.src_weights[i] = data.src_weights[src_cell.data.indices[i]];
+        for (size_t d = 0; d < C; d++) {
+            src_str[d * n_src + i] = x[d][src_cell.data.indices[i]];
+        }
+    }
+
+    auto check_eval = nbody_eval(K, s2c, src_str.data());
+    auto equiv_srcs = svd_solve(check_to_equiv, check_eval);
+
+    for (size_t i = 0; i < R * config.order; i++) {
+        #pragma omp atomic
+        locals[i] += equiv_srcs[i];
+    }
+}
+
+template <size_t dim, size_t R, size_t C>
+void FMMOperator<dim,R,C>::M2P(const Octree<dim>& obs_cell,
+    const Octree<dim>& src_cell, double* multipoles, BlockVectorX& out) const
+{
+    auto equiv_pts = surface.upward_equiv_points(src_cell.data.bounds, config.d);
+
+    NBodyData<dim> m2p;
+    m2p.src_locs = equiv_pts;
+    m2p.src_normals = surface.normals;
+    m2p.src_weights = std::vector<double>(equiv_pts.size(), 1.0);
+
+    auto n_obs = obs_cell.data.indices.size();
+    m2p.obs_locs.resize(n_obs);
+    m2p.obs_normals.resize(n_obs);
+    for (size_t i = 0; i < n_obs; i++) {
+        m2p.obs_locs[i] = data.obs_locs[obs_cell.data.indices[i]];
+        m2p.obs_normals[i] = data.obs_normals[obs_cell.data.indices[i]];
+    }
+
+    auto res = nbody_eval(K, m2p, multipoles);
+
+    for (size_t i = 0; i < n_obs; i++) {
+        for (size_t d = 0; d < R; d++) {
+            #pragma omp atomic
+            out[d][obs_cell.data.indices[i]] += res[d * n_obs + i];
+        }
+    }
+}
+
+template <size_t dim, size_t R, size_t C>
+void FMMOperator<dim,R,C>::M2L(const Octree<dim>& obs_cell, const Octree<dim>& src_cell,
+    const SVDPtr& down_check_to_equiv, double* multipoles, 
+    double* locals) const
+{
+    auto equiv_pts = surface.upward_equiv_points(src_cell.data.bounds, config.d);
+    NBodyData<dim> m2l;
+    m2l.src_locs = equiv_pts;
+    m2l.src_normals = surface.normals;
+    m2l.src_weights = std::vector<double>(equiv_pts.size(), 1.0);
+    
+    auto check_pts = surface.downward_check_points(obs_cell.data.bounds, config.d);
+    m2l.obs_locs = check_pts;
+    m2l.obs_normals = surface.normals;
+
+    auto check_eval = nbody_eval(K, m2l, multipoles);
+    auto solved = svd_solve(down_check_to_equiv, check_eval);
+
+    for (size_t i = 0; i < solved.size(); i++) {
+        #pragma omp atomic
+        locals[i] += solved[i];
+    }
+}
+
+template <size_t dim, size_t R, size_t C>
+void FMMOperator<dim,R,C>::L2L(const Octree<dim>& cell,
+    const SVDPtr& check_to_equiv, double* parent_locals,
+    std::vector<double*>& child_locals) const
+{
+    assert(!cell.is_leaf());
+
+    auto equiv_pts = surface.downward_equiv_points(cell.data.bounds, config.d);
+
+    NBodyData<dim> l2l;
+    l2l.src_locs = equiv_pts;
+    l2l.src_normals = surface.normals;
+    l2l.src_weights = std::vector<double>(config.order, 1.0);
+
+    for (size_t c = 0; c < Octree<dim>::split; c++) {
+        auto& child = cell.children[c];
+        if (child == nullptr) {
+            continue;
+        }
+
+        auto check_pts = surface.downward_check_points(child->data.bounds, config.d);
+        l2l.obs_locs = check_pts;
+        l2l.obs_normals = surface.normals;
+
+        auto check_eval = nbody_eval(K, l2l, parent_locals);
+        auto equiv_srcs = svd_solve(check_to_equiv, check_eval);
+
+        for (size_t i = 0; i < R * config.order; i++) {
+            #pragma omp atomic
+            child_locals[c][i] += equiv_srcs[i];
+        }
+    }
+}
+
+template <size_t dim, size_t R, size_t C>
+void FMMOperator<dim,R,C>::L2P(const Octree<dim>& cell,
+    double* locals, BlockVectorX& out) const
+{
+    //TODO: Code is essentially identical to M2P
+    auto equiv_pts = surface.downward_equiv_points(cell.data.bounds, config.d);
+
+    NBodyData<dim> l2p;
+    l2p.src_locs = equiv_pts;
+    l2p.src_normals = surface.normals;
+    l2p.src_weights = std::vector<double>(equiv_pts.size(), 1.0);
+
+    auto n_obs = cell.data.indices.size();
+    l2p.obs_locs.resize(n_obs);
+    l2p.obs_normals.resize(n_obs);
+    for (size_t i = 0; i < n_obs; i++) {
+        l2p.obs_locs[i] = data.obs_locs[cell.data.indices[i]];
+        l2p.obs_normals[i] = data.obs_normals[cell.data.indices[i]];
+    }
+
+    auto res = nbody_eval(K, l2p, locals);
+
+    for (size_t i = 0; i < n_obs; i++) {
+        for (size_t d = 0; d < R; d++) {
+            #pragma omp atomic
+            out[d][cell.data.indices[i]] += res[d * n_obs + i];
+        }
+    }
+}
+
+
+template <size_t dim, size_t R, size_t C>
+BlockVectorX FMMOperator<dim,R,C>::execute_tasks(const FMMTasks<dim>& tasks,
+    const BlockVectorX& x, 
+    const CheckToEquiv& up_check_to_equiv,
+    const CheckToEquiv& down_check_to_equiv) const
+{
+    std::cout << "P2M tasks: " << tasks.p2ms.size() << std::endl;
+    std::cout << "P2L tasks: " << tasks.p2ls.size() << std::endl;
+    std::cout << "P2P tasks: " << tasks.p2ps.size() << std::endl;
+    std::cout << "M2M tasks: " << tasks.m2ms.size() << std::endl;
+    std::cout << "M2L tasks: " << tasks.m2ls.size() << std::endl;
+    std::cout << "M2P tasks: " << tasks.m2ps.size() << std::endl;
+    std::cout << "L2L tasks: " << tasks.l2ls.size() << std::endl;
+    std::cout << "L2P tasks: " << tasks.l2ps.size() << std::endl;
+
+    auto n_src_cells = 1 + src_oct.n_children();
+    std::vector<double> multipoles(n_src_cells * config.order * C);
+    BlockVectorX out(R, VectorX(data.obs_locs.size(), 0.0));
+
+    auto equiv_start = [&](const Octree<dim>& cell) {
+        return cell.data.index * config.order * C;
+    };
+
+    TIC
+#pragma omp parallel for 
+    for (size_t i = 0; i < tasks.p2ms.size(); i++) {
+        auto& cell = tasks.p2ms[i].cell;
+        auto& check_to_equiv_op = up_check_to_equiv[cell.data.level];
+        P2M(cell, check_to_equiv_op, x, multipoles.data() + equiv_start(cell));
+    }
+    TOC("P2M");
+
+    TIC2
+// #pragma omp parallel for 
+    for (size_t i = 0; i < tasks.m2ms.size(); i++) {
+        auto& cell = tasks.m2ms[i].cell;
+        auto& check_to_equiv_op = up_check_to_equiv[cell.data.level];
+        std::vector<double*> child_data_ptrs(Octree<dim>::split);
+        for (size_t c = 0; c < Octree<dim>::split; c++) {
+            if (cell.children[c] == nullptr) {
+                continue;
+            }
+            auto ptr = multipoles.data() + equiv_start(*cell.children[c]);
+            child_data_ptrs[c] = ptr;
+        }
+        auto parent_data_ptr = multipoles.data() + equiv_start(cell);
+        M2M(cell, check_to_equiv_op, child_data_ptrs, parent_data_ptr);
+    }
+    TOC("M2M");
+
+    TIC2
+#pragma omp parallel for 
+    for (size_t i = 0; i < tasks.p2ps.size(); i++) {
+        auto t = tasks.p2ps[i];
+        P2P(t.obs_cell, t.src_cell, x, out);
+    }
+    TOC("P2P");
+
+    TIC2
+#pragma omp parallel for
+    for (size_t i = 0; i < tasks.m2ps.size(); i++) {
+        auto t = tasks.m2ps[i];
+        auto data_ptr = multipoles.data() + equiv_start(t.src_cell);
+        M2P(t.obs_cell, t.src_cell, data_ptr, out);
+    }
+    TOC("M2P");
+
+    auto n_obs_cells = 1 + obs_oct.n_children();
+    std::vector<double> locals(n_obs_cells * config.order * C, 0.0);
+
+    TIC2
+#pragma omp parallel for
+    for (size_t i = 0; i < tasks.p2ls.size(); i++) {
+        auto t = tasks.p2ls[i];
+        auto& check_to_equiv_op = down_check_to_equiv[t.obs_cell.data.level];
+        auto data_ptr = locals.data() + equiv_start(t.obs_cell);
+        P2L(t.obs_cell, t.src_cell, check_to_equiv_op, x, data_ptr);
+    }
+    TOC("P2L");
+
+    TIC2
+#pragma omp parallel for
+    for (size_t i = 0; i < tasks.m2ls.size(); i++) {
+        auto t = tasks.m2ls[i];
+        auto& check_to_equiv_op = down_check_to_equiv[t.obs_cell.data.level];
+        auto multipole_data = multipoles.data() + equiv_start(t.src_cell);
+        auto local_data = locals.data() + equiv_start(t.obs_cell);
+        M2L(t.obs_cell, t.src_cell, check_to_equiv_op, multipole_data, local_data);
+    }
+    TOC("M2L");
+
+    TIC2
+// #pragma omp parallel for
+    for (size_t i = 0; i < tasks.l2ls.size(); i++) {
+        auto& cell = tasks.l2ls[i].cell;
+        auto& check_to_equiv_op = down_check_to_equiv[cell.data.level + 1];
+        std::vector<double*> child_data_ptrs(Octree<dim>::split);
+        for (size_t c = 0; c < Octree<dim>::split; c++) {
+            if (cell.children[c] == nullptr) {
+                continue;
+            }
+            auto ptr = locals.data() + equiv_start(*cell.children[c]);
+            child_data_ptrs[c] = ptr;
+        }
+        auto parent_data_ptr = locals.data() + equiv_start(cell);
+        L2L(cell, check_to_equiv_op, parent_data_ptr, child_data_ptrs);
+    }
+    TOC("L2L");
+
+    TIC2
+#pragma omp parallel for
+    for (size_t i = 0; i < tasks.l2ps.size(); i++) {
+        auto& cell = tasks.l2ps[i].cell;
+        auto data_ptr = locals.data() + equiv_start(cell);
+        L2P(cell, data_ptr, out);
+    }
+    TOC("L2P");
+
+    return out;
+}
+
+template <size_t dim, size_t R, size_t C>
+BlockVectorX FMMOperator<dim,R,C>::apply(const BlockVectorX& x) const 
+{
+    assert(x.size() == C);
+
+    TIC
+    //TODO: CheckToEquivs can be class members since they only depend on the
+    //tree structure.
+    CheckToEquiv up_check_to_equiv;
+    CheckToEquiv down_check_to_equiv;
+    build_check_to_equiv(src_oct, up_check_to_equiv, down_check_to_equiv);
+    TOC("Computing check to equiv pseudoinverses");
+
+    TIC2
+    FMMTasks<dim> tasks;
+    upward_traversal(src_oct, tasks);
+    dual_tree(obs_oct, src_oct, tasks);
+    downward_traversal(obs_oct, tasks);
+    TOC("Traversal/planning");
+
+    TIC2
+    auto out = execute_tasks(tasks, x, up_check_to_equiv, down_check_to_equiv);
+    TOC("Execution");
+
+    return out;
+}
+
+template <size_t dim, size_t R, size_t C>
+void FMMOperator<dim,R,C>::upward_traversal(const Octree<dim>& cell,
     FMMTasks<dim>& tasks) const
+{
+    if (cell.is_leaf()) {
+        tasks.p2ms.push_back({cell});
+    } else {
+        //recurse and then M2M
+        for (size_t i = 0; i < Octree<dim>::split; i++) {
+            if (cell.children[i] == nullptr) {
+                continue;
+            }
+            upward_traversal(*cell.children[i], tasks);
+        }
+        tasks.m2ms.push_back({cell});
+    }
+}
+
+template <size_t dim, size_t R, size_t C>
+void FMMOperator<dim,R,C>::dual_tree(const Octree<dim>& obs_cell,
+    const Octree<dim>& src_cell, FMMTasks<dim>& tasks) const
 {
     auto r_src = hypot(src_cell.data.bounds.half_width);
     auto r_obs = hypot(obs_cell.data.bounds.half_width);
     double r_max = std::max(r_src, r_obs);
     double r_min = std::min(r_src, r_obs);
     auto sep = hypot(obs_cell.data.bounds.center - src_cell.data.bounds.center);
-    if (obs_cell.is_leaf()) {
-        if (r_max + config.mac * r_min <= config.mac * sep) {
-            if (src_cell.data.indices.size() <= p2m.data.size()) {
-                tasks.p2ps.push_back({obs_cell, src_cell});
-                return;
-            }
-            tasks.m2ps.push_back({obs_cell, src_cell, p2m});
-            return;
-        }
-
-        if (src_cell.is_leaf()) {
+    if (r_max + config.mac * r_min <= config.mac * sep) {
+        bool small_src = src_cell.data.indices.size() <= config.order;
+        bool small_obs = obs_cell.data.indices.size() <= config.order;
+        if (small_obs && small_src) {
             tasks.p2ps.push_back({obs_cell, src_cell});
-            return;
+        } else if (small_obs) {
+            tasks.m2ps.push_back({obs_cell, src_cell});
+        } else if (small_src) {
+            tasks.p2ls.push_back({obs_cell, src_cell});
+        } else {
+            tasks.m2ls.push_back({obs_cell, src_cell});
         }
+        return;
+    }
+
+    if (obs_cell.is_leaf() && src_cell.is_leaf()) {
+        tasks.p2ps.push_back({obs_cell, src_cell});
+        return;
     }
 
     bool src_is_shallower = obs_cell.data.level > src_cell.data.level;
@@ -395,7 +655,7 @@ void FMMOperator<dim,R,C>::dual_tree(const Octree<dim>& obs_cell,
             if (src_cell.children[c] == nullptr) {
                 continue;
             }
-            dual_tree(obs_cell, *src_cell.children[c], *p2m.children[c], tasks);
+            dual_tree(obs_cell, *src_cell.children[c], tasks);
         }
     } else {
         //split obs
@@ -403,93 +663,29 @@ void FMMOperator<dim,R,C>::dual_tree(const Octree<dim>& obs_cell,
             if (obs_cell.children[c] == nullptr) {
                 continue;
             }
-            dual_tree(*obs_cell.children[c], src_cell, p2m, tasks);
+            dual_tree(*obs_cell.children[c], src_cell, tasks);
         }
     }
 }
 
 template <size_t dim, size_t R, size_t C>
-BlockVectorX FMMOperator<dim,R,C>::execute_tasks(
-    const FMMTasks<dim>& tasks, const BlockVectorX& x) const
+void FMMOperator<dim,R,C>::downward_traversal(const Octree<dim>& obs_cell,
+    FMMTasks<dim>& tasks) const
 {
-    BlockVectorX out(R, VectorX(data.obs_locs.size(), 0.0));
-
-    // label cells
-    std::map<size_t,size_t> p2p_cell_map;
-    size_t next_cell = 0;
-    for (const auto& p2p: tasks.p2ps) {
-        auto cell_key = p2p.obs_cell.data.indices[0];
-        if (p2p_cell_map.count(cell_key) == 0) {
-            p2p_cell_map[cell_key] = next_cell;
-            next_cell++;
+    if (obs_cell.is_leaf()) {
+        tasks.l2ps.push_back({obs_cell});
+        return;
+    } else {
+        tasks.l2ls.push_back({obs_cell});
+        for (size_t c = 0; c < Octree<dim>::split; c++) {
+            if (obs_cell.children[c] == nullptr) {
+                continue;
+            }
+            downward_traversal(*obs_cell.children[c], tasks);
         }
     }
-
-    std::map<size_t,size_t> m2p_cell_map;
-    next_cell = 0;
-    for (const auto& m2p: tasks.m2ps) {
-        auto cell_key = m2p.obs_cell.data.indices[0];
-        if (m2p_cell_map.count(cell_key) == 0) {
-            m2p_cell_map[cell_key] = next_cell;
-            next_cell++;
-        }
-    }
-
-    //separate tasks by observer cell
-    std::vector<std::vector<P2PTask<dim>>> p2p_sorted(p2p_cell_map.size());
-    std::vector<std::vector<M2PTask<dim>>> m2p_sorted(m2p_cell_map.size());
-    for (const auto& p2p: tasks.p2ps) {
-        auto cell_key = p2p.obs_cell.data.indices[0];
-        p2p_sorted[p2p_cell_map[cell_key]].push_back(p2p);
-    }
-    for (const auto& m2p: tasks.m2ps) {
-        auto cell_key = m2p.obs_cell.data.indices[0];
-        m2p_sorted[m2p_cell_map[cell_key]].push_back(m2p);
-    }
-
-#pragma omp parallel for 
-    for (size_t i = 0; i < p2p_sorted.size(); i++) {
-        for (const auto& t: p2p_sorted[i]) {
-            P2P(out, t.obs_cell, t.src_cell, x);
-        }
-    }
-
-#pragma omp parallel for
-    for (size_t i = 0; i < m2p_sorted.size(); i++) {
-        for (const auto& t: m2p_sorted[i]) {
-            M2P(out, t.obs_cell, t.src_cell, t.p2m);
-        }
-    }
-
-    return out;
 }
 
-template <size_t dim, size_t R, size_t C>
-BlockVectorX FMMOperator<dim,R,C>::apply(const BlockVectorX& x) const 
-{
-    assert(x.size() == C);
-    int original_nested = omp_get_nested();
-    omp_set_nested(1);
-
-    CheckToEquiv check_to_equiv;
-    TIC
-    build_check_to_equiv(src_oct, check_to_equiv);
-    TOC("Build C2E");
-    TIC2
-    const auto p2m = P2M(src_oct, x, check_to_equiv);
-    TOC("P2M");
-
-    TIC2
-    FMMTasks<dim> tasks;
-    dual_tree(obs_oct, src_oct, *p2m, tasks);
-    TOC("DTT");
-    TIC2
-    auto out = execute_tasks(tasks, x);
-    TOC("Execute");
-
-    omp_set_nested(original_nested);
-    return out;
-}
 
 template struct FMMOperator<2,1,1>;
 template struct FMMOperator<2,2,2>;

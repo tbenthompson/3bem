@@ -28,18 +28,6 @@ TEST(MakeSurroundingSurface)
     CHECK_CLOSE(surface.normals[1], (Vec<double,2>{0.0, 1.0}), 1e-12);
 } 
 
-template <size_t dim>
-void check_identity_p2m(const Octree<dim>& cell, const P2MData<dim>& p2m) 
-{
-    CHECK_EQUAL(cell.data.indices.size(), p2m.data[0]);
-    for (size_t c = 0; c < Octree<dim>::split; c++) {
-        if (cell.children[c] == nullptr) {
-            continue;
-        }
-        check_identity_p2m(*cell.children[c], *p2m.children[c]);
-    }
-}
-
 TEST(IdentityP2M) 
 {
     size_t n = 500;
@@ -52,26 +40,48 @@ TEST(IdentityP2M)
     };
     IdentityScalar<2> K;
     FMMOperator<2,1,1> tree(K, data, {0.3, 1, 1, 0.05});
-    CheckToEquiv check_to_equiv;
-    tree.build_check_to_equiv(tree.src_oct, check_to_equiv);
-    auto p2m = tree.P2M(tree.src_oct, x, check_to_equiv);
-    check_identity_p2m(tree.src_oct, *p2m);
+    CheckToEquiv up_check_to_equiv;
+    CheckToEquiv down_check_to_equiv;
+    tree.build_check_to_equiv(tree.src_oct, up_check_to_equiv, down_check_to_equiv);
+
+    double M_coeff;
+    tree.P2M(tree.src_oct, up_check_to_equiv[0], x, &M_coeff);
+    CHECK_EQUAL(M_coeff, static_cast<double>(n));
+
+    double L_coeff = 0.0;
+    tree.M2L(tree.obs_oct, tree.src_oct, down_check_to_equiv[0], &M_coeff, &L_coeff);
+    CHECK_EQUAL(L_coeff, static_cast<double>(n));
+
+    std::vector<double> L_child(4);
+    std::vector<double*> child_ptr(4);
+    for (size_t i = 0; i < 4; i++) {
+        child_ptr[i] = &L_child[i];
+    }
+    tree.L2L(tree.src_oct, down_check_to_equiv[1], &L_coeff, child_ptr);
+    for (size_t i = 0; i < 4; i++) {
+        CHECK_EQUAL(L_child[i], static_cast<double>(n));
+    }
+
+    BlockVectorX out(1, VectorX(n, 0.0));
+    tree.L2P(tree.src_oct, &L_coeff, out);
+    for (size_t i = 0; i < n; i++) {
+        CHECK_EQUAL(out[0][i], static_cast<double>(n));
+    }
 }
 
 template <size_t dim, size_t R, size_t C>
 void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
     size_t order, double allowed_error) 
 {
-    size_t n_per_cell = std::max<size_t>(50, order);
+    size_t n_per_cell = std::max<size_t>(20, order);
     BlockVectorX x(C, VectorX(data.src_weights));
-    FMMOperator<dim,R,C> tree(K, data, {0.3, order, n_per_cell, 0.05});
+    FMMOperator<dim,R,C> tree(K, data, {0.35, order, n_per_cell, 0.05});
     TIC
     auto out = tree.apply(x);
     TOC("FMM");
 
     BlockDirectNBodyOperator<dim,R,C> exact_op{data, K};
     auto exact = exact_op.apply(x);
-    size_t close_to_bad = 0;
     for (size_t d = 0; d < R; d++) {
         double average_magnitude = 0.0;
         for (size_t i = 0; i < data.obs_locs.size(); i++) {
@@ -85,14 +95,13 @@ void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
             CHECK_CLOSE(error, 0, allowed_error);
         }
     }
-    std::cout << "NNN: " << close_to_bad << std::endl;
 }
 
 
 template <size_t dim, size_t R, size_t C>
 void test_kernel(const Kernel<dim,R,C>& K, size_t order, double allowed_error) 
 {
-    size_t n = 4000;
+    size_t n = 10000;
     auto data = ones_data<dim>(n);
     return test_kernel(data, K, order, allowed_error);    
 }
@@ -104,7 +113,7 @@ TEST(IdentityFMM)
 
 TEST(SingleLayer2DFMM) 
 {
-    test_kernel(LaplaceSingle<2>(), 10, 1e-4);
+    test_kernel(LaplaceSingle<2>(), 15, 1e-2);
 }
 
 TEST(DoubleLayer2DFMM) 
@@ -142,6 +151,6 @@ TEST(ElasticHypersingular2DFMM)
 
 int main(int, char const *[])
 {
-    return UnitTest::RunAllTests();
-    // return RunOneTest("IdentityFMM");
+    // return UnitTest::RunAllTests();
+    return RunOneTest("SingleLayer2DFMM");
 }

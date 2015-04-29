@@ -1,11 +1,10 @@
 CURRENT: FMM 
-** FMM (as opposed to the current treecode)!
-** move obs, src loop into the kernel functions
-** sse/avx implementation of kernel functions
-Eigen SVD is obscenely slow. See what else is out there! 
-Use blas?
-How is the Armadillo SVD?
-** move unittest-cpp inside the repository
+** FMM
+** replace unittest-cpp with Catch (header only!)
+** replace boost with cython
+** Redo elastic solver
+** tbempy python package and tbempy_elastic python package
+** hanging nodes
 
 MISC:
 ** see how FMM accuracy changes as a function of
@@ -14,7 +13,10 @@ MISC:
     3) order of expansion
     4) multipole acceptance criteria
 
-** hanging nodes!
+** move obs, src loop into the kernel functions
+** sse/avx implementation of kernel functions
+Use blas SVD
+
 ** nearest_neighbors for point->triangle or triangle->triangle intersection
 ** Handle the general case when fault-surface intersection does not occur at a vertex.
 -- Linked to hanging nodes in that lots of geometry code needs to be used/written.
@@ -32,5 +34,4 @@ MISC:
 ** move continuity builder stuff to cpp file
 
 BETTER BUILD SYSTEM:
-** test the build system on mac, windows, a fresh ubuntu, odyssey/meade02
-** kill the boost dependency, replace with cython wrappers
+** test the build system on mac, a fresh ubuntu, odyssey/meade02, don't support windows

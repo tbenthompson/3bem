@@ -34,58 +34,67 @@ struct TranslationSurface {
         auto r_ref = 0.3; //std::sqrt(2) + d;
         return move(box, r_ref);
     }
+
+    std::vector<Vec<double,dim>> 
+    downward_check_points(const Box<dim>& box, double d) const
+    {
+        auto r_ref = std::sqrt(2) + d;
+        return move(box, r_ref);
+    }
+
+    std::vector<Vec<double,dim>> 
+    downward_equiv_points(const Box<dim>& box, double d) const
+    {
+        auto r_ref = 4.0 - std::sqrt(2) - 2 * d;
+        return move(box, r_ref);
+    }
 };
 template <size_t dim>
-TranslationSurface<dim> make_surrounding_surface(size_t expansion_order);
+TranslationSurface<dim> make_surrounding_surface(size_t order);
 
 typedef std::vector<SVDPtr> CheckToEquiv;
-template <size_t dim>
-using P2MData = OctreeData<dim,std::vector<double>>;
-template <size_t dim>
-using L2PData = P2MData<dim>;
 
 struct FMMConfig {
     const double mac;
     // const double inner_radius;
     // const double outer_radius;
-    const size_t expansion_order;
+    const size_t order;
     const size_t min_pts_per_cell;
     const double d;
     // const double alpha;
 };
 
 template <size_t dim>
-struct M2PTask
-{
-    const Octree<dim>& obs_cell;
-    const Octree<dim>& src_cell;
-    const P2MData<dim>& p2m;
-};
-
-template <size_t dim>
-struct M2LTask
-{
-    const Octree<dim>& obs_cell;
-    const Octree<dim>& src_cell;
-    const P2MData<dim>& p2m;
-    const L2PData<dim>& l2p;
-};
-
-template <size_t dim>
-struct P2PTask
-{
-    const Octree<dim>& obs_cell;
-    const Octree<dim>& src_cell;
-};
-
-template <size_t dim>
 struct FMMTasks 
 {
-    std::vector<M2PTask<dim>> m2ps;
-    std::vector<M2LTask<dim>> m2ls;
-    std::vector<P2PTask<dim>> p2ps;
+    struct CellPairTask
+    {
+        const Octree<dim>& obs_cell;
+        const Octree<dim>& src_cell;
+    };
+
+    struct CellTask
+    {
+        const Octree<dim>& cell;
+    };
+
+    std::vector<CellTask> p2ms;
+    std::vector<CellTask> m2ms;
+    std::vector<CellPairTask> m2ps;
+    std::vector<CellPairTask> p2ps;
+    std::vector<CellPairTask> p2ls;
+    std::vector<CellPairTask> m2ls;
+    std::vector<CellTask> l2ls;
+    std::vector<CellTask> l2ps;
 };
 
+/* An implementation of the kernel independent fast multipole method
+ * as described in:
+ *
+ * A Kernel-independent Adaptive Fast Multipole Method in Two and 
+ * Three Dimensions. L. Ying, G. Biros, D. Zorin. Journal of Computational
+ * Physics, 196(2), 591-626, 2004.
+ */
 template <size_t dim, size_t R, size_t C>
 struct FMMOperator {
     const Kernel<dim,R,C>& K;
@@ -98,32 +107,87 @@ struct FMMOperator {
     FMMOperator(const Kernel<dim,R,C>& K, const NBodyData<dim>& data,
         const FMMConfig& config);
 
+    /* Construct the operator relating the influence of a set of
+     * a sources on the check surface to the equivalent set of sources on
+     * the equivalent surface.
+     */
     void build_check_to_equiv(const Octree<dim>& cell, 
-        CheckToEquiv& created_ops) const;
+        CheckToEquiv& up_ops, CheckToEquiv& down_ops) const;
     
-    std::vector<double> apply_src_to_check(const Octree<dim>& cell,
-        const BlockVectorX& x) const;
+    /* The P2M operator converts sources to equivalent sources in the
+     * upward tree traversal.
+     */
+    void P2M(const Octree<dim>& cell, const SVDPtr& check_to_equiv,
+        const BlockVectorX& x, double* parent_multipoles) const;
 
-    std::vector<double> apply_children_to_check(const Octree<dim>& cell,
-        const typename P2MData<dim>::ChildrenType& child_p2m) const;
+    /* The M2M operator converts child cell equivalent sources to parent cell
+     * equivalent sources in the upward tree traversal.
+     */
+    void M2M(const Octree<dim>& cell, const SVDPtr& check_to_equiv,
+        std::vector<double*>& child_multipoles, double* parent_multipoles) const;
 
-    std::unique_ptr<P2MData<dim>> P2M(const Octree<dim>& cell, const BlockVectorX& x,
-        CheckToEquiv& check_to_equiv_ops) const;
+    /* The P2L operator converts from sources straight to the equivalent sources
+     * at a farfield observation cell (local coefficients) bypassing the P2M, M2M 
+     * and M2L operators in cases where there are insufficient sources to justify
+     * using those operators.
+     */
+    void P2L(const Octree<dim>& obs_cell, const Octree<dim>& src_cell,
+        const SVDPtr& check_to_equiv, const BlockVectorX& x,
+        double* locals) const;
 
-    void P2P(BlockVectorX& out, const Octree<dim>& obs_cell,
-        const Octree<dim>& src_cell, const BlockVectorX& x) const;
+    /* The M2P operator evaluates the influence of source cell equivalent
+     * sources (multipole coefficients) on farfield observation points bypassing
+     * the M2L, L2L, L2P operators in cases where there are insufficient observation
+     * points to justify using those operators.
+     */
+    void M2P(const Octree<dim>& obs_cell, const Octree<dim>& src_cell,
+        double* multipoles, BlockVectorX& out) const;
 
-    void M2P(BlockVectorX& out, const Octree<dim>& obs_cell,
-        const Octree<dim>& src_cell, const P2MData<dim>& p2m) const;
+    /* The M2L operator converts equivalent sources from an source tree 
+     * cell (multipole coefficients) into equivalent sources for an
+     * observation tree cell (local coefficients).
+     */
+    void M2L(const Octree<dim>& obs_cell, const Octree<dim>& src_cell,
+        const SVDPtr& down_check_to_equiv, double* multipoles, 
+        double* locals) const;
 
-    void M2L(L2PData<dim>& l2p, const Octree<dim>& obs_cell,
-        const Octree<dim>& src_cell, const P2MData<dim>& p2m) const;
+    /* Convert from equivalent sources at a farfield parent observation cell
+     * to its child cells.
+     */
+    void L2L(const Octree<dim>& cell, const SVDPtr& check_to_equiv,
+        double* parent_locals, std::vector<double*>& child_locals) const;
 
-    void dual_tree(const Octree<dim>& obs_cell,
-        const Octree<dim>& src_cell, const P2MData<dim>& p2m,
+    /* The L2P operator evaluates the influence of the equivalent sources from
+     * a observation cell on the observation points in that cell
+     */
+    void L2P(const Octree<dim>& cell, double* locals, BlockVectorX& out) const;
+
+    /* Perform a direct n body calculation between a source and observation
+     * cell.
+     */
+    void P2P(const Octree<dim>& obs_cell, const Octree<dim>& src_cell,
+        const BlockVectorX& x, BlockVectorX& out) const;
+
+    /* Determine the sequence of operations necessary to compute the upward
+     * equivalent sources
+     */
+    void upward_traversal(const Octree<dim>& cell, FMMTasks<dim>& tasks) const;
+
+    /* Determine the sequence of FMM operations for the interaction of a set of
+     * sources and observers
+     */
+    void dual_tree(const Octree<dim>& obs_cell, const Octree<dim>& src_cell,
         FMMTasks<dim>& tasks) const;
 
-    BlockVectorX execute_tasks(const FMMTasks<dim>& tasks, const BlockVectorX& x) const;
+    /* Determine the sequence of FMM operations for calculating the influence of
+     * observation cell equivalent sources on observation points
+     */
+    void downward_traversal(const Octree<dim>& obs_cell, FMMTasks<dim>& tasks) const;
+
+    BlockVectorX execute_tasks(const FMMTasks<dim>& tasks,
+        const BlockVectorX& x, 
+        const CheckToEquiv& up_check_to_equiv,
+        const CheckToEquiv& down_check_to_equiv) const;
 
     BlockVectorX apply(const BlockVectorX& x) const;
 };

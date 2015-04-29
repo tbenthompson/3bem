@@ -28,10 +28,10 @@ template <size_t dim, typename T>
 struct OctreeData {
     static const size_t split = 2<<(dim-1);
     typedef std::array<std::unique_ptr<OctreeData<dim,T>>,split> ChildrenType;
-    const T data;
+    T data;
     ChildrenType children;
 
-    size_t count_children() const {
+    size_t n_immediate_children() const {
         size_t c = 0;
         for (const auto& p: children) {
             if (p != nullptr) {
@@ -41,11 +41,11 @@ struct OctreeData {
         return c;
     }
     
-    size_t count_children_recursive() const {
+    size_t n_children() const {
         size_t c = 0;
         for (const auto& p: children) {
             if (p != nullptr) {
-                c += 1 + p->count_children_recursive();
+                c += 1 + p->n_children();
             }
         }
         return c;
@@ -67,6 +67,7 @@ struct OctreeCell {
     const Box<dim> tight_bounds;
     const std::vector<int> indices;
     const size_t level;
+    const size_t index;
 };
 
 template <size_t dim>

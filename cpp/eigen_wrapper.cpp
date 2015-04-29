@@ -56,6 +56,7 @@ void set_threshold(const SVDPtr& svd, double threshold)
 
 std::vector<double> svd_solve(const SVDPtr& svd, const std::vector<double>& b)
 {
+    assert(b.size() == static_cast<size_t>(svd->svd.cols()));
     Eigen::Map<const Eigen::VectorXd> eigen_b(b.data(), svd->svd.cols());
     Eigen::VectorXd soln = svd->svd.solve(eigen_b);
     return std::vector<double>(soln.data(), soln.data() + svd->svd.rows());

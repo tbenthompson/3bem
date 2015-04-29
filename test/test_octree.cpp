@@ -3,6 +3,7 @@
 #include "util.h"
 #include "vec_ops.h"
 #include "test_shared.h"
+#include <set>
 using namespace tbem;
 
 std::vector<Vec<double,3>> three_pts() {
@@ -175,6 +176,28 @@ TEST(OctreeLine) {
 
     auto oct = build_octree(pts, 1);
     CHECK_EQUAL(count_children(oct), 31); 
+}
+
+template <size_t dim>
+std::set<size_t> check_nonoverlapping_indices(const Octree<dim>& oct,
+    const std::set<size_t>& indices)
+{
+    auto new_set = indices;
+    auto ret = new_set.emplace(oct.data.index);
+    CHECK(ret.second);
+    for (auto& c: oct.children) {
+        if (c == nullptr) {
+            continue;
+        }
+        new_set = check_nonoverlapping_indices(*c, new_set);
+    }
+    return new_set;
+}
+
+TEST(NonOverlappingIndices) {
+    auto pts = random_pts<3>(1000);
+    auto oct = build_octree(pts, 4);
+    check_nonoverlapping_indices(oct, {});
 }
 
 int main(int, char const *[])

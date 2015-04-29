@@ -85,7 +85,7 @@ template <size_t dim>
 typename Octree<dim>::ChildrenType
 build_children(const Box<dim>& bounds, 
     const std::vector<Vec<double,dim>>& pts, const std::vector<int>& indices,
-    size_t level, size_t min_pts_per_cell) 
+    size_t level, size_t min_pts_per_cell, size_t& next_index) 
 {
     typename Octree<dim>::ChildrenType children;
     if (indices.size() <= min_pts_per_cell) {
@@ -127,12 +127,19 @@ build_children(const Box<dim>& bounds,
         typename Octree<dim>::ChildrenType sub_children;
         if (any(tight_bounds.half_width != 0.0)) {
             sub_children = build_children(
-                child_bounds, pts, child_indices[i], child_level, min_pts_per_cell
+                child_bounds, pts, child_indices[i],
+                child_level, min_pts_per_cell, next_index
             );
         }
 
+        size_t child_idx;
+#pragma omp critical 
+        {
+            child_idx = next_index;
+            next_index++;
+        }
         children[i] = std::unique_ptr<Octree<dim>>(new Octree<dim>{
-            {child_bounds, tight_bounds, child_indices[i], child_level},
+            {child_bounds, tight_bounds, child_indices[i], child_level, child_idx},
             std::move(sub_children)
         });
     }
@@ -149,11 +156,12 @@ Octree<dim> build_octree(const std::vector<Vec<double,dim>>& pts,
     half_width += 1e-5 * max_axis;
     Box<dim> expanded_box{box.center, half_width};
     auto all_indices = range(pts.size());
+    size_t next_index = 1;
     auto children = build_children(
-        box, pts, all_indices, 0, min_pts_per_cell
+        box, pts, all_indices, 0, min_pts_per_cell, next_index
     );
     return Octree<dim>{
-        {expanded_box, expanded_box, all_indices, 0},
+        {expanded_box, expanded_box, all_indices, 0, 0},
         std::move(children)
     };
 }
