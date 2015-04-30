@@ -1,6 +1,5 @@
 from tools.config import get_config
 from tools.build import run_build
-from tools.testing import run_unit_tests
 from tools.fabricate import main, autoclean
 import pprint
 import sys

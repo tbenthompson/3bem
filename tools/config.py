@@ -1,6 +1,5 @@
 from __future__ import print_function
 from tools.util import files_in_dir
-from tools.testing import unit_testing_targets
 from numpy.distutils.system_info import get_info as np_config_info
 import distutils.sysconfig
 import warnings
@@ -33,30 +32,40 @@ python_include_dir = distutils.sysconfig.get_python_inc()
 python_lib_dir = distutils.sysconfig.get_python_lib(standard_lib = True)
 python_lib = distutils.sysconfig.get_config_var('LDLIBRARY')
 
-def get_config(command_params):
+def determine_build_type(command_params):
     build_type = 'release'
     if '-d' in command_params:
         build_type = 'debug'
     if '-p' in command_params:
         build_type = 'profile'
+    return build_type
+
+def determine_printer(command_params):
     printer = lambda x: None
     if '-v' in command_params:
         printer = print
+    return printer
 
+def get_config(command_params):
+    build_type = determine_build_type(command_params);
+    build_dir = os.path.join('build', str(build_type))
     cpp_flags = base_cpp_flags + include_flags + cpp_flag_types[build_type]
-
     link_flags = base_link_flags + link_flag_types.get(build_type, [])
 
+    printer = determine_printer(command_params)
+
+    lib_cpp_flags = cpp_flags + ['-fPIC']
+    lib_link_flags = link_flags + ['-shared']
     lib = dict()
-    lib['cpp_flags'] = cpp_flags + ['-fPIC']
-    lib['link_flags'] = link_flags + ['-shared']
+    lib['cpp_flags'] = lib_cpp_flags
+    lib['link_flags'] = lib_link_flags
     lib['sources'] = files_in_dir(src_dir, 'cpp')
     lib['linked_sources'] = []
     lib['binary_name'] = 'lib3bem.so'
     lib['priority'] = 0
 
-    python_wrapper_cpp_flags = lib['cpp_flags'] + include([python_include_dir])
-    python_wrapper_link_flags = lib['link_flags'] +\
+    python_wrapper_cpp_flags = lib_cpp_flags + include([python_include_dir])
+    python_wrapper_link_flags = lib_link_flags +\
         ['-L' + python_lib_dir] +\
         ['-l:' + python_lib] +\
         ['-l' + boost_python_lib]
@@ -68,8 +77,13 @@ def get_config(command_params):
     python_wrapper['binary_name'] = 'tbempy.so'
     python_wrapper['priority'] = 2
 
-    build_dir = os.path.join('build', str(build_type))
-    lib_dep_flags = ['-Wl,-rpath=./' + build_dir, '-L./' + build_dir, '-l3bem']
+    tests = dict()
+    tests['cpp_flags'] = cpp_flags
+    tests['link_flags'] = link_flags
+    tests['sources'] = files_in_dir(test_dir, 'cpp')
+    tests['linked_sources'] = lib['sources']
+    tests['binary_name'] = 'test_runner'
+    tests['priority'] = 1
 
     c = dict()
     c['build_dir'] = build_dir
@@ -81,12 +95,9 @@ def get_config(command_params):
     c['compiler'] = 'g++'
     c['command_params'] = command_params
     c['printer'] = printer
-    c['lib_dep_flags'] = lib_dep_flags
-    c['cpp_flags'] = cpp_flags
-    c['link_flags'] = link_flags
     c['targets'] = dict()
     c['targets']['lib'] = lib
     c['targets']['python_wrapper'] = python_wrapper
-    c['targets'].update(unit_testing_targets(c))
+    c['targets']['tests'] = tests
     return c
 
