@@ -9,3 +9,4 @@ build*/*
 *.hdf5
 !notes/method_desc/*.tex
 notes/method_desc/*
+lib
