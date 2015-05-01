@@ -26,8 +26,13 @@ base_link_flags = ['-fopenmp']
 link_flag_types = dict()
 link_flag_types['coverage'] = ['--coverage']
 
-boost_python_dir = ''
-boost_python_lib = 'boost_python'
+boost_include_dir = 'lib/boost_subset/'
+boost_lib = 'local_boost.so'
+boost_src_dirs = ['lib/boost_subset/libs/python/src']
+boost_src_dirs += [boost_src_dirs[0] + '/converter']
+boost_src_dirs += [boost_src_dirs[0] + '/object']
+boost_sources = reduce(lambda fs1, fs2: fs1 + fs2,
+                       map(lambda d: files_in_dir(d, 'cpp'), boost_src_dirs))
 python_include_dir = distutils.sysconfig.get_python_inc()
 python_lib_dir = distutils.sysconfig.get_python_lib(standard_lib = True)
 python_lib = distutils.sysconfig.get_config_var('LDLIBRARY')
@@ -64,11 +69,13 @@ def get_config(command_params):
     lib['binary_name'] = 'lib3bem.so'
     lib['priority'] = 0
 
-    python_wrapper_cpp_flags = lib_cpp_flags + include([python_include_dir])
+    python_wrapper_cpp_flags = lib_cpp_flags +\
+            include([python_include_dir, boost_include_dir])
     python_wrapper_link_flags = lib_link_flags +\
         ['-L' + python_lib_dir] +\
         ['-l:' + python_lib] +\
-        ['-l' + boost_python_lib]
+        ['-L' + os.path.join(os.getcwd(), build_dir)] +\
+        ['-l:' + boost_lib]
     python_wrapper = dict()
     python_wrapper['cpp_flags'] = python_wrapper_cpp_flags
     python_wrapper['link_flags'] = python_wrapper_link_flags
@@ -85,13 +92,24 @@ def get_config(command_params):
     tests['binary_name'] = 'test_runner'
     tests['priority'] = 1
 
+    boost = dict()
+    boost['cpp_flags'] = lib_cpp_flags + include([python_include_dir])
+    boost['link_flags'] = lib_link_flags +\
+        ['-L' + python_lib_dir] +\
+        ['-l:' + python_lib]
+    boost['sources'] = boost_sources
+    boost['linked_sources'] = []
+    boost['binary_name'] = boost_lib
+    boost['priority'] = -1
+
     c = dict()
     c['build_dir'] = build_dir
     c['subdirs'] = dict(
         src_dir = src_dir,
         test_dir = test_dir,
-        py_wrap_dir = py_wrap_dir
+        py_wrap_dir = py_wrap_dir,
     )
+    c['subdirs'].update({d:d for d in boost_src_dirs})
     c['compiler'] = 'g++'
     c['command_params'] = command_params
     c['printer'] = printer
@@ -99,5 +117,6 @@ def get_config(command_params):
     c['targets']['lib'] = lib
     c['targets']['python_wrapper'] = python_wrapper
     c['targets']['tests'] = tests
+    c['targets']['boost'] = boost
     return c
 

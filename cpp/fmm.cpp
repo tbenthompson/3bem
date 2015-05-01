@@ -1,5 +1,13 @@
 #include "fmm.h"
 
+//TODO: Remove the timing code.
+#undef TIC
+#define TIC
+#undef TIC2
+#define TIC2
+#undef TOC
+#define TOC
+
 namespace tbem {
 
 template <>
@@ -458,14 +466,14 @@ BlockVectorX FMMOperator<dim,R,C>::execute_tasks(const FMMTasks<dim>& tasks,
     const CheckToEquiv& up_check_to_equiv,
     const CheckToEquiv& down_check_to_equiv) const
 {
-    std::cout << "P2M tasks: " << tasks.p2ms.size() << std::endl;
-    std::cout << "P2L tasks: " << tasks.p2ls.size() << std::endl;
-    std::cout << "P2P tasks: " << tasks.p2ps.size() << std::endl;
-    std::cout << "M2M tasks: " << tasks.m2ms.size() << std::endl;
-    std::cout << "M2L tasks: " << tasks.m2ls.size() << std::endl;
-    std::cout << "M2P tasks: " << tasks.m2ps.size() << std::endl;
-    std::cout << "L2L tasks: " << tasks.l2ls.size() << std::endl;
-    std::cout << "L2P tasks: " << tasks.l2ps.size() << std::endl;
+    // std::cout << "P2M tasks: " << tasks.p2ms.size() << std::endl;
+    // std::cout << "P2L tasks: " << tasks.p2ls.size() << std::endl;
+    // std::cout << "P2P tasks: " << tasks.p2ps.size() << std::endl;
+    // std::cout << "M2M tasks: " << tasks.m2ms.size() << std::endl;
+    // std::cout << "M2L tasks: " << tasks.m2ls.size() << std::endl;
+    // std::cout << "M2P tasks: " << tasks.m2ps.size() << std::endl;
+    // std::cout << "L2L tasks: " << tasks.l2ls.size() << std::endl;
+    // std::cout << "L2P tasks: " << tasks.l2ps.size() << std::endl;
 
     auto n_src_cells = 1 + src_oct.n_children();
     std::vector<double> multipoles(n_src_cells * config.order * C);
