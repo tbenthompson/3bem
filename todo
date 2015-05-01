@@ -2,9 +2,6 @@ CURRENT: FMM
 ** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
 ** Redo elastic solver
 ** hanging nodes
-** how to avoid including boost_subset and eigen and catch in the project repository?
-catch url: https://raw.githubusercontent.com/philsquared/Catch/develop/single_include/catch.hpp
-boost url: http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.bz2/download
 
 MISC:
 ** see how FMM accuracy changes as a function of

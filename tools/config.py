@@ -26,9 +26,9 @@ base_link_flags = ['-fopenmp']
 link_flag_types = dict()
 link_flag_types['coverage'] = ['--coverage']
 
-boost_include_dir = 'lib/boost_subset/'
+boost_include_dir = 'lib/boost/'
 boost_lib = 'local_boost.so'
-boost_src_dirs = ['lib/boost_subset/libs/python/src']
+boost_src_dirs = ['lib/boost/libs/python/src']
 boost_src_dirs += [boost_src_dirs[0] + '/converter']
 boost_src_dirs += [boost_src_dirs[0] + '/object']
 boost_sources = reduce(lambda fs1, fs2: fs1 + fs2,
