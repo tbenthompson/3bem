@@ -1,4 +1,6 @@
 #!/bin/bash
+mkdir lib
+
 wget https://raw.githubusercontent.com/philsquared/Catch/develop/single_include/catch.hpp 
 mv catch.hpp lib/_catch.hpp
 
