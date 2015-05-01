@@ -1,7 +1,5 @@
 .deps
 build*/*
-!build/fabricate.py
-archive/*
 *.so
 *.swp
 *.swo
@@ -9,6 +7,5 @@ archive/*
 *.s
 *.pyc
 *.hdf5
-coverage.info
 !notes/method_desc/*.tex
 notes/method_desc/*

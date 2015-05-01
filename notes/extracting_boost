@@ -3,4 +3,4 @@
 #3: Something like:
 mkdir boost_subset
 bcp --boost="boost_1_58_0" python "boost_subset"
-#4: Make a script for this!
+#4: Make a script for this! (DONE!)
