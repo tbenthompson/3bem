@@ -10,7 +10,7 @@ def include(dirs):
 
 src_dir = 'cpp'
 lib_srces = files_in_dir(src_dir, 'cpp')
-test_dir = 'test'
+test_dir = 'unit_tests'
 py_wrap_dir = 'python_wrapper'
 wrapper_srces = files_in_dir(py_wrap_dir, 'cpp')
 
@@ -72,7 +72,7 @@ def get_config(command_params):
     lib['priority'] = 0
 
     python_wrapper_cpp_flags = lib_cpp_flags +\
-            include([python_include_dir, boost_include_dir])
+            include([python_include_dir] + boost_include_dirs)
     python_wrapper_link_flags = lib_link_flags +\
         ['-L' + python_lib_dir] +\
         ['-l:' + python_lib] +\
@@ -95,7 +95,7 @@ def get_config(command_params):
     tests['priority'] = 1
 
     boost = dict()
-    boost['cpp_flags'] = lib_cpp_flags + include([python_include_dir])
+    boost['cpp_flags'] = python_wrapper_cpp_flags
     boost['link_flags'] = lib_link_flags +\
         ['-L' + python_lib_dir] +\
         ['-l:' + python_lib]

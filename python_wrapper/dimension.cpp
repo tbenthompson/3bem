@@ -112,6 +112,8 @@ void export_dimension() {
     def("dense_integral_operator", dense_integral_operator<dim,dim,dim>);
 
     //TODO: don't expose this...??
+    //TODO: Instead have a wrapper for mesh_to_points that takes a
+    //numpy array for each of the constructor inputs to ObsPt
     class_<ObsPt<dim>>("ObsPt", 
         init<double, Vec<double,dim>, Vec<double,dim>, Vec<double,dim>>())
         .def_readonly("loc", &ObsPt<dim>::loc);

@@ -76,14 +76,6 @@ def run_build(c):
             c['printer']('\nLinking target: ' + t['binary_name'])
             link(c, t)
         after()
-    if 'python_wrapper' in targets:
-        copy_python_wrapper_to_py(c)
-
-def copy_python_wrapper_to_py(c):
-    pylib_file = c['targets']['python_wrapper']['binary_name']
-    pylib_path = oname(c['build_dir'], pylib_file)
-    pylib_dest = os.path.join('py', pylib_file)
-    shutil.copy(pylib_path, pylib_dest)
 
 def setup_tree(c):
     def setup_dir(dirname):

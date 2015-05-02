@@ -2,6 +2,7 @@ CURRENT: FMM
 ** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
 ** Redo elastic solver
 ** hanging nodes
+** vectorx should become numpy array in python
 
 MISC:
 ** see how FMM accuracy changes as a function of
