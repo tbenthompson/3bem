@@ -1,4 +1,5 @@
 #include <boost/python.hpp>
+#include <iostream>
 
 void export_util();
 void export_linalg();
@@ -13,6 +14,7 @@ boost::python::scope start_module(std::string name) {
     scope().attr(name.c_str()) = module;
     return module;
 }
+
 
 BOOST_PYTHON_MODULE(tbempy)
 {

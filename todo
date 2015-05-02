@@ -14,6 +14,10 @@ MISC:
 ** sse/avx implementation of kernel functions
 Use blas SVD
 
+** rename py/ directory to acceptance_tests/
+** Create a python layer on top of the interop to isolate that layer and create a more pythonic interface
+** See if I can turn vectorx into a numpy array wrapper. this would make python-c++ interop super smooth...
+
 ** nearest_neighbors for point->triangle or triangle->triangle intersection
 ** Handle the general case when fault-surface intersection does not occur at a vertex.
 -- Linked to hanging nodes in that lots of geometry code needs to be used/written.

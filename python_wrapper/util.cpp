@@ -29,8 +29,11 @@ void export_util() {
 
     VectorFromIterable().from_python<std::vector<double>>();
     VectorFromIterable().from_python<std::vector<int>>();
+    VectorFromIterable().from_python<std::vector<size_t>>();
     class_<std::vector<int>>("VectorOfInts")
-        .def(vector_indexing_suite<std::vector<double>>());
+        .def(vector_indexing_suite<std::vector<int>>());
+    class_<std::vector<size_t>>("VectorOfUnsignedInts")
+        .def(vector_indexing_suite<std::vector<size_t>>());
     class_<std::vector<double>>("VectorOfDoubles")
         .def(vector_indexing_suite<std::vector<double>>());
     class_<std::vector<Vec<double,2>>>("VectorOf2Doubles")

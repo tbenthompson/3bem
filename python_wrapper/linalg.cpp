@@ -112,6 +112,7 @@ void export_linalg() {
              return_value_policy<reference_existing_object>());
 
     class_<BlockDOFMap>("BlockDOFMap", no_init);
+    def("build_block_dof_map", build_block_dof_map);
     def("block_dof_map_from_functions", block_dof_map_from_functions);
     def("concatenate", concatenate);
     def("expand", expand);

@@ -72,6 +72,9 @@ RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c,
 ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
     const RearrangedConstraintEQ& subs_in);
 
+std::vector<ConstraintEQ> 
+shift_constraints(const std::vector<ConstraintEQ>& constraints, size_t shift_dof);
+
 } // END namespace tbem
 
 #endif

@@ -82,3 +82,10 @@ TEST_CASE("SubstituteWithTermsAddToPreexistingTerm", "[constraint]") {
     ConstraintEQ correct{{LinearTerm{3,4}}, 4.0};
     subs_test(eqtn0, eqtn1, correct);
 }
+
+TEST_CASE("ShiftConstraints", "[constraint]") {
+    ConstraintEQ eqtn0{{LinearTerm{1,1}, LinearTerm{3,1}}, 4.0};
+    auto cs = shift_constraints({eqtn0}, 1);
+    REQUIRE(cs[0].terms[0].dof == 2);
+    REQUIRE(cs[0].terms[1].dof == 4);
+}

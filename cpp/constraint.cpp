@@ -171,4 +171,22 @@ ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps)
     return {out_terms, c.rhs};
 }
 
+std::vector<ConstraintEQ> 
+shift_constraints(const std::vector<ConstraintEQ>& constraints, size_t shift_dof) {
+    std::vector<ConstraintEQ> out;
+    for (size_t i = 0; i < constraints.size(); i++) {
+        auto n_terms = constraints[i].terms.size();
+        std::vector<LinearTerm> out_terms; 
+        for (size_t t_idx = 0; t_idx < n_terms; t_idx++) {
+            out_terms.push_back({
+                constraints[i].terms[t_idx].dof + shift_dof,
+                constraints[i].terms[t_idx].weight
+            });
+        }
+        out.push_back({out_terms, constraints[i].rhs});
+    }
+
+    return out;
+}
+
 } //END namespace tbem
