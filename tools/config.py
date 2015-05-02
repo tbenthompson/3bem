@@ -9,8 +9,10 @@ def include(dirs):
     return ['-I' + d for d in dirs]
 
 src_dir = 'cpp'
+lib_srces = files_in_dir(src_dir, 'cpp')
 test_dir = 'test'
 py_wrap_dir = 'python_wrapper'
+wrapper_srces = files_in_dir(py_wrap_dir, 'cpp')
 
 include_dirs = ['./' + str(src_dir), './lib', './lib/eigen']
 include_flags = include(include_dirs)
@@ -26,9 +28,9 @@ base_link_flags = ['-fopenmp']
 link_flag_types = dict()
 link_flag_types['coverage'] = ['--coverage']
 
-boost_include_dir = 'lib/boost/'
+boost_include_dirs = ['lib/boost/', 'lib/boost_numpy']
 boost_lib = 'local_boost.so'
-boost_src_dirs = ['lib/boost/libs/python/src']
+boost_src_dirs = ['lib/boost/libs/python/src', 'lib/boost_numpy/libs/numpy/src']
 boost_src_dirs += [boost_src_dirs[0] + '/converter']
 boost_src_dirs += [boost_src_dirs[0] + '/object']
 boost_sources = reduce(lambda fs1, fs2: fs1 + fs2,
@@ -64,7 +66,7 @@ def get_config(command_params):
     lib = dict()
     lib['cpp_flags'] = lib_cpp_flags
     lib['link_flags'] = lib_link_flags
-    lib['sources'] = files_in_dir(src_dir, 'cpp')
+    lib['sources'] = lib_srces
     lib['linked_sources'] = []
     lib['binary_name'] = 'lib3bem.so'
     lib['priority'] = 0
@@ -79,7 +81,7 @@ def get_config(command_params):
     python_wrapper = dict()
     python_wrapper['cpp_flags'] = python_wrapper_cpp_flags
     python_wrapper['link_flags'] = python_wrapper_link_flags
-    python_wrapper['sources'] = files_in_dir(py_wrap_dir, 'cpp')
+    python_wrapper['sources'] = wrapper_srces
     python_wrapper['linked_sources'] = lib['sources']
     python_wrapper['binary_name'] = 'tbempy.so'
     python_wrapper['priority'] = 2

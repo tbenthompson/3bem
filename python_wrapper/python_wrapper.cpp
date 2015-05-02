@@ -1,5 +1,9 @@
 #include <boost/python.hpp>
+#include <boost/numpy.hpp>
 #include <iostream>
+
+namespace p = boost::python;
+namespace np = boost::numpy;
 
 void export_util();
 void export_linalg();
@@ -15,22 +19,21 @@ boost::python::scope start_module(std::string name) {
     return module;
 }
 
-
 BOOST_PYTHON_MODULE(tbempy)
 {
-    using namespace boost::python;
+    np::initialize();
 
     export_util();
     export_linalg();
     export_constraints();
 
     {
-        scope scope2D = start_module("TwoD");
+        p::scope scope2D = start_module("TwoD");
         export_dimension<2>();
     }
 
     {
-        scope scope3D = start_module("ThreeD");
+        p::scope scope3D = start_module("ThreeD");
         export_dimension<3>();
     }
 }

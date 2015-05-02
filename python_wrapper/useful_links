@@ -9,3 +9,5 @@ https://dev.lsstcorp.org/trac/wiki/SwigVsBoostPython
 
 how to make packages in a boost python extension module:
 http://isolation-nation.blogspot.com/2008/09/packages-in-python-extension-modules.html
+
+https://misspent.wordpress.com/2009/09/27/how-to-write-boost-python-converters/

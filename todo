@@ -13,6 +13,8 @@ MISC:
 ** move obs, src loop into the kernel functions
 ** sse/avx implementation of kernel functions
 Use blas SVD
+Or faster Eigen SVD:
+http://www.eigen.tuxfamily.org/dox/unsupported/classEigen_1_1BDCSVD.html
 
 ** rename py/ directory to acceptance_tests/
 ** Create a python layer on top of the interop to isolate that layer and create a more pythonic interface
@@ -35,4 +37,5 @@ Use blas SVD
 ** move continuity builder stuff to cpp file
 
 ** clean up the build system design
+** get distutils to stop throwing so many warnings
 ** test the build system on mac, a fresh ubuntu, odyssey/meade02, don't support windows

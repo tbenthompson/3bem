@@ -1,4 +1,5 @@
 #include <boost/python.hpp>
+#include <boost/numpy.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "iterable_converter.h"
 
@@ -11,6 +12,8 @@
 #include "integral_operator.h"
 #include "mass_operator.h"
 #include "basis.h"
+namespace p = boost::python;
+namespace np = boost::numpy;
 
 namespace tbem {
 
@@ -37,6 +40,26 @@ std::vector<ConstraintEQ> interpolate_bc_constraints_wrapper(
         });
 }
 
+template <size_t dim>
+struct FacetsToNPArray
+{
+    static PyObject* convert(const std::vector<Vec<Vec<double,dim>,dim>>& facets)
+    {
+
+        size_t bytes = sizeof(double);
+        auto out = np::from_data(
+            reinterpret_cast<const double*>(facets.data()),
+            np::dtype::get_builtin<double>(),
+            p::make_tuple(facets.size(), dim, dim),
+            p::make_tuple(dim * dim * bytes, dim * bytes, bytes),
+            p::object()
+        );
+
+        return p::incref(out.ptr());
+    }
+};
+
+
 } //end namespace tbem
 
 template <size_t dim>
@@ -48,8 +71,13 @@ template <size_t dim>
 void export_dimension() {
     using namespace boost::python;
     using namespace tbem;
+
+    to_python_converter<std::vector<std::array<std::array<double,dim>,dim>>, 
+                        FacetsToNPArray<dim>>();
+
     class_<VertexIterator<dim>>("VertexIterator", no_init);
     class_<Mesh<dim>>("Mesh")
+        .add_property("facets", make_getter(&Mesh<dim>::facets, return_value_policy<return_by_value>()))
         .def("get_vertex", &Mesh<dim>::get_vertex,
                return_value_policy<reference_existing_object>())
         .def("refine_repeatedly", &Mesh<dim>::refine_repeatedly)
