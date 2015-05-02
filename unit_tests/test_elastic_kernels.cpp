@@ -52,7 +52,7 @@ void test_elastic_kernel(std::string name) {
 
     std::ifstream test_data;
     std::string line;
-    std::string filename = "test/test_data_elastic" + std::to_string(dim);
+    std::string filename = "unit_tests/test_data_elastic" + std::to_string(dim);
     test_data.open(filename, std::ios::in);
     REQUIRE(test_data.is_open()); 
     

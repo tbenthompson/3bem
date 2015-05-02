@@ -2,6 +2,12 @@ from distutils.core import setup, Extension
 from tools.config import boost_include_dirs, boost_lib, boost_sources, include_dirs,\
     base_cpp_flags,cpp_flag_types, wrapper_srces, lib_srces
 from tools.util import files_in_dir
+import os
+
+# Setting OPT to '' prevents distutils from appending the -Wstrict-prototypes flag
+# which does not apply to c++ compilation
+if 'OPT' not in os.environ:
+    os.environ['OPT'] = ''
 
 tbempy_srces = lib_srces + wrapper_srces + boost_sources
 tbempy_srces = [s + '.cpp' for s in tbempy_srces]

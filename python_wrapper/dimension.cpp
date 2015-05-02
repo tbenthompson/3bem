@@ -40,25 +40,6 @@ std::vector<ConstraintEQ> interpolate_bc_constraints_wrapper(
         });
 }
 
-template <size_t dim>
-struct FacetsToNPArray
-{
-    static PyObject* convert(const std::vector<Vec<Vec<double,dim>,dim>>& facets)
-    {
-
-        size_t bytes = sizeof(double);
-        auto out = np::from_data(
-            reinterpret_cast<const double*>(facets.data()),
-            np::dtype::get_builtin<double>(),
-            p::make_tuple(facets.size(), dim, dim),
-            p::make_tuple(dim * dim * bytes, dim * bytes, bytes),
-            p::object()
-        );
-
-        return p::incref(out.ptr());
-    }
-};
-
 
 } //end namespace tbem
 
@@ -72,12 +53,10 @@ void export_dimension() {
     using namespace boost::python;
     using namespace tbem;
 
-    to_python_converter<std::vector<std::array<std::array<double,dim>,dim>>, 
-                        FacetsToNPArray<dim>>();
-
     class_<VertexIterator<dim>>("VertexIterator", no_init);
     class_<Mesh<dim>>("Mesh")
-        .add_property("facets", make_getter(&Mesh<dim>::facets, return_value_policy<return_by_value>()))
+        .add_property("facets", 
+            make_getter(&Mesh<dim>::facets, return_value_policy<return_by_value>()))
         .def("get_vertex", &Mesh<dim>::get_vertex,
                return_value_policy<reference_existing_object>())
         .def("refine_repeatedly", &Mesh<dim>::refine_repeatedly)
@@ -116,7 +95,8 @@ void export_dimension() {
     //numpy array for each of the constructor inputs to ObsPt
     class_<ObsPt<dim>>("ObsPt", 
         init<double, Vec<double,dim>, Vec<double,dim>, Vec<double,dim>>())
-        .def_readonly("loc", &ObsPt<dim>::loc);
+        .add_property("loc", 
+            make_getter(&ObsPt<dim>::loc, return_value_policy<return_by_value>()));
     VectorFromIterable().from_python<std::vector<ObsPt<dim>>>();
     def("mesh_to_points_operator", mesh_to_points_operator<dim,1,1>);
 

@@ -1,25 +1,30 @@
 CURRENT: FMM 
-** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
 ** Redo elastic solver
 ** hanging nodes
-** vectorx should become numpy array in python
 
-MISC:
+INTERNAL ARRAYS:
+ideas:
+** think about the memory management of array transfer between python and c++, when is copying necessary and when can just the data pointer be transferred? maybe copying is ideal to avoid premature optimization. if it ever becomes essential to avoid copying, deal with it then...
+** vectorx should become numpy array in python
+** consider getting rid of vectorx, or replacing with a facade over Eigen? or over numpy?
+** See if I can turn vectorx into a numpy array wrapper. this would make python-c++ interop super smooth...
+
+FMM/NBODY SPEED:
+** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
 ** see how FMM accuracy changes as a function of
     1) radius of equivalent surface
     2) radius of check surface
     3) order of expansion
     4) multipole acceptance criteria
-
 ** move obs, src loop into the kernel functions
 ** sse/avx implementation of kernel functions
 Use blas SVD
 Or faster Eigen SVD:
 http://www.eigen.tuxfamily.org/dox/unsupported/classEigen_1_1BDCSVD.html
 
-** rename py/ directory to acceptance_tests/
+MISC:
+
 ** Create a python layer on top of the interop to isolate that layer and create a more pythonic interface
-** See if I can turn vectorx into a numpy array wrapper. this would make python-c++ interop super smooth...
 
 ** nearest_neighbors for point->triangle or triangle->triangle intersection
 ** Handle the general case when fault-surface intersection does not occur at a vertex.
@@ -30,13 +35,14 @@ http://www.eigen.tuxfamily.org/dox/unsupported/classEigen_1_1BDCSVD.html
 ** characterize the galerkin BEM for hypersingular kernels
 ** characterize the sinh-sigmoidal method
 ** get rid of non-block operators and rename "Block___" to "___"
-** replace references to the kernel by unique_ptr to the kernel
-** Clear out all "inline"
-** consider getting rid of vectorx, or replacing with a facade over Eigen? or over numpy?
 ** use iterators for traversing point sets?
 ** turn some of the stuff in basis and numerics into a "Basis" class
-** move continuity builder stuff to cpp file
 
+BUILD:
 ** clean up the build system design
-** get distutils to stop throwing so many warnings
 ** test the build system on mac, a fresh ubuntu, odyssey/meade02, don't support windows
+
+BORING:
+** replace references to the kernel by unique_ptr to the kernel
+** Clear out all "inline"
+** move continuity builder stuff to cpp file

@@ -14,7 +14,8 @@ void export_internal_vec(std::string name) {
     using namespace boost::python;
     class_<T>(name.c_str(), init<std::vector<typename T::ValueType>>())
         .def(init<size_t,typename T::ValueType>())
-        .def_readonly("storage", &T::storage)
+        .add_property("storage",
+            make_getter(&T::storage, return_value_policy<return_by_value>()))
         .def("size", &T::size)
         .def(self + self)
         .def(self + double())

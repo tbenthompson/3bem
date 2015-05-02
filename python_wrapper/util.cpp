@@ -1,45 +1,114 @@
 #include <boost/python.hpp>
+#include <boost/numpy.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <vector>
 #include "iterable_converter.h"
 
 #include "mesh_gen.h"
 #include "mesh.h"
+namespace p = boost::python;
+namespace np = boost::numpy;
 
-template <typename T, size_t dim> 
-T get_item_from_std_array(const std::array<T,dim>& A, const boost::python::object& o) 
+namespace tbem {
+
+template <size_t dim>
+struct TensorsToNPArray
 {
-    using namespace boost::python;
-    size_t idx = extract<size_t>(o); 
-    assert(idx < dim);
-    return A[idx];
-}
+    static PyObject* convert(const std::vector<Vec<Vec<double,dim>,dim>>& tensors)
+    {
+        size_t bytes = sizeof(double);
+        auto out = np::from_data(
+            reinterpret_cast<const double*>(tensors.data()),
+            np::dtype::get_builtin<double>(),
+            p::make_tuple(tensors.size(), dim, dim),
+            p::make_tuple(dim * dim * bytes, dim * bytes, bytes),
+            p::object()
+        );
+
+        return p::incref(out.copy().ptr());
+    }
+};
+
+template <typename T>
+struct VectorToNPArray
+{
+    static PyObject* convert(const std::vector<T>& array) 
+    {
+        size_t bytes = sizeof(T);
+        auto out = np::from_data(
+            reinterpret_cast<const T*>(array.data()),
+            np::dtype::get_builtin<T>(),
+            p::make_tuple(array.size()),
+            p::make_tuple(bytes),
+            p::object()
+        );
+
+        return p::incref(out.copy().ptr());
+    }
+};
+
+template <typename T, size_t dim>
+struct ArrayToNPArray
+{
+    static PyObject* convert(const std::array<T,dim>& array) 
+    {
+        size_t bytes = sizeof(T);
+        auto out = np::from_data(
+            reinterpret_cast<const T*>(array.data()),
+            np::dtype::get_builtin<T>(),
+            p::make_tuple(dim),
+            p::make_tuple(bytes),
+            p::object()
+        );
+
+        return p::incref(out.copy().ptr());
+    }
+};
+
+template <typename T, size_t dim>
+struct VectorOfArraysToNPArray
+{
+    static PyObject* convert(const std::vector<std::array<T,dim>>& vec) 
+    {
+        size_t bytes = sizeof(T);
+        auto out = np::from_data(
+            reinterpret_cast<const T*>(vec.data()),
+            np::dtype::get_builtin<T>(),
+            p::make_tuple(vec.size(), dim),
+            p::make_tuple(dim * bytes, bytes),
+            p::object()
+        );
+
+        return p::incref(out.copy().ptr());
+    }
+};
+
+} //end namespace tbem
 
 void export_util() {
     using namespace boost::python;
     using namespace tbem;
 
+    to_python_converter<std::vector<std::array<std::array<double,2>,2>>, 
+                        TensorsToNPArray<2>>();
+    to_python_converter<std::vector<std::array<std::array<double,3>,3>>, 
+                        TensorsToNPArray<3>>();
+    to_python_converter<std::vector<double>, VectorToNPArray<double>>();
+    to_python_converter<std::vector<int>, VectorToNPArray<int>>();
+    to_python_converter<std::vector<size_t>, VectorToNPArray<size_t>>();
+    to_python_converter<std::array<double,2>, ArrayToNPArray<double,2>>();
+    to_python_converter<std::array<double,3>, ArrayToNPArray<double,3>>();
+    to_python_converter<std::vector<std::array<double,2>>,
+                        VectorOfArraysToNPArray<double,2>>();
+    to_python_converter<std::vector<std::array<double,3>>,
+                        VectorOfArraysToNPArray<double,3>>();
+
     ArrayFromIterable().from_python<double,2>();
     ArrayFromIterable().from_python<double,3>();
 
-    class_<std::array<double,2>>("ArrayOf2Doubles")
-        .def("__getitem__", get_item_from_std_array<double,2>);
-    class_<std::array<double,3>>("ArrayOf3Doubles")
-        .def("__getitem__", get_item_from_std_array<double,3>);
-
-    VectorFromIterable().from_python<std::vector<double>>();
     VectorFromIterable().from_python<std::vector<int>>();
+    VectorFromIterable().from_python<std::vector<double>>();
     VectorFromIterable().from_python<std::vector<size_t>>();
-    class_<std::vector<int>>("VectorOfInts")
-        .def(vector_indexing_suite<std::vector<int>>());
-    class_<std::vector<size_t>>("VectorOfUnsignedInts")
-        .def(vector_indexing_suite<std::vector<size_t>>());
-    class_<std::vector<double>>("VectorOfDoubles")
-        .def(vector_indexing_suite<std::vector<double>>());
-    class_<std::vector<Vec<double,2>>>("VectorOf2Doubles")
-        .def(vector_indexing_suite<std::vector<Vec<double,2>>>());
-    class_<std::vector<Vec<double,3>>>("VectorOf3Doubles")
-        .def(vector_indexing_suite<std::vector<Vec<double,3>>>());
 
     def("line_mesh", line_mesh);
     def("circle_mesh", circle_mesh);

@@ -54,14 +54,16 @@ def solve_half_space(slip, fault, surface):
 
     lhs_op = integral_operator(surface, surface, hypersingular_mthd)
 
-    np_rhs = np.array(rhs_condensed.storage)
+    np_rhs = rhs_condensed.storage
     def mv(v):
         vec_v = VectorX(v)
         distributed = distribute_vector(constraint_matrix, vec_v, surface.n_dofs())
         applied = lhs_op.apply(distributed)
         condensed = condense_vector(constraint_matrix, applied)
-        res = np.array(condensed.storage)
-        return res
+        print("ITERATION: " + str(mv.it))
+        mv.it += 1
+        return condensed.storage
+    mv.it = 0
 
     A = sp_la.LinearOperator((np_rhs.shape[0], np_rhs.shape[0]),
                              matvec = mv, dtype = np.float64)
@@ -73,8 +75,7 @@ def half_space(refine):
     fault = line_mesh([0, -1], [0, 0])
     slip = VectorX([1.0] * fault.n_dofs())
     surface = line_mesh([-50, 0.0], [50, 0.0]).refine_repeatedly(refine)
-    soln = solve_half_space(slip, fault, surface)
-    soln = np.array(soln.storage)
+    soln = solve_half_space(slip, fault, surface).storage
     xs = get_vertices(2, surface)[:, 0]
     indices = [i for i in range(len(xs)) if 0 < np.abs(xs[i]) < 10]
     xs = xs[indices]
@@ -128,10 +129,9 @@ def half_space_interior(refine):
     exact_tracy = (s * shear_modulus) / (2 * np.pi) * (
         (x / (x ** 2 + (y + d) ** 2)) -
         (x / (x ** 2 + (y - d) ** 2)))
-
-    l2_error_disp = np.sqrt(np.mean((np.array(disp.storage) - exact_uz) ** 2))
-    l2_error_tracx = np.sqrt(np.mean((np.array(tracx.storage) - exact_tracx) ** 2))
-    l2_error_tracy = np.sqrt(np.mean((np.array(tracy.storage) - exact_tracy) ** 2))
+    l2_error_disp = np.sqrt(np.mean((disp.storage - exact_uz) ** 2))
+    l2_error_tracx = np.sqrt(np.mean((tracx.storage - exact_tracx) ** 2))
+    l2_error_tracy = np.sqrt(np.mean((tracy.storage - exact_tracy) ** 2))
 
     return l2_error_disp, l2_error_tracx, l2_error_tracy
 

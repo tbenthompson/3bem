@@ -11,3 +11,8 @@ how to make packages in a boost python extension module:
 http://isolation-nation.blogspot.com/2008/09/packages-in-python-extension-modules.html
 
 https://misspent.wordpress.com/2009/09/27/how-to-write-boost-python-converters/
+
+When having problems look at the boost python FAQ:
+http://www.boost.org/doc/libs/1_58_0/libs/python/doc/v2/faq.html
+
+"Why is my automatic to-python conversion not being found?" explains why def_readonly and def_readwrite don't ues to-python converters
