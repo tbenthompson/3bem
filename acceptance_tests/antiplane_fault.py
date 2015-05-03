@@ -5,15 +5,6 @@ import numpy as np
 import scipy.sparse.linalg as sp_la
 # import matplotlib.pyplot as plt
 
-def get_vertices(dim, surface):
-    xs = []
-    for v in range(dim * surface.n_facets()):
-        v_local_idx = v % dim
-        f_idx = (v - v_local_idx) / dim
-        v = surface.get_vertex(f_idx, v_local_idx)
-        xs.append([v[d] for d in range(dim)])
-    return np.array(xs)
-
 def full_space():
     fault = line_mesh([0, -1], [0, 0])
     slip = VectorX([1.0] * fault.n_dofs())
@@ -76,7 +67,7 @@ def half_space(refine):
     slip = VectorX([1.0] * fault.n_dofs())
     surface = line_mesh([-50, 0.0], [50, 0.0]).refine_repeatedly(refine)
     soln = solve_half_space(slip, fault, surface).storage
-    xs = get_vertices(2, surface)[:, 0]
+    xs = surface.facets[:, :, 0].reshape((surface.n_facets() * 2))
     indices = [i for i in range(len(xs)) if 0 < np.abs(xs[i]) < 10]
     xs = xs[indices]
     exact = np.arctan(1.0 / xs) / np.pi
@@ -153,4 +144,5 @@ def test_convergence():
         assert(ratio > 2.0)
 
 if __name__ == "__main__":
+    half_space(7)
     half_space_interior(7)

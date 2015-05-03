@@ -54,7 +54,7 @@ void export_dimension() {
     using namespace tbem;
 
     class_<VertexIterator<dim>>("VertexIterator", no_init);
-    class_<Mesh<dim>>("Mesh")
+    class_<Mesh<dim>>("Mesh", init<std::vector<Facet<dim>>>())
         .add_property("facets", 
             make_getter(&Mesh<dim>::facets, return_value_policy<return_by_value>()))
         .def("get_vertex", &Mesh<dim>::get_vertex,
@@ -62,7 +62,9 @@ void export_dimension() {
         .def("refine_repeatedly", &Mesh<dim>::refine_repeatedly)
         .def("begin", &Mesh<dim>::begin)
         .def("n_facets", &Mesh<dim>::n_facets)
-        .def("n_dofs", &Mesh<dim>::n_dofs);
+        .def("n_dofs", &Mesh<dim>::n_dofs)
+        .def("create_union", &Mesh<dim>::create_union).staticmethod("create_union");
+    VectorFromIterable().from_python<std::vector<Mesh<dim>>>();
     
 
     class_<QuadStrategy<dim>>("QuadStrategy", init<int,int,double,double>());

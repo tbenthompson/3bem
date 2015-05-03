@@ -1,7 +1,6 @@
 from tbempy import *
 from tbempy.TwoD import *
 from dislocation import *
-from antiplane_fault import get_vertices
 import numpy as np
 # import matplotlib.pyplot as plt
 
@@ -29,7 +28,7 @@ def test_planestrain():
     hyp = ElasticHypersingular(30e9, 0.25)
     soln = solve(2, surface, fault, hyp, qs, slip)
 
-    xs = get_vertices(2, surface)[:, 0]
+    xs = surface.facets[:, :, 0].reshape((surface.n_facets() * 2))
     indices = [i for i in range(xs.shape[0])
                if 0 < np.abs(xs[i]) < 10]
     exact_ux, exact_uy = exact_displacements(xs[indices])

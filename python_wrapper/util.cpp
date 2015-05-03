@@ -83,6 +83,71 @@ struct VectorOfArraysToNPArray
     }
 };
 
+template <typename T, size_t dim>
+struct NPArrayToVectorOfTensors {
+    typedef std::vector<std::array<std::array<T,dim>,dim>> OutType;
+
+    NPArrayToVectorOfTensors() {
+        p::converter::registry::push_back(
+            &convertible,
+            &construct,
+            p::type_id<OutType>()
+        );
+    }
+
+    static void* convertible(PyObject* p) {
+        try {
+            p::object obj(p::handle<>(p::borrowed(p)));
+            std::unique_ptr<np::ndarray> array(
+                new np::ndarray(
+                    np::from_object(
+                        obj, np::dtype::get_builtin<T>(), 3,
+                        3, np::ndarray::V_CONTIGUOUS
+                    )
+                )
+            );
+            if (array->shape(1) != dim) {
+                return 0;
+            }
+            if (array->shape(2) != dim) {
+                return 0;
+            }
+            return array.release();
+        } catch (p::error_already_set & err) {
+            p::handle_exception();
+            return 0;
+        }
+    }
+
+    static void construct(PyObject* obj,
+        p::converter::rvalue_from_python_stage1_data* data) 
+    {
+        // Extract the array we passed out of the convertible() member function.
+        std::unique_ptr<np::ndarray> array(
+            reinterpret_cast<np::ndarray*>(data->convertible)
+        );
+        // Find the memory block Boost.Python has prepared for the result.
+        typedef p::converter::rvalue_from_python_storage<T> storage_t;
+        storage_t * storage = reinterpret_cast<storage_t*>(data);
+        // Use placement new to initialize the result.
+        OutType* out = new (storage->storage.bytes) OutType(array->shape(0));
+
+        // Fill the result with the values from the NumPy array.
+        auto strides = array->get_strides();
+        for (size_t i = 0; i < array->shape(0); i++) {
+            for (size_t d1 = 0; d1 < dim; d1++) {
+                for (size_t d2 = 0; d2 < dim; d2++) {
+                    auto offset = i * strides[0] + d1 * strides[1] + d2 * strides[2];
+                    auto byte_ptr = array->get_data() + offset;
+                    (*out)[i][d1][d2] = *reinterpret_cast<T*>(byte_ptr);
+                }
+            }
+        }
+        // Finish up.
+        data->convertible = storage->storage.bytes;
+    }
+};
+
 } //end namespace tbem
 
 void export_util() {
@@ -102,6 +167,9 @@ void export_util() {
                         VectorOfArraysToNPArray<double,2>>();
     to_python_converter<std::vector<std::array<double,3>>,
                         VectorOfArraysToNPArray<double,3>>();
+
+    NPArrayToVectorOfTensors<double,2>();
+    NPArrayToVectorOfTensors<double,3>();
 
     ArrayFromIterable().from_python<double,2>();
     ArrayFromIterable().from_python<double,3>();

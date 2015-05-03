@@ -14,5 +14,4 @@ void export_constraints() {
     def("condense_vector", &condense_vector);
     def("condense_matrix", &condense_matrix);
     def("distribute_vector", &distribute_vector);
-
 }

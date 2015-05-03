@@ -1,7 +1,6 @@
 from tbempy import *
 from tbempy.ThreeD import *
 from dislocation import *
-from antiplane_fault import get_vertices
 import numpy as np
 import matplotlib.pyplot as plt
 from okada_wrapper import dc3dwrapper
@@ -48,9 +47,8 @@ def test_okada():
     np.save('okada.dat', soln)
     # soln = np.load('okada.dat')
 
-    vs = get_vertices(3, surface)
-    n_v = vs.shape[0]
-    facets = np.arange(n_v).reshape((n_v / 3, 3))
+    vs = surface.facets.reshape((surface.n_facets() * 3, 3))
+    facets = np.arange(vs.shape[0]).reshape((surface.n_facets(), 3))
 
     exact = compute_okada(mu, pr, vs)
 
