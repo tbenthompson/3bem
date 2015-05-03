@@ -20,6 +20,11 @@ Mesh<2> connected_mesh() {
     return line_mesh({{0, 0}}, {{0, 1}}).refine_repeatedly(2);
 }
 
+TEST_CASE("FindOverlappingVerticesEmptyMesh", "[continuity_builder]") {
+    Mesh<2> m{{}};
+    auto overlaps = find_overlapping_vertices(m.begin(), m.begin());
+}
+
 TEST_CASE("FindOverlappingVerticesDifferentMeshes", "[continuity_builder]") {
     auto m0 = disjoint_mesh();
     auto m1 = connected_mesh();

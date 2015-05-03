@@ -16,15 +16,14 @@ FMM/NBODY SPEED:
     2) radius of check surface
     3) order of expansion
     4) multipole acceptance criteria
-** move obs, src loop into the kernel functions
-** sse/avx implementation of kernel functions
-Use blas SVD
-Or faster Eigen SVD:
-http://www.eigen.tuxfamily.org/dox/unsupported/classEigen_1_1BDCSVD.html
+** move obs, src loop into the kernel functions which will reduce the number of
+function calls and also allow sse/avx implementations of those kernel functions
+** replace the SVD used in the fmm code... use blas SVD, which allows use of fast
+SVDs in things like MKL (once this is done, remove eigen dependency)
 
 MISC:
 
-** Create a python layer on top of the interop to isolate that layer and create a more pythonic interface
+** think about creating a python layer on top of the interop to isolate that layer and create a more pythonic interface
 
 ** nearest_neighbors for point->triangle or triangle->triangle intersection
 ** Handle the general case when fault-surface intersection does not occur at a vertex.

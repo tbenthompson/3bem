@@ -29,11 +29,13 @@ BOOST_PYTHON_MODULE(tbempy)
 
     {
         p::scope scope2D = start_module("TwoD");
+        scope2D.attr("dim") = 2;
         export_dimension<2>();
     }
 
     {
         p::scope scope3D = start_module("ThreeD");
+        scope3D.attr("dim") = 3;
         export_dimension<3>();
     }
 }

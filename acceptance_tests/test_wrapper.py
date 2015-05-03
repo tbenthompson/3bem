@@ -23,5 +23,11 @@ def test_mesh_union():
     m_union = Mesh.create_union([m1, m2])
     assert(m_union.facets.shape[0] == 8)
 
+def test_dim():
+    import tbempy.TwoD
+    import tbempy.ThreeD
+    assert(tbempy.TwoD.dim == 2)
+    assert(tbempy.ThreeD.dim == 3)
+
 if __name__ == "__main__":
     test_mesh_union()
