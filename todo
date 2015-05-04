@@ -1,6 +1,9 @@
-CURRENT: FMM 
-** Redo elastic solver
-** hanging nodes
+CURRENT: MISC
+** replace references to the kernel by unique_ptr to the kernel
+** Clear out all "inline"
+** move continuity builder stuff to cpp file
+** consider moving all the general tbempy imports to within the TwoD, ThreeD dimension modules
+** think about creating a python layer on top of the interop to isolate that layer and create a more pythonic interface
 
 INTERNAL ARRAYS:
 ideas:
@@ -8,6 +11,17 @@ ideas:
 ** vectorx should become numpy array in python
 ** consider getting rid of vectorx, or replacing with a facade over Eigen? or over numpy?
 ** See if I can turn vectorx into a numpy array wrapper. this would make python-c++ interop super smooth...
+
+FMM SVD:
+** replace the SVD used in the fmm code... use blas SVD, which allows use of fast
+SVDs in things like MKL (once this is done, remove eigen dependency)
+
+NEXT: hanging nodes 
+** nearest_neighbors for point->triangle or triangle->triangle intersection
+** Handle the general case when fault-surface intersection does not occur at a vertex.
+-- Linked to hanging nodes in that lots of geometry code needs to be used/written.
+-- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
+
 
 FMM/NBODY SPEED:
 ** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
@@ -18,30 +32,22 @@ FMM/NBODY SPEED:
     4) multipole acceptance criteria
 ** move obs, src loop into the kernel functions which will reduce the number of
 function calls and also allow sse/avx implementations of those kernel functions
-** replace the SVD used in the fmm code... use blas SVD, which allows use of fast
-SVDs in things like MKL (once this is done, remove eigen dependency)
 
-MISC:
-
-** think about creating a python layer on top of the interop to isolate that layer and create a more pythonic interface
-
-** nearest_neighbors for point->triangle or triangle->triangle intersection
-** Handle the general case when fault-surface intersection does not occur at a vertex.
--- Linked to hanging nodes in that lots of geometry code needs to be used/written.
--- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
-
-** crack-tip elements
-** characterize the galerkin BEM for hypersingular kernels
+INTEGRATION:
+** finish up the sinh-sigmoidal work
+** try using one shifted observation point globally rather than a different one for each local integral
 ** characterize the sinh-sigmoidal method
-** get rid of non-block operators and rename "Block___" to "___"
-** use iterators for traversing point sets?
-** turn some of the stuff in basis and numerics into a "Basis" class
+** crack-tip elements
 
 BUILD:
 ** clean up the build system design
 ** test the build system on mac, a fresh ubuntu, odyssey/meade02, don't support windows
 
-BORING:
-** replace references to the kernel by unique_ptr to the kernel
-** Clear out all "inline"
-** move continuity builder stuff to cpp file
+MISC/BORING:
+** use iterators for traversing point sets?
+** characterize the galerkin BEM for hypersingular kernels
+** get rid of non-block operators and rename "Block___" to "___"
+
+BASIS:
+** better structure for dof maps -- stabilize that interface
+** turn some of the stuff in basis and numerics into a "Basis" class
