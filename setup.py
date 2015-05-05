@@ -1,46 +1,75 @@
 from distutils.core import setup
-import build_tools.entry
+from numpy.distutils.misc_util import Configuration
+from numpy.distutils.core import setup
+import urllib
+import shutil
 import os
 import sys
 import copy
 
-# I want to call fabricate with sys.argv empty, but still pass sys.argv to
-# the python packaging tools
-stored_argv = copy.copy(sys.argv)
-sys.argv = []
+def download_libs():
+    if os.path.exists('lib'):
+        print('Not downloading libraries. If libraries should be re-downloaded, delete the lib directory')
+        return
 
-# Fabricate calls system.exit when it is done compiling. Let's prevent it
-# from actually exiting by catching the SystemExit exception
-try:
-    # The root of the build tree should be the containing folder for this script
-    dir = os.path.dirname(os.path.realpath(__file__))
-    build_tools.entry.run_fabricate('build', dir)
-except SystemExit as e:
-    pass
+    catch_url = 'https://raw.githubusercontent.com/philsquared/Catch/develop/single_include/catch.hpp'
+    boost_url = 'http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.bz2/download'
+    boost_numpy_url = 'https://github.com/ndarray/Boost.NumPy/archive/master.zip'
+    eigen_url = 'http://bitbucket.org/eigen/eigen/get/3.2.4.tar.gz'
 
-# Check the build by running unit tests
-print('Checking the build by running the unit tests')
-returncode = build_tools.entry.tests()
-if returncode != 0:
-    print('')
-    print('')
-    print('')
-    print('**** Tests are failing. The build or code have problems. Quitting. **** ')
-    print('')
-    print('')
-    print('')
-    sys.exit(returncode)
+    # Delete the lib tree and recreate an empty directory
+    os.makedirs('lib')
 
-# Restore sys.argv to be passed to python packager
-sys.argv = stored_argv
+    print('Downloading Catch unit testing framework')
+    urllib.urlretrieve(catch_url, os.path.join('lib', '_catch.hpp'))
 
-# Call python packager
-setup(
-    name = 'tbempy',
-    version = '0.1',
-    description = 'The black box boundary element method.',
-    author = 'T. Ben Thompson',
-    author_email = 't.ben.thompson@gmail.com',
-    packages = ['tbempy'],
-    package_data = dict(tbempy = ['tbempy.so'])
-)
+    print('Downloading Boost for building C++ <--> python wrappers')
+    urllib.urlretrieve(boost_url, 'boost.archive')
+    cmd = ['tar', '-xvf', 'boost.archive']
+    proc = subprocess.Popen(cmd)
+    proc.wait()
+    os.remove('boost.archive')
+    boost_directory_name = [f for f in os.listdir(os.curdir) if f.startswith('boost')][0]
+    shutil.move(boost_directory_name, os.path.join('lib', 'boost'))
+
+    print('Download Boost.NumPy for clean C++ <--> python array transfer')
+    urllib.urlretrieve(boost_numpy_url, 'boost.numpy.archive')
+    cmd = ['unzip', 'boost.numpy.archive']
+    proc = subprocess.Popen(cmd)
+    proc.wait()
+    os.remove('boost.numpy.archive')
+    numpy_directory_name = [f for f in os.listdir(os.curdir) if f.startswith('Boost')][0]
+    shutil.move(numpy_directory_name, os.path.join('lib', 'boost_numpy'))
+
+    print('Downloading Eigen for linear algebra')
+    urllib.urlretrieve(eigen_url, 'eigen.archive')
+    cmd = ['tar', '-xvf', 'eigen.archive']
+    proc = subprocess.Popen(cmd)
+    proc.wait()
+    os.remove('eigen.archive')
+    eigen_directory_name = [f for f in os.listdir(os.curdir) if f.startswith('eigen')][0]
+    shutil.move(eigen_directory_name, os.path.join('lib', 'eigen'))
+
+def configuration(parent_package='', top_path = None):
+    config = Configuration(None, parent_package, top_path)
+    config.add_subpackage('tbempy')
+    return config
+
+def setup_package():
+    download_libs()
+
+    metadata = dict(
+        name = 'tbempy',
+        version = '0.1',
+        description = 'The black box boundary element method.',
+        author = 'T. Ben Thompson',
+        author_email = 't.ben.thompson@gmail.com'
+    )
+    metadata['configuration'] = configuration
+
+    if len(sys.argv) == 1:
+        sys.argv = ['', 'build_ext', '--inplace']
+    setup(**metadata)
+
+if __name__ == '__main__':
+    setup_package()

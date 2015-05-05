@@ -4,17 +4,10 @@ import ycm_core
 # These are the compilation flags that will be used in case there's no
 # compilation database set (by default, one is not set).
 # CHANGE THIS LIST OF FLAGS. YES, THIS IS THE DROID YOU HAVE BEEN LOOKING FOR.
-petsc_dir = os.environ['PETSC_DIR']
-petsc_arch = os.environ['PETSC_ARCH']
 includes = [
-    './cpp',
-    '../lib/',
-    '../lib/unittest-cpp/UnitTest++',
-    '../lib/autocheck/include',
-    petsc_dir + '/' + petsc_arch + '/include',
-    petsc_dir + '/include'
+    'cpp',
 ]
-flags = '-Wall -std=c++11 -fopenmp'.split()
+flags = '-std=c++11 -fopenmp'.split()
 flags.extend(['-I' + loc for loc in includes])
 flags.extend(['-x', 'c++'])
 
