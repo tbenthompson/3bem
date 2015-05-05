@@ -31,17 +31,17 @@ struct BlockGalerkinOperator: public BlockOperatorI
         return shape.n_cols * obs_mesh.n_facets() * obs_quad.size();
     }
 
-    virtual BlockVectorX apply(const BlockVectorX& x) const {
+    virtual std::vector<double> apply(const std::vector<double>& x) const {
         auto n_obs_dofs = obs_mesh.n_dofs();
-
-        BlockVectorX out(shape.n_rows, VectorX(n_obs_dofs, 0.0));
+        auto n_quad_pts = obs_mesh.n_facets() * obs_quad.size();
+        std::vector<double> out(shape.n_rows * n_obs_dofs, 0.0);
 #pragma omp parallel for
         for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) 
         {
             auto obs_jacobian = facet_jacobian<dim>(obs_mesh.facets[obs_idx]);
             for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) 
             {
-                auto interp_dof = obs_idx * obs_quad.size() + obs_q;
+                auto quad_idx = obs_idx * obs_quad.size() + obs_q;
                 auto basis = linear_basis(obs_quad[obs_q].x_hat);
                 auto weight = obs_jacobian * obs_quad[obs_q].w;
 
@@ -50,7 +50,8 @@ struct BlockGalerkinOperator: public BlockOperatorI
                     auto obs_dof = dim * obs_idx + obs_basis_idx;
                     auto entry_value = basis[obs_basis_idx] * weight;
                     for (size_t d = 0; d < shape.n_rows; d++) {
-                        out[d][obs_dof] += entry_value * x[d][interp_dof];
+                        out[d * n_obs_dofs + obs_dof] += entry_value * 
+                            x[d * n_quad_pts + quad_idx];
                     }
                 }
             }

@@ -8,7 +8,6 @@
 #include "nbody_data.h"
 #include "octree.h"
 #include "numbers.h"
-#include "vectorx.h"
 #include "util.h"
 #include "eigen_wrapper.h"
 
@@ -118,7 +117,7 @@ struct FMMOperator {
      * upward tree traversal.
      */
     void P2M(const Octree<dim>& cell, const SVDPtr& check_to_equiv,
-        const BlockVectorX& x, double* parent_multipoles) const;
+        const std::vector<double>& x, double* parent_multipoles) const;
 
     /* The M2M operator converts child cell equivalent sources to parent cell
      * equivalent sources in the upward tree traversal.
@@ -132,7 +131,7 @@ struct FMMOperator {
      * using those operators.
      */
     void P2L(const Octree<dim>& obs_cell, const Octree<dim>& src_cell,
-        const SVDPtr& check_to_equiv, const BlockVectorX& x,
+        const SVDPtr& check_to_equiv, const std::vector<double>& x,
         double* locals) const;
 
     /* The M2P operator evaluates the influence of source cell equivalent
@@ -141,7 +140,7 @@ struct FMMOperator {
      * points to justify using those operators.
      */
     void M2P(const Octree<dim>& obs_cell, const Octree<dim>& src_cell,
-        double* multipoles, BlockVectorX& out) const;
+        double* multipoles, std::vector<double>& out) const;
 
     /* The M2L operator converts equivalent sources from an source tree 
      * cell (multipole coefficients) into equivalent sources for an
@@ -160,13 +159,13 @@ struct FMMOperator {
     /* The L2P operator evaluates the influence of the equivalent sources from
      * a observation cell on the observation points in that cell
      */
-    void L2P(const Octree<dim>& cell, double* locals, BlockVectorX& out) const;
+    void L2P(const Octree<dim>& cell, double* locals, std::vector<double>& out) const;
 
     /* Perform a direct n body calculation between a source and observation
      * cell.
      */
     void P2P(const Octree<dim>& obs_cell, const Octree<dim>& src_cell,
-        const BlockVectorX& x, BlockVectorX& out) const;
+        const std::vector<double>& x, std::vector<double>& out) const;
 
     /* Determine the sequence of operations necessary to compute the upward
      * equivalent sources
@@ -184,12 +183,12 @@ struct FMMOperator {
      */
     void downward_traversal(const Octree<dim>& obs_cell, FMMTasks<dim>& tasks) const;
 
-    BlockVectorX execute_tasks(const FMMTasks<dim>& tasks,
-        const BlockVectorX& x, 
+    std::vector<double> execute_tasks(const FMMTasks<dim>& tasks,
+        const std::vector<double>& x, 
         const CheckToEquiv& up_check_to_equiv,
         const CheckToEquiv& down_check_to_equiv) const;
 
-    BlockVectorX apply(const BlockVectorX& x) const;
+    std::vector<double> apply(const std::vector<double>& x) const;
 };
 
 } // END namespace tbem

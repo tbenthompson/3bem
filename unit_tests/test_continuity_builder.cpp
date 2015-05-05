@@ -1,6 +1,5 @@
 #include "catch.hpp"
 #include "continuity_builder.h"
-#include "vectorx.h"
 #include "mesh_gen.h"
 
 using namespace tbem;

@@ -271,10 +271,10 @@ void test_sinh_sigmoidal(double lambda, size_t nt, size_t nr, double x0, double 
 }
 
 TEST_CASE("SinhSigmoidal2D", "[quadrature]") {
-    TIC
-    test_sinh_sigmoidal(1.5, 25, 25, 0.0, 0.0);
-    test_sinh_sigmoidal(0.5, 19, 9, 0.2, 0.4);
-    test_sinh_sigmoidal(1.0, 30, 20, 0.1, 0.1);
-    test_sinh_sigmoidal(1.5, 70, 30, 0.4, 0.49);
-    TOC("A");
+    // TIC
+    // test_sinh_sigmoidal(1.5, 25, 25, 0.0, 0.0);
+    // test_sinh_sigmoidal(0.5, 19, 9, 0.2, 0.4);
+    // test_sinh_sigmoidal(1.0, 30, 20, 0.1, 0.1);
+    // test_sinh_sigmoidal(1.5, 70, 30, 0.4, 0.49);
+    // TOC("A");
 }

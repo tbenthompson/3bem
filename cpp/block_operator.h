@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <cassert>
-#include "vectorx.h"
 #include "operator.h"
 
 namespace tbem {
@@ -13,16 +12,7 @@ struct BlockOperatorI {
     virtual size_t n_block_cols() const = 0;
     virtual size_t n_total_rows() const = 0;
     virtual size_t n_total_cols() const = 0;
-    virtual BlockVectorX apply(const BlockVectorX& x) const = 0;
-
-    VectorX apply_scalar(const VectorX& x) const {
-        assert(n_block_cols() == 1);
-        assert(n_block_rows() == 1);
-        return apply(BlockVectorX{x})[0]; 
-    }
-    virtual VectorX apply(const VectorX& x) const {
-        return apply_scalar(x);
-    }
+    virtual std::vector<double> apply(const std::vector<double>& x) const = 0;
 };
 
 template <typename T>
@@ -54,17 +44,24 @@ struct BlockOperator: public BlockOperatorI {
         return n_cols;
     }
 
-    virtual BlockVectorX apply(const BlockVectorX& x) const {
-        assert(n_block_rows() * x.size() == ops.size());
-        assert(n_block_cols() == x.size());
+    virtual std::vector<double> apply(const std::vector<double>& x) const {
+        assert(x.size() == n_total_cols());
 
-        BlockVectorX res(n_block_rows(), VectorX(ops[0].n_rows(), 0.0));
+        std::vector<double> res(n_block_rows() * ops[0].n_rows(), 0.0);
         for (size_t d1 = 0; d1 < n_block_rows(); d1++) {
             for (size_t d2 = 0; d2 < n_block_cols(); d2++) {
                 size_t comp_idx = d1 * n_block_cols() + d2;
 
                 const auto& op = ops[comp_idx];
-                res[d1] += op.apply(x[d2]);
+                std::vector<double> input(ops[0].n_cols());
+                for (size_t i = 0; i < ops[0].n_cols(); i++) {
+                    input[i] = x[d2 * ops[0].n_cols() + i];
+                }
+                auto applied = op.apply(input);
+                assert(applied.size() == ops[0].n_rows());
+                for (size_t i = 0; i < ops[0].n_rows(); i++) {
+                    res[d1 * ops[0].n_rows() + i] += applied[i];
+                }
             }
         }
         return res;

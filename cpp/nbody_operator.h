@@ -6,7 +6,6 @@
 #include "vec.h"
 #include "kernel.h"
 #include "operator.h"
-#include "fwd_vectorx.h"
 #include "nbody_data.h"
 
 namespace tbem {
@@ -16,7 +15,7 @@ struct BlockDirectNBodyOperator {
     const NBodyData<dim> data;
     const Kernel<dim,R,C>& K;
 
-    BlockVectorX apply(const BlockVectorX& x) const;
+    std::vector<double> apply(const std::vector<double>& x) const;
 };
 
 } // end namespace tbem

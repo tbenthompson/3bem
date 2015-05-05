@@ -1,6 +1,5 @@
 #include "catch.hpp"
 #include "constraint_matrix.h"
-#include "vectorx.h"
 
 using namespace tbem;
 

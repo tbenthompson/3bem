@@ -189,7 +189,7 @@ void FMMOperator<dim,R,C>::build_check_to_equiv(const Octree<dim>& cell,
 
 template <size_t dim, size_t R, size_t C>
 void FMMOperator<dim,R,C>::P2M(const Octree<dim>& cell,
-    const SVDPtr& check_to_equiv, const BlockVectorX& x,
+    const SVDPtr& check_to_equiv, const std::vector<double>& x,
     double* parent_multipoles) const
 {
     auto n_src = cell.data.indices.size();
@@ -207,7 +207,7 @@ void FMMOperator<dim,R,C>::P2M(const Octree<dim>& cell,
         s2c.src_normals[i] = data.src_normals[cell.data.indices[i]];
         s2c.src_weights[i] = data.src_weights[cell.data.indices[i]];
         for (size_t d = 0; d < C; d++) {
-            src_str[d * n_src + i] = x[d][cell.data.indices[i]];
+            src_str[d * n_src + i] = x[d * data.src_locs.size() + cell.data.indices[i]];
         }
     }
 
@@ -271,7 +271,7 @@ void FMMOperator<dim,R,C>::M2M(const Octree<dim>& cell,
 
 template <size_t dim, size_t R, size_t C>
 void FMMOperator<dim,R,C>::P2P(const Octree<dim>& obs_cell,
-    const Octree<dim>& src_cell, const BlockVectorX& x, BlockVectorX& out) const 
+    const Octree<dim>& src_cell, const std::vector<double>& x, std::vector<double>& out) const 
 {
     auto n_src = src_cell.data.indices.size();
     auto n_obs = obs_cell.data.indices.size();
@@ -286,7 +286,7 @@ void FMMOperator<dim,R,C>::P2P(const Octree<dim>& obs_cell,
         p2p.src_normals[j] = data.src_normals[src_cell.data.indices[j]];
         p2p.src_weights[j] = data.src_weights[src_cell.data.indices[j]];
         for (size_t d = 0; d < C; d++) {
-            src_str[d * n_src + j] = x[d][src_cell.data.indices[j]];
+            src_str[d * n_src + j] = x[d * data.src_locs.size() + src_cell.data.indices[j]];
         }
     }
 
@@ -302,7 +302,7 @@ void FMMOperator<dim,R,C>::P2P(const Octree<dim>& obs_cell,
     for (size_t i = 0; i < n_obs; i++) {
         for (size_t d = 0; d < R; d++) {
             #pragma omp atomic
-            out[d][obs_cell.data.indices[i]] += res[d * n_obs + i];
+            out[d * data.obs_locs.size() + obs_cell.data.indices[i]] += res[d * n_obs + i];
         }
     }
 }
@@ -310,7 +310,7 @@ void FMMOperator<dim,R,C>::P2P(const Octree<dim>& obs_cell,
 template <size_t dim, size_t R, size_t C>
 void FMMOperator<dim,R,C>::P2L(const Octree<dim>& obs_cell,
     const Octree<dim>& src_cell, const SVDPtr& check_to_equiv,
-    const BlockVectorX& x, double* locals) const
+    const std::vector<double>& x, double* locals) const
 {
     //TODO: This is almost identical to the P2M operator.
     auto n_src = src_cell.data.indices.size();
@@ -329,7 +329,7 @@ void FMMOperator<dim,R,C>::P2L(const Octree<dim>& obs_cell,
         s2c.src_normals[i] = data.src_normals[src_cell.data.indices[i]];
         s2c.src_weights[i] = data.src_weights[src_cell.data.indices[i]];
         for (size_t d = 0; d < C; d++) {
-            src_str[d * n_src + i] = x[d][src_cell.data.indices[i]];
+            src_str[d * n_src + i] = x[d * data.src_locs.size() + src_cell.data.indices[i]];
         }
     }
 
@@ -344,7 +344,7 @@ void FMMOperator<dim,R,C>::P2L(const Octree<dim>& obs_cell,
 
 template <size_t dim, size_t R, size_t C>
 void FMMOperator<dim,R,C>::M2P(const Octree<dim>& obs_cell,
-    const Octree<dim>& src_cell, double* multipoles, BlockVectorX& out) const
+    const Octree<dim>& src_cell, double* multipoles, std::vector<double>& out) const
 {
     auto equiv_pts = surface.upward_equiv_points(src_cell.data.bounds, config.d);
 
@@ -366,7 +366,7 @@ void FMMOperator<dim,R,C>::M2P(const Octree<dim>& obs_cell,
     for (size_t i = 0; i < n_obs; i++) {
         for (size_t d = 0; d < R; d++) {
             #pragma omp atomic
-            out[d][obs_cell.data.indices[i]] += res[d * n_obs + i];
+            out[d * data.obs_locs.size() + obs_cell.data.indices[i]] += res[d * n_obs + i];
         }
     }
 }
@@ -431,7 +431,7 @@ void FMMOperator<dim,R,C>::L2L(const Octree<dim>& cell,
 
 template <size_t dim, size_t R, size_t C>
 void FMMOperator<dim,R,C>::L2P(const Octree<dim>& cell,
-    double* locals, BlockVectorX& out) const
+    double* locals, std::vector<double>& out) const
 {
     //TODO: Code is essentially identical to M2P
     auto equiv_pts = surface.downward_equiv_points(cell.data.bounds, config.d);
@@ -454,15 +454,15 @@ void FMMOperator<dim,R,C>::L2P(const Octree<dim>& cell,
     for (size_t i = 0; i < n_obs; i++) {
         for (size_t d = 0; d < R; d++) {
             #pragma omp atomic
-            out[d][cell.data.indices[i]] += res[d * n_obs + i];
+            out[d * data.obs_locs.size() + cell.data.indices[i]] += res[d * n_obs + i];
         }
     }
 }
 
 
 template <size_t dim, size_t R, size_t C>
-BlockVectorX FMMOperator<dim,R,C>::execute_tasks(const FMMTasks<dim>& tasks,
-    const BlockVectorX& x, 
+std::vector<double> FMMOperator<dim,R,C>::execute_tasks(const FMMTasks<dim>& tasks,
+    const std::vector<double>& x, 
     const CheckToEquiv& up_check_to_equiv,
     const CheckToEquiv& down_check_to_equiv) const
 {
@@ -477,7 +477,7 @@ BlockVectorX FMMOperator<dim,R,C>::execute_tasks(const FMMTasks<dim>& tasks,
 
     auto n_src_cells = 1 + src_oct.n_children();
     std::vector<double> multipoles(n_src_cells * config.order * C);
-    BlockVectorX out(R, VectorX(data.obs_locs.size(), 0.0));
+    std::vector<double> out(R * data.obs_locs.size(), 0.0);
 
     auto equiv_start = [&](const Octree<dim>& cell) {
         return cell.data.index * config.order * C;
@@ -582,9 +582,9 @@ BlockVectorX FMMOperator<dim,R,C>::execute_tasks(const FMMTasks<dim>& tasks,
 }
 
 template <size_t dim, size_t R, size_t C>
-BlockVectorX FMMOperator<dim,R,C>::apply(const BlockVectorX& x) const 
+std::vector<double> FMMOperator<dim,R,C>::apply(const std::vector<double>& x) const 
 {
-    assert(x.size() == C);
+    assert(x.size() == C * data.src_locs.size());
 
     TIC
     //TODO: CheckToEquivs can be class members since they only depend on the

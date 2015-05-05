@@ -1,7 +1,6 @@
 #ifndef __1231231231898972_SPARSE_OPERATOR_H
 #define __1231231231898972_SPARSE_OPERATOR_H
 #include <vector>
-#include "vectorx.h"
 #include "operator.h"
 
 namespace tbem {
@@ -35,8 +34,8 @@ struct SparseOperator: public OperatorI
         return shape.n_cols;
     }
 
-    virtual VectorX apply(const VectorX& x) const {
-        VectorX out(shape.n_rows, 0.0);
+    virtual std::vector<double> apply(const std::vector<double>& x) const {
+        std::vector<double> out(shape.n_rows, 0.0);
         for (size_t i = 0; i < storage.size(); i++) {
             out[storage[i].loc[0]] += storage[i].value * x[storage[i].loc[1]];
         }

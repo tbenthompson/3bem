@@ -4,7 +4,6 @@
 #include <vector>
 #include <cstdlib>
 #include <cassert>
-#include "fwd_vectorx.h"
 
 namespace tbem {
 
@@ -17,13 +16,6 @@ struct BlockDOFMap {
 };
 
 BlockDOFMap build_block_dof_map(std::vector<size_t> component_sizes);
-
-BlockDOFMap block_dof_map_from_functions(const BlockVectorX& fncs);
-
-VectorX concatenate(const BlockDOFMap& dof_map, const BlockVectorX& fncs);
-
-BlockVectorX expand(const BlockDOFMap& dof_map, const VectorX& data);
-
 } // end namespace tbem
 
 #endif

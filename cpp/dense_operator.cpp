@@ -1,6 +1,5 @@
 #include "dense_operator.h"
 #include "block_operator.h"
-#include "vectorx.h"
 #include <cassert>
 
 namespace tbem {
@@ -33,10 +32,10 @@ size_t DenseOperator::n_elements() const {
     return shape.n_rows * shape.n_cols;
 }
 
-VectorX DenseOperator::apply(const VectorX& x) const {
+std::vector<double> DenseOperator::apply(const std::vector<double>& x) const {
     assert(x.size() == n_cols());
    
-    VectorX res(n_rows(), 0.0);
+    std::vector<double> res(n_rows(), 0.0);
 #pragma omp parallel for
     for (size_t i = 0; i < n_rows(); i++) {
         for (size_t j = 0; j < n_cols(); j++) {

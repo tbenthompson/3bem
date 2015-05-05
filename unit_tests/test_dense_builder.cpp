@@ -9,7 +9,6 @@
 #include "identity_kernels.h"
 #include "laplace_kernels.h"
 #include "elastic_kernels.h"
-#include "vectorx.h"
 
 using namespace tbem;
 struct EvalProb {
@@ -28,7 +27,7 @@ struct EvalProb {
         ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
         auto mthd = make_adaptive_integration_mthd(qs, k);
         auto op = mesh_to_points_operator({obs}, sphere, mthd);
-        return op.apply({src_strength})[0][0];
+        return op.apply(src_strength)[0];
     }
 
     Mesh<3> sphere;
@@ -97,10 +96,10 @@ void test_integral_operator(Mesh<2> m1, Mesh<2> m2)
     QuadStrategy<2> qs(3);
     LaplaceDouble<2> k;
     auto mthd = make_adaptive_integration_mthd(qs, k);
-    VectorX v(random_list(m2.n_dofs()));
-    auto correct = dense_integral_operator(m1, m2, mthd).apply_scalar(v);
+    std::vector<double> v(random_list(m2.n_dofs()));
+    auto correct = dense_integral_operator(m1, m2, mthd).apply(v);
     auto other_op = integral_operator(m1, m2, mthd);
-    auto other = other_op.apply_scalar(v);
+    auto other = other_op.apply(v);
     REQUIRE(other_op.n_total_rows() == m1.n_dofs());
     REQUIRE(other_op.n_total_cols() == m2.n_dofs());
     REQUIRE_ARRAY_CLOSE(correct, other, m1.n_dofs(), 1e-12);
@@ -123,15 +122,12 @@ TEST_CASE("IntegralOperatorTensor", "[dense_builder]") {
     QuadStrategy<2> qs(3);
     ElasticHypersingular<2> k(1.0, 0.25);
     auto mthd = make_adaptive_integration_mthd(qs, k);
-    BlockVectorX v{
-        VectorX(random_list(m2.n_dofs())),
-        VectorX(random_list(m2.n_dofs()))
-    };
+    auto v = random_list(2 * m2.n_dofs());
     auto correct = dense_integral_operator(m1, m2, mthd).apply(v);
     auto other_op = integral_operator(m1, m2, mthd);
     auto other = other_op.apply(v);
     REQUIRE(other_op.n_total_rows() == 2 * m1.n_dofs());
     REQUIRE(other_op.n_total_cols() == 2 * m2.n_dofs());
-    REQUIRE_ARRAY_CLOSE(correct[0], other[0], m1.n_dofs(), 1e-12);
-    REQUIRE_ARRAY_CLOSE(correct[1], other[1], m1.n_dofs(), 1e-12);
+    REQUIRE_ARRAY_CLOSE(correct, other, m1.n_dofs(), 1e-12);
+    REQUIRE_ARRAY_CLOSE(correct, other, m1.n_dofs(), 1e-12);
 }

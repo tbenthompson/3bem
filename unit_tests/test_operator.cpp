@@ -1,7 +1,6 @@
 #include "catch.hpp"
 #include "dense_operator.h"
 #include "block_operator.h"
-#include "vectorx.h"
 
 using namespace tbem;
 
@@ -10,7 +9,7 @@ TEST_CASE("SimpleMatrixMultiply", "[operator]") {
         1, 1, 
         {DenseOperator(2, 2, {0,1,1,0})}
     };
-    auto res = matrix.apply({{3,4}})[0];
+    auto res = matrix.apply({3, 4});
     REQUIRE(res[0] == 4);
     REQUIRE(res[1] == 3);
 }
@@ -25,10 +24,10 @@ TEST_CASE("SimpleMatrixMultiplyWithComponents", "[operator]") {
             DenseOperator(1, 1, {0})
         }
     };
-    BlockVectorX x({VectorX({3}), VectorX({4})});
+    std::vector<double> x{3, 4};
     auto res = matrix.apply(x);
-    REQUIRE(res[0][0] == 4);
-    REQUIRE(res[1][0] == 3);
+    REQUIRE(res[0] == 4);
+    REQUIRE(res[1] == 3);
 }
 
 TEST_CASE("CombineComponents", "[operator]") {

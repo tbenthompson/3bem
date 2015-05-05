@@ -1,18 +1,40 @@
 CURRENT: MISC
-** replace references to the kernel by unique_ptr to the kernel
-** Clear out all "inline"
+** operators should be just one double array
+
+** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
 ** move continuity builder stuff to cpp file
 ** consider moving all the general tbempy imports to within the TwoD, ThreeD dimension modules
 ** think about creating a python layer on top of the interop to isolate that layer and create a more pythonic interface
 
-INTERNAL ARRAYS:
-ideas:
-** think about the memory management of array transfer between python and c++, when is copying necessary and when can just the data pointer be transferred? maybe copying is ideal to avoid premature optimization. if it ever becomes essential to avoid copying, deal with it then...
-** vectorx should become numpy array in python
-** consider getting rid of vectorx, or replacing with a facade over Eigen? or over numpy?
-** See if I can turn vectorx into a numpy array wrapper. this would make python-c++ interop super smooth...
+KERNEL OVERHAUL
+** replace references to the kernel by pointer to the kernel
+** move obs, src loop into the kernel functions which will reduce the number of function calls and also allow sse/avx implementations of those kernel functions
+template <size_t dim, size_t R, size_t C>
+struct NewKernel {
+    typedef std::vector<Vec<double,dim>> PtsType;
+    typedef Vec<double,R> OutType;
+    typedef Vec<double,C> InType;
+    typedef Vec<Vec<double,C>,R> OperatorType;
+    typedef std::function<OperatorType(PtType,PtType,NormalType,NormalType)> FncType;
 
-FMM SVD:
+    const static size_t n_rows = R;
+    const static size_t n_cols = C;
+    
+    std::vector<OperatorType> 
+    nbody_matrix(const NBodyData<dim>& data)
+    {
+        
+    }
+
+    std::vector<OutType> 
+    nbody_eval(const NBodyData<dim>& data, const BlockVectorX& x)
+    {
+    
+    }
+
+    FncType internal;
+};
+
 ** replace the SVD used in the fmm code... use blas SVD, which allows use of fast
 SVDs in things like MKL (once this is done, remove eigen dependency)
 
@@ -23,15 +45,11 @@ NEXT: hanging nodes
 -- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
 
 
-FMM/NBODY SPEED:
-** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
 ** see how FMM accuracy changes as a function of
     1) radius of equivalent surface
     2) radius of check surface
     3) order of expansion
     4) multipole acceptance criteria
-** move obs, src loop into the kernel functions which will reduce the number of
-function calls and also allow sse/avx implementations of those kernel functions
 
 INTEGRATION:
 ** finish up the sinh-sigmoidal work

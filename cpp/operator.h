@@ -1,7 +1,7 @@
 #ifndef ADKJASdLL_OPERATOR_H
 #define ADKJASdLL_OPERATOR_H
 
-#include "vectorx.h"
+#include <vector>
 
 namespace tbem {
 
@@ -13,7 +13,7 @@ struct OperatorShape {
 struct OperatorI {
     virtual size_t n_rows() const = 0;
     virtual size_t n_cols() const = 0;
-    virtual VectorX apply(const VectorX& x) const = 0;
+    virtual std::vector<double> apply(const std::vector<double>& x) const = 0;
 };
 
 } // end namespace tbem

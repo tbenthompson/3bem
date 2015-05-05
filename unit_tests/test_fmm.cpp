@@ -30,7 +30,7 @@ TEST_CASE("MakeSurroundingSurface", "[fmm]")
 TEST_CASE("IdentityP2M", "[fmm]") 
 {
     size_t n = 500;
-    BlockVectorX x(1, VectorX(n, 1.0));
+    std::vector<double> x(n, 1.0);
     std::vector<double> weights(n, 1.0);
     NBodyData<2> data{
         random_pts<2>(n, 1, 2), random_pts<2>(n, -1, 1),
@@ -61,10 +61,10 @@ TEST_CASE("IdentityP2M", "[fmm]")
         REQUIRE(L_child[i] == static_cast<double>(n));
     }
 
-    BlockVectorX out(1, VectorX(n, 0.0));
+    std::vector<double> out(n, 0.0);
     tree.L2P(tree.src_oct, &L_coeff, out);
     for (size_t i = 0; i < n; i++) {
-        REQUIRE(out[0][i] == static_cast<double>(n));
+        REQUIRE(out[i] == static_cast<double>(n));
     }
 }
 
@@ -72,8 +72,8 @@ template <size_t dim, size_t R, size_t C>
 void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
     size_t order, double allowed_error) 
 {
-    size_t n_per_cell = std::max<size_t>(20, order);
-    BlockVectorX x(C, VectorX(data.src_weights));
+    size_t n_per_cell = 1;
+    std::vector<double> x(C * data.src_locs.size(), 1.0);
     FMMOperator<dim,R,C> tree(K, data, {0.35, order, n_per_cell, 0.05});
     TIC
     auto out = tree.apply(x);
@@ -84,12 +84,14 @@ void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
     for (size_t d = 0; d < R; d++) {
         double average_magnitude = 0.0;
         for (size_t i = 0; i < data.obs_locs.size(); i++) {
-            average_magnitude += exact[d][i];
+            average_magnitude += exact[d * data.obs_locs.size() + i];
         }
         average_magnitude /= data.obs_locs.size();
         for (size_t i = 0; i < data.obs_locs.size(); i++) {
-            auto error1 = std::fabs((out[d][i] - exact[d][i]) / exact[d][i]);
-            auto error2 = std::fabs((out[d][i] - exact[d][i]) / average_magnitude);
+            auto out_val = out[d * data.obs_locs.size() + i];
+            auto exact_val = exact[d * data.obs_locs.size() + i];
+            auto error1 = std::fabs((out_val - exact_val) / exact_val);
+            auto error2 = std::fabs((out_val - exact_val) / average_magnitude);
             auto error = std::min(error1, error2);
             // CHECK_CLOSE(error, 0, allowed_error);
         }
@@ -100,7 +102,7 @@ void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
 template <size_t dim, size_t R, size_t C>
 void test_kernel(const Kernel<dim,R,C>& K, size_t order, double allowed_error) 
 {
-    size_t n = 10000;
+    size_t n = 500;
     auto data = ones_data<dim>(n);
     return test_kernel(data, K, order, allowed_error);    
 }

@@ -18,7 +18,8 @@ namespace np = boost::numpy;
 namespace tbem {
 
 template <size_t dim>
-VectorX interpolate_wrapper(const Mesh<dim>& mesh, const boost::python::object& fnc) 
+std::vector<double>
+interpolate_wrapper(const Mesh<dim>& mesh, const boost::python::object& fnc) 
 {
     return interpolate<dim>(mesh,
         [&](const Vec<double,dim>& x) {

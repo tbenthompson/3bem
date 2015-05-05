@@ -1,7 +1,7 @@
 #ifndef __NWQPOISJMNLJSDROIT_BASIS_H
 #define __NWQPOISJMNLJSDROIT_BASIS_H
 #include <functional>
-#include "fwd_vectorx.h"
+#include <vector>
 #include "vec.h"
 
 namespace tbem {
@@ -13,7 +13,7 @@ struct Mesh;
  * mesh.
  */
 template <size_t dim>
-VectorX interpolate(const Mesh<dim>& mesh, 
+std::vector<double> interpolate(const Mesh<dim>& mesh, 
     const std::function<double(const Vec<double,dim>&)>& fnc);
 
 } //END NAMESPACE tbem

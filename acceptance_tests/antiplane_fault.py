@@ -7,7 +7,7 @@ import scipy.sparse.linalg as sp_la
 
 def full_space():
     fault = line_mesh([0, -1], [0, 0])
-    slip = VectorX([1.0] * fault.n_dofs())
+    slip = np.ones(fault.n_dofs())
     surface = line_mesh([-10, -0.5], [10, -0.5]).refine_repeatedly(8)
 
     qs = QuadStrategy(5, 8, 4.0, 1e-13);
@@ -47,8 +47,7 @@ def solve_half_space(slip, fault, surface):
 
     np_rhs = rhs_condensed.storage
     def mv(v):
-        vec_v = VectorX(v)
-        distributed = distribute_vector(constraint_matrix, vec_v, surface.n_dofs())
+        distributed = distribute_vector(constraint_matrix, v, surface.n_dofs())
         applied = lhs_op.apply(distributed)
         condensed = condense_vector(constraint_matrix, applied)
         print("ITERATION: " + str(mv.it))
@@ -59,12 +58,12 @@ def solve_half_space(slip, fault, surface):
     A = sp_la.LinearOperator((np_rhs.shape[0], np_rhs.shape[0]),
                              matvec = mv, dtype = np.float64)
     res = sp_la.gmres(A, np_rhs, tol = 1e-6)
-    soln = distribute_vector(constraint_matrix, VectorX(res[0]), surface.n_dofs())
+    soln = distribute_vector(constraint_matrix, res[0], surface.n_dofs())
     return soln
 
 def half_space(refine):
     fault = line_mesh([0, -1], [0, 0])
-    slip = VectorX([1.0] * fault.n_dofs())
+    slip = np.ones(fault.n_dofs())
     surface = line_mesh([-50, 0.0], [50, 0.0]).refine_repeatedly(refine)
     soln = solve_half_space(slip, fault, surface).storage
     xs = surface.facets[:, :, 0].reshape((surface.n_facets() * 2))

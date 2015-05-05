@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <memory>
-#include "fwd_vectorx.h"
 #include "operator.h"
 
 namespace tbem {
@@ -24,7 +23,7 @@ struct DenseOperator: public OperatorI {
     virtual size_t n_cols() const override;
     size_t n_elements() const; 
 
-    virtual VectorX apply(const VectorX& x) const override;
+    virtual std::vector<double> apply(const std::vector<double>& x) const override;
 
     const DataT& data() const;
     double& operator[] (size_t idx); 

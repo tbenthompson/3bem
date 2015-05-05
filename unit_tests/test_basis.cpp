@@ -2,7 +2,6 @@
 #include "basis.h"
 #include "mesh_gen.h"
 #include "mesh.h"
-#include "vectorx.h"
 
 using namespace tbem;
 

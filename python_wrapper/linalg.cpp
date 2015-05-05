@@ -2,7 +2,6 @@
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "iterable_converter.h"
 
-#include "vectorx.h"
 #include "dense_operator.h"
 #include "sparse_operator.h"
 #include "block_operator.h"
@@ -10,36 +9,13 @@
 #include "dense_builder.h"
 namespace p = boost::python;
 
-template <typename T>
-void export_internal_vec(std::string name) {
-    p::class_<T>(name.c_str(), p::init<std::vector<typename T::ValueType>>())
-        .def(p::init<size_t,typename T::ValueType>())
-        .add_property("storage", p::make_getter(
-            &T::storage, p::return_value_policy<p::return_by_value>()
-        ))
-        .def("size", &T::size)
-        .def(p::self + p::self)
-        .def(p::self + double())
-        .def(p::self - p::self)
-        .def(p::self - double())
-        .def(p::self * p::self)
-        .def(p::self * double())
-        .def(p::self += p::self)
-        .def(p::self += double())
-        .def(p::self -= p::self)
-        .def(p::self -= double())
-        .def(p::self *= p::self)
-        .def(p::self *= double())
-        .def(-p::self);
-}
-
 namespace tbem {
     struct OperatorIWrap: OperatorI, boost::python::wrapper<OperatorI> 
     {
         virtual size_t n_rows() const {return this->get_override("n_rows")();}
         virtual size_t n_cols() const {return this->get_override("n_cols")();}
 
-        virtual VectorX apply(const VectorX& x) const 
+        virtual std::vector<double> apply(const std::vector<double>& x) const 
         {
             return this->get_override("apply")();
         }
@@ -64,11 +40,7 @@ namespace tbem {
             return this->get_override("n_block_cols")();
         }
 
-        virtual VectorX apply(const VectorX& x) const 
-        {
-            return this->get_override("apply")();
-        }
-        virtual BlockVectorX apply(const BlockVectorX& x) const 
+        virtual std::vector<double> apply(const std::vector<double>& x) const 
         {
             return this->get_override("apply")();
         }
@@ -77,25 +49,13 @@ namespace tbem {
 
 void export_linalg() {
     using namespace tbem;
-    export_internal_vec<VectorX>("VectorX");
-
-    p::class_<std::vector<VectorX>>("VectorOfVectorX")
-        .def(p::vector_indexing_suite<std::vector<VectorX>>());
-    VectorFromIterable().from_python<std::vector<VectorX>>();
-
-    export_internal_vec<BlockVectorX>("BlockVectorX");
 
     p::class_<OperatorIWrap, boost::noncopyable>("OperatorI")
         .def("apply", p::pure_virtual(&OperatorI::apply))
         .def("n_rows", p::pure_virtual(&OperatorI::n_rows))
         .def("n_cols", p::pure_virtual(&OperatorI::n_cols));
-    BlockVectorX (BlockOperatorI::*apply1)(const BlockVectorX&) const =
-        &BlockOperatorI::apply;
-    VectorX (BlockOperatorI::*apply2)(const VectorX&) const =
-        &BlockOperatorI::apply;
     p::class_<BlockOperatorIWrap, boost::noncopyable>("BlockOperatorI")
-        .def("apply", p::pure_virtual(apply1))
-        .def("apply", p::pure_virtual(apply2))
+        .def("apply", p::pure_virtual(&BlockOperatorIWrap::apply))
         .def("n_total_rows", p::pure_virtual(&BlockOperatorI::n_total_rows))
         .def("n_total_cols", p::pure_virtual(&BlockOperatorI::n_total_cols))
         .def("n_block_rows", p::pure_virtual(&BlockOperatorI::n_block_rows))
@@ -121,7 +81,4 @@ void export_linalg() {
             &BlockDOFMap::start_positions, p::return_value_policy<p::return_by_value>()
         ));
     p::def("build_block_dof_map", build_block_dof_map);
-    p::def("block_dof_map_from_functions", block_dof_map_from_functions);
-    p::def("concatenate", concatenate);
-    p::def("expand", expand);
 }

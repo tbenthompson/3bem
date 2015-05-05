@@ -1,13 +1,13 @@
 #include "nbody_operator.h"
-#include "vectorx.h"
 #include "vec_ops.h"
 
 namespace tbem {
 
 template <size_t dim, size_t R, size_t C>
-BlockVectorX BlockDirectNBodyOperator<dim,R,C>::apply(const BlockVectorX& x) const
+std::vector<double> BlockDirectNBodyOperator<dim,R,C>::apply(
+    const std::vector<double>& x) const
 {
-    BlockVectorX out(R, VectorX(data.obs_locs.size(), 0.0));
+    std::vector<double> out(R * data.obs_locs.size(), 0.0);
 #pragma omp parallel for
     for (size_t i = 0; i < data.obs_locs.size(); i++) {
         for (size_t j = 0; j < data.src_locs.size(); j++) {
@@ -16,7 +16,9 @@ BlockVectorX BlockDirectNBodyOperator<dim,R,C>::apply(const BlockVectorX& x) con
             auto entry = data.src_weights[j] * kernel_val;
             for (size_t d1 = 0; d1 < R; d1++) {
                 for (size_t d2 = 0; d2 < C; d2++) {
-                    out[d1][i] += entry[d1][d2] * x[d2][j];
+                    auto& out_val = out[d1 * data.obs_locs.size() + i];
+                    auto in = x[d2 * data.src_locs.size() + j];
+                    out_val += entry[d1][d2] * in;
                 }
             }
         }

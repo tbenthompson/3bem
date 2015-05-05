@@ -1,6 +1,5 @@
 #include "constraint_matrix.h"
 #include "block_operator.h"
-#include "vectorx.h"
 
 namespace tbem {
 
@@ -17,7 +16,7 @@ RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
     const ConstraintMatrix& matrix) 
 {
     if (c.terms.size() == 0) {
-        std::string msg = "VectorX: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.";
+        std::string msg = "ConstraintMatrix: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.";
         throw std::invalid_argument(msg);
     }
 
@@ -51,8 +50,8 @@ ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints)
     return ConstraintMatrix{new_mat};
 };
 
-VectorX distribute_vector(const ConstraintMatrix& matrix,
-    const VectorX& in, size_t total_dofs) 
+std::vector<double> distribute_vector(const ConstraintMatrix& matrix,
+    const std::vector<double>& in, size_t total_dofs) 
 {
     std::vector<double> out(total_dofs); 
 
@@ -82,7 +81,7 @@ VectorX distribute_vector(const ConstraintMatrix& matrix,
 }
 
 void add_term_with_constraints(const ConstraintMatrix& matrix,
-    VectorX& modifiable_vec, const LinearTerm& entry) 
+    std::vector<double>& modifiable_vec, const LinearTerm& entry) 
 {
     if (!is_constrained(matrix, entry.dof)) {
         modifiable_vec[entry.dof] += entry.weight;
@@ -98,9 +97,10 @@ void add_term_with_constraints(const ConstraintMatrix& matrix,
     }
 }
 
-VectorX condense_vector(const ConstraintMatrix& matrix, const VectorX& all) 
+std::vector<double> condense_vector(const ConstraintMatrix& matrix,
+    const std::vector<double>& all) 
 {
-    VectorX condensed_dofs(all.size(), 0.0);
+    std::vector<double> condensed_dofs(all.size(), 0.0);
     for (int dof_idx = all.size() - 1; dof_idx >= 0; dof_idx--) {
         double condensed_value = condensed_dofs[dof_idx];
         condensed_dofs[dof_idx] = 0.0;
@@ -108,7 +108,7 @@ VectorX condense_vector(const ConstraintMatrix& matrix, const VectorX& all)
         add_term_with_constraints(matrix, condensed_dofs, term_to_add);
     }
 
-    VectorX out(all.size() - matrix.size());
+    std::vector<double> out(all.size() - matrix.size());
     size_t next_out_idx = 0;
     for (size_t dof_idx = 0; dof_idx < all.size(); dof_idx++) {
         if (is_constrained(matrix, dof_idx)) {

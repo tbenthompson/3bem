@@ -26,7 +26,7 @@ struct BlockMassOperator: public BlockOperatorI
     virtual size_t n_total_rows() const {return galerkin.n_total_rows();} 
     virtual size_t n_total_cols() const {return interp.n_total_cols();}
 
-    virtual BlockVectorX apply(const BlockVectorX& x) const {
+    virtual std::vector<double> apply(const std::vector<double>& x) const {
         return galerkin.apply(interp.apply(x));
     }
 };

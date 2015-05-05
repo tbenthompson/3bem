@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include "constraint.h"
 #include "dense_operator.h"
-#include "fwd_vectorx.h"
 
 namespace tbem {
 
@@ -18,11 +17,12 @@ RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
 ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints);
 
 /* Accepts a reduced DOF vector and returns the full DOF vector. */
-VectorX distribute_vector(const ConstraintMatrix& matrix, 
-    const VectorX& in, size_t total_dofs);
+std::vector<double> distribute_vector(const ConstraintMatrix& matrix, 
+    const std::vector<double>& in, size_t total_dofs);
 
 /* Accepts a full DOF vector and returns the reduced DOF vector.  */
-VectorX condense_vector(const ConstraintMatrix& matrix, const VectorX& all);
+std::vector<double> condense_vector(const ConstraintMatrix& matrix,
+    const std::vector<double>& all);
 
 DenseOperator condense_matrix(const ConstraintMatrix& row_cm,
     const ConstraintMatrix& col_cm, const DenseOperator& matrix);

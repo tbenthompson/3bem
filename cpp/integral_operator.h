@@ -90,13 +90,15 @@ struct BlockIntegralOperator: public BlockOperatorI {
     virtual size_t n_block_cols() const {return nearfield.n_block_cols();}
     virtual size_t n_total_rows() const {return nearfield.n_total_rows();} 
     virtual size_t n_total_cols() const {return nearfield.n_total_cols();}
-    virtual BlockVectorX apply(const BlockVectorX& x) const {
+    virtual std::vector<double> apply(const std::vector<double>& x) const {
         auto interpolated = interp.apply(x);
         auto nbodied = farfield.apply(interpolated);
         auto galerkin_far = galerkin.apply(nbodied);
-        auto near_eval = nearfield.apply(x);
-
-        return near_eval + galerkin_far;
+        auto eval = nearfield.apply(x);
+        for (size_t i = 0; i < eval.size(); i++) {
+            eval[i] += galerkin_far[i];
+        }
+        return eval;
     }
 };
 
