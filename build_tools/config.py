@@ -5,11 +5,12 @@ import warnings
 import os
 
 # Code to get the compiler distutils will use
-# import distutils.sysconfig
-# import distutils.ccompiler
-# compiler = distutils.ccompiler.new_compiler()
-# distutils.sysconfig.customize_compiler(compiler)
-# print compiler.compiler_so
+def get_compiler():
+    import distutils.sysconfig
+    import distutils.ccompiler
+    compiler = distutils.ccompiler.new_compiler()
+    distutils.sysconfig.customize_compiler(compiler)
+    return compiler.compiler_cxx
 
 def files_in_dir(directory, ext):
     ret = []
@@ -31,7 +32,7 @@ lib_srces = files_in_dir(src_dir, 'cpp')
 wrapper_srces = files_in_dir(py_wrap_dir, 'cpp')
 test_srces = files_in_dir(test_dir, 'cpp')
 
-include_dirs = ['./' + str(src_dir), './lib', './lib/eigen']
+include_dirs = [str(src_dir), 'lib', os.path.join('lib', 'eigen')]
 include_flags = include(include_dirs)
 
 base_cpp_flags = ['-Wextra', '-std=c++11', '-fopenmp', '-DDEBUG=1', '-fPIC']
@@ -43,11 +44,15 @@ cpp_flag_types['profile'] = cpp_flag_types['release'] + ['-g']
 base_link_flags = ['-fopenmp']
 link_flag_types = dict()
 
-boost_include_dirs = ['lib/boost/', 'lib/boost_numpy']
-boost_lib = 'local_boost.so'
-boost_src_dirs = ['lib/boost/libs/python/src', 'lib/boost_numpy/libs/numpy/src']
-boost_src_dirs += [boost_src_dirs[0] + '/converter']
-boost_src_dirs += [boost_src_dirs[0] + '/object']
+boost_root = os.path.join('lib', 'boost')
+boost_numpy_root = os.path.join('lib', 'boost_numpy')
+boost_include_dirs = [boost_root, boost_numpy_root]
+boost_src_dirs = [
+    os.path.join(boost_root, 'libs', 'python', 'src'),
+    os.path.join(boost_numpy_root, 'libs', 'numpy', 'src')
+]
+boost_src_dirs += [os.path.join(boost_src_dirs[0], 'converter')]
+boost_src_dirs += [os.path.join(boost_src_dirs[0], 'object')]
 boost_sources = reduce(lambda fs1, fs2: fs1 + fs2,
                        map(lambda d: files_in_dir(d, 'cpp'), boost_src_dirs))
 python_include_dir = distutils.sysconfig.get_python_inc()
@@ -100,12 +105,13 @@ def get_config(command_params):
     c = dict()
     c['build_dir'] = build_dir
     c['subdirs'] = dict(
+        src_dir = src_dir,
         test_dir = test_dir,
         py_wrap_dir = py_wrap_dir,
         tbempy_dir = tbempy_dir
     )
     c['subdirs'].update({d:d for d in boost_src_dirs})
-    c['compiler'] = 'g++'
+    c['compiler'] = get_compiler()
     c['command_params'] = command_params
     c['printer'] = printer
     c['targets'] = dict()

@@ -1,5 +1,5 @@
 from distutils.core import setup
-import tools.entry
+import build_tools.entry
 import os
 import sys
 import copy
@@ -19,17 +19,17 @@ except SystemExit as e:
     pass
 
 # Check the build by running unit tests
-# print('Checking the build by running the unit tests')
-# returncode = tools.entry.tests()
-# if returncode != 0:
-#     print('')
-#     print('')
-#     print('')
-#     print('**** Tests are failing. The build or code have problems. Quitting. **** ')
-#     print('')
-#     print('')
-#     print('')
-#     sys.exit(returncode)
+print('Checking the build by running the unit tests')
+returncode = tools.entry.tests()
+if returncode != 0:
+    print('')
+    print('')
+    print('')
+    print('**** Tests are failing. The build or code have problems. Quitting. **** ')
+    print('')
+    print('')
+    print('')
+    sys.exit(returncode)
 
 # Restore sys.argv to be passed to python packager
 sys.argv = stored_argv

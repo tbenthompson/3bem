@@ -1,6 +1,6 @@
 CURRENT: MISC
+** determine compiler from distutils
 ** operators should be just one double array
-
 ** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
 ** move continuity builder stuff to cpp file
 
@@ -42,7 +42,6 @@ NEXT: hanging nodes
 -- Linked to hanging nodes in that lots of geometry code needs to be used/written.
 -- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
 
-
 ** see how FMM accuracy changes as a function of
     1) radius of equivalent surface
     2) radius of check surface
@@ -62,7 +61,3 @@ MISC/BORING:
 ** use iterators for traversing point sets?
 ** characterize the galerkin BEM for hypersingular kernels
 ** get rid of non-block operators and rename "Block___" to "___"
-
-BASIS:
-** turn some of the stuff in basis and numerics into a "Basis" class
-** a useful dof map structure?

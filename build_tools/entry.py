@@ -1,6 +1,6 @@
-from tools.config import get_config
-from tools.build import build_target
-from tools.fabricate import main, autoclean, after
+from build_tools.config import get_config
+from build_tools.build import build_target
+from build_tools.fabricate import main, autoclean
 import pprint
 import sys
 import os
@@ -53,6 +53,14 @@ def save_parameters():
         del sys.argv[2:]
 
 def run_fabricate(dir):
+    import multiprocessing
+
+    n_cores = 2
+    try:
+        n_cores = multiprocessing.cpu_count()
+    except NotImplementedError as e:
+        n_cores = 2
+    print('Building with ' + str(n_cores) + ' cores')
     main(parallel_ok = True, build_dir = dir, jobs = 12)
 
 def entrypoint(dir):

@@ -30,6 +30,9 @@
 
 
 - Higher order bases? is this worth the effort? medium-high cost, what is the value? be realistic.
+-- Useful for crack-tip elements.
+-- Could at least move the stray basis and interpolation code into one place.
+-- And set up some type of dof map structure.
 -- Probably not useful for static elastic problems. Adaptive meshing would be more useful. 
 -- Key problem is that the surface shape has to be parameterized to the same accuracy as the field of interest, otherwise the 
 -- I suspect higher order would be very useful for volumetric problems/body forces, where surface shape does not need to be parameterized so heavily.

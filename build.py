@@ -1,4 +1,4 @@
-from tools.entry import entrypoint
+from build_tools.entry import entrypoint
 import os
 
 if __name__ == "__main__":
