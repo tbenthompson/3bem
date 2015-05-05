@@ -1,32 +1,47 @@
 from __future__ import print_function
-from tools.util import files_in_dir
 from numpy.distutils.system_info import get_info as np_config_info
 import distutils.sysconfig
 import warnings
 import os
 
+# Code to get the compiler distutils will use
+# import distutils.sysconfig
+# import distutils.ccompiler
+# compiler = distutils.ccompiler.new_compiler()
+# distutils.sysconfig.customize_compiler(compiler)
+# print compiler.compiler_so
+
+def files_in_dir(directory, ext):
+    ret = []
+    for file in os.listdir(directory):
+        file_name, file_ext = os.path.splitext(file)
+        if file_ext == '.' + ext:
+            ret.append(os.path.join(directory, file_name))
+    return ret
+
 def include(dirs):
     return ['-I' + d for d in dirs]
 
 src_dir = 'cpp'
-lib_srces = files_in_dir(src_dir, 'cpp')
 test_dir = 'unit_tests'
 py_wrap_dir = 'python_wrapper'
+tbempy_dir = 'tbempy'
+
+lib_srces = files_in_dir(src_dir, 'cpp')
 wrapper_srces = files_in_dir(py_wrap_dir, 'cpp')
+test_srces = files_in_dir(test_dir, 'cpp')
 
 include_dirs = ['./' + str(src_dir), './lib', './lib/eigen']
 include_flags = include(include_dirs)
 
-base_cpp_flags = ['-Wextra', '-std=c++11', '-fopenmp', '-DDEBUG=1']
+base_cpp_flags = ['-Wextra', '-std=c++11', '-fopenmp', '-DDEBUG=1', '-fPIC']
 cpp_flag_types = dict()
 cpp_flag_types['debug'] = ['-g', '-Og']
 cpp_flag_types['release'] = ['-Ofast']
 cpp_flag_types['profile'] = cpp_flag_types['release'] + ['-g']
-cpp_flag_types['coverage'] = ['--coverage'] + cpp_flag_types['debug']
 
 base_link_flags = ['-fopenmp']
 link_flag_types = dict()
-link_flag_types['coverage'] = ['--coverage']
 
 boost_include_dirs = ['lib/boost/', 'lib/boost_numpy']
 boost_lib = 'local_boost.so'
@@ -61,64 +76,40 @@ def get_config(command_params):
 
     printer = determine_printer(command_params)
 
-    lib_cpp_flags = cpp_flags + ['-fPIC']
-    lib_link_flags = link_flags + ['-shared']
-    lib = dict()
-    lib['cpp_flags'] = lib_cpp_flags
-    lib['link_flags'] = lib_link_flags
-    lib['sources'] = lib_srces
-    lib['linked_sources'] = []
-    lib['binary_name'] = 'lib3bem.so'
-    lib['priority'] = 0
-
-    python_wrapper_cpp_flags = lib_cpp_flags +\
-            include([python_include_dir] + boost_include_dirs)
-    python_wrapper_link_flags = lib_link_flags +\
-        ['-L' + python_lib_dir] +\
-        ['-l:' + python_lib] +\
-        ['-L' + os.path.join(os.getcwd(), build_dir)] +\
-        ['-l:' + boost_lib]
-    python_wrapper = dict()
-    python_wrapper['cpp_flags'] = python_wrapper_cpp_flags
-    python_wrapper['link_flags'] = python_wrapper_link_flags
-    python_wrapper['sources'] = wrapper_srces
-    python_wrapper['linked_sources'] = lib['sources']
-    python_wrapper['binary_name'] = 'tbempy.so'
-    python_wrapper['priority'] = 2
-
     tests = dict()
     tests['cpp_flags'] = cpp_flags
     tests['link_flags'] = link_flags
-    tests['sources'] = files_in_dir(test_dir, 'cpp')
-    tests['linked_sources'] = lib['sources']
+    tests['sources'] = test_srces + lib_srces
+    tests['linked_sources'] = []
     tests['binary_name'] = 'test_runner'
     tests['priority'] = 1
 
-    boost = dict()
-    boost['cpp_flags'] = python_wrapper_cpp_flags
-    boost['link_flags'] = lib_link_flags +\
+    python_wrapper_cpp_flags = cpp_flags +\
+            include([python_include_dir] + boost_include_dirs)
+    python_wrapper_link_flags = link_flags + ['-shared'] +\
         ['-L' + python_lib_dir] +\
         ['-l:' + python_lib]
-    boost['sources'] = boost_sources
-    boost['linked_sources'] = []
-    boost['binary_name'] = boost_lib
-    boost['priority'] = -1
+    python_wrapper = dict()
+    python_wrapper['cpp_flags'] = python_wrapper_cpp_flags
+    python_wrapper['link_flags'] = python_wrapper_link_flags
+    python_wrapper['sources'] = wrapper_srces + boost_sources
+    python_wrapper['linked_sources'] = lib_srces
+    python_wrapper['binary_name'] = 'tbempy.so'
+    python_wrapper['priority'] = 2
 
     c = dict()
     c['build_dir'] = build_dir
     c['subdirs'] = dict(
-        src_dir = src_dir,
         test_dir = test_dir,
         py_wrap_dir = py_wrap_dir,
+        tbempy_dir = tbempy_dir
     )
     c['subdirs'].update({d:d for d in boost_src_dirs})
     c['compiler'] = 'g++'
     c['command_params'] = command_params
     c['printer'] = printer
     c['targets'] = dict()
-    c['targets']['lib'] = lib
     c['targets']['python_wrapper'] = python_wrapper
     c['targets']['tests'] = tests
-    c['targets']['boost'] = boost
     return c
 

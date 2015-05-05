@@ -1,19 +1,18 @@
 from tools.config import get_config
-from tools.build import run_build
-from tools.fabricate import main, autoclean
+from tools.build import build_target
+from tools.fabricate import main, autoclean, after
 import pprint
 import sys
+import os
+import subprocess
+import shutil
 
 def tests():
-    run_unit_tests(get_config(command_params))
-
-def lcov():
-    coverage_file = oname('coverage.info')
-    lcov_outdir = oname('lcov_out')
-    after()
-    run('lcov', '--capture', '--directory', build_dir, '--output-file', coverage_file)
-    after()
-    run('genhtml', coverage_file, '--output-directory', lcov_outdir)
+    c = get_config(command_params)
+    test_runner = os.path.join(c['build_dir'], c['targets']['tests']['binary_name'])
+    p = subprocess.Popen([test_runner] + command_params)
+    p.wait()
+    return p.returncode
 
 def basic_config():
     c = get_config(command_params)
@@ -25,7 +24,20 @@ def full_config():
     pprint.pprint(c)
 
 def build():
-    run_build(get_config(command_params))
+    build_tests()
+    build_python_wrapper()
+
+def build_tests():
+    c = get_config(command_params)
+    build_target(c, c['targets']['tests'])
+
+def build_python_wrapper():
+    c = get_config(command_params)
+    build_target(c, c['targets']['python_wrapper'])
+    binary_path = os.path.join(
+        c['build_dir'], c['targets']['python_wrapper']['binary_name']
+    )
+    shutil.copy(binary_path, c['subdirs']['tbempy_dir'])
 
 def clean():
     autoclean()
@@ -40,9 +52,12 @@ def save_parameters():
         command_params.extend(sys.argv[2:])
         del sys.argv[2:]
 
+def run_fabricate(dir):
+    main(parallel_ok = True, build_dir = dir, jobs = 12)
+
 def entrypoint(dir):
     save_parameters()
-    main(parallel_ok = True, build_dir = dir, jobs = 12)
+    run_fabricate(dir)
 
 if __name__ == '__main__':
     entrypoint()

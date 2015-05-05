@@ -19,63 +19,21 @@ sophistication of the command line parsing may need to improve.
 """
 from __future__ import print_function
 
-from tools.util import oname
 import os
 import shutil
 import sys
 import copy
 from tools.fabricate import run, after
 
-def determine_removed_targets(c):
-    remove_targets = []
-    for entry in c['command_params']:
-        if entry.startswith('--'):
-            name = entry[2:]
-            remove_targets.append(name)
-    return remove_targets
+def oname(build_dir, filename):
+    return os.path.join(build_dir, filename)
 
-def determine_targets(c):
-    remove_targets = determine_removed_targets(c)
-    target = None
-    for entry in c['command_params']:
-        if entry.startswith('+'):
-            if target is not None:
-                print("Specify only one target or build all targets.")
-                sys.exit()
-            target = entry[1:]
-
-    if target is not None:
-        return dict(target = c['targets'][target]), True
-    else:
-        all_targets = c['targets']
-        for rem in remove_targets:
-            del all_targets[rem]
-        return all_targets, False
-
-def priority_groupings(targets):
-    buckets = dict()
-    for t in targets.values():
-        p = t['priority']
-        if p in buckets:
-            buckets[p].append(t)
-        else:
-            buckets[p] = [t]
-    return buckets
-
-def run_build(c):
-    targets, one_target = determine_targets(c)
-    buckets = priority_groupings(targets)
+def build_target(c, target):
     setup_tree(c)
-    for b in sorted(buckets.keys()):
-        for t in buckets[b]:
-            c['printer']('\nCompiling target: ' + t['binary_name'])
-            compile(c, t, one_target)
+    compile(c, target)
     after()
-    for b in sorted(buckets.keys()):
-        for t in buckets[b]:
-            c['printer']('\nLinking target: ' + t['binary_name'])
-            link(c, t)
-        after()
+    link(c, target)
+    after()
 
 def setup_tree(c):
     def setup_dir(dirname):
@@ -85,10 +43,8 @@ def setup_tree(c):
     for k in c['subdirs']:
         setup_dir(os.path.join(c['build_dir'], c['subdirs'][k]))
 
-def compile(c, target, one_target):
+def compile(c, target):
     to_compile = copy.copy(target['sources'])
-    if one_target:
-        to_compile.extend(target['linked_sources'])
     for source in to_compile:
         compile_runner(c['build_dir'], c['compiler'], source,
                        target['cpp_flags'])

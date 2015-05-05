@@ -3,8 +3,6 @@ CURRENT: MISC
 
 ** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
 ** move continuity builder stuff to cpp file
-** consider moving all the general tbempy imports to within the TwoD, ThreeD dimension modules
-** think about creating a python layer on top of the interop to isolate that layer and create a more pythonic interface
 
 KERNEL OVERHAUL
 ** replace references to the kernel by pointer to the kernel
@@ -58,7 +56,6 @@ INTEGRATION:
 ** crack-tip elements
 
 BUILD:
-** clean up the build system design
 ** test the build system on mac, a fresh ubuntu, odyssey/meade02, don't support windows
 
 MISC/BORING:
@@ -67,5 +64,5 @@ MISC/BORING:
 ** get rid of non-block operators and rename "Block___" to "___"
 
 BASIS:
-** better structure for dof maps -- stabilize that interface
 ** turn some of the stuff in basis and numerics into a "Basis" class
+** a useful dof map structure?

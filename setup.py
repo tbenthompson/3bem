@@ -1,65 +1,46 @@
-from distutils.core import setup, Extension
-from tools.config import boost_include_dirs, boost_lib, boost_sources, include_dirs,\
-    base_cpp_flags,cpp_flag_types, wrapper_srces, lib_srces
-from tools.util import files_in_dir
+from distutils.core import setup
+import tools.entry
 import os
+import sys
+import copy
 
-# Setting OPT to '' prevents distutils from appending the -Wstrict-prototypes flag
-# which does not apply to c++ compilation
-if 'OPT' not in os.environ:
-    os.environ['OPT'] = ''
+# I want to call fabricate with sys.argv empty, but still pass sys.argv to
+# the python packaging tools
+stored_argv = copy.copy(sys.argv)
+sys.argv = []
 
-tbempy_srces = lib_srces + wrapper_srces + boost_sources
-tbempy_srces = [s + '.cpp' for s in tbempy_srces]
-no_warnings = True
-cpp_flags = base_cpp_flags + cpp_flag_types['release']
-if no_warnings:
-    cpp_flags.append('-w')
-includes = include_dirs + boost_include_dirs
-libs = [
-]
-link_args = [
-    '-fopenmp'
-]
+# Fabricate calls system.exit when it is done compiling. Let's prevent it
+# from actually exiting by catching the SystemExit exception
+try:
+    # The root of the build tree should be the containing folder for this script
+    dir = os.path.dirname(os.path.realpath(__file__))
+    tools.entry.run_fabricate(dir)
+except SystemExit as e:
+    pass
 
-tbempy = Extension(
-    'tbempy',
-    sources = tbempy_srces,
-    include_dirs = includes,
-    libraries = libs,
-    extra_compile_args = cpp_flags,
-    extra_link_args = link_args,
-    language = 'c++'
-)
+# Check the build by running unit tests
+print('Checking the build by running the unit tests')
+returncode = tools.entry.tests()
+if returncode != 0:
+    print('')
+    print('')
+    print('')
+    print('**** Tests are failing. The build or code have problems. Quitting. **** ')
+    print('')
+    print('')
+    print('')
+    sys.exit(returncode)
 
-# monkey-patch for parallel compilation
-def parallelCCompile(self, sources, output_dir=None, macros=None, include_dirs=None, debug=0, extra_preargs=None, extra_postargs=None, depends=None):
-    # those lines are copied from distutils.ccompiler.CCompiler directly
-    macros, objects, extra_postargs, pp_opts, build = self._setup_compile(output_dir, macros, include_dirs, sources, depends, extra_postargs)
-    cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
-    # parallel code
-    import multiprocessing.pool
-    import multiprocessing
-    N = 1
-    try:
-        N = multiprocessing.cpu_count()
-    except e:
-        pass
-    def _single_compile(obj):
-        try: src, ext = build[obj]
-        except KeyError: return
-        self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
-    # convert to list, imap is evaluated on-demand
-    list(multiprocessing.pool.ThreadPool(N).imap(_single_compile,objects))
-    return objects
-import distutils.ccompiler
-distutils.ccompiler.CCompiler.compile=parallelCCompile
+# Restore sys.argv to be passed to python packager
+sys.argv = stored_argv
 
+# Call python packager
 setup(
     name = 'tbempy',
     version = '0.1',
     description = 'The black box boundary element method.',
     author = 'T. Ben Thompson',
     author_email = 't.ben.thompson@gmail.com',
-    ext_modules = [tbempy]
+    packages = ['tbempy'],
+    package_data = dict(tbempy = ['tbempy.so'])
 )
