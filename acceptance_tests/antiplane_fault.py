@@ -1,4 +1,3 @@
-from tbempy import *
 from tbempy.TwoD import *
 from dislocation import *
 import numpy as np
@@ -35,7 +34,7 @@ def get_qs():
     return QuadStrategy(5, 9, 3.0, 1e-5)
 
 def solve_half_space(slip, fault, surface):
-    constraint_matrix = faulted_surface_constraints(2, surface, fault)
+    constraint_matrix = faulted_surface_constraints(tbempy.TwoD, surface, fault)
     qs = get_qs()
 
     hypersingular_kernel = LaplaceHypersingular()

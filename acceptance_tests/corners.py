@@ -1,4 +1,3 @@
-from tbempy import *
 from tbempy.TwoD import *
 from laplace2d import theta_u, make_theta_dudn
 import scipy.sparse.linalg as sp_la

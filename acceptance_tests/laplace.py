@@ -12,17 +12,17 @@ def np_matrix_from_tbem_matrix(matrix):
     np_matrix = np_matrix.reshape((rows,cols))
     return np_matrix
 
-def solve_direct(constraint_matrix, matrix, rhs):
-    matrix_condensed = condense_matrix(constraint_matrix, constraint_matrix,
+def solve_direct(tbem, constraint_matrix, matrix, rhs):
+    matrix_condensed = tbem.condense_matrix(constraint_matrix, constraint_matrix,
                                        matrix.get_block(0,0));
     np_matrix = np_matrix_from_tbem_matrix(matrix_condensed)
     return np.linalg.solve(np_matrix, rhs)
 
-def solve_iterative(constraint_matrix, matrix, rhs):
+def solve_iterative(tbem, constraint_matrix, matrix, rhs):
     def mv(v):
-        distributed = distribute_vector(constraint_matrix, v, matrix.n_total_rows())
+        distributed = tbem.distribute_vector(constraint_matrix, v, matrix.n_total_rows())
         applied = matrix.apply(distributed)
-        condensed = condense_vector(constraint_matrix, applied)
+        condensed = tbem.condense_vector(constraint_matrix, applied)
         return condensed
     A = sp_la.LinearOperator((rhs.shape[0], rhs.shape[0]),
                              matvec = mv, dtype = np.float64)
@@ -39,7 +39,7 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc):
 
     continuity = tbem.mesh_continuity(mesh.begin())
     constraints = tbem.convert_to_constraints(continuity)
-    constraint_matrix = from_constraints(constraints)
+    constraint_matrix = tbem.from_constraints(constraints)
 
     u = tbem.interpolate(mesh, u_fnc)
     dudn = tbem.interpolate(mesh, dudn_fnc)
@@ -51,14 +51,14 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc):
     rhs_mass = tbem.mass_operator_scalar(mesh, 3).apply(u);
 
     rhs = rhs_double + rhs_mass
-    rhs_condensed = condense_vector(constraint_matrix, rhs);
+    rhs_condensed = tbem.condense_vector(constraint_matrix, rhs);
 
     single_kernel = tbem.LaplaceSingle()
     single_mthd = tbem.make_adaptive_integration_mthd(qs, single_kernel)
     matrix = operator_builder(mesh, mesh, single_mthd);
 
-    soln_condensed = linear_solver(constraint_matrix, matrix, rhs_condensed)
-    soln = distribute_vector(constraint_matrix, soln_condensed, mesh.n_dofs())
+    soln_condensed = linear_solver(tbem, constraint_matrix, matrix, rhs_condensed)
+    soln = tbem.distribute_vector(constraint_matrix, soln_condensed, mesh.n_dofs())
     np_soln = soln
     np_dudn = dudn
     boundary_error = np.sqrt(np.mean((np_soln - np_dudn) ** 2))
