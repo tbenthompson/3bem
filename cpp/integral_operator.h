@@ -92,7 +92,9 @@ struct BlockIntegralOperator: public BlockOperatorI {
     virtual size_t n_total_cols() const {return nearfield.n_total_cols();}
     virtual std::vector<double> apply(const std::vector<double>& x) const {
         auto interpolated = interp.apply(x);
+        TIC
         auto nbodied = farfield.apply(interpolated);
+        TOC("n-body");
         auto galerkin_far = galerkin.apply(nbodied);
         auto eval = nearfield.apply(x);
         for (size_t i = 0; i < eval.size(); i++) {

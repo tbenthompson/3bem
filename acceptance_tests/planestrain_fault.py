@@ -21,7 +21,7 @@ def exact_displacements(x):
 def test_planestrain():
     fault = line_mesh([-1, -1], [0, 0])
     surface = line_mesh([-100, 0], [100, 0]).refine_repeatedly(9)
-    slip = BlockVectorX(2, VectorX(fault.n_dofs(), 1.0))
+    slip = np.ones(2 * fault.n_dofs())
 
     qs = QuadStrategy(3, 8, 3.0, 1e-4)
 

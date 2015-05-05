@@ -28,11 +28,11 @@ def test_okada():
         [-1, 0, -3.0], [-1, 0, -0.0],
         [1, 0, -0.0], [1, 0, -3.0]
     ).refine_repeatedly(refine_surf - 1)
-    slip = BlockVectorX([
-        VectorX(fault.n_dofs(), 1.0),
-        VectorX(fault.n_dofs(), 0.0),
-        VectorX(fault.n_dofs(), 0.0)
-    ])
+    slip = np.concatenate((
+        np.ones(fault.n_dofs()),
+        np.zeros(fault.n_dofs()),
+        np.zeros(fault.n_dofs())
+    ))
     qs = QuadStrategy(2, 5, 3.0, 1e-3)
 
     surface = rect_mesh(

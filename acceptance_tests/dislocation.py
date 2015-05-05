@@ -23,6 +23,24 @@ def faulted_surface_constraints(dim, surface, fault):
     constraint_matrix = from_constraints(constraints)
     return constraint_matrix
 
+def condense(dim, input, cm, n_dofs):
+    out_components = []
+    for d in range(dim):
+        start_dof = d * n_dofs
+        end_dof = (d + 1) * n_dofs
+        component = input[start_dof:end_dof]
+        out_components.append(condense_vector(cm, component))
+    return out_components
+
+def distribute(dim, input, cm, n_dofs, n_reduced_dofs):
+    out_components = []
+    for d in range(dim):
+        start_dof = d * n_reduced_dofs
+        end_dof = (d + 1) * n_reduced_dofs
+        component = input[start_dof:end_dof]
+        out_components.append(distribute_vector(cm, component, n_dofs))
+    return out_components
+
 def solve(dim, surface, fault, hyp, qs, slip):
     linear_solve_tol = 1e-8
     n_dofs = surface.n_dofs()
@@ -34,46 +52,22 @@ def solve(dim, surface, fault, hyp, qs, slip):
 
     rhs_op = tbem.integral_operator(surface, fault, mthd)
     all_dofs_rhs = rhs_op.apply(slip)
-    rhs = BlockVectorX([
-        condense_vector(cm, all_dofs_rhs.storage[i]) for i in range(dim)
-    ])
-
-    dof_map = block_dof_map_from_functions(rhs)
-    rhs = concatenate(dof_map, rhs)
+    rhs = np.concatenate(condense(dim, all_dofs_rhs, cm, n_dofs))
+    n_reduced_dofs = rhs.shape[0] / dim
 
     lhs = tbem.integral_operator(surface, surface, mthd)
 
     def mv(v):
-        vec_v = VectorX(v)
-        both = expand(dof_map, vec_v)
-
-        test = BlockVectorX([
-            distribute_vector(cm, both.storage[i], n_dofs)
-            for i in range(dim)
-        ])
-        s = time.time()
-        applied = lhs.apply(test)
-        print("Apply took " + str(time.time() - s))
-        condensed = BlockVectorX([
-            condense_vector(cm, applied.storage[i])
-            for i in range(dim)
-        ])
-        out = concatenate(dof_map, condensed)
         print("IT: " + str(mv.it))
         mv.it+=1
-        return np.array(out.storage)
+        soln = np.concatenate(distribute(dim, v, cm, n_dofs, n_reduced_dofs))
+        applied = lhs.apply(soln)
+        out = np.concatenate(condense(dim, applied, cm, n_dofs))
+        return out
     mv.it = 0
 
-    np_rhs = np.array(rhs.storage)
-    A = sp_la.LinearOperator((np_rhs.shape[0], np_rhs.shape[0]),
+    A = sp_la.LinearOperator((rhs.shape[0], rhs.shape[0]),
                              matvec = mv, dtype = np.float64)
-    res = sp_la.gmres(A, np_rhs, tol = linear_solve_tol)
-
-    res_vec = VectorX(res[0])
-    soln_expanded = expand(dof_map, res_vec)
-
-    soln = [
-        np.array(distribute_vector(cm, soln_expanded.storage[i], n_dofs).storage)
-        for i in range(dim)
-    ]
+    res = sp_la.gmres(A, rhs, tol = linear_solve_tol)
+    soln = distribute(dim, res[0], cm, n_dofs, n_reduced_dofs)
     return soln

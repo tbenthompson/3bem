@@ -31,7 +31,6 @@ tbempy = Extension(
     extra_link_args = link_args,
     language = 'c++'
 )
-print(dir(tbempy))
 
 # monkey-patch for parallel compilation
 def parallelCCompile(self, sources, output_dir=None, macros=None, include_dirs=None, debug=0, extra_preargs=None, extra_postargs=None, depends=None):

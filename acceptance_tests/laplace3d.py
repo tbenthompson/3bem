@@ -42,7 +42,7 @@ def run():
     pts, obs_pts = make_interior_pts(2000, center, obs_radius)
     pts = np.array(pts)
     sphere = sphere_mesh(center, r, refine)
-    return solve(3, sphere, solve_iterative, integral_operator,
+    return solve(3, sphere, solve_iterative, dense_integral_operator,
                  obs_pts, harmonic_u, make_harmonic_dudn(center))
 
 def test_laplace3d():

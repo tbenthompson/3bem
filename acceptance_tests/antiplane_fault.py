@@ -13,7 +13,8 @@ def full_space():
     qs = QuadStrategy(5, 8, 4.0, 1e-13);
 
     double_kernel = LaplaceDouble()
-    double_layer = make_boundary_integral(surface, fault, double_kernel)
+    mthd = make_adaptive_integration_mthd(qs, double_kernel)
+    double_layer = integral_operator(surface, fault, mthd)
 
     def fnc(x):
         richardson_dir = [1, 0]
@@ -23,11 +24,11 @@ def full_space():
             return 0.0
         obs = ObsPt(0.001, x, [0, 1], richardson_dir)
 
-        op = mesh_to_points_operator(double_layer, qs, [obs])
-        val = op.apply(slip).storage[0]
+        op = mesh_to_points_operator([obs], fault, mthd)
+        val = op.apply(slip)
         exact = np.arctan(0.5 / x[0]) / np.pi
         assert(np.abs(exact - val) < 2e-15)
-        return val
+        return val[0]
     u = interpolate(surface, fnc)
 
 def get_qs():
@@ -40,24 +41,23 @@ def solve_half_space(slip, fault, surface):
     hypersingular_kernel = LaplaceHypersingular()
     hypersingular_mthd = make_adaptive_integration_mthd(qs, hypersingular_kernel)
     rhs_op = integral_operator(surface, fault, hypersingular_mthd)
-    rhs = -(rhs_op.apply(slip))
-    rhs_condensed = condense_vector(constraint_matrix, rhs)
+    full_rhs = -(rhs_op.apply(slip))
+    rhs = condense_vector(constraint_matrix, full_rhs)
 
     lhs_op = integral_operator(surface, surface, hypersingular_mthd)
 
-    np_rhs = rhs_condensed.storage
     def mv(v):
         distributed = distribute_vector(constraint_matrix, v, surface.n_dofs())
         applied = lhs_op.apply(distributed)
         condensed = condense_vector(constraint_matrix, applied)
-        print("ITERATION: " + str(mv.it))
+        # print("ITERATION: " + str(mv.it))
         mv.it += 1
-        return condensed.storage
+        return condensed
     mv.it = 0
 
-    A = sp_la.LinearOperator((np_rhs.shape[0], np_rhs.shape[0]),
+    A = sp_la.LinearOperator((rhs.shape[0], rhs.shape[0]),
                              matvec = mv, dtype = np.float64)
-    res = sp_la.gmres(A, np_rhs, tol = 1e-6)
+    res = sp_la.gmres(A, rhs, tol = 1e-6)
     soln = distribute_vector(constraint_matrix, res[0], surface.n_dofs())
     return soln
 
@@ -65,7 +65,7 @@ def half_space(refine):
     fault = line_mesh([0, -1], [0, 0])
     slip = np.ones(fault.n_dofs())
     surface = line_mesh([-50, 0.0], [50, 0.0]).refine_repeatedly(refine)
-    soln = solve_half_space(slip, fault, surface).storage
+    soln = solve_half_space(slip, fault, surface)
     xs = surface.facets[:, :, 0].reshape((surface.n_facets() * 2))
     indices = [i for i in range(len(xs)) if 0 < np.abs(xs[i]) < 10]
     xs = xs[indices]
@@ -75,7 +75,7 @@ def half_space(refine):
 
 def half_space_interior(refine):
     fault = line_mesh([0, -1], [0, 0])
-    slip = VectorX([1.0] * fault.n_dofs())
+    slip = np.ones(fault.n_dofs())
     surface = line_mesh([-50, 0.0], [50, 0.0]).refine_repeatedly(refine)
     qs = get_qs()
 
@@ -119,11 +119,14 @@ def half_space_interior(refine):
     exact_tracy = (s * shear_modulus) / (2 * np.pi) * (
         (x / (x ** 2 + (y + d) ** 2)) -
         (x / (x ** 2 + (y - d) ** 2)))
-    l2_error_disp = np.sqrt(np.mean((disp.storage - exact_uz) ** 2))
-    l2_error_tracx = np.sqrt(np.mean((tracx.storage - exact_tracx) ** 2))
-    l2_error_tracy = np.sqrt(np.mean((tracy.storage - exact_tracy) ** 2))
+    l2_error_disp = np.sqrt(np.mean((disp - exact_uz) ** 2))
+    l2_error_tracx = np.sqrt(np.mean((tracx - exact_tracx) ** 2))
+    l2_error_tracy = np.sqrt(np.mean((tracy - exact_tracy) ** 2))
 
     return l2_error_disp, l2_error_tracx, l2_error_tracy
+
+def test_fullspace():
+    full_space()
 
 def test_halfspace():
     error = half_space(5)

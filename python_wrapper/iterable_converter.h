@@ -59,7 +59,8 @@ struct VectorFromIterable
 
     static void* is_convertible(PyObject* object)
     {
-        return PyObject_GetIter(object) ? object : NULL;
+        auto convertible = PyObject_GetIter(object) ? object : NULL;
+        return convertible;
     }
 
     template <typename Container>
