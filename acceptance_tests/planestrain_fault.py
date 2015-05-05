@@ -2,7 +2,6 @@ from tbempy import *
 from tbempy.TwoD import *
 from dislocation import *
 import numpy as np
-# import matplotlib.pyplot as plt
 
 def exact_displacements(x):
     s = np.sqrt(2)

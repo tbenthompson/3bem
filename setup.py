@@ -14,13 +14,13 @@ sys.argv = []
 try:
     # The root of the build tree should be the containing folder for this script
     dir = os.path.dirname(os.path.realpath(__file__))
-    tools.entry.run_fabricate(dir)
+    build_tools.entry.run_fabricate('build', dir)
 except SystemExit as e:
     pass
 
 # Check the build by running unit tests
 print('Checking the build by running the unit tests')
-returncode = tools.entry.tests()
+returncode = build_tools.entry.tests()
 if returncode != 0:
     print('')
     print('')

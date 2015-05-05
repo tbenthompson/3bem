@@ -3,7 +3,6 @@ from tbempy.ThreeD import *
 import numpy as np
 from laplace import*
 import random
-import matplotlib.pyplot as plt
 
 
 def harmonic_u(x):

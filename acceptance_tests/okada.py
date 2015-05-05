@@ -2,7 +2,6 @@ from tbempy import *
 from tbempy.ThreeD import *
 from dislocation import *
 import numpy as np
-import matplotlib.pyplot as plt
 from okada_wrapper import dc3dwrapper
 
 def compute_okada(mu, pr, vertices):

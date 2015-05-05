@@ -3,7 +3,6 @@ from tbempy.TwoD import *
 import numpy as np
 import time
 import random
-import matplotlib.pyplot as plt
 from laplace import *
 
 def log_u(x):

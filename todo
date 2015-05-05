@@ -1,8 +1,8 @@
 CURRENT: MISC
-** determine compiler from distutils
 ** operators should be just one double array
 ** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
 ** move continuity builder stuff to cpp file
+** build with intel compiler on meade02/odyssey
 
 KERNEL OVERHAUL
 ** replace references to the kernel by pointer to the kernel

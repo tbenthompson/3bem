@@ -2,7 +2,6 @@ from tbempy.TwoD import *
 from dislocation import *
 import numpy as np
 import scipy.sparse.linalg as sp_la
-# import matplotlib.pyplot as plt
 
 def full_space():
     fault = line_mesh([0, -1], [0, 0])

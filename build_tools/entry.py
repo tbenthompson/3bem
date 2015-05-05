@@ -46,13 +46,7 @@ def rebuild():
     clean()
     build()
 
-command_params = []
-def save_parameters():
-    if len(sys.argv) > 2:
-        command_params.extend(sys.argv[2:])
-        del sys.argv[2:]
-
-def run_fabricate(dir):
+def run_fabricate(command, dir):
     import multiprocessing
 
     n_cores = 2
@@ -61,11 +55,11 @@ def run_fabricate(dir):
     except NotImplementedError as e:
         n_cores = 2
     print('Building with ' + str(n_cores) + ' cores')
-    main(parallel_ok = True, build_dir = dir, jobs = 12)
+    main(parallel_ok = True, command_line = [command], build_dir = dir, jobs = 12)
 
 def entrypoint(dir):
     save_parameters()
-    run_fabricate(dir)
+    run_fabricate(sys.argv[1], dir)
 
 if __name__ == '__main__':
     entrypoint()
