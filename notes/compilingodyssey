@@ -1,0 +1,3 @@
+The compilation gets confused when the CPATH is set improperly. The simplest solution
+is:
+unset CPATH

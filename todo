@@ -2,8 +2,6 @@ CURRENT: MISC
 ** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
 
 ** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
-** build with intel compiler on meade02/odyssey
-
 ** sparse ILU of near field matrix
 
 ** operators should be just one double array
