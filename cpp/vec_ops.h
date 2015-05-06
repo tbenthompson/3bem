@@ -10,6 +10,54 @@
 namespace tbem {
 
 template <typename T>
+void operator+=(Vec<T,3>& a, const Vec<T,3>& b);
+template <typename T>
+void operator+=(Vec<T,2>& a, const Vec<T,2>& b);
+template <typename T>
+void operator+=(Vec<T,1>& a, const Vec<T,1>& b);
+template <typename T, typename F>
+void operator+=(Vec<T,3>& a, const F& s);
+template <typename T, typename F>
+void operator+=(Vec<T,2>& a, const F& s);
+template <typename T, typename F>
+void operator+=(Vec<T,1>& a, const F& s);
+
+template <typename T>
+void operator-=(Vec<T,3>& a, const Vec<T,3>& b);
+template <typename T>
+void operator-=(Vec<T,2>& a, const Vec<T,2>& b);
+template <typename T>
+void operator-=(Vec<T,1>& a, const Vec<T,1>& b);
+template <typename T, typename F>
+void operator-=(Vec<T,3>& a, const F& s);
+template <typename T, typename F>
+void operator-=(Vec<T,2>& a, const F& s);
+template <typename T, typename F>
+void operator-=(Vec<T,1>& a, const F& s);
+
+template <typename T>
+void operator*=(Vec<T,3>& a, const Vec<T,3>& b);
+template <typename T>
+void operator*=(Vec<T,2>& a, const Vec<T,2>& b);
+template <typename T>
+void operator*=(Vec<T,1>& a, const Vec<T,1>& b);
+template <typename T, typename F>
+void operator*=(Vec<T,3>& a, const F& s);
+template <typename T, typename F>
+void operator*=(Vec<T,2>& a, const F& s);
+template <typename T, typename F>
+void operator*=(Vec<T,1>& a, const F& s);
+
+template <typename T>
+void operator/=(Vec<T,3>& a, const Vec<T,3>& b);
+template <typename T>
+void operator/=(Vec<T,2>& a, const Vec<T,2>& b);
+template <typename T>
+void operator/=(Vec<T,1>& a, const Vec<T,1>& b);
+template <typename T, size_t dim>
+void operator/=(Vec<T,dim>& a, const T& s);
+
+template <typename T>
 void operator+=(Vec3<T>& a, const Vec3<T>& b) {
     a[0] += b[0]; a[1] += b[1]; a[2] += b[2];
 }

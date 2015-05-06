@@ -156,7 +156,7 @@ Mesh<dim>::from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
     return Mesh<dim>{facets};
 }
 
-template class Mesh<2>;
-template class Mesh<3>;
+template struct Mesh<2>;
+template struct Mesh<3>;
 
 } //END NAMESPACE tbem

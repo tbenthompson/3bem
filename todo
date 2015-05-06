@@ -5,15 +5,17 @@ dependencies:
 ** numpy
 ** scipy
 ** tar
+** c++ compiler: clang++, g++, icpc
 
 ** acceptance test: sparse ILU of near field matrix
 ** acceptance test: setup fmm operators for python wrapper
 ** finish setting up the elastic solver
 ** easy load/save for solved problems
+** build against clang
 
 ** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
 
-** automated build testing on mac, ubuntu, etc
+** automated build testing on mac, ubuntu, with clang, gcc, intel compilers 
 ** split out the fmm scheduler/traversal
 ** some simple capacity tests. how to make sure these run in the same conditions?
 ** operators should be just one double array

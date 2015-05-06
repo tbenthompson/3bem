@@ -1,4 +1,4 @@
-#include <cassert>
+#include <assert.h>
 #include "integral_term.h"
 #include "richardson.h"
 #include "adaptive_quad.h"

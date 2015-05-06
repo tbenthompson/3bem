@@ -38,7 +38,7 @@ find_overlapping_vertices(const VertexIterator<dim>& A_begin,
     const VertexIterator<dim>& B_begin, double eps = 1e-15) 
 {
     if (A_begin.is_end()) {
-        return {};
+        return OverlapMap<dim>{};
     }
 
     std::vector<Vec<double,dim>> target_pts;

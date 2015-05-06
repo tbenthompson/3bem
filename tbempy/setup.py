@@ -97,7 +97,13 @@ def get_blas_flags():
 
 def get_extension_config():
     # -UNDEBUG and -DDEBUG=1 ensure that asserts are turned on
-    compile_args = ['-std=c++11', '-fopenmp', '-UNDEBUG', '-DDEBUG=1']
+    compile_args = [
+        '-std=c++11',
+        '-fopenmp',
+        '-UNDEBUG',
+        '-DDEBUG=1',
+        '-Wno-missing-braces'
+    ]
     link_args = ['-fopenmp']
     includes = ['cpp', 'lib']
     return dict(

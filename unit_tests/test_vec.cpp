@@ -169,10 +169,24 @@ TEST_CASE("OnesTensor", "[vec]") {
     REQUIRE(z == c);
 }
 
-TEST_CASE("ConstantTensor", "[vec]") {
+TEST_CASE("ConstantTensor", "[vec]") 
+{
     auto z = constant<Vec2<Vec2<double>>>::make(2.2);
     Vec2<Vec2<double>> c{{{2.2, 2.2}, {2.2, 2.2}}};
     REQUIRE(z == c);
+}
+
+TEST_CASE("Declaration ordering shouldn't matter", "[vec]")
+{
+    Vec2<Vec1<Vec1<double>>> x;
+    Vec2<Vec1<Vec1<double>>> y;
+    x[0][0][0] = 5.0;
+    x[1][0][0] = 10.0;
+    y[0][0][0] = 15.0;
+    y[1][0][0] = 10.0;
+    x += y;
+    REQUIRE(x[0][0][0] == 20.0);
+    REQUIRE(x[1][0][0] == 20.0);
 }
 
 TEST_CASE("Inequality", "[vec]") {

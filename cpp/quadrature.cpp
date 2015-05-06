@@ -257,7 +257,7 @@ QuadStrategy<dim>::QuadStrategy(size_t obs_order, size_t n_singular_steps,
     near_tol(near_tol)
 {}
 
-template class QuadStrategy<2>;
-template class QuadStrategy<3>;
+template struct QuadStrategy<2>;
+template struct QuadStrategy<3>;
 
 } //END NAMESPACE tbem
