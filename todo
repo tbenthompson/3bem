@@ -1,18 +1,24 @@
 CURRENT: MISC
+dependencies:
+** git
+** python2.7
+** numpy
+** scipy
+** tar
+
+** acceptance test: sparse ILU of near field matrix
+** acceptance test: setup fmm operators for python wrapper
+** finish setting up the elastic solver
+** easy load/save for solved problems
+
 ** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
 
-** fix (figure out how to cause consistently) the occasional segfaults in the FMM.
-** sparse ILU of near field matrix
-
+** automated build testing on mac, ubuntu, etc
+** split out the fmm scheduler/traversal
+** some simple capacity tests. how to make sure these run in the same conditions?
 ** operators should be just one double array
 ** move continuity builder stuff to cpp file
 -- this may imply using a struct or redesigning the interface
-
-** compute pseudoinverse instead of svd solve in fmm
-
-** split out the fmm scheduler/traversal
-
-** some simple capacity tests. how to make sure these run in the same conditions?
 
 KERNEL OVERHAUL
 ** replace references to the kernel by pointer to the kernel
@@ -63,7 +69,7 @@ INTEGRATION:
 ** crack-tip elements
 
 BUILD:
-** test the build system on mac, a fresh ubuntu, odyssey/meade02, don't support windows
+** test the build system on a fresh ubuntu
 
 MISC/BORING:
 ** use iterators for traversing point sets?

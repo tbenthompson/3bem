@@ -6,6 +6,7 @@ import shutil
 import os
 import sys
 import copy
+import subprocess
 
 def download_libs():
     if os.path.exists('lib'):

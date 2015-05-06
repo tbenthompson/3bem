@@ -103,10 +103,9 @@ def get_extension_config():
     return dict(
         sources = get_tbempy_srces(),
         include_dirs = includes,
-        libraries = get_blas_flags()['libraries'],
-        library_dirs = get_blas_flags()['library_dirs'],
         extra_compile_args = compile_args,
-        extra_link_args = link_args
+        extra_link_args = link_args,
+        extra_info = get_blas_flags()
     )
 
 def configuration(parent_package='',top_path=None):
