@@ -9,7 +9,7 @@
 #include "octree.h"
 #include "numbers.h"
 #include "util.h"
-#include "eigen_wrapper.h"
+#include "blas_wrapper.h"
 
 namespace tbem {
 
@@ -18,40 +18,57 @@ struct TranslationSurface {
     const std::vector<Vec<double,dim>> pts;
     const std::vector<Vec<double,dim>> normals;
 
-    std::vector<Vec<double,dim>> move(const Box<dim>& box, double r_ref) const;
+    std::vector<Vec<double,dim>> move(const Box<dim>& box) const
+    {
+        auto cell_r = hypot(box.half_width);
+        auto out_r = cell_r;
+        auto out_center = box.center;
 
-    std::vector<Vec<double,dim>> 
-    upward_check_points(const Box<dim>& box, double d) const
+        std::vector<Vec<double,dim>> out_pts(pts.size());
+        for (size_t i = 0; i < pts.size(); i++) {
+            out_pts[i] = out_r * pts[i] + out_center;
+        }
+
+        return out_pts;
+    }
+
+    TranslationSurface<dim> scale(double factor) const
+    {
+        std::vector<Vec<double,dim>> out_pts(pts.size());
+        for (size_t i = 0; i < pts.size(); i++) {
+            out_pts[i] = factor * pts[i];
+        }
+        return {out_pts, normals};
+    }
+
+    static TranslationSurface<dim> up_check_surface(size_t order, double d) 
     {
         auto r_ref = 4.0 - std::sqrt(2) - 2 * d;
-        return move(box, r_ref);
+        return make_surrounding_surface(order).scale(r_ref);
     }
 
-    std::vector<Vec<double,dim>> 
-    upward_equiv_points(const Box<dim>& box, double d) const
+    static TranslationSurface<dim> up_equiv_surface(size_t order, double d)
     {
         auto r_ref = 0.3; //std::sqrt(2) + d;
-        return move(box, r_ref);
+        return make_surrounding_surface(order).scale(r_ref);
     }
 
-    std::vector<Vec<double,dim>> 
-    downward_check_points(const Box<dim>& box, double d) const
+    static TranslationSurface<dim> down_check_surface(size_t order, double d)
     {
         auto r_ref = 0.3; //std::sqrt(2) + d;
-        return move(box, r_ref);
+        return make_surrounding_surface(order).scale(r_ref);
     }
 
-    std::vector<Vec<double,dim>> 
-    downward_equiv_points(const Box<dim>& box, double d) const
+    static TranslationSurface<dim> down_equiv_surface(size_t order, double d)
     {
         auto r_ref = 4.0 - std::sqrt(2) - 2 * d;
-        return move(box, r_ref);
+        return make_surrounding_surface(order).scale(r_ref);
     }
+
+    static TranslationSurface<dim> make_surrounding_surface(size_t order);
 };
-template <size_t dim>
-TranslationSurface<dim> make_surrounding_surface(size_t order);
 
-typedef std::vector<SVDPtr> CheckToEquiv;
+typedef std::vector<std::vector<double>> CheckToEquiv;
 
 struct FMMConfig {
     const double mac;
@@ -98,31 +115,37 @@ template <size_t dim, size_t R, size_t C>
 struct FMMOperator {
     const Kernel<dim,R,C>& K;
     const NBodyData<dim> data;
-    const TranslationSurface<dim> surface;
+    const TranslationSurface<dim> up_equiv_surface;
+    const TranslationSurface<dim> up_check_surface;
+    const TranslationSurface<dim> down_equiv_surface;
+    const TranslationSurface<dim> down_check_surface;
     Octree<dim> src_oct;
     Octree<dim> obs_oct;
     const FMMConfig config;
+    const CheckToEquiv up_check_to_equiv;
+    const CheckToEquiv down_check_to_equiv;
 
     FMMOperator(const Kernel<dim,R,C>& K, const NBodyData<dim>& data,
         const FMMConfig& config);
 
-    /* Construct the operator relating the influence of a set of
+    /* Construct the operators relating the influence of a set of
      * a sources on the check surface to the equivalent set of sources on
      * the equivalent surface.
      */
-    void build_check_to_equiv(const Octree<dim>& cell, 
-        CheckToEquiv& up_ops, CheckToEquiv& down_ops) const;
+    CheckToEquiv build_check_to_equiv(const Octree<dim>& cell,
+        size_t start_level, const TranslationSurface<dim>& equiv_surf,
+        const TranslationSurface<dim>& check_surf) const;
     
     /* The P2M operator converts sources to equivalent sources in the
      * upward tree traversal.
      */
-    void P2M(const Octree<dim>& cell, const SVDPtr& check_to_equiv,
+    void P2M(const Octree<dim>& cell, const std::vector<double>& check_to_equiv,
         const std::vector<double>& x, double* parent_multipoles) const;
 
     /* The M2M operator converts child cell equivalent sources to parent cell
      * equivalent sources in the upward tree traversal.
      */
-    void M2M(const Octree<dim>& cell, const SVDPtr& check_to_equiv,
+    void M2M(const Octree<dim>& cell, const std::vector<double>& check_to_equiv,
         std::vector<double*>& child_multipoles, double* parent_multipoles) const;
 
     /* The P2L operator converts from sources straight to the equivalent sources
@@ -131,7 +154,7 @@ struct FMMOperator {
      * using those operators.
      */
     void P2L(const Octree<dim>& obs_cell, const Octree<dim>& src_cell,
-        const SVDPtr& check_to_equiv, const std::vector<double>& x,
+        const std::vector<double>& check_to_equiv, const std::vector<double>& x,
         double* locals) const;
 
     /* The M2P operator evaluates the influence of source cell equivalent
@@ -147,13 +170,13 @@ struct FMMOperator {
      * observation tree cell (local coefficients).
      */
     void M2L(const Octree<dim>& obs_cell, const Octree<dim>& src_cell,
-        const SVDPtr& down_check_to_equiv, double* multipoles, 
+        const std::vector<double>& down_check_to_equiv, double* multipoles, 
         double* locals) const;
 
     /* Convert from equivalent sources at a farfield parent observation cell
      * to its child cells.
      */
-    void L2L(const Octree<dim>& cell, const SVDPtr& check_to_equiv,
+    void L2L(const Octree<dim>& cell, const std::vector<double>& check_to_equiv,
         double* parent_locals, std::vector<double*>& child_locals) const;
 
     /* The L2P operator evaluates the influence of the equivalent sources from

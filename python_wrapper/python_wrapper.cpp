@@ -19,7 +19,7 @@ boost::python::scope start_module(std::string name) {
     return module;
 }
 
-BOOST_PYTHON_MODULE(tbempy)
+BOOST_PYTHON_MODULE(_tbempy)
 {
     np::initialize();
 

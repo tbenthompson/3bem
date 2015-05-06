@@ -1,2 +1,2 @@
-from tbempy import *
-from tbempy.ThreeD import *
+from _tbempy import *
+from _tbempy.ThreeD import *

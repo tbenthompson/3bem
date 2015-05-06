@@ -1,2 +1,2 @@
-from tbempy import *
-from tbempy.TwoD import *
+from _tbempy import *
+from _tbempy.TwoD import *

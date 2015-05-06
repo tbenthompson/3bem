@@ -9,13 +9,14 @@ import copy
 
 def download_libs():
     if os.path.exists('lib'):
+        print('')
         print('Not downloading libraries. If libraries should be re-downloaded, delete the lib directory')
+        print('')
         return
 
     catch_url = 'https://raw.githubusercontent.com/philsquared/Catch/develop/single_include/catch.hpp'
     boost_url = 'http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.bz2/download'
     boost_numpy_url = 'https://github.com/ndarray/Boost.NumPy/archive/master.zip'
-    eigen_url = 'http://bitbucket.org/eigen/eigen/get/3.2.4.tar.gz'
 
     # Delete the lib tree and recreate an empty directory
     os.makedirs('lib')
@@ -40,15 +41,6 @@ def download_libs():
     os.remove('boost.numpy.archive')
     numpy_directory_name = [f for f in os.listdir(os.curdir) if f.startswith('Boost')][0]
     shutil.move(numpy_directory_name, os.path.join('lib', 'boost_numpy'))
-
-    print('Downloading Eigen for linear algebra')
-    urllib.urlretrieve(eigen_url, 'eigen.archive')
-    cmd = ['tar', '-xvf', 'eigen.archive']
-    proc = subprocess.Popen(cmd)
-    proc.wait()
-    os.remove('eigen.archive')
-    eigen_directory_name = [f for f in os.listdir(os.curdir) if f.startswith('eigen')][0]
-    shutil.move(eigen_directory_name, os.path.join('lib', 'eigen'))
 
 def configuration(parent_package='', top_path = None):
     config = Configuration(None, parent_package, top_path)

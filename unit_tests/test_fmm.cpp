@@ -19,7 +19,7 @@ NBodyData<dim> ones_data(size_t n)
 
 TEST_CASE("MakeSurroundingSurface", "[fmm]") 
 {
-    auto surface = make_surrounding_surface<2>(4);
+    auto surface = TranslationSurface<2>::make_surrounding_surface(4);
     REQUIRE_CLOSE(surface.pts[0], (Vec<double,2>{1.0, 0.0}), 1e-12);
     REQUIRE_CLOSE(surface.pts[1], (Vec<double,2>{0.0, 1.0}), 1e-12);
     REQUIRE_CLOSE(surface.pts[3], (Vec<double,2>{0.0, -1.0}), 1e-12);
@@ -39,16 +39,13 @@ TEST_CASE("IdentityP2M", "[fmm]")
     };
     IdentityScalar<2> K;
     FMMOperator<2,1,1> tree(K, data, {0.3, 1, 1, 0.05});
-    CheckToEquiv up_check_to_equiv;
-    CheckToEquiv down_check_to_equiv;
-    tree.build_check_to_equiv(tree.src_oct, up_check_to_equiv, down_check_to_equiv);
 
     double M_coeff;
-    tree.P2M(tree.src_oct, up_check_to_equiv[0], x, &M_coeff);
+    tree.P2M(tree.src_oct, tree.up_check_to_equiv[0], x, &M_coeff);
     REQUIRE(M_coeff == static_cast<double>(n));
 
     double L_coeff = 0.0;
-    tree.M2L(tree.obs_oct, tree.src_oct, down_check_to_equiv[0], &M_coeff, &L_coeff);
+    tree.M2L(tree.obs_oct, tree.src_oct, tree.down_check_to_equiv[0], &M_coeff, &L_coeff);
     REQUIRE(L_coeff == static_cast<double>(n));
 
     std::vector<double> L_child(4);
@@ -56,7 +53,7 @@ TEST_CASE("IdentityP2M", "[fmm]")
     for (size_t i = 0; i < 4; i++) {
         child_ptr[i] = &L_child[i];
     }
-    tree.L2L(tree.src_oct, down_check_to_equiv[1], &L_coeff, child_ptr);
+    tree.L2L(tree.src_oct, tree.down_check_to_equiv[1], &L_coeff, child_ptr);
     for (size_t i = 0; i < 4; i++) {
         REQUIRE(L_child[i] == static_cast<double>(n));
     }
