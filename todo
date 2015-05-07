@@ -4,13 +4,17 @@ CURRENT: MISC
 
 ** finish setting up the elastic solver
 ** easy load/save for solved problems
-** try again on compiling on mac osx
 
 KERNEL OVERHAUL
+** unit test: create a integration method with inline kernel parameter
 ** replace references to the kernel by pointer to the kernel
+** capacity test: benchmark the fmm
 ** move obs, src loop into the kernel functions which will reduce the number of function calls and also allow sse/avx implementations of those kernel functions
 
 NEXT: hanging nodes 
+** acceptance test #1: fault intersecting surface not at point
+** acceptance test #2: selectively refined okada solution
+** acceptance test #3: adaptively refined okada solution (using the real error as the refinement criterion, so not technically adaptive meshing yet)
 ** nearest_neighbors for point->triangle or triangle->triangle intersection
 ** Handle the general case when fault-surface intersection does not occur at a vertex.
 -- Linked to hanging nodes in that lots of geometry code needs to be used/written.
@@ -18,12 +22,14 @@ NEXT: hanging nodes
 
 INTEGRATION:
 ** try using one shifted observation point globally rather than a different one for each local integral
-** finish up the sinh-sigmoidal work
+** acceptance test: solve planestrain fault problem with sinh-sigmoidal quadrature (finish up the sinh-sigmoidal work)
 ** characterize the sinh-sigmoidal method
-** crack-tip elements
+
+
+** acceptance test: high accuracy crack tip stress intensity factor (crack-tip elements)
 
 MISC:
-** test the build system on a fresh ubuntu
+** test the build system on a fresh ubuntu (just use a docker container)
 ** use iterators for traversing point sets?
 ** characterize the galerkin BEM for hypersingular kernels
 ** see how FMM accuracy changes as a function of
@@ -34,7 +40,7 @@ MISC:
 ** get rid of non-block operators and rename "Block___" to "___"
 ** automated build testing on mac, ubuntu, with clang, gcc, intel compilers 
 ** split out the fmm scheduler/traversal
-** some simple capacity tests. how to make sure these run in the same conditions?
+** some simple capacity tests. how to make sure these run in the same conditions? remove timings from standard unit tests
 ** operators should be just one double array
 ** move continuity builder stuff to cpp file
 -- this may imply using a struct or redesigning the interface
