@@ -1,56 +1,14 @@
 CURRENT: MISC
-dependencies:
-** git
-** python2.7
-** numpy
-** scipy
-** tar
-** c++ compiler: clang++, g++, icpc
-
 ** acceptance test: sparse ILU of near field matrix
 ** acceptance test: setup fmm operators for python wrapper
+
 ** finish setting up the elastic solver
 ** easy load/save for solved problems
-** build against clang
-
-** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
-
-** automated build testing on mac, ubuntu, with clang, gcc, intel compilers 
-** split out the fmm scheduler/traversal
-** some simple capacity tests. how to make sure these run in the same conditions?
-** operators should be just one double array
-** move continuity builder stuff to cpp file
--- this may imply using a struct or redesigning the interface
+** try again on compiling on mac osx
 
 KERNEL OVERHAUL
 ** replace references to the kernel by pointer to the kernel
 ** move obs, src loop into the kernel functions which will reduce the number of function calls and also allow sse/avx implementations of those kernel functions
-template <size_t dim, size_t R, size_t C>
-struct NewKernel {
-    typedef std::vector<Vec<double,dim>> PtsType;
-    typedef Vec<double,R> OutType;
-    typedef Vec<double,C> InType;
-    typedef Vec<Vec<double,C>,R> OperatorType;
-    typedef std::function<OperatorType(PtType,PtType,NormalType,NormalType)> FncType;
-
-    const static size_t n_rows = R;
-    const static size_t n_cols = C;
-    
-    std::vector<OperatorType> 
-    nbody_matrix(const NBodyData<dim>& data)
-    {
-        
-    }
-
-    std::vector<OutType> 
-    nbody_eval(const NBodyData<dim>& data, const BlockVectorX& x)
-    {
-    
-    }
-
-    FncType internal;
-};
-
 
 NEXT: hanging nodes 
 ** nearest_neighbors for point->triangle or triangle->triangle intersection
@@ -58,22 +16,26 @@ NEXT: hanging nodes
 -- Linked to hanging nodes in that lots of geometry code needs to be used/written.
 -- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
 
+INTEGRATION:
+** try using one shifted observation point globally rather than a different one for each local integral
+** finish up the sinh-sigmoidal work
+** characterize the sinh-sigmoidal method
+** crack-tip elements
+
+MISC:
+** test the build system on a fresh ubuntu
+** use iterators for traversing point sets?
+** characterize the galerkin BEM for hypersingular kernels
 ** see how FMM accuracy changes as a function of
     1) radius of equivalent surface
     2) radius of check surface
     3) order of expansion
     4) multipole acceptance criteria
-
-INTEGRATION:
-** finish up the sinh-sigmoidal work
-** try using one shifted observation point globally rather than a different one for each local integral
-** characterize the sinh-sigmoidal method
-** crack-tip elements
-
-BUILD:
-** test the build system on a fresh ubuntu
-
-MISC/BORING:
-** use iterators for traversing point sets?
-** characterize the galerkin BEM for hypersingular kernels
 ** get rid of non-block operators and rename "Block___" to "___"
+** automated build testing on mac, ubuntu, with clang, gcc, intel compilers 
+** split out the fmm scheduler/traversal
+** some simple capacity tests. how to make sure these run in the same conditions?
+** operators should be just one double array
+** move continuity builder stuff to cpp file
+-- this may imply using a struct or redesigning the interface
+** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey

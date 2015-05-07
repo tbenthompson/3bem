@@ -1,8 +1,6 @@
-from tbempy import *
-from tbempy.TwoD import *
 import numpy as np
-import time
 import random
+from tbempy.TwoD import *
 from laplace import *
 
 def log_u(x):
