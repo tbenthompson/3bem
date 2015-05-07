@@ -16,8 +16,7 @@ RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
     const ConstraintMatrix& matrix) 
 {
     if (c.terms.size() == 0) {
-        std::string msg = "ConstraintMatrix: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.";
-        throw std::invalid_argument(msg);
+        throw std::invalid_argument("ConstraintMatrix: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.");
     }
 
     auto last_dof_index = find_last_dof_index(c);

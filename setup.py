@@ -1,6 +1,8 @@
 from distutils.core import setup
 from numpy.distutils.misc_util import Configuration
 from numpy.distutils.core import setup
+import numpy.distutils.command.build_ext as _build_ext
+from tbempy.build_ext import tbempyBuildExt
 import urllib
 import shutil
 import os
@@ -58,6 +60,7 @@ def setup_package():
         author = 'T. Ben Thompson',
         author_email = 't.ben.thompson@gmail.com'
     )
+    metadata['cmdclass'] = dict(build_ext = tbempyBuildExt)
     metadata['configuration'] = configuration
 
     if len(sys.argv) == 1:

@@ -196,5 +196,5 @@ std::set<size_t> check_nonoverlapping_indices(const Octree<dim>& oct,
 TEST_CASE("NonOverlappingIndices", "[octree]") {
     auto pts = random_pts<3>(1000);
     auto oct = build_octree(pts, 4);
-    check_nonoverlapping_indices(oct, {});
+    check_nonoverlapping_indices(oct, std::set<size_t>{});
 }
