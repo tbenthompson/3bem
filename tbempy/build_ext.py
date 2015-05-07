@@ -44,8 +44,9 @@ class tbempyBuildExt(_build_ext.build_ext):
         print('')
         print('')
         print('')
-        print('You are compiling with clang. clang does not yet '
-              'support OpenMP, so OpenMP will be turned off.')
+        print('You are compiling with clang. clang does not yet support OpenMP '
+              ' so OpenMP will be turned off. \nTo use a different compiler, try: '
+              '\nCXX=compilername python ' + ' '.join(sys.argv))
         print('Continue (y/n):', end='')
         response = raw_input()
         if (response.lower() == 'n'):

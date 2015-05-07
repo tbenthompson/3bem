@@ -64,7 +64,7 @@ def setup_package():
     metadata['configuration'] = configuration
 
     if len(sys.argv) == 1:
-        sys.argv = ['', 'build_ext', '--inplace']
+        sys.argv.extend(['build_ext', '--inplace'])
     setup(**metadata)
 
 if __name__ == '__main__':
