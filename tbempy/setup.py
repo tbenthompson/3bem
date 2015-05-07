@@ -102,9 +102,13 @@ def get_extension_config():
         '-fopenmp',
         '-UNDEBUG',
         '-DDEBUG=1',
-        '-Wno-missing-braces'
+        '-Wno-missing-braces',
+        '-O3',
+        '-Wextra'
     ]
-    link_args = ['-fopenmp']
+    link_args = [
+        '-fopenmp'
+    ]
     includes = ['cpp', 'lib']
     return dict(
         sources = get_tbempy_srces(),

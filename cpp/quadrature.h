@@ -4,6 +4,7 @@
 #include <utility>
 #include <functional>
 #include <map>
+#include <array>
 
 namespace tbem {
 

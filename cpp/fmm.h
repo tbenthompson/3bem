@@ -1,7 +1,6 @@
 #ifndef __KASDJLKJKJ_FMM_H
 #define __KASDJLKJKJ_FMM_H
 
-#include <omp.h>
 #include <cassert>
 #include <memory>
 #include "kernel.h"

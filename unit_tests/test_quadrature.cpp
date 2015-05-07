@@ -198,34 +198,34 @@ void ElliotJohnston2007I3(bool iterated, std::vector<double> correct_error) {
         }
     );
 }
+// 
+// TEST_CASE("SinhTransformElliotJohnston2007I2NotIterated", "[quadrature]") {
+//     std::vector<double> correct_error = {
+//         1.8346e-11, 3.8039e-8, 1.8163e-6, 1.8068e-5, 8.0392e-5, 2.2492e-4
+//     };
+//     ElliotJohnston2007I2(false, correct_error);
+// }
+// 
+// TEST_CASE("SinhTransformElliotJohnston2007I2Iterated", "[quadrature]") {
+//     std::vector<double> correct_error = {
+//         2.2359e-6, 2.9066e-4, 2.2667e-3, 6.3398e-3, 1.0995e-2, 1.4802e-2
+//     };
+//     ElliotJohnston2007I2(true, correct_error);
+// }
 
-TEST_CASE("SinhTransformElliotJohnston2007I2NotIterated", "[quadrature]") {
-    std::vector<double> correct_error = {
-        1.8346e-11, 3.8039e-8, 1.8163e-6, 1.8068e-5, 8.0392e-5, 2.2492e-4
-    };
-    ElliotJohnston2007I2(false, correct_error);
-}
+// TEST_CASE("SinhTransformElliotJohnston2007I3NotIterated", "[quadrature]") {
+//     std::vector<double> correct_error = {
+//         3.3753e-6, 4.6976e-3, 4.0194e-2, 1.2006e-1, 2.2969e-1, 3.4904e-1
+//     };
+//     ElliotJohnston2007I3(false, correct_error);
+// }
 
-TEST_CASE("SinhTransformElliotJohnston2007I2Iterated", "[quadrature]") {
-    std::vector<double> correct_error = {
-        2.2359e-6, 2.9066e-4, 2.2667e-3, 6.3398e-3, 1.0995e-2, 1.4802e-2
-    };
-    ElliotJohnston2007I2(true, correct_error);
-}
-
-TEST_CASE("SinhTransformElliotJohnston2007I3NotIterated", "[quadrature]") {
-    std::vector<double> correct_error = {
-        3.3753e-6, 4.6976e-3, 4.0194e-2, 1.2006e-1, 2.2969e-1, 3.4904e-1
-    };
-    ElliotJohnston2007I3(false, correct_error);
-}
-
-TEST_CASE("SinhTransformElliotJohnston2007I3Iterated", "[quadrature]") {
-    std::vector<double> correct_error = {
-        4.1270e-9, 8.6692e-7, 8.7829e-6, 3.0635e-5, 7.2012e-5, 1.4502e-4
-    };
-    ElliotJohnston2007I3(true, correct_error);
-}
+// TEST_CASE("SinhTransformElliotJohnston2007I3Iterated", "[quadrature]") {
+//     std::vector<double> correct_error = {
+//         4.1270e-9, 8.6692e-7, 8.7829e-6, 3.0635e-5, 7.2012e-5, 1.4502e-4
+//     };
+//     ElliotJohnston2007I3(true, correct_error);
+// }
 
 TEST_CASE("SinhTransformScaled", "[quadrature]") {
     double a = 0.0;
