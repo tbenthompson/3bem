@@ -6,7 +6,7 @@ CURRENT: MISC
 ** easy load/save for solved problems
 
 KERNEL OVERHAUL
-** unit test: create a integration method with inline kernel parameter
+** unit test: create a integration method with inline kernel parameter. currently, this would segfault, because a reference is stored rather 
 ** replace references to the kernel by pointer to the kernel
 ** capacity test: benchmark the fmm
 ** move obs, src loop into the kernel functions which will reduce the number of function calls and also allow sse/avx implementations of those kernel functions
@@ -25,23 +25,20 @@ INTEGRATION:
 ** acceptance test: solve planestrain fault problem with sinh-sigmoidal quadrature (finish up the sinh-sigmoidal work)
 ** characterize the sinh-sigmoidal method
 
-
+** crack tip elements may require creating a basis structure
 ** acceptance test: high accuracy crack tip stress intensity factor (crack-tip elements)
 
 MISC:
-** test the build system on a fresh ubuntu (just use a docker container)
 ** use iterators for traversing point sets?
 ** characterize the galerkin BEM for hypersingular kernels
-** see how FMM accuracy changes as a function of
-    1) radius of equivalent surface
-    2) radius of check surface
-    3) order of expansion
-    4) multipole acceptance criteria
 ** get rid of non-block operators and rename "Block___" to "___"
-** automated build testing on mac, ubuntu, with clang, gcc, intel compilers 
 ** split out the fmm scheduler/traversal
-** some simple capacity tests. how to make sure these run in the same conditions? remove timings from standard unit tests
 ** operators should be just one double array
-** move continuity builder stuff to cpp file
+** create a continuity builder struct, move continuity builder stuff to cpp file
 -- this may imply using a struct or redesigning the interface
 ** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
+** test the build system on a fresh ubuntu (just use a docker container)
+** automated build testing on mac, ubuntu, with clang, gcc, intel compilers -- maybe turn the mac mini into a build server
+http://www.joelonsoftware.com/articles/fog0000000023.html
+** some simple capacity tests. how to make sure these run in the same conditions? remove timings from standard unit tests
+** add a size function to constraint_matrix for the total number of constraints

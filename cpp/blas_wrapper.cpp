@@ -104,7 +104,7 @@ std::vector<double> svd_pseudoinverse(const SVDPtr& svd)
             }
         } else {
             for (size_t j = 0; j < n; j++) {
-                left_singular_vectors[i * n + i] = 0.0;
+                left_singular_vectors[i * n + j] = 0.0;
             }
         }
     }

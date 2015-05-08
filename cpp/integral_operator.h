@@ -17,7 +17,7 @@ BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
     auto n_blocks = R * C;
 
     auto src_facet_info = get_facet_info(src_mesh);
-    std::vector<std::vector<SparseMatrixEntry>> entries(n_blocks);
+    std::vector<SparseMatrixEntry> entries;
     const auto& obs_quad = mthd.get_obs_quad();
 #pragma omp parallel for
     for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) {
@@ -51,9 +51,11 @@ BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
 #pragma omp critical
                     for (size_t d1 = 0; d1 < R; d1++) {
                         for (size_t d2 = 0; d2 < C; d2++) {
-                            entries[d1 * C + d2].push_back(
-                                {obs_dof, e.first, val_to_add[d1][d2]}
-                            );
+                            entries.push_back({
+                                d1 * n_obs_dofs + obs_dof,
+                                d2 * n_src_dofs + e.first,
+                                val_to_add[d1][d2]
+                            });
                         }
                     }
                 }
@@ -61,11 +63,7 @@ BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
         }
     }
 
-    std::vector<SparseOperator> ops;
-    for (size_t i = 0; i < n_blocks; i++) {
-        ops.push_back(SparseOperator(n_obs_dofs, n_src_dofs, entries[i]));
-    }
-    return BlockSparseOperator(R, C, std::move(ops));
+    return BlockSparseOperator(n_obs_dofs, n_src_dofs, R, C, entries);
 }
 
 
@@ -92,9 +90,7 @@ struct BlockIntegralOperator: public BlockOperatorI {
     virtual size_t n_total_cols() const {return nearfield.n_total_cols();}
     virtual std::vector<double> apply(const std::vector<double>& x) const {
         auto interpolated = interp.apply(x);
-        TIC
         auto nbodied = farfield.apply(interpolated);
-        TOC("n-body");
         auto galerkin_far = galerkin.apply(nbodied);
         auto eval = nearfield.apply(x);
         for (size_t i = 0; i < eval.size(); i++) {

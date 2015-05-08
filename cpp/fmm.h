@@ -48,13 +48,13 @@ struct TranslationSurface {
 
     static TranslationSurface<dim> up_equiv_surface(size_t order, double d)
     {
-        auto r_ref = 0.3; //std::sqrt(2) + d;
+        auto r_ref = 0.3;//std::sqrt(2) + d;
         return make_surrounding_surface(order).scale(r_ref);
     }
 
     static TranslationSurface<dim> down_check_surface(size_t order, double d)
     {
-        auto r_ref = 0.3; //std::sqrt(2) + d;
+        auto r_ref = 0.3;//std::sqrt(2) + d;
         return make_surrounding_surface(order).scale(r_ref);
     }
 
@@ -71,12 +71,21 @@ typedef std::vector<std::vector<double>> CheckToEquiv;
 
 struct FMMConfig {
     const double mac;
-    // const double inner_radius;
-    // const double outer_radius;
+
+    // Note that the order of approximation will only be approximately 
+    // satisfied in 3D. For even distribution of point on a sphere in 3D,
+    // the translation surface may have a few more or less points. As a 
+    // result, config.order is not perfectly representative of the number of
+    // multipole or local coefficients either and should not be used as a
+    // loop limit.
     const size_t order;
+
     const size_t min_pts_per_cell;
     const double d;
-    // const double alpha;
+    //TODO: Add the SVD threshold as a parameter
+    //TODO: Add the translation surface inner and outer radii as parameters.
+    //
+    const bool account_for_small_cells;
 };
 
 template <size_t dim>

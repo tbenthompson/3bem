@@ -10,5 +10,5 @@ build/*
 *.hdf5
 !notes/method_desc/*.tex
 notes/method_desc/*
-lib
+lib/*
 unit_tests/test_runner

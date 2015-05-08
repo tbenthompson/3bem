@@ -42,6 +42,29 @@ TEST_CASE("Pseudoinverse", "[blas_wrapper]")
     REQUIRE_ARRAY_CLOSE(pseudoinv, inv, 4, 1e-14);
 }
 
+TEST_CASE("Thresholded pseudoinverse", "[blas_wrapper]") 
+{
+    // Matrix has two singular values: 1.0 and 1e-5
+    std::vector<double> matrix{
+        0.0238032718573239, 0.1524037864980028,
+        0.1524037864980028, 0.9762067281426762
+    };
+    auto svd = svd_decompose(matrix);
+    auto no_threshold_pseudoinv = svd_pseudoinverse(svd);
+    std::vector<double> correct_no_threshold{
+        97620.6728142285282956, -15240.3786497941800917,
+        -15240.3786497941782727, 2380.3271857314393856
+    };
+    REQUIRE_ARRAY_CLOSE(no_threshold_pseudoinv, correct_no_threshold, 4, 1e-4);
+    set_threshold(svd, 1e-4);
+    auto thresholded_pseudoinv = svd_pseudoinverse(svd);
+    std::vector<double> correct_thresholded{
+        0.0237935097924219, 0.1524053105511083,
+        0.1524053105511085, 0.9762064902075779
+    };
+    REQUIRE_ARRAY_CLOSE(thresholded_pseudoinv, correct_thresholded, 4, 1e-12);
+}
+
 TEST_CASE("Condition number", "[blas_wrapper]") 
 {
     std::vector<double> matrix{

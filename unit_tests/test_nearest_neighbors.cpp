@@ -50,7 +50,6 @@ TEST_CASE("AllPairsPerformance", "[nearest_neighbors]")
     size_t n = 50000;
     auto pts = line_pts(n);
     auto oct = build_octree(pts, 50);
-    TIC
+    //TODO: Capacity test
     auto result = identical_points_all_pairs(pts, pts, oct, oct);
-    TOC("All pairs identical points for " + std::to_string(n) + " points");
 }

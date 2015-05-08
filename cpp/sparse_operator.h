@@ -1,7 +1,7 @@
 #ifndef __1231231231898972_SPARSE_OPERATOR_H
 #define __1231231231898972_SPARSE_OPERATOR_H
 #include <vector>
-#include "operator.h"
+#include "block_operator.h"
 
 namespace tbem {
 
@@ -11,41 +11,41 @@ struct SparseMatrixEntry
     const double value;
 };
 
-struct SparseOperator: public OperatorI
+struct BlockSparseOperator: public BlockOperatorI
 {
-    typedef std::vector<SparseMatrixEntry> DataT;
+    const OperatorShape component_shape;
+    const OperatorShape block_shape;
+    const std::vector<SparseMatrixEntry> storage;
 
-    const OperatorShape shape;
-    const DataT storage;
-
-    SparseOperator(size_t n_rows, size_t n_cols,
+    BlockSparseOperator(size_t n_component_rows, size_t n_component_cols,
+        size_t n_block_rows, size_t n_block_cols,
         const std::vector<SparseMatrixEntry>& entries):
-        shape{n_rows, n_cols},
+        component_shape{n_component_rows, n_component_cols},
+        block_shape{n_block_rows, n_block_cols},
         storage(entries)
     {}
 
-    virtual size_t n_rows() const 
+    virtual size_t n_block_rows() const {return block_shape.n_rows;}
+    virtual size_t n_block_cols() const {return block_shape.n_cols;}
+    virtual size_t n_total_rows() const 
     {
-        return shape.n_rows; 
+        return block_shape.n_rows * component_shape.n_rows;
+    }
+    virtual size_t n_total_cols() const
+    {
+        return block_shape.n_cols * component_shape.n_cols;
     }
 
-    virtual size_t n_cols() const
+    virtual std::vector<double> apply(const std::vector<double>& x) const 
     {
-        return shape.n_cols;
-    }
-
-    virtual std::vector<double> apply(const std::vector<double>& x) const {
-        std::vector<double> out(shape.n_rows, 0.0);
+        assert(x.size() == n_total_cols());
+        std::vector<double> out(n_total_rows(), 0.0);
         for (size_t i = 0; i < storage.size(); i++) {
             out[storage[i].loc[0]] += storage[i].value * x[storage[i].loc[1]];
         }
         return out;
     }
 };
-
-template <typename T>
-struct BlockOperator;
-typedef BlockOperator<SparseOperator> BlockSparseOperator;
 
 } // end namespace tbem
 

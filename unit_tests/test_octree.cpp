@@ -56,9 +56,8 @@ TEST_CASE("InBoxInclusive", "[octree]") {
 TEST_CASE("CheckLawOfLargeNumbers", "[octree]") {
     int n = 1000000;
     auto pts = random_pts<3>(n);
-    TIC
+    //TODO: Make a octree capacity test
     auto tree = build_octree(pts, 100);
-    TOC("Build " + std::to_string(n));
     for (size_t i = 0; i < 8; i++) {
         int n_pts = tree.children[i]->data.indices.size();
         int diff = abs(n_pts - (n / 8));
