@@ -73,9 +73,7 @@ void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
     size_t n_per_cell = 1;
     std::vector<double> x(C * data.src_locs.size(), 1.0);
     FMMOperator<dim,R,C> tree(K, data, {0.35, order, n_per_cell, 0.05, false});
-    TIC
     auto out = tree.apply(x);
-    TOC("FMM");
 
     BlockDirectNBodyOperator<dim,R,C> exact_op{data, K};
     auto exact = exact_op.apply(x);
@@ -92,7 +90,6 @@ void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
             auto error1 = std::fabs((out_val - exact_val) / exact_val);
             auto error2 = std::fabs((out_val - exact_val) / average_magnitude);
             error.push_back(std::min(error1, error2));
-            // std::cout << error[error.size() - 1] << std::endl;
         }
     }
     std::vector<double> zeros(error.size(), 0.0);
@@ -135,7 +132,7 @@ TEST_CASE("SingleLayer3DFMM", "[fmm]")
 
 TEST_CASE("DoubleLayer3DFMM", "[fmm]") 
 {
-    test_kernel(LaplaceDouble<3>(), 65, 1e-4);
+    test_kernel(LaplaceDouble<3>(), 75, 1e-4);
 }
 
 TEST_CASE("ElasticDisplacement2DFMM", "[fmm]")

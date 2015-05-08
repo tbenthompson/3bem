@@ -7,7 +7,8 @@ namespace tbem {
 
 struct SparseMatrixEntry 
 {
-    const size_t loc[2];
+    const size_t row;
+    const size_t col;
     const double value;
 };
 
@@ -41,7 +42,7 @@ struct BlockSparseOperator: public BlockOperatorI
         assert(x.size() == n_total_cols());
         std::vector<double> out(n_total_rows(), 0.0);
         for (size_t i = 0; i < storage.size(); i++) {
-            out[storage[i].loc[0]] += storage[i].value * x[storage[i].loc[1]];
+            out[storage[i].row] += storage[i].value * x[storage[i].col];
         }
         return out;
     }
