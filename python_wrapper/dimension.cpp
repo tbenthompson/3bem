@@ -1,6 +1,5 @@
 #include <boost/python.hpp>
 #include <boost/numpy.hpp>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "iterable_converter.h"
 #include "block_op_wrap.h"
 
@@ -86,11 +85,20 @@ void export_dimension() {
     export_kernels<dim>();
     export_integration<dim>();
 
-    auto integral_op_scalar =
-        class_<BlockIntegralOperator<dim,1,1>>("IntegralOperatorScalar", no_init);
+    auto integral_op_scalar = class_<
+            BlockIntegralOperator<dim,1,1>
+        >("IntegralOperatorScalar", no_init).
+        def("get_nearfield_matrix",
+            &BlockIntegralOperator<dim,1,1>::get_nearfield_matrix,
+            p::return_value_policy<p::reference_existing_object>());
     export_block_operator<BlockIntegralOperator<dim,1,1>>(integral_op_scalar);
-    auto integral_op_tensor =
-        class_<BlockIntegralOperator<dim,dim,dim>>("IntegralOperatorTensor", no_init);
+
+    auto integral_op_tensor = class_<
+            BlockIntegralOperator<dim,dim,dim>
+        >("IntegralOperatorTensor", no_init).
+        def("get_nearfield_matrix",
+            &BlockIntegralOperator<dim,dim,dim>::get_nearfield_matrix,
+            p::return_value_policy<p::reference_existing_object>());
     export_block_operator<BlockIntegralOperator<dim,dim,dim>>(integral_op_tensor);
 
     def("integral_operator", integral_operator<dim,1,1>);

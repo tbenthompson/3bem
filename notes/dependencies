@@ -10,7 +10,5 @@ compiling with g++ (gnu) is good
 compiling with icpc (intel) is good
 compiling with clang++ may fail due to lack of openmp libraries, unless a gcc installation is also present, in which case the installation will be single-threaded
 
-installing gcc using homebrew need "--without-multilib" to enable OpenMP
-
 to install on mac needed:
-CC=gcc-4.9 CXX=g++-4.9 CFLAGS="" OPT="" python unit_tests/setup.py
+CXX=g++-4.9 python unit_tests/setup.py

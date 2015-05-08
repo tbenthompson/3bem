@@ -17,7 +17,7 @@ BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
     auto n_blocks = R * C;
 
     auto src_facet_info = get_facet_info(src_mesh);
-    std::vector<SparseMatrixEntry> entries;
+    std::vector<MatrixEntry> entries;
     const auto& obs_quad = mthd.get_obs_quad();
 #pragma omp parallel for
     for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) {
@@ -63,7 +63,7 @@ BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
         }
     }
 
-    return BlockSparseOperator(n_obs_dofs, n_src_dofs, R, C, entries);
+    return BlockSparseOperator::csr_from_coo(n_obs_dofs, n_src_dofs, R, C, entries);
 }
 
 
@@ -97,6 +97,10 @@ struct BlockIntegralOperator: public BlockOperatorI {
             eval[i] += galerkin_far[i];
         }
         return eval;
+    }
+
+    const BlockSparseOperator& get_nearfield_matrix() {
+        return nearfield;
     }
 };
 

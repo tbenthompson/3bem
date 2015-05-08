@@ -25,12 +25,16 @@ void export_linalg() {
             p::return_value_policy<p::reference_existing_object>())
     );
 
-    p::class_<SparseMatrixEntry>("SparseMatrixEntry", p::no_init)
-        .def_readonly("row", &SparseMatrixEntry::row)
-        .def_readonly("col", &SparseMatrixEntry::col)
-        .def_readonly("value", &SparseMatrixEntry::value);
     export_block_operator<BlockSparseOperator>(
         p::class_<BlockSparseOperator>("BlockSparseOperator", p::no_init)
-        .def_readonly("storage", &BlockSparseOperator::storage)
+        .add_property("values", make_getter(
+                &BlockSparseOperator::values, 
+                p::return_value_policy<p::return_by_value>()))
+        .add_property("column_indices", make_getter(
+                &BlockSparseOperator::column_indices, 
+                p::return_value_policy<p::return_by_value>()))
+        .add_property("row_ptrs", make_getter(
+                &BlockSparseOperator::row_ptrs, 
+                p::return_value_policy<p::return_by_value>()))
     );
 }

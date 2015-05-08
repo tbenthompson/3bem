@@ -1,13 +1,14 @@
 #ifndef __ASDASDQ12123_CONSTRAINT_MATRIX_H
 #define __ASDASDQ12123_CONSTRAINT_MATRIX_H
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include "constraint.h"
 #include "dense_operator.h"
+#include "sparse_operator.h"
 
 namespace tbem {
 
-typedef std::unordered_map<int,RearrangedConstraintEQ> ConstraintMatrix;
+typedef std::map<int,RearrangedConstraintEQ> ConstraintMatrix;
 
 bool is_constrained(const ConstraintMatrix& dof_constraint_map, size_t dof);
 
@@ -27,8 +28,8 @@ std::vector<double> condense_vector(const ConstraintMatrix& matrix,
 DenseOperator condense_matrix(const ConstraintMatrix& row_cm,
     const ConstraintMatrix& col_cm, const DenseOperator& matrix);
 
-BlockDenseOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
-    const std::vector<ConstraintMatrix>& col_cms, const BlockDenseOperator& op);
+BlockSparseOperator condense_matrix(const ConstraintMatrix& row_cm,
+    const ConstraintMatrix& col_cm, const BlockSparseOperator& matrix);
 
 } // end namespace tbem
 

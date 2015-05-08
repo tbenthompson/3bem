@@ -1,5 +1,6 @@
 #include "constraint_matrix.h"
 #include "block_operator.h"
+#include <algorithm>
 
 namespace tbem {
 
@@ -120,12 +121,6 @@ std::vector<double> condense_vector(const ConstraintMatrix& matrix,
     return out;
 }
 
-struct MatrixEntry 
-{
-    const size_t loc[2];
-    const double value;
-};
-
 void add_entry_with_constraints(const ConstraintMatrix& row_cm, 
     const ConstraintMatrix& col_cm, DenseOperator& modifiable_matrix,
     const MatrixEntry& entry) 
@@ -205,12 +200,11 @@ DenseOperator condense_matrix(const ConstraintMatrix& row_cm,
     for (int row_idx = matrix.n_rows() - 1; row_idx >= 0; --row_idx) {
         for (int col_idx = matrix.n_cols() - 1; col_idx >= 0; --col_idx) {
             auto entry_idx = row_idx * matrix.n_cols() + col_idx;
-            auto condensed_value = condensed[entry_idx];
-            condensed[entry_idx] = 0.0;
             MatrixEntry entry_to_add{
-                {(size_t)row_idx, (size_t)col_idx},
-                condensed_value + matrix[entry_idx]
+                (size_t)row_idx, (size_t)col_idx,
+                condensed[entry_idx] + matrix[entry_idx]
             };
+            condensed[entry_idx] = 0.0;
 
             add_entry_with_constraints(row_cm, col_cm, condensed, entry_to_add);
         }
@@ -219,23 +213,111 @@ DenseOperator condense_matrix(const ConstraintMatrix& row_cm,
     return remove_constrained(row_cm, col_cm, condensed);
 }
 
-BlockDenseOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
-    const std::vector<ConstraintMatrix>& col_cms, const BlockDenseOperator& op) 
+//TODO: This could be used in dense condensation and vector condensation too.
+std::map<size_t,size_t> constraint_dof_map(const ConstraintMatrix& cm, size_t n_dofs) 
 {
-    std::vector<DenseOperator> out_ops;
-    for (size_t d1 = 0; d1 < op.n_block_rows(); d1++) {
-        for (size_t d2 = 0; d2 < op.n_block_cols(); d2++) {
-            out_ops.push_back(
-                condense_matrix(row_cms[d1], col_cms[d2],
-                    op.ops[d1 * op.n_block_cols() + d2])
+    std::map<size_t,size_t> dof_map;
+    size_t out_idx = 0;
+    for (size_t in_idx = 0; in_idx < n_dofs; in_idx++) {
+        if (is_constrained(cm, in_idx)) {
+            continue;
+        }
+        dof_map[in_idx] = out_idx;
+        out_idx++;
+    }
+    return dof_map;
+}
+
+std::vector<MatrixEntry> remove_constrained(const ConstraintMatrix& row_cm,
+    const ConstraintMatrix& col_cm, size_t n_rows, size_t n_cols, 
+    const std::map<size_t,double>& matrix) 
+{
+    std::vector<MatrixEntry> out;
+    auto row_map = constraint_dof_map(row_cm, n_rows);
+    auto col_map = constraint_dof_map(col_cm, n_cols);
+    for (auto it = matrix.begin(); it != matrix.end(); ++it) {
+        auto matrix_idx = it->first;
+        auto col = matrix_idx % n_cols;
+        auto row = (matrix_idx - col) / n_cols;
+        out.push_back({row, col, it->second});
+    }
+    return out;
+}
+
+void add_entry_with_constraints(const ConstraintMatrix& row_cm, 
+    const ConstraintMatrix& col_cm, size_t n_rows, size_t n_cols,
+    std::map<size_t,double>& modifiable_matrix, const MatrixEntry& entry) 
+{
+    //TODO: This could be combined with the dense matrix add_entry_with_constraints 
+    //to reduce the duplication
+    int constrained_axis;
+    int other_axis;
+    const ConstraintMatrix* cm;
+    if (!is_constrained(row_cm, entry.loc[0])) {
+        if (!is_constrained(col_cm, entry.loc[1])) {
+            size_t entry_idx = entry.loc[0] * n_cols +
+                               entry.loc[1];
+            if (modifiable_matrix.count(entry_idx) == 0) {
+                modifiable_matrix[entry_idx] = entry.value;
+            } else {
+                modifiable_matrix[entry_idx] += entry.value;
+            }
+            return;
+        }
+        cm = &col_cm;
+        constrained_axis = 1;
+        other_axis = 0;
+    } else {
+        cm = &row_cm;
+        constrained_axis = 0;
+        other_axis = 1;
+    }
+
+    auto constrained_dof = entry.loc[constrained_axis];
+    const auto& constraint = cm->find(constrained_dof)->second;
+    const auto& terms = constraint.terms;
+
+    for (const auto& t: terms) {
+        double recurse_weight = t.weight * entry.value;
+        size_t loc[2];
+        loc[constrained_axis] = t.dof;
+        loc[other_axis] = entry.loc[other_axis];
+        assert(loc[constrained_axis] < constrained_dof);
+        add_entry_with_constraints(
+            row_cm, col_cm, n_rows, n_cols, modifiable_matrix, 
+            {loc[0], loc[1], recurse_weight}
+        );
+    }
+}
+
+
+BlockSparseOperator condense_matrix(const ConstraintMatrix& row_cm,
+    const ConstraintMatrix& col_cm, const BlockSparseOperator& matrix)
+{
+    std::map<size_t,double> condensed;
+
+    for (int row = matrix.n_total_rows() - 1; row >= 0; --row) {
+        int last_col = static_cast<int>(matrix.row_ptrs[row + 1] - 1);
+        int first_col = static_cast<int>(matrix.row_ptrs[row]);
+        for (int col_idx = last_col; col_idx >= first_col; --col_idx) {
+            auto col = matrix.column_indices[col_idx];
+            auto val = matrix.values[col_idx];
+            auto entry_idx = row * matrix.n_total_cols() + col;
+            MatrixEntry entry_to_add{static_cast<size_t>(row), col, val};
+            add_entry_with_constraints(
+                row_cm, col_cm, matrix.n_total_rows(),
+                matrix.n_total_cols(), condensed, entry_to_add
             );
         }
     }
-    return {
-        op.n_block_rows(),
-        op.n_block_cols(),
-        out_ops
-    };
+    
+    auto entries = remove_constrained(
+        row_cm, col_cm, matrix.n_total_rows(), matrix.n_total_cols(), condensed
+    );
+    return BlockSparseOperator::csr_from_coo(
+        matrix.component_shape.n_rows, matrix.component_shape.n_cols,
+        matrix.block_shape.n_rows, matrix.block_shape.n_cols, entries
+    );
 }
 
 } // END namespace tbem

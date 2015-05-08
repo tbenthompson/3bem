@@ -16,6 +16,13 @@ void export_constraints() {
     def("shift_constraints", shift_constraints);
     def("from_constraints", from_constraints);
     def("condense_vector", &condense_vector);
-    def("condense_matrix", &condense_matrix);
+
+    DenseOperator (*condense_dense)(const ConstraintMatrix&,
+        const ConstraintMatrix&, const DenseOperator&) = &condense_matrix;
+    def("condense_matrix", condense_dense);
+    BlockSparseOperator (*condense_sparse)(const ConstraintMatrix&,
+        const ConstraintMatrix&, const BlockSparseOperator&) = &condense_matrix;
+    def("condense_matrix", condense_sparse);
+
     def("distribute_vector", &distribute_vector);
 }

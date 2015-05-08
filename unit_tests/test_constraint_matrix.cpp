@@ -167,6 +167,22 @@ TEST_CASE("CondenseMatrixContinuity", "[constraint_matrix]") {
     REQUIRE(result[0] == 3);
 }
 
+TEST_CASE("Sparse matrix continuity", "[constraint_matrix]") {
+    auto cm = from_constraints({
+        continuity_constraint(0, 2),
+        continuity_constraint(1, 2)
+    });
+    auto matrix = BlockSparseOperator::csr_from_coo(
+        3, 3, 1, 1,
+        {{0, 0, 1}, {1, 1, 1}, {2, 2, 1}}
+    );
+    auto result = condense_matrix(cm, cm, matrix);
+    REQUIRE(result.nnz() == 1);
+    REQUIRE(result.values[0] == 3);
+    REQUIRE(result.column_indices[0] == 0);
+}
+//TODO: Write another sparse matrix condensation test
+
 TEST_CASE("CondenseMatrixContinuityPartial", "[constraint_matrix]") {
     auto cm = from_constraints({
         continuity_constraint(1, 2)
@@ -207,6 +223,3 @@ TEST_CASE("CondenseNonSquareMatrixContinuity", "[constraint_matrix]") {
     REQUIRE(result.n_elements() == 1);
     REQUIRE(result[0] == 2);
 }
-
-BlockDenseOperator condense_block_operator(const std::vector<ConstraintMatrix>& row_cms,
-    const std::vector<ConstraintMatrix>& col_cms, const BlockDenseOperator& op);
