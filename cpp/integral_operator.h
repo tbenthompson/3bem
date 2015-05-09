@@ -4,13 +4,19 @@
 #include "galerkin_operator.h"
 #include "interpolation_operator.h"
 #include "nbody_operator.h"
-#include "fmm.h"
+#include "integral_term.h"
 
 namespace tbem {
 
 template <size_t dim, size_t R, size_t C>
-BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
-    const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd) 
+using GalerkinNearfieldFnc = std::function<Vec<Vec<Vec<double,C>,R>,dim>(
+    const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&
+    )>;
+
+template <size_t dim, size_t R, size_t C>
+BlockSparseOperator galerkin_nearfield_helper(const Mesh<dim>& obs_mesh,
+    const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd,
+    const GalerkinNearfieldFnc<dim,R,C>& f)
 {
     size_t n_obs_dofs = obs_mesh.n_dofs();
     size_t n_src_dofs = src_mesh.n_dofs();
@@ -33,11 +39,9 @@ BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
                     continue; 
                 }
                 IntegralTerm<dim,R,C> term{pt, src_facet_info[i]};
-                auto integrals = mthd.compute_term(term, nearest_pt);
-                auto farfield_correction = mthd.compute_farfield(term, nearest_pt);
-                auto nearfield_term = integrals - farfield_correction;
+                auto eval = f(term, nearest_pt);
                 for (int b = 0; b < dim; b++) {
-                    row.push_back(std::make_pair(dim * i + b, nearfield_term[b]));
+                    row.push_back(std::make_pair(dim * i + b, eval[b]));
                 }
             }
 
@@ -66,19 +70,43 @@ BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
     return BlockSparseOperator::csr_from_coo(n_obs_dofs, n_src_dofs, R, C, entries);
 }
 
+template <size_t dim, size_t R, size_t C>
+BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
+    const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd) 
+{
+    GalerkinNearfieldFnc<dim,R,C> f = 
+        [&] (const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& pt) {
+            return mthd.compute_term(term, pt); 
+        };
+    return galerkin_nearfield_helper(obs_mesh, src_mesh, mthd, f);
+}
+
+template <size_t dim, size_t R, size_t C>
+BlockSparseOperator galerkin_farfield_correction(const Mesh<dim>& obs_mesh,
+    const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd) 
+{
+    GalerkinNearfieldFnc<dim,R,C> f = 
+        [&] (const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& pt) {
+            return -mthd.compute_farfield(term, pt); 
+        };
+    return galerkin_nearfield_helper(obs_mesh, src_mesh, mthd, f);
+}
 
 template <size_t dim, size_t R, size_t C>
 struct BlockIntegralOperator: public BlockOperatorI {
     const BlockSparseOperator nearfield;
+    const BlockSparseOperator farfield_correction;
     const BlockGalerkinOperator<dim> galerkin;
     const BlockDirectNBodyOperator<dim,R,C> farfield;
     const BlockInterpolationOperator<dim> interp;
 
     BlockIntegralOperator(const BlockSparseOperator& nearfield,
+        const BlockSparseOperator& farfield_correction,
         const BlockGalerkinOperator<dim>& galerkin,
         const BlockDirectNBodyOperator<dim,R,C>& farfield,
         const BlockInterpolationOperator<dim>& interp):
         nearfield(nearfield),
+        farfield_correction(farfield_correction),
         galerkin(galerkin),
         farfield(std::move(farfield)),
         interp(interp)
@@ -93,8 +121,9 @@ struct BlockIntegralOperator: public BlockOperatorI {
         auto nbodied = farfield.apply(interpolated);
         auto galerkin_far = galerkin.apply(nbodied);
         auto eval = nearfield.apply(x);
+        auto correction = farfield_correction.apply(x);
         for (size_t i = 0; i < eval.size(); i++) {
-            eval[i] += galerkin_far[i];
+            eval[i] += galerkin_far[i] + correction[i];
         }
         return eval;
     }
@@ -110,6 +139,7 @@ BlockIntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd) {
 
     auto nearfield = galerkin_nearfield(obs_mesh, src_mesh, mthd);
+    auto farfield_correction = galerkin_farfield_correction(obs_mesh, src_mesh, mthd);
     auto nbody_data = nbody_data_from_bem(obs_mesh, src_mesh,
         mthd.get_obs_quad(), mthd.get_src_quad());
     auto farfield = BlockDirectNBodyOperator<dim,R,C>{nbody_data, mthd.get_kernel()};
@@ -119,7 +149,9 @@ BlockIntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
     BlockGalerkinOperator<dim> galerkin({R,C}, obs_mesh, obs_quad);
     BlockInterpolationOperator<dim> interp({R,C}, src_mesh, src_quad);
 
-    return BlockIntegralOperator<dim,R,C>(nearfield, galerkin, farfield, interp);
+    return BlockIntegralOperator<dim,R,C>(
+        nearfield, farfield_correction, galerkin, farfield, interp
+    );
 }
 
 } // end namespace tbem

@@ -43,7 +43,8 @@ def make_interior_pts(n, center, max_r):
     obs_pts = [ObsPt(0.001, p, n, n) for (p, n) in zip(pts, inward_normal)]
     return pts, obs_pts
 
-def run(linear_solver, operator_builder, refine, u_fnc, dudn_fnc_builder):
+def run(linear_solver, operator_builder, refine, u_fnc, dudn_fnc_builder,
+    far_threshold = 3.0):
     center = [5.0, 0.0]
     r = 3
     obs_radius = 2.9
@@ -52,7 +53,7 @@ def run(linear_solver, operator_builder, refine, u_fnc, dudn_fnc_builder):
     pts, obs_pts = make_interior_pts(100, center, obs_radius)
     circle = circle_mesh(center, r, refine)
     return solve(2, circle, linear_solver, operator_builder,
-                 obs_pts, u_fnc, dudn_fnc_builder(center))
+                 obs_pts, u_fnc, dudn_fnc_builder(center), far_threshold)
 
 def test_convergence():
     es = []

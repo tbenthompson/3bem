@@ -167,22 +167,6 @@ TEST_CASE("CondenseMatrixContinuity", "[constraint_matrix]") {
     REQUIRE(result[0] == 3);
 }
 
-TEST_CASE("Sparse matrix continuity", "[constraint_matrix]") {
-    auto cm = from_constraints({
-        continuity_constraint(0, 2),
-        continuity_constraint(1, 2)
-    });
-    auto matrix = BlockSparseOperator::csr_from_coo(
-        3, 3, 1, 1,
-        {{0, 0, 1}, {1, 1, 1}, {2, 2, 1}}
-    );
-    auto result = condense_matrix(cm, cm, matrix);
-    REQUIRE(result.nnz() == 1);
-    REQUIRE(result.values[0] == 3);
-    REQUIRE(result.column_indices[0] == 0);
-}
-//TODO: Write another sparse matrix condensation test
-
 TEST_CASE("CondenseMatrixContinuityPartial", "[constraint_matrix]") {
     auto cm = from_constraints({
         continuity_constraint(1, 2)
@@ -222,4 +206,41 @@ TEST_CASE("CondenseNonSquareMatrixContinuity", "[constraint_matrix]") {
     auto result = condense_matrix(row_cm, col_cm, DenseOperator(2, 3, matrix));
     REQUIRE(result.n_elements() == 1);
     REQUIRE(result[0] == 2);
+}
+
+TEST_CASE("Sparse matrix continuity", "[constraint_matrix]") {
+    auto cm = from_constraints({
+        continuity_constraint(0, 2),
+        continuity_constraint(1, 2)
+    });
+    auto matrix = BlockSparseOperator::csr_from_coo(
+        3, 3, 1, 1,
+        {{0, 0, 1}, {1, 1, 1}, {2, 2, 1}}
+    );
+    auto result = condense_matrix(cm, cm, matrix);
+    REQUIRE(result.nnz() == 1);
+    REQUIRE(result.row_ptrs.size() == 2);
+    REQUIRE(result.values[0] == 3);
+    REQUIRE(result.column_indices[0] == 0);
+}
+
+TEST_CASE("Sparse matrix larger matrix", "[constraint_matrix]") {
+    auto cm = from_constraints({
+        continuity_constraint(1, 2)
+    });
+    auto matrix = BlockSparseOperator::csr_from_coo(
+        5, 5, 1, 1,
+        {{0, 0, 1}, {0, 2, 4}, {1, 1, 1}, {2, 2, 1}, {2, 0, 1}, 
+        {4, 0, -1}, {4, 3, 1}, {3, 4, 1}}
+    );
+    auto result = condense_matrix(cm, cm, matrix);
+    auto correct = BlockSparseOperator::csr_from_coo(
+        4, 4, 1, 1,
+        {{0, 0, 1}, {0, 1, 4}, {1, 0, 1}, {1, 1, 2}, {3, 0, -1},
+        {3, 2, 1}, {2, 3, 1}}
+    );
+    auto nnz = correct.nnz();
+    REQUIRE_ARRAY_EQUAL(result.values, correct.values, nnz);
+    REQUIRE_ARRAY_EQUAL(result.column_indices, correct.column_indices, nnz);
+    REQUIRE_ARRAY_EQUAL(result.row_ptrs, correct.row_ptrs, correct.n_total_rows() + 1);
 }

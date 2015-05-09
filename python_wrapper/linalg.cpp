@@ -27,6 +27,7 @@ void export_linalg() {
 
     export_block_operator<BlockSparseOperator>(
         p::class_<BlockSparseOperator>("BlockSparseOperator", p::no_init)
+        .def("nnz", &BlockSparseOperator::nnz)
         .add_property("values", make_getter(
                 &BlockSparseOperator::values, 
                 p::return_value_policy<p::return_by_value>()))

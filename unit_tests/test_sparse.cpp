@@ -58,7 +58,31 @@ TEST_CASE("Fewer rows than entries", "[sparse]")
 {
     auto op = BlockSparseOperator::csr_from_coo(3, 3, 1, 1, {
         {0, 0, 1.0}, {0, 1, 2.0}, {0, 2, 4.0},
-        {1, 0, 1.0}, {1, 0, 2.0}, {1, 2, 4.0},
-        {2, 0, 1.0}, {2, 0, 2.0}, {2, 2, 4.0}
+        {1, 0, 1.0}, {1, 1, 2.0}, {1, 2, 4.0},
+        {2, 0, 1.0}, {2, 1, 2.0}, {2, 2, 4.0}
     });
+}
+
+TEST_CASE("To dense", "[sparse]") 
+{
+    auto op = BlockSparseOperator::csr_from_coo(3, 3, 1, 1, {
+        {0, 0, 1.0}, {0, 1, 2.0}, {0, 2, 4.0}, {1, 2, 4.0}, {2, 0, 1.0}, 
+    });
+    auto d = op.to_dense();
+    std::vector<double> correct = {
+        1.0, 2.0, 4.0, 0.0, 0.0, 4.0, 1.0, 0.0, 0.0
+    };
+    CHECK_ARRAY_EQUAL(d, correct, 9);
+}
+
+TEST_CASE("To dense -- multiple values for one entry", "[sparse]") 
+{
+    auto op = BlockSparseOperator::csr_from_coo(3, 3, 1, 1, {
+        {0, 0, 1.0}, {0, 0, 1.0}, {0, 1, 2.0}, {0, 2, 4.0}, {1, 2, 4.0}, {2, 0, 1.0}, 
+    });
+    auto d = op.to_dense();
+    std::vector<double> correct = {
+        2.0, 2.0, 4.0, 0.0, 0.0, 4.0, 1.0, 0.0, 0.0
+    };
+    CHECK_ARRAY_EQUAL(d, correct, 9);
 }

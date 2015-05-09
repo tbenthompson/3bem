@@ -2,6 +2,7 @@
 #define __1231231231898972_SPARSE_OPERATOR_H
 #include <vector>
 #include "block_operator.h"
+#include <iostream>
 
 namespace tbem {
 
@@ -16,6 +17,7 @@ struct MatrixEntry
 
 struct BlockSparseOperator: public BlockOperatorI
 {
+    //TODO: get rid of the two types of shape. one type of shape!
     const OperatorShape component_shape;
     const OperatorShape block_shape;
     const std::vector<double> values;
@@ -37,6 +39,16 @@ struct BlockSparseOperator: public BlockOperatorI
     }
 
     size_t nnz() const {return row_ptrs.back();}
+
+    std::vector<double> to_dense() {
+        std::vector<double> dense(n_total_cols() * n_total_rows(), 0.0);
+        for (size_t i = 0; i < row_ptrs.size() - 1; i++) {
+           for (size_t c_idx = row_ptrs[i]; c_idx < row_ptrs[i + 1]; c_idx++) {
+               dense[i * n_total_cols() + column_indices[c_idx]] += values[c_idx];
+           }
+        }
+        return dense;
+    }
 
     virtual size_t n_block_rows() const {return block_shape.n_rows;}
     virtual size_t n_block_cols() const {return block_shape.n_cols;}
@@ -68,9 +80,12 @@ struct BlockSparseOperator: public BlockOperatorI
     {
         //compute number of non-zero entries per row of A 
         auto n_total_rows = n_block_rows * n_component_rows;
+        auto n_total_cols = n_block_cols * n_component_cols;
         std::vector<size_t> nonzeros_per_row(n_total_rows, 0.0);
 
         for (size_t i = 0; i < entries.size(); i++) {
+            assert(entries[i].row() < n_total_rows);
+            assert(entries[i].col() < n_total_cols);
             nonzeros_per_row[entries[i].row()]++;
         }
 
@@ -92,6 +107,7 @@ struct BlockSparseOperator: public BlockOperatorI
             values[row_next] = entries[i].value;
             in_row_already[row]++;
         }
+
         return BlockSparseOperator(
             n_component_rows, n_component_cols, n_block_rows, n_block_cols,
             values, column_indices, row_ptrs

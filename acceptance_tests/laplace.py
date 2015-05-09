@@ -30,12 +30,14 @@ def solve_iterative(tbem, constraint_matrix, matrix, rhs):
     assert(res[1] == 0) #Check that the iterative solver succeeded
     return res[0]
 
-def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc):
+def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc,
+    far_threshold = 3.0):
+
     if dim == 2:
         tbem = tbempy.TwoD
     else:
         tbem = tbempy.ThreeD
-    qs = tbem.QuadStrategy(3, 8, 3.0, 1e-5)
+    qs = tbem.QuadStrategy(3, 8, far_threshold, 1e-5)
 
     continuity = tbem.mesh_continuity(mesh.begin())
     constraints = tbem.convert_to_constraints(continuity)
