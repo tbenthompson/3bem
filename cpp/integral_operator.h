@@ -14,7 +14,7 @@ using GalerkinNearfieldFnc = std::function<Vec<Vec<Vec<double,C>,R>,dim>(
     )>;
 
 template <size_t dim, size_t R, size_t C>
-BlockSparseOperator galerkin_nearfield_helper(const Mesh<dim>& obs_mesh,
+SparseOperator galerkin_nearfield_helper(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd,
     const GalerkinNearfieldFnc<dim,R,C>& f)
 {
@@ -67,11 +67,11 @@ BlockSparseOperator galerkin_nearfield_helper(const Mesh<dim>& obs_mesh,
         }
     }
 
-    return BlockSparseOperator::csr_from_coo(n_obs_dofs, n_src_dofs, R, C, entries);
+    return SparseOperator::csr_from_coo(R * n_obs_dofs, C * n_src_dofs, entries);
 }
 
 template <size_t dim, size_t R, size_t C>
-BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
+SparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd) 
 {
     GalerkinNearfieldFnc<dim,R,C> f = 
@@ -82,7 +82,7 @@ BlockSparseOperator galerkin_nearfield(const Mesh<dim>& obs_mesh,
 }
 
 template <size_t dim, size_t R, size_t C>
-BlockSparseOperator galerkin_farfield_correction(const Mesh<dim>& obs_mesh,
+SparseOperator galerkin_farfield_correction(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd) 
 {
     GalerkinNearfieldFnc<dim,R,C> f = 
@@ -93,18 +93,18 @@ BlockSparseOperator galerkin_farfield_correction(const Mesh<dim>& obs_mesh,
 }
 
 template <size_t dim, size_t R, size_t C>
-struct BlockIntegralOperator: public BlockOperatorI {
-    const BlockSparseOperator nearfield;
-    const BlockSparseOperator farfield_correction;
-    const BlockGalerkinOperator<dim> galerkin;
+struct IntegralOperator: public OperatorI {
+    const SparseOperator nearfield;
+    const SparseOperator farfield_correction;
+    const GalerkinOperator<dim> galerkin;
     const BlockDirectNBodyOperator<dim,R,C> farfield;
-    const BlockInterpolationOperator<dim> interp;
+    const InterpolationOperator<dim> interp;
 
-    BlockIntegralOperator(const BlockSparseOperator& nearfield,
-        const BlockSparseOperator& farfield_correction,
-        const BlockGalerkinOperator<dim>& galerkin,
+    IntegralOperator(const SparseOperator& nearfield,
+        const SparseOperator& farfield_correction,
+        const GalerkinOperator<dim>& galerkin,
         const BlockDirectNBodyOperator<dim,R,C>& farfield,
-        const BlockInterpolationOperator<dim>& interp):
+        const InterpolationOperator<dim>& interp):
         nearfield(nearfield),
         farfield_correction(farfield_correction),
         galerkin(galerkin),
@@ -112,10 +112,8 @@ struct BlockIntegralOperator: public BlockOperatorI {
         interp(interp)
     {}
 
-    virtual size_t n_block_rows() const {return nearfield.n_block_rows();}
-    virtual size_t n_block_cols() const {return nearfield.n_block_cols();}
-    virtual size_t n_total_rows() const {return nearfield.n_total_rows();} 
-    virtual size_t n_total_cols() const {return nearfield.n_total_cols();}
+    virtual size_t n_rows() const {return nearfield.n_rows();} 
+    virtual size_t n_cols() const {return nearfield.n_cols();}
     virtual std::vector<double> apply(const std::vector<double>& x) const {
         auto interpolated = interp.apply(x);
         auto nbodied = farfield.apply(interpolated);
@@ -128,14 +126,14 @@ struct BlockIntegralOperator: public BlockOperatorI {
         return eval;
     }
 
-    const BlockSparseOperator& get_nearfield_matrix() {
+    const SparseOperator& get_nearfield_matrix() {
         return nearfield;
     }
 };
 
 
 template <size_t dim, size_t R, size_t C>
-BlockIntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
+IntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd) {
 
     auto nearfield = galerkin_nearfield(obs_mesh, src_mesh, mthd);
@@ -146,10 +144,10 @@ BlockIntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
 
     auto obs_quad = mthd.get_obs_quad();
     auto src_quad = mthd.get_src_quad();
-    BlockGalerkinOperator<dim> galerkin({R,C}, obs_mesh, obs_quad);
-    BlockInterpolationOperator<dim> interp({R,C}, src_mesh, src_quad);
+    GalerkinOperator<dim> galerkin({R,C}, obs_mesh, obs_quad);
+    InterpolationOperator<dim> interp({R,C}, src_mesh, src_quad);
 
-    return BlockIntegralOperator<dim,R,C>(
+    return IntegralOperator<dim,R,C>(
         nearfield, farfield_correction, galerkin, farfield, interp
     );
 }

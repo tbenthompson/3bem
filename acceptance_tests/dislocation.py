@@ -27,7 +27,7 @@ def faulted_surface_constraints(tbem, surface, fault, disp_dim):
 def default_linear_solver(tbem, cm, lhs, rhs):
     def mv(v):
         mv.it+=1
-        soln = tbem.distribute_vector(cm, v, lhs.n_total_rows())
+        soln = tbem.distribute_vector(cm, v, lhs.n_rows())
         applied = lhs.apply(soln)
         out = tbem.condense_vector(cm, applied)
         return out

@@ -14,13 +14,13 @@ def np_matrix_from_tbem_matrix(matrix):
 
 def solve_direct(tbem, constraint_matrix, matrix, rhs):
     matrix_condensed = tbem.condense_matrix(constraint_matrix, constraint_matrix,
-                                       matrix.get_block(0,0));
+                                       matrix);
     np_matrix = np_matrix_from_tbem_matrix(matrix_condensed)
     return np.linalg.solve(np_matrix, rhs)
 
 def solve_iterative(tbem, constraint_matrix, matrix, rhs):
     def mv(v):
-        distributed = tbem.distribute_vector(constraint_matrix, v, matrix.n_total_rows())
+        distributed = tbem.distribute_vector(constraint_matrix, v, matrix.n_rows())
         applied = matrix.apply(distributed)
         condensed = tbem.condense_vector(constraint_matrix, applied)
         return condensed

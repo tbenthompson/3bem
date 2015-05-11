@@ -18,8 +18,8 @@ void test_integral_operator(Mesh<2> m1, Mesh<2> m2)
     auto correct = dense_integral_operator(m1, m2, mthd).apply(v);
     auto other_op = integral_operator(m1, m2, mthd);
     auto other = other_op.apply(v);
-    REQUIRE(other_op.n_total_rows() == m1.n_dofs());
-    REQUIRE(other_op.n_total_cols() == m2.n_dofs());
+    REQUIRE(other_op.n_rows() == m1.n_dofs());
+    REQUIRE(other_op.n_cols() == m2.n_dofs());
     REQUIRE_ARRAY_CLOSE(correct, other, m1.n_dofs(), 1e-12);
 }
 
@@ -47,8 +47,8 @@ TEST_CASE("IntegralOperatorTensor", "[integral_operator]")
     auto correct = dense_integral_operator(m1, m2, mthd).apply(v);
     auto other_op = integral_operator(m1, m2, mthd);
     auto other = other_op.apply(v);
-    REQUIRE(other_op.n_total_rows() == 2 * m1.n_dofs());
-    REQUIRE(other_op.n_total_cols() == 2 * m2.n_dofs());
+    REQUIRE(other_op.n_rows() == 2 * m1.n_dofs());
+    REQUIRE(other_op.n_cols() == 2 * m2.n_dofs());
     REQUIRE_ARRAY_CLOSE(correct, other, m1.n_dofs(), 1e-12);
     REQUIRE_ARRAY_CLOSE(correct, other, m1.n_dofs(), 1e-12);
 }
@@ -63,7 +63,7 @@ TEST_CASE("Constrained nearfield matrix", "[integral_operator]")
     auto dense_matrix2 = matrix.to_dense();
 
     SECTION("Dense operator equals galerkin nearfield") {
-        auto dense_matrix1 = *dense_integral_operator(m, m, mthd).ops[0].storage;
+        auto dense_matrix1 = *dense_integral_operator(m, m, mthd).storage;
         REQUIRE_ARRAY_CLOSE(dense_matrix1, dense_matrix2, dense_matrix1.size(), 1e-12);
     }
 
@@ -73,7 +73,7 @@ TEST_CASE("Constrained nearfield matrix", "[integral_operator]")
         );
         auto test = condense_matrix(cm, cm, matrix).to_dense();
         auto correct = *condense_matrix(cm, cm, DenseOperator(
-            matrix.n_total_rows(), matrix.n_total_cols(), dense_matrix2
+            matrix.n_rows(), matrix.n_cols(), dense_matrix2
         )).storage;
         REQUIRE(test.size() == correct.size());
         REQUIRE_ARRAY_CLOSE(test, correct, correct.size(), 1e-12);

@@ -20,8 +20,8 @@ void export_constraints() {
     DenseOperator (*condense_dense)(const ConstraintMatrix&,
         const ConstraintMatrix&, const DenseOperator&) = &condense_matrix;
     def("condense_matrix", condense_dense);
-    BlockSparseOperator (*condense_sparse)(const ConstraintMatrix&,
-        const ConstraintMatrix&, const BlockSparseOperator&) = &condense_matrix;
+    SparseOperator (*condense_sparse)(const ConstraintMatrix&,
+        const ConstraintMatrix&, const SparseOperator&) = &condense_matrix;
     def("condense_matrix", condense_sparse);
 
     def("distribute_vector", &distribute_vector);

@@ -1,27 +1,25 @@
 #ifndef __KLJLKJLKJNNBMBMNV_INTERPOLATION_OPERATOR_H
 #define __KLJLKJLKJNNBMBMNV_INTERPOLATION_OPERATOR_H
 
-#include "block_operator.h"
+#include "operator.h"
 #include "quadrature.h"
 
 namespace tbem {
 
 template <size_t dim>
-struct BlockInterpolationOperator: public BlockOperatorI
+struct InterpolationOperator: public OperatorI
 {
     const OperatorShape shape;
     const Mesh<dim> mesh;
     const QuadRule<dim-1> quad;
 
-    BlockInterpolationOperator(const OperatorShape& shape,
+    InterpolationOperator(const OperatorShape& shape,
         const Mesh<dim>& mesh, const QuadRule<dim-1>& quad):
         shape(shape), mesh(mesh), quad(quad)
     {}
 
-    virtual size_t n_block_rows() const {return shape.n_rows;}
-    virtual size_t n_block_cols() const {return shape.n_cols;}
-    virtual size_t n_total_rows() const {return shape.n_rows * mesh.n_dofs();} 
-    virtual size_t n_total_cols() const {return shape.n_cols * mesh.n_dofs();}
+    virtual size_t n_rows() const {return shape.n_rows * mesh.n_dofs();} 
+    virtual size_t n_cols() const {return shape.n_cols * mesh.n_dofs();}
 
     virtual std::vector<double> apply(const std::vector<double>& x) const {
         auto n_quadrature_pts = mesh.n_facets() * quad.size();

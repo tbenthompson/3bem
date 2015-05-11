@@ -39,7 +39,7 @@ class Solver(object):
         rhs /= shear_modulus
         def mv(v):
             distributed = tbem.distribute_vector(
-                constraint_matrix, v, op.n_total_rows()
+                constraint_matrix, v, op.n_rows()
             )
             applied = op.apply(distributed)
             applied /= shear_modulus

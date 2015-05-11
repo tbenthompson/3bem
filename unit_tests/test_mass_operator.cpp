@@ -37,10 +37,10 @@ TEST_CASE("TensorMassTerm", "[mass_operator]") {
     std::vector<double> str(3 * sphere.n_dofs(), 1.0);
     auto mass_op = mass_operator<3,3,3>(sphere, 2);
     auto res = mass_op.apply(str);
-    REQUIRE((mass_op.n_block_rows() * mass_op.n_block_cols() == 9));
-    REQUIRE(mass_op.n_total_rows() == 3 * sphere.n_dofs());
-    REQUIRE(mass_op.galerkin.n_total_cols() == 3 * sphere.n_facets() * 4);
-    REQUIRE(res.size() == mass_op.n_total_rows());
+    REQUIRE(mass_op.n_rows() == 3 * sphere.n_dofs());
+    REQUIRE(mass_op.n_cols() == 3 * sphere.n_dofs());
+    REQUIRE(mass_op.galerkin.n_cols() == 3 * sphere.n_facets() * 4);
+    REQUIRE(res.size() == mass_op.n_rows());
 
     double true_area = 0.0;
     for (auto f: sphere.facets) {

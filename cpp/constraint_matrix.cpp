@@ -1,5 +1,4 @@
 #include "constraint_matrix.h"
-#include "block_operator.h"
 #include <algorithm>
 #include <map>
 
@@ -256,13 +255,13 @@ std::vector<MatrixEntry> remove_constrained(const ConstraintMatrix& row_cm,
 
 
 
-BlockSparseOperator condense_matrix(const ConstraintMatrix& row_cm,
-    const ConstraintMatrix& col_cm, const BlockSparseOperator& matrix)
+SparseOperator condense_matrix(const ConstraintMatrix& row_cm,
+    const ConstraintMatrix& col_cm, const SparseOperator& matrix)
 {
     std::map<size_t,double> condensed;
 
-    auto n_in_rows = matrix.n_total_rows();
-    auto n_in_cols = matrix.n_total_cols();
+    auto n_in_rows = matrix.n_rows();
+    auto n_in_cols = matrix.n_cols();
 
     size_t count = 0;
     for (int row = n_in_rows - 1; row >= 0; --row) {
@@ -281,14 +280,11 @@ BlockSparseOperator condense_matrix(const ConstraintMatrix& row_cm,
     }
     
     auto entries = remove_constrained(
-        row_cm, col_cm, matrix.n_total_rows(), matrix.n_total_cols(), condensed
+        row_cm, col_cm, n_in_rows, n_in_cols, condensed
     );
-    auto out_rows = matrix.n_total_rows() - row_cm.size();
-    auto out_cols = matrix.n_total_cols() - col_cm.size();
-    return BlockSparseOperator::csr_from_coo(
-        out_rows / matrix.block_shape.n_rows, out_cols / matrix.block_shape.n_cols,
-        matrix.block_shape.n_rows, matrix.block_shape.n_cols, entries
-    );
+    auto out_rows = n_in_rows - row_cm.size();
+    auto out_cols = n_in_cols - col_cm.size();
+    return SparseOperator::csr_from_coo(out_rows, out_cols, entries);
 }
 
 } // END namespace tbem

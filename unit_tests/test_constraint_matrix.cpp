@@ -213,9 +213,8 @@ TEST_CASE("Sparse matrix continuity", "[constraint_matrix]") {
         continuity_constraint(0, 2),
         continuity_constraint(1, 2)
     });
-    auto matrix = BlockSparseOperator::csr_from_coo(
-        3, 3, 1, 1,
-        {{0, 0, 1}, {1, 1, 1}, {2, 2, 1}}
+    auto matrix = SparseOperator::csr_from_coo(
+        3, 3, {{0, 0, 1}, {1, 1, 1}, {2, 2, 1}}
     );
     auto result = condense_matrix(cm, cm, matrix);
     REQUIRE(result.nnz() == 1);
@@ -228,19 +227,19 @@ TEST_CASE("Sparse matrix larger matrix", "[constraint_matrix]") {
     auto cm = from_constraints({
         continuity_constraint(1, 2)
     });
-    auto matrix = BlockSparseOperator::csr_from_coo(
-        5, 5, 1, 1,
+    auto matrix = SparseOperator::csr_from_coo(
+        5, 5,
         {{0, 0, 1}, {0, 2, 4}, {1, 1, 1}, {2, 2, 1}, {2, 0, 1}, 
         {4, 0, -1}, {4, 3, 1}, {3, 4, 1}}
     );
     auto result = condense_matrix(cm, cm, matrix);
-    auto correct = BlockSparseOperator::csr_from_coo(
-        4, 4, 1, 1,
+    auto correct = SparseOperator::csr_from_coo(
+        4, 4,
         {{0, 0, 1}, {0, 1, 4}, {1, 0, 1}, {1, 1, 2}, {3, 0, -1},
         {3, 2, 1}, {2, 3, 1}}
     );
     auto nnz = correct.nnz();
     REQUIRE_ARRAY_EQUAL(result.values, correct.values, nnz);
     REQUIRE_ARRAY_EQUAL(result.column_indices, correct.column_indices, nnz);
-    REQUIRE_ARRAY_EQUAL(result.row_ptrs, correct.row_ptrs, correct.n_total_rows() + 1);
+    REQUIRE_ARRAY_EQUAL(result.row_ptrs, correct.row_ptrs, correct.n_rows() + 1);
 }

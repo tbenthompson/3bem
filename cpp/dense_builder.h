@@ -3,7 +3,6 @@
 
 #include <cassert>
 #include "dense_operator.h"
-#include "block_operator.h"
 #include "obs_pt.h"
 #include "util.h"
 #include "integral_term.h"
@@ -11,16 +10,14 @@
 namespace tbem {
 
 template <size_t dim, size_t R, size_t C>
-BlockDenseOperator mesh_to_points_operator(const std::vector<ObsPt<dim>>& obs_pts, 
+DenseOperator mesh_to_points_operator(const std::vector<ObsPt<dim>>& obs_pts, 
     const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd)
 {
     auto n_obs_dofs = obs_pts.size();
     auto n_src_dofs = src_mesh.n_dofs();
-    std::vector<DenseOperator> ops;
-    for (size_t i = 0; i < R * C; i++) {
-        ops.push_back(DenseOperator(n_obs_dofs, n_src_dofs, 0.0));
-    }
-    BlockDenseOperator block_op{R, C, ops}; 
+
+    DenseOperator op(R * n_obs_dofs, C * n_src_dofs, 0.0);
+
     auto src_facet_info = get_facet_info(src_mesh);
 #pragma omp parallel for
     for (size_t pt_idx = 0; pt_idx < obs_pts.size(); pt_idx++) {
@@ -39,25 +36,25 @@ BlockDenseOperator mesh_to_points_operator(const std::vector<ObsPt<dim>>& obs_pt
         for (size_t i = 0; i < result.size(); i++) {
             for (size_t d1 = 0; d1 < R; d1++) {
                 for (size_t d2 = 0; d2 < C; d2++) {
-                    block_op.ops[d1 * C + d2][start_idx + i] += result[i][d1][d2];
+                    auto row_idx = d1 * n_obs_dofs + pt_idx;
+                    auto col_idx = d2 * n_src_dofs + i;
+                    op[row_idx * C * n_src_dofs + col_idx] += result[i][d1][d2];
                 }
             }
         }
     }
-    return block_op;
+    return op;
 }
 
 template <size_t dim, size_t R, size_t C>
-BlockDenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
+DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd)
 {
     size_t n_obs_dofs = obs_mesh.n_dofs();
     size_t n_src_dofs = src_mesh.n_dofs();
-    std::vector<DenseOperator> ops;
-    for (size_t i = 0; i < R * C; i++) {
-        ops.push_back(DenseOperator(n_obs_dofs, n_src_dofs, 0.0));
-    }
-    BlockDenseOperator block_op{R, C, ops}; 
+
+    DenseOperator op(R * n_obs_dofs, C * n_src_dofs, 0.0);
+
     auto src_facet_info = get_facet_info(src_mesh);
     const auto& obs_quad = mthd.get_obs_quad();
 
@@ -92,16 +89,17 @@ BlockDenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
             int obs_dof = dim * obs_idx + obs_basis_idx;
             for (size_t src_dof = 0; src_dof < n_src_dofs; src_dof++) {
                 auto val_to_add = row[src_dof][obs_basis_idx];
-                auto idx = obs_dof * n_src_dofs + src_dof;
                 for (size_t d1 = 0; d1 < R; d1++) {
                     for (size_t d2 = 0; d2 < C; d2++) {
-                        block_op.ops[d1 * C + d2][idx] += val_to_add[d1][d2];
+                        auto row_idx = d1 * n_obs_dofs + obs_dof;
+                        auto col_idx = d2 * n_src_dofs + src_dof;
+                        op[row_idx * C * n_src_dofs + col_idx] += val_to_add[d1][d2];
                     }
                 }
             }
         }
     }
-    return block_op;
+    return op;
 }
 
 } // END NAMESPACE tbem

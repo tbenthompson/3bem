@@ -1,7 +1,7 @@
 #include <boost/python.hpp>
 #include <boost/numpy.hpp>
 #include "iterable_converter.h"
-#include "block_op_wrap.h"
+#include "op_wrap.h"
 
 #include "mesh.h"
 #include "continuity_builder.h"
@@ -48,8 +48,6 @@ template <size_t dim>
 void export_integration();
 template <size_t dim>
 void export_kernels();
-template <typename T, typename BPObj>
-void export_block_operator(BPObj& class_obj);
 
 template <size_t dim>
 void export_dimension() {
@@ -86,20 +84,20 @@ void export_dimension() {
     export_integration<dim>();
 
     auto integral_op_scalar = class_<
-            BlockIntegralOperator<dim,1,1>
+            IntegralOperator<dim,1,1>
         >("IntegralOperatorScalar", no_init).
         def("get_nearfield_matrix",
-            &BlockIntegralOperator<dim,1,1>::get_nearfield_matrix,
+            &IntegralOperator<dim,1,1>::get_nearfield_matrix,
             p::return_value_policy<p::reference_existing_object>());
-    export_block_operator<BlockIntegralOperator<dim,1,1>>(integral_op_scalar);
+    export_operator<IntegralOperator<dim,1,1>>(integral_op_scalar);
 
     auto integral_op_tensor = class_<
-            BlockIntegralOperator<dim,dim,dim>
+            IntegralOperator<dim,dim,dim>
         >("IntegralOperatorTensor", no_init).
         def("get_nearfield_matrix",
-            &BlockIntegralOperator<dim,dim,dim>::get_nearfield_matrix,
+            &IntegralOperator<dim,dim,dim>::get_nearfield_matrix,
             p::return_value_policy<p::reference_existing_object>());
-    export_block_operator<BlockIntegralOperator<dim,dim,dim>>(integral_op_tensor);
+    export_operator<IntegralOperator<dim,dim,dim>>(integral_op_tensor);
 
     def("integral_operator", integral_operator<dim,1,1>);
     def("integral_operator", integral_operator<dim,dim,dim>);
@@ -117,8 +115,8 @@ void export_dimension() {
     def("mesh_to_points_operator", mesh_to_points_operator<dim,1,1>);
 
 
-    auto mass_op = class_<BlockMassOperator<dim>>("BlockMassOperator", no_init);
-    export_block_operator<BlockMassOperator<dim>>(mass_op);
+    auto mass_op = class_<MassOperator<dim>>("MassOperator", no_init);
+    export_operator<MassOperator<dim>>(mass_op);
 
     def("mass_operator_scalar", mass_operator<dim,1,1>);
     def("mass_operator_tensor", mass_operator<dim,dim,dim>);

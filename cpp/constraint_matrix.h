@@ -28,8 +28,8 @@ std::vector<double> condense_vector(const ConstraintMatrix& matrix,
 DenseOperator condense_matrix(const ConstraintMatrix& row_cm,
     const ConstraintMatrix& col_cm, const DenseOperator& matrix);
 
-BlockSparseOperator condense_matrix(const ConstraintMatrix& row_cm,
-    const ConstraintMatrix& col_cm, const BlockSparseOperator& matrix);
+SparseOperator condense_matrix(const ConstraintMatrix& row_cm,
+    const ConstraintMatrix& col_cm, const SparseOperator& matrix);
 
 } // end namespace tbem
 

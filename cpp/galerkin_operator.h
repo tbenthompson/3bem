@@ -2,32 +2,29 @@
 #define __LKJLKJK12312111_GALERKIN_OPERATOR_H
 
 #include "numerics.h"
-#include "block_operator.h"
+#include "operator.h"
 #include "mesh.h"
 #include "quadrature.h"
 
 namespace tbem {
 
 template <size_t dim>
-struct BlockGalerkinOperator: public BlockOperatorI
+struct GalerkinOperator: public OperatorI
 {
     const OperatorShape shape;
     const Mesh<dim> obs_mesh;
     const QuadRule<dim-1> obs_quad;
 
-    BlockGalerkinOperator(const OperatorShape& shape,
+    GalerkinOperator(const OperatorShape& shape,
         const Mesh<dim>& obs_mesh, const QuadRule<dim-1>& obs_quad):
         shape(shape), obs_mesh(obs_mesh), obs_quad(obs_quad)
     {}
 
-    virtual size_t n_block_rows() const {return shape.n_rows;}
-    virtual size_t n_block_cols() const {return shape.n_cols;}
-
-    virtual size_t n_total_rows() const {
+    virtual size_t n_rows() const {
         return shape.n_rows * obs_mesh.n_dofs();
     }
 
-    virtual size_t n_total_cols() const {
+    virtual size_t n_cols() const {
         return shape.n_cols * obs_mesh.n_facets() * obs_quad.size();
     }
 

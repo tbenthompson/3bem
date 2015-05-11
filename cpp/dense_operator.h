@@ -30,12 +30,6 @@ struct DenseOperator: public OperatorI {
     const double& operator[] (size_t idx) const;
 };
 
-template <typename T>
-struct BlockOperator;
-typedef BlockOperator<DenseOperator> BlockDenseOperator;
-
-DenseOperator combine_components(const BlockDenseOperator& block);
-
 } // end namespace tbem
 
 #endif

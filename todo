@@ -30,9 +30,7 @@ INTEGRATION:
 MISC:
 ** use iterators for traversing point sets?
 ** characterize the galerkin BEM for hypersingular kernels
-** get rid of non-block operators and rename "Block___" to "___"
 ** split out the fmm scheduler/traversal
-** operators should be just one double array
 ** create a continuity builder struct, move continuity builder stuff to cpp file
 -- this may imply using a struct or redesigning the interface
 ** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
