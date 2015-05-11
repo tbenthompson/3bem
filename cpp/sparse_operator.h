@@ -2,6 +2,7 @@
 #define __1231231231898972_SPARSE_OPERATOR_H
 #include <vector>
 #include <assert.h>
+#include <iostream>
 #include "operator.h"
 
 namespace tbem {
@@ -67,7 +68,7 @@ struct SparseOperator: public OperatorI
         const std::vector<MatrixEntry>& entries)
     {
         //compute number of non-zero entries per row of A 
-        std::vector<size_t> nonzeros_per_row(n_rows, 0.0);
+        std::vector<size_t> nonzeros_per_row(n_rows, 0);
 
         for (size_t i = 0; i < entries.size(); i++) {
             assert(entries[i].row() < n_rows);
@@ -77,7 +78,7 @@ struct SparseOperator: public OperatorI
 
         std::vector<size_t> row_ptrs(n_rows + 1);
         size_t cumulative = 0;
-        for (size_t i = 0; i < row_ptrs.size(); i++) {
+        for (size_t i = 0; i < row_ptrs.size() - 1; i++) {
             row_ptrs[i] = cumulative;
             cumulative += nonzeros_per_row[i];
         }
