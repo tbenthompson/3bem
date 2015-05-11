@@ -1,14 +1,14 @@
 #ifndef __ASDASDQ12123_CONSTRAINT_MATRIX_H
 #define __ASDASDQ12123_CONSTRAINT_MATRIX_H
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include "constraint.h"
 #include "dense_operator.h"
 #include "sparse_operator.h"
 
 namespace tbem {
 
-typedef std::map<int,RearrangedConstraintEQ> ConstraintMatrix;
+typedef std::unordered_map<int,RearrangedConstraintEQ> ConstraintMatrix;
 
 bool is_constrained(const ConstraintMatrix& dof_constraint_map, size_t dof);
 

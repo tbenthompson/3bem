@@ -1,6 +1,7 @@
 #include "constraint_matrix.h"
 #include "block_operator.h"
 #include <algorithm>
+#include <map>
 
 namespace tbem {
 
@@ -114,6 +115,7 @@ std::vector<double> condense_vector(const ConstraintMatrix& matrix,
         if (is_constrained(matrix, dof_idx)) {
             continue;
         }
+        assert(next_out_idx < out.size());
         out[next_out_idx] = condensed_dofs[dof_idx];
         next_out_idx++;
     }

@@ -33,7 +33,7 @@ def get_qs():
     return QuadStrategy(5, 9, 3.0, 1e-5)
 
 def solve_half_space(slip, fault, surface):
-    constraint_matrix = faulted_surface_constraints(tbempy.TwoD, surface, fault)
+    constraint_matrix = faulted_surface_constraints(tbempy.TwoD, surface, fault, 1)
     qs = get_qs()
 
     hypersingular_kernel = LaplaceHypersingular()
@@ -48,7 +48,6 @@ def solve_half_space(slip, fault, surface):
         distributed = distribute_vector(constraint_matrix, v, surface.n_dofs())
         applied = lhs_op.apply(distributed)
         condensed = condense_vector(constraint_matrix, applied)
-        # print("ITERATION: " + str(mv.it))
         mv.it += 1
         return condensed
     mv.it = 0

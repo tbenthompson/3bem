@@ -17,16 +17,7 @@ def exact_displacements(x):
             (np.cos(delta) + xsi * np.sin(delta)) / (1 + xsi ** 2))
     return exact_ux, exact_uy
 
-def test_planestrain():
-    fault = line_mesh([-1, -1], [0, 0])
-    surface = line_mesh([-100, 0], [100, 0]).refine_repeatedly(9)
-    slip = np.ones(2 * fault.n_dofs())
-
-    qs = QuadStrategy(3, 8, 3.0, 1e-4)
-
-    hyp = ElasticHypersingular(30e9, 0.25)
-    soln = solve(2, surface, fault, hyp, qs, slip)
-
+def check_planestrain_error(surface, soln):
     xs = surface.facets[:, :, 0].reshape((surface.n_facets() * 2))
     indices = [i for i in range(xs.shape[0])
                if 0 < np.abs(xs[i]) < 10]
@@ -37,6 +28,17 @@ def test_planestrain():
     uy_error = np.sqrt(np.mean((uy - exact_uy) ** 2))
     assert(ux_error < 2e-3)
     assert(uy_error < 6e-3)
+
+def test_planestrain():
+    fault = line_mesh([-1, -1], [0, 0])
+    surface = line_mesh([-100, 0], [100, 0]).refine_repeatedly(9)
+    slip = np.ones(2 * fault.n_dofs())
+
+    qs = QuadStrategy(3, 8, 3.0, 1e-4)
+
+    hyp = ElasticHypersingular(30e9, 0.25)
+    soln = solve(2, surface, fault, hyp, qs, slip)
+    check_planestrain_error(surface, soln)
 
 
 

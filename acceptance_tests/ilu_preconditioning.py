@@ -1,69 +1,72 @@
-from tbempy.TwoD import dense_integral_operator, integral_operator
-from laplace import solve_iterative, np_matrix_from_tbem_matrix
-from laplace2d import run, log_u, make_log_dudn
+import tbempy.TwoD
+from dislocation import solve
+from planestrain_fault import exact_displacements, check_planestrain_error
 import scipy.sparse.linalg
 import scipy.sparse
 import numpy as np
 
-def test_ILU():
-    class Solver(object):
-        def __init__(self):
-            self.iterations = 0
+# Note: need to scale rows so that the residual is properly evaluated. Simply
+# dividing by the shear modulus should work.
+shear_modulus = 30e9
 
-        def solve(self, tbem, constraint_matrix, op, rhs):
-            # nearfield_condensed = tbem.condense_matrix(
-            #     constraint_matrix, constraint_matrix, op.get_nearfield_matrix()
-            # )
+def form_preconditioner(tbem, constraint_matrix, op):
+    nearfield_condensed = tbem.condense_matrix(
+        constraint_matrix, constraint_matrix, op.get_nearfield_matrix()
+    )
 
-            # np_matrix = scipy.sparse.csr_matrix((
-            #     nearfield_condensed.values,
-            #     nearfield_condensed.column_indices,
-            #     nearfield_condensed.row_ptrs
-            # )).tocsc()
+    scaled_values = nearfield_condensed.values / shear_modulus
 
-            # print(np.linalg.cond(np_matrix.todense()))
-            # nnz = np_matrix.nnz
-            # max_nnz = np_matrix.shape[0] * np_matrix.shape[1]
-            # density = nnz / float(max_nnz)
-            # print('matrix density ' + str(density))
+    np_matrix = scipy.sparse.csr_matrix((
+        scaled_values,
+        nearfield_condensed.column_indices,
+        nearfield_condensed.row_ptrs
+    ))
 
-            # P = scipy.sparse.linalg.splu(np_matrix)
-            def precondition(x):
-                return x
-                print("PREC")
-                return P.solve(x)
+    np_matrix = np_matrix.tocsc()
 
-            def mv(v):
-                distributed = tbem.distribute_vector(
-                    constraint_matrix, v, op.n_total_rows()
-                )
-                applied = op.apply(distributed)
-                condensed = tbem.condense_vector(constraint_matrix, applied)
-                self.iterations += 1
-                return condensed
-            n = rhs.shape[0]
-            M = scipy.sparse.linalg.LinearOperator((n, n), precondition)
-            A = scipy.sparse.linalg.LinearOperator((n, n), matvec = mv,
-                dtype = np.float64)
+    P = scipy.sparse.linalg.spilu(np_matrix)
+    def precondition(x):
+        # return x
+        # print("PREC")
+        return P.solve(x)
+    return precondition
 
-            def callback(residual):
-                print(residual)
+class Solver(object):
+    def __init__(self):
+        self.iterations = 0
 
-            res = scipy.sparse.linalg.gmres(
-                A, rhs, tol = 1e-7,
-                callback = callback, M = M
+    def solve(self, tbem, constraint_matrix, op, rhs):
+        rhs /= shear_modulus
+        def mv(v):
+            distributed = tbem.distribute_vector(
+                constraint_matrix, v, op.n_total_rows()
             )
-            assert(res[1] == 0) #Check that the iterative solver succeeded
-            return res[0]
+            applied = op.apply(distributed)
+            applied /= shear_modulus
+            condensed = tbem.condense_vector(constraint_matrix, applied)
+            self.iterations += 1
+            return condensed
+        n = rhs.shape[0]
+
+        prec_fnc = form_preconditioner(tbem, constraint_matrix, op)
+        M = scipy.sparse.linalg.LinearOperator((n, n), matvec = prec_fnc)
+        A = scipy.sparse.linalg.LinearOperator((n, n), matvec = mv)
+
+        res = scipy.sparse.linalg.lgmres(A, rhs, tol = 1e-8, M = M)
+        assert(res[1] == 0) #Check that the iterative solver succeeded
+        return res[0]
+
+def test_ILU():
+    fault = tbempy.TwoD.line_mesh([-1, -1], [0, 0])
+    surface = tbempy.TwoD.line_mesh([-100, 0], [100, 0]).refine_repeatedly(9)
+    slip = np.ones(2 * fault.n_dofs())
+    qs = tbempy.TwoD.QuadStrategy(3, 8, 5.0, 1e-4)
+    hyp = tbempy.TwoD.ElasticHypersingular(shear_modulus, 0.25)
 
     solver = Solver()
-
-    bdry_error, int_error = run(
-        solver.solve, dense_integral_operator, 10, log_u, make_log_dudn, 3.0
-    )
-    assert(bdry_error < 2e-5)
-    assert(int_error < 2e-5)
-    assert(solver.iterations < 20)
+    soln = solve(2, surface, fault, hyp, qs, slip, linear_solver = solver.solve)
+    check_planestrain_error(surface, soln)
+    assert(solver.iterations < 30)
 
 if __name__ == "__main__":
     test_ILU()

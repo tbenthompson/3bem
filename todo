@@ -1,5 +1,4 @@
 CURRENT: MISC
-** acceptance test: sparse ILU of near field matrix
 ** acceptance test: setup fmm operators for python wrapper
 
 ** finish setting up the elastic solver
