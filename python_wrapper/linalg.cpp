@@ -11,7 +11,8 @@ void export_linalg() {
     using namespace tbem;
 
     export_operator<DenseOperator>(
-        p::class_<DenseOperator>("DenseOperator", p::no_init)
+        p::class_<DenseOperator>("DenseOperator",
+            p::init<size_t, size_t, std::vector<double>>())
         .def("data", &DenseOperator::data,
              p::return_value_policy<p::return_by_value>())
     );
