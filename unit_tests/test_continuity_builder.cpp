@@ -19,9 +19,15 @@ Mesh<2> connected_mesh() {
     return line_mesh({{0, 0}}, {{0, 1}}).refine_repeatedly(2);
 }
 
-TEST_CASE("FindOverlappingVerticesEmptyMesh", "[continuity_builder]") {
+TEST_CASE("FindOverlappingVerticesFirstEmptyMesh", "[continuity_builder]") {
     Mesh<2> m{{}};
     auto overlaps = find_overlapping_vertices(m.begin(), m.begin());
+}
+
+TEST_CASE("FindOverlappingVerticesSecondEmptyMesh", "[continuity_builder]") {
+    auto m1 = connected_mesh();
+    Mesh<2> m2{{}};
+    auto overlaps = find_overlapping_vertices(m1.begin(), m2.begin());
 }
 
 TEST_CASE("FindOverlappingVerticesDifferentMeshes", "[continuity_builder]") {
