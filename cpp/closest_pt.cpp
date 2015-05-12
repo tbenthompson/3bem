@@ -23,7 +23,15 @@ Vec<double,1> closest_pt_seg(const Vec<double,2>& pt, const Vec<Vec<double,2>,2>
      return {b * 2 - 1};
 }
 
-Vec<double,2> closest_pt_tri(const Vec<double,3>& pt, const Vec<Vec<double,3>,3> tri) {
+/* Find the closest reference point on a triangle. I took this from somewhere 
+ * online and can't remember where. 
+ *
+ * A faster approach might be to treat the problem as a quadratic minimization
+ * for the triangle reference coordinates. (see Ericson's Real-Time Collision
+ * Detection)
+ */
+Vec<double,2> closest_pt_tri(const Vec<double,3>& pt, const Vec<Vec<double,3>,3> tri) 
+{
     auto diff = pt - tri[0];
     auto edge0 = tri[1] - tri[0];
     auto edge1 = tri[2] - tri[0];
@@ -217,13 +225,15 @@ Vec<double,2> closest_pt_tri(const Vec<double,3>& pt, const Vec<Vec<double,3>,3>
 
 template <>
 Vec<double,1> closest_pt_facet(const Vec<double,2>& pt,
-    const Vec<Vec<double,2>,2> tri) {
+    const Vec<Vec<double,2>,2> tri) 
+{
     return closest_pt_seg(pt, tri);
 }
 
 template <>
 Vec<double,2> closest_pt_facet(const Vec<double,3>& pt,
-    const Vec<Vec<double,3>,3> tri) {
+    const Vec<Vec<double,3>,3> tri) 
+{
     return closest_pt_tri(pt, tri);
 }
 

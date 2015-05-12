@@ -8,21 +8,22 @@ KERNEL OVERHAUL
 ** replace references to the kernel by pointer to the kernel
 ** capacity test: benchmark the fmm
 ** move obs, src loop into the kernel functions which will reduce the number of function calls and also allow sse/avx implementations of those kernel functions
+** if a large number of obs and src points are passed to the kernel functions simultaneously, then maybe the output can simply be a vector rather than using the templated tensor arrays
 
 NEXT: hanging nodes 
 ** acceptance test #1: fault intersecting surface not at point
 ** acceptance test #2: selectively refined okada solution
 ** acceptance test #3: adaptively refined okada solution (using the real error as the refinement criterion, so not technically adaptive meshing yet)
+** octree for balls (circles, spheres)
 ** nearest_neighbors for point->triangle or triangle->triangle intersection
 ** Handle the general case when fault-surface intersection does not occur at a vertex.
 -- Linked to hanging nodes in that lots of geometry code needs to be used/written.
 -- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
 
 INTEGRATION:
-** try using one shifted observation point globally rather than a different one for each local integral
+** determine richardson_dir and len_scale based on src_mesh.
 ** acceptance test: solve planestrain fault problem with sinh-sigmoidal quadrature (finish up the sinh-sigmoidal work)
 ** characterize the sinh-sigmoidal method
-
 ** crack tip elements may require creating a basis structure
 ** acceptance test: high accuracy crack tip stress intensity factor (crack-tip elements)
 

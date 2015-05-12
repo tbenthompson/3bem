@@ -29,7 +29,9 @@ SparseOperator galerkin_nearfield_helper(const Mesh<dim>& obs_mesh,
     for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(obs_mesh.facets[obs_idx]);
         for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
-            auto pt = ObsPt<dim>::from_face(obs_quad[obs_q].x_hat, obs_face);
+            auto pt = ObsPt<dim>::away_from_nearest_facets(
+                obs_quad[obs_q].x_hat, obs_face, src_mesh
+            );
 
             std::vector<std::pair<size_t,Vec<Vec<double,C>,R>>> row;
             for (size_t i = 0; i < src_mesh.facets.size(); i++) {

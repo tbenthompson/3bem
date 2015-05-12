@@ -64,6 +64,9 @@ def setup_package():
     metadata['configuration'] = configuration
 
     if len(sys.argv) == 1:
+        tbempy_path = os.path.join('tbempy', '_tbempy.so')
+        if os.path.exists(tbempy_path):
+            os.remove(tbempy_path)
         sys.argv.extend(['build_ext', '--inplace'])
     setup(**metadata)
 

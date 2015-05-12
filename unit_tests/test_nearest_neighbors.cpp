@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include "nearest_neighbors.h"
 #include "util.h"
+#include "mesh.h"
 
 using namespace tbem;
 
@@ -64,3 +65,86 @@ TEST_CASE("AllPairsPerformance", "[nearest_neighbors]")
     auto result = nearby_points_all_pairs(pts, pts, oct, oct, 0.0);
 }
 
+TEST_CASE("NearestFacetsOneFacetEndpoint", "[nearest_neighbors]") {
+    Facet<2> f{{{1,1},{2,1}}};
+    Mesh<2> m{{f}};
+    auto result = nearest_facets({0, 0}, m.facets);
+    REQUIRE(result.facets[0] == m.facets[0]);
+    REQUIRE(result.pt == m.facets[0][0]);
+    REQUIRE(result.distance == std::sqrt(2));
+}
+
+TEST_CASE("NearestFacetsOneFacetNotEndpoint", "[nearest_neighbors]") {
+    Facet<2> f{{{-1,-1},{1,-1}}};
+    Mesh<2> m{{f}};
+    auto result = nearest_facets({0, 0}, m.facets);
+    REQUIRE(result.facets[0] == m.facets[0]);
+    REQUIRE_ARRAY_CLOSE(result.pt, Vec<double,2>{0,-1}, 2, 1e-14);
+    REQUIRE(result.distance == 1.0);
+}
+
+TEST_CASE("NearestFacetsTwoFacetsNotEndpoint", "[nearest_neighbors]") {
+    Facet<2> f{{{0.5,-1},{1,-1}}};
+    Facet<2> f2{{{-1,-1},{0.5,-1}}};
+    Mesh<2> m{{f,f2}};
+    auto result = nearest_facets({0, 0}, m.facets);
+    REQUIRE(result.facets[0] == m.facets[1]);
+    REQUIRE_ARRAY_CLOSE(result.pt, Vec<double,2>{0,-1}, 2, 1e-14);
+    REQUIRE(result.distance == 1.0);
+}
+
+TEST_CASE("NearestFacetsIntersection", "[nearest_neighbors]") {
+    Facet<2> f{{{0,0},{1,0}}};
+    Facet<2> f2{{{0,1},{0,0}}};
+    Mesh<2> m{{f,f2}};
+    auto result = nearest_facets({0, 0}, m.facets);
+    REQUIRE(result.facets.size() == 2);
+    bool correct_facets = result.facets[0] == f || result.facets[1] == f &&
+        result.facets[0] == f2 || result.facets[1] == f2; 
+    REQUIRE(correct_facets);
+    REQUIRE_ARRAY_CLOSE(result.pt, Vec<double,2>{0,0}, 2, 1e-14);
+    REQUIRE(result.distance == 0.0);
+}
+
+TEST_CASE("DecideRichardsonDirFar", "[nearest_neighbors]") {
+    Facet<2> f{{{0,-1},{1,-1}}};
+    Vec<double,2> p{0,1};
+    NearestFacets<2> np{{f}, p, 0.0};
+    auto dir = decide_richardson_dir(p, np);
+    REQUIRE(dir == (Vec<double,2>{0, 1}));
+}
+
+TEST_CASE("DecideRichardsonDirTouching", "[nearest_neighbors]") {
+    Facet<2> f{{{0,0},{0,1}}};
+    Vec<double,2> p{0,0};
+    NearestFacets<2> np{{f}, p, 0.0};
+    auto dir = decide_richardson_dir(p, np);
+    REQUIRE(dir == (Vec<double,2>{-1, 0}));
+}
+
+TEST_CASE("DecideRichardsonDirOppositeNormal", "[nearest_neighbors]") {
+    Facet<2> f{{{0,-1},{1,-1}}};
+    Vec<double,2> p{0,-2};
+    NearestFacets<2> np{{f}, p, 0.0};
+    auto dir = decide_richardson_dir(p, np);
+    REQUIRE(dir == (Vec<double,2>{0, -1}));
+}
+
+TEST_CASE("DecideRichardsonDirIntersection", "[nearest_neighbors]") {
+    Facet<2> f{{{0,0},{1,0}}};
+    Facet<2> f2{{{0,1},{0,0}}};
+    Vec<double,2> p{0,0};
+    NearestFacets<2> np{{f,f2}, p, 0.0};
+    auto dir = decide_richardson_dir(p, np);
+    REQUIRE(dir == (Vec<double,2>{0.5, 0.5}));
+}
+
+TEST_CASE("DecideRichardsonDirOppositeNormalsCancel", "[nearest_neighbors]") {
+    Facet<2> f{{{1,-1},{1,1}}};
+    Facet<2> f2{{{-1,1},{-1,-1}}};
+    Vec<double,2> p{0,0};
+    NearestFacets<2> np{{f,f2}, p, 0.0};
+    auto dir = decide_richardson_dir(p, np);
+    bool normals_canceled = (dir[0] != 0.0) || (dir[1] != 0.0);
+    REQUIRE(normals_canceled);
+}

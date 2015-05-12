@@ -1,7 +1,7 @@
 import sys
 import os
-dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(dir, os.pardir))
+this_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(this_dir, os.pardir))
 
 from tbempy.setup import get_extension_config, setup_parallel_compile, \
     files_in_dir
@@ -48,6 +48,9 @@ def setup_package():
 
     # Default to building in place, the most common use case during development.
     if len(sys.argv) == 1:
+        executable_path = os.path.join('unit_tests', 'test_runner')
+        if os.path.exists(executable_path):
+            os.remove(executable_path)
         sys.argv.extend(['build_ext', '--inplace'])
     setup(**metadata)
 

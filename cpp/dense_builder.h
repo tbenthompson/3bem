@@ -65,7 +65,10 @@ DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
         std::vector<Vec<Vec<Vec<double,C>,R>,dim>> row(n_src_dofs, 
                 zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make());
         for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
-            auto pt = ObsPt<dim>::from_face(obs_quad[obs_q].x_hat, obs_face);
+            //TODO: This is ugly and messy
+            auto pt = ObsPt<dim>::away_from_nearest_facets(
+                obs_quad[obs_q].x_hat, obs_face, src_mesh
+            );
 
             const auto basis = linear_basis(obs_quad[obs_q].x_hat);
             std::vector<Vec<Vec<double,C>,R>> add_to_row(src_mesh.n_dofs());

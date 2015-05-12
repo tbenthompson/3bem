@@ -2,9 +2,12 @@
 #define __QWEKLHHHHAHAHHA_NEAREST_NEIGHBORS_H
 
 #include <cassert>
+#include <limits>
 #include "octree.h"
 #include "vec_ops.h"
 #include "geometry.h"
+#include "closest_pt.h"
+#include "numerics.h"
 
 namespace tbem {
 
@@ -85,7 +88,60 @@ nearby_points(const Vec<double,dim>& ptA,
     return out_indices;
 }
 
+template <size_t dim>
+struct NearestFacets {
+    const std::vector<Vec<Vec<double,dim>,dim>> facets;
+    const Vec<double,dim> pt;
+    const double distance;
+};
 
+//TODO: Use the bounding balls to speed this up as still as O(n^2) algorithm
+//TODO: Do this using an octree to get faster asymptotic times
+template <size_t dim>
+NearestFacets<dim> nearest_facets(const Vec<double,dim>& pt,
+    const std::vector<Vec<Vec<double,dim>,dim>>& facets) 
+{
+    std::vector<Vec<Vec<double,dim>,dim>> closest_facets;
+    Vec<double,dim> closest_pt;
+    auto min_dist2 = std::numeric_limits<double>::max();
+    for (size_t facet_idx = 0; facet_idx < facets.size(); facet_idx++) {
+        auto ref_pt = closest_pt_facet(pt, facets[facet_idx]);
+        auto mesh_pt = ref_to_real(ref_pt, facets[facet_idx]);
+        auto dist2_to_mesh = dist2(pt, mesh_pt);
+        if (dist2_to_mesh < min_dist2) {
+            closest_facets.clear();
+            closest_facets.push_back(facets[facet_idx]);
+            min_dist2 = dist2_to_mesh;
+            closest_pt = mesh_pt;
+        } else if (dist2_to_mesh == min_dist2) {
+            closest_facets.push_back(facets[facet_idx]);
+        }
+    }
+    return {closest_facets, closest_pt, std::sqrt(min_dist2)};
+}
+
+template <size_t dim>
+Vec<double,dim> decide_richardson_dir(const Vec<double,dim>& pt,
+    const NearestFacets<dim>& nearest_facets) 
+{
+    auto facet_normal = zeros<Vec<double,dim>>::make();
+    for (size_t i = 0; i < nearest_facets.facets.size(); i++) {
+        facet_normal += unscaled_normal(nearest_facets.facets[i]); 
+    }
+    if (all(facet_normal == 0.0)) {
+        facet_normal = unscaled_normal(nearest_facets.facets[0]);
+    }
+    facet_normal /= (double)nearest_facets.facets.size();
+
+    auto which_side = which_side_point(nearest_facets.facets[0], pt);
+    if (which_side == INTERSECT) {
+        return facet_normal;
+    } else if (which_side == FRONT) {
+        return facet_normal;
+    } else {
+        return -facet_normal;
+    }
+}
 
 } //end namespace tbem
 

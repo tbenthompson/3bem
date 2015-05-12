@@ -25,7 +25,7 @@ void test_integral_operator(Mesh<2> m1, Mesh<2> m2)
 
 TEST_CASE("IntegralOperatorSameMesh", "[integral_operator]") 
 {
-    auto m = circle_mesh({0, 0}, 1.0, 5);
+    auto m = circle_mesh({0, 0}, 1.0, 2);
     test_integral_operator(m, m);
 }
 
@@ -49,7 +49,6 @@ TEST_CASE("IntegralOperatorTensor", "[integral_operator]")
     auto other = other_op.apply(v);
     REQUIRE(other_op.n_rows() == 2 * m1.n_dofs());
     REQUIRE(other_op.n_cols() == 2 * m2.n_dofs());
-    REQUIRE_ARRAY_CLOSE(correct, other, m1.n_dofs(), 1e-12);
     REQUIRE_ARRAY_CLOSE(correct, other, m1.n_dofs(), 1e-12);
 }
 
