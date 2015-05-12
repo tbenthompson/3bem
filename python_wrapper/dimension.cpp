@@ -74,6 +74,7 @@ void export_dimension() {
         .def("size", &OverlapMap<dim>::size);
     def("mesh_continuity", mesh_continuity<dim>);
     def("cut_at_intersection", cut_at_intersection<dim>);
+    def("normal_constraints", normal_constraints<dim>);
 
     def("convert_to_constraints", convert_to_constraints<dim>);
     def("interpolate_bc_constraints", interpolate_bc_constraints_wrapper<dim>);

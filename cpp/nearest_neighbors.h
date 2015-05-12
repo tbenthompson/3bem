@@ -9,17 +9,18 @@
 namespace tbem {
 
 template <size_t dim>
-std::vector<std::pair<size_t,size_t>> identical_points_all_pairs(
+std::vector<std::pair<size_t,size_t>> nearby_points_all_pairs(
     const std::vector<Vec<double,dim>>& ptsA,
     const std::vector<Vec<double,dim>>& ptsB,
     const Octree<dim>& cellA,
-    const Octree<dim>& cellB)
+    const Octree<dim>& cellB, 
+    double r)
 {
     auto rA = hypot(cellA.data.bounds.half_width);
     auto rB = hypot(cellB.data.bounds.half_width);
     auto sep = hypot(cellB.data.bounds.center - cellA.data.bounds.center);
-    if (sep > rA + rB) {
-        // the cells don't intersect. ignore them!
+    if (sep > rA + rB + 2 * r) {
+        // the cells are too far apart, ignore them
         return {};
     }
 
@@ -28,7 +29,8 @@ std::vector<std::pair<size_t,size_t>> identical_points_all_pairs(
         std::vector<std::pair<size_t,size_t>> out_pairs;
         for (const auto& idxA: cellA.data.indices) {
             for (const auto& idxB: cellB.data.indices) {
-                if (ptsA[idxA] == ptsB[idxB]) {
+                bool close_pts = all(fabs(ptsA[idxA] - ptsB[idxB]) <= r);
+                if (close_pts) {
                     out_pairs.push_back({idxA, idxB});
                 }
             }
@@ -46,8 +48,8 @@ std::vector<std::pair<size_t,size_t>> identical_points_all_pairs(
             if (cellB.children[c] == nullptr) {
                 continue;
             }
-            auto child_pairs = identical_points_all_pairs(
-                ptsA, ptsB, cellA, *cellB.children[c]
+            auto child_pairs = nearby_points_all_pairs(
+                ptsA, ptsB, cellA, *cellB.children[c], r
             );
             out_pairs.insert(out_pairs.end(), child_pairs.begin(), child_pairs.end());
         }
@@ -57,8 +59,8 @@ std::vector<std::pair<size_t,size_t>> identical_points_all_pairs(
             if (cellA.children[c] == nullptr) {
                 continue;
             }
-            auto child_pairs = identical_points_all_pairs(
-                ptsA, ptsB, *cellA.children[c], cellB
+            auto child_pairs = nearby_points_all_pairs(
+                ptsA, ptsB, *cellA.children[c], cellB, r
             );
             out_pairs.insert(out_pairs.end(), child_pairs.begin(), child_pairs.end());
         }
@@ -69,12 +71,12 @@ std::vector<std::pair<size_t,size_t>> identical_points_all_pairs(
 
 template <size_t dim>
 std::vector<size_t>
-identical_points(const Vec<double,dim>& ptA, 
+nearby_points(const Vec<double,dim>& ptA, 
     const std::vector<Vec<double,dim>>& ptsB,
-    const Octree<dim>& octB)
+    const Octree<dim>& octB, double r)
 {
     auto octA = build_octree<dim>({ptA}, 1);
-    auto pairs = identical_points_all_pairs({ptA}, ptsB, octA, octB);
+    auto pairs = nearby_points_all_pairs({ptA}, ptsB, octA, octB, r);
     std::vector<size_t> out_indices(pairs.size());
     for (size_t i = 0; i < pairs.size(); i++) {
         assert(pairs[i].first == 0);

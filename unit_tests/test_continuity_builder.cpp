@@ -19,18 +19,21 @@ Mesh<2> connected_mesh() {
     return line_mesh({{0, 0}}, {{0, 1}}).refine_repeatedly(2);
 }
 
-TEST_CASE("FindOverlappingVerticesFirstEmptyMesh", "[continuity_builder]") {
+TEST_CASE("FindOverlappingVerticesFirstEmptyMesh", "[continuity_builder]") 
+{
     Mesh<2> m{{}};
     auto overlaps = find_overlapping_vertices(m.begin(), m.begin());
 }
 
-TEST_CASE("FindOverlappingVerticesSecondEmptyMesh", "[continuity_builder]") {
+TEST_CASE("FindOverlappingVerticesSecondEmptyMesh", "[continuity_builder]") 
+{
     auto m1 = connected_mesh();
     Mesh<2> m2{{}};
     auto overlaps = find_overlapping_vertices(m1.begin(), m2.begin());
 }
 
-TEST_CASE("FindOverlappingVerticesDifferentMeshes", "[continuity_builder]") {
+TEST_CASE("FindOverlappingVerticesDifferentMeshes", "[continuity_builder]") 
+{
     auto m0 = disjoint_mesh();
     auto m1 = connected_mesh();
     auto overlaps = find_overlapping_vertices(m0.begin(), m1.begin());
@@ -38,7 +41,8 @@ TEST_CASE("FindOverlappingVerticesDifferentMeshes", "[continuity_builder]") {
     REQUIRE(overlaps.find(m0.begin())->second == m1.begin());
 }
 
-TEST_CASE("FindOverlappingVertices", "[continuity_builder]") {
+TEST_CASE("FindOverlappingVertices", "[continuity_builder]") 
+{
     auto m = disjoint_mesh();
     auto overlaps = find_overlapping_vertices(m.begin(), m.begin());
     int n_verts = m.n_dofs();
@@ -49,13 +53,15 @@ TEST_CASE("FindOverlappingVertices", "[continuity_builder]") {
     }
 }
 
-TEST_CASE("FindOverlappingVerticesSameMeshDisjoint", "[continuity_builder]") {
+TEST_CASE("FindOverlappingVerticesSameMeshDisjoint", "[continuity_builder]") 
+{
     auto m = disjoint_mesh();
     auto overlaps = find_overlapping_vertices_same_mesh(m.begin());
     REQUIRE(overlaps.size() == 0);
 }
 
-TEST_CASE("FindOverlappingVerticesSameMeshConnected", "[continuity_builder]") {
+TEST_CASE("FindOverlappingVerticesSameMeshConnected", "[continuity_builder]") 
+{
     auto m = connected_mesh();
     auto overlaps = find_overlapping_vertices_same_mesh(m.begin());
     REQUIRE(overlaps.size() == m.n_facets() - 1);
@@ -67,7 +73,8 @@ TEST_CASE("FindOverlappingVerticesSameMeshConnected", "[continuity_builder]") {
     }
 }
 
-TEST_CASE("ConstraintMesh", "[continuity_builder]") {
+TEST_CASE("ConstraintMesh", "[continuity_builder]") 
+{
     auto sphere = sphere_mesh({{0, 0, 0}}, 1, 2);
     auto continuity = mesh_continuity(sphere.begin());
     auto constraints = convert_to_constraints(continuity);
@@ -78,7 +85,8 @@ TEST_CASE("ConstraintMesh", "[continuity_builder]") {
     REQUIRE(my_c[0].weight == 1);
 }
 
-TEST_CASE("RectMeshContinuity", "[continuity_builder]") {
+TEST_CASE("RectMeshContinuity", "[continuity_builder]") 
+{
     auto zplane = rect_mesh({{-1, -1, 0}}, {{1, -1, 0}}, {{1, 1, 0}}, {{-1, 1, 0}})
         .refine_repeatedly(1);
     auto continuity = mesh_continuity(zplane.begin());
@@ -86,7 +94,8 @@ TEST_CASE("RectMeshContinuity", "[continuity_builder]") {
     REQUIRE(constraints.size() == 29);
 }
 
-TEST_CASE("CutWithDiscontinuity", "[continuity_builder]") {
+TEST_CASE("CutWithDiscontinuity", "[continuity_builder]") 
+{
     auto zplane = rect_mesh({{-1, -1, 0}}, {{1, -1, 0}}, {{1, 1, 0}}, {{-1, 1, 0}})
         .refine_repeatedly(1);
     auto xplane = rect_mesh({{0, -1, -1}}, {{0, 1, -1}}, {{0, 1, 1}}, {{0, -1, 1}})
@@ -97,7 +106,8 @@ TEST_CASE("CutWithDiscontinuity", "[continuity_builder]") {
     REQUIRE(constraints.size() == 16);
 }
 
-TEST_CASE("GetReducedToCountTheNumberOfVerticesOnASphereApproximation", "[continuity_builder]") {
+TEST_CASE("GetReducedToCountTheNumberOfVerticesOnASphereApproximation", "[continuity_builder]") 
+{
     auto sphere = sphere_mesh({{0, 0, 0}}, 1, 0);
     auto continuity = mesh_continuity(sphere.begin());
     auto constraints = convert_to_constraints(continuity);
@@ -108,7 +118,8 @@ TEST_CASE("GetReducedToCountTheNumberOfVerticesOnASphereApproximation", "[contin
     REQUIRE_ARRAY_EQUAL(reduced, (std::vector<double>(6, 4.0)), 6);
 }
 
-TEST_CASE("ImposeNeighborBCs", "[continuity_builder]") {
+TEST_CASE("ImposeNeighborBCs", "[continuity_builder]") 
+{
     auto m0 = disjoint_mesh();
     auto m1 = connected_mesh();
     std::vector<double> bcs(m1.n_dofs(), 2.33);
@@ -130,4 +141,16 @@ TEST_CASE("InterpolateBCConstraints", "[continuity_builder]") {
     REQUIRE(cs[0].rhs == 0.0);
     REQUIRE(cs[1].terms[0] == (LinearTerm{1, 1}));
     REQUIRE(cs[1].rhs == 2.0);
+}
+
+TEST_CASE("Normal constraints", "[continuity_builder]") 
+{
+    auto m0 = line_mesh({-1, -1}, {1, 1});
+    auto cs = normal_constraints(m0, {0.0, 1.0});
+    auto invsqrt2 = 1.0 / std::sqrt(2);
+    REQUIRE(cs.size() == 2);
+    REQUIRE(cs[0].terms.size() == 2);
+    REQUIRE(cs[0].terms[0] == (LinearTerm{0, -invsqrt2}));
+    REQUIRE(cs[1].terms[1] == (LinearTerm{3, invsqrt2}));
+    REQUIRE(cs[1].rhs == 1.0);
 }

@@ -307,6 +307,18 @@ template <typename T>
 inline Vec1<bool> operator<(const Vec1<T>& t, const T& rhs) {
     return {t[0] < rhs};
 }
+template <typename T>
+inline Vec3<bool> operator<=(const Vec3<T>& t, const T& rhs) {
+    return {t[0] <= rhs, t[1] <= rhs, t[2] <= rhs};
+}
+template <typename T>
+inline Vec2<bool> operator<=(const Vec2<T>& t, const T& rhs) {
+    return {t[0] <= rhs, t[1] <= rhs};
+}
+template <typename T>
+inline Vec1<bool> operator<=(const Vec1<T>& t, const T& rhs) {
+    return {t[0] <= rhs};
+}
 
 template <typename T>
 inline Vec3<bool> operator>(const Vec3<T>& t, const T& rhs) {

@@ -1,8 +1,7 @@
 CURRENT: MISC
 ** acceptance test: setup fmm operators for python wrapper
-
-** finish setting up the elastic solver
 ** easy load/save for solved problems
+** setup.py clean
 
 KERNEL OVERHAUL
 ** unit test: create a integration method with inline kernel parameter. currently, this would segfault, because a reference is stored rather 

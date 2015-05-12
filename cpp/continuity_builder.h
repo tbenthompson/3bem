@@ -50,7 +50,7 @@ find_overlapping_vertices(const VertexIterator<dim>& A_begin,
     std::vector<OverlapPair<dim>> overlaps;
     for (auto A_it = A_begin; !A_it.is_end(); ++A_it) {
         auto A_pt = *A_it;
-        auto ident_pts_indices = identical_points(A_pt, target_pts, oct);
+        auto ident_pts_indices = nearby_points(A_pt, target_pts, oct, eps);
         for (const auto& idx: ident_pts_indices) {
             overlaps.push_back({A_it, B_begin + idx});
         }
@@ -168,6 +168,24 @@ std::vector<ConstraintEQ> interpolate_bc_constraints(
     return out;
 }
 
+template <size_t dim>
+std::vector<ConstraintEQ> normal_constraints(const Mesh<dim>& m,
+    std::vector<double> normal_values)
+{
+  // Opening displacement constraint.
+    std::vector<ConstraintEQ> constraints;
+    for (auto it = m.begin(); it != m.end(); ++it) {
+        auto normal = normalized(unscaled_normal(it.get_facet()));
+        std::vector<LinearTerm> terms;
+        for (size_t d = 0; d < dim; d++) {
+            auto dof = d * m.n_dofs() + it.absolute_index();
+            terms.push_back({dof, normal[d]});
+        }
+        ConstraintEQ c{terms, normal_values[it.absolute_index()]};
+        constraints.push_back(c);
+    }
+    return constraints;
+}
 
 
 } //END namespace tbem
