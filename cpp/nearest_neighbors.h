@@ -121,19 +121,11 @@ NearestFacets<dim> nearest_facets(const Vec<double,dim>& pt,
 }
 
 template <size_t dim>
-Vec<double,dim> decide_richardson_dir(const Vec<double,dim>& pt,
-    const NearestFacets<dim>& nearest_facets) 
+Vec<double,dim> away_from_facet_dir(const Vec<Vec<double,dim>,dim>& f,
+    const Vec<double,dim>& pt) 
 {
-    auto facet_normal = zeros<Vec<double,dim>>::make();
-    for (size_t i = 0; i < nearest_facets.facets.size(); i++) {
-        facet_normal += unscaled_normal(nearest_facets.facets[i]); 
-    }
-    if (all(facet_normal == 0.0)) {
-        facet_normal = unscaled_normal(nearest_facets.facets[0]);
-    }
-    facet_normal /= (double)nearest_facets.facets.size();
-
-    auto which_side = which_side_point(nearest_facets.facets[0], pt);
+    auto facet_normal = unscaled_normal(f); 
+    auto which_side = which_side_point(f, pt);
     if (which_side == INTERSECT) {
         return facet_normal;
     } else if (which_side == FRONT) {
@@ -141,6 +133,21 @@ Vec<double,dim> decide_richardson_dir(const Vec<double,dim>& pt,
     } else {
         return -facet_normal;
     }
+}
+
+template <size_t dim>
+Vec<double,dim> decide_richardson_dir(const Vec<double,dim>& pt,
+    const NearestFacets<dim>& nearest_facets) 
+{
+    auto direction = zeros<Vec<double,dim>>::make();
+    for (size_t i = 0; i < nearest_facets.facets.size(); i++) {
+        direction += away_from_facet_dir(nearest_facets.facets[i], pt);
+    }
+    if (all(direction == 0.0)) {
+        direction = away_from_facet_dir(nearest_facets.facets[0], pt);
+    }
+    direction /= (double)nearest_facets.facets.size();
+    return direction;
 }
 
 } //end namespace tbem

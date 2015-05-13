@@ -15,22 +15,18 @@ def full_space():
     double_layer = integral_operator(surface, fault, mthd)
 
     def fnc(x):
-        richardson_dir = [1, 0]
-        if (x[0] < 0):
-            richardson_dir = [-1, 0]
         if x[0] == 0.0:
             return 0.0
-        obs = ObsPt(0.001, x, [0, 1], richardson_dir)
-
-        op = mesh_to_points_operator([obs], fault, mthd)
+        obs_pt = setup_obs_pts(np.array([x]), np.array([[0, 1]]), [fault])
+        op = mesh_to_points_operator(obs_pt, fault, mthd)
         val = op.apply(slip)
         exact = np.arctan(0.5 / x[0]) / np.pi
-        assert(np.abs(exact - val) < 2e-15)
+        assert(np.abs(exact - val) < 2e-4)
         return val[0]
     u = interpolate(surface, fnc)
 
 def get_qs():
-    return QuadStrategy(5, 9, 3.0, 1e-5)
+    return QuadStrategy(5, 10, 3.0, 1e-5)
 
 def solve_half_space(slip, fault, surface):
     constraint_matrix = faulted_surface_constraints(tbempy.TwoD, surface, fault, 1)
@@ -39,7 +35,7 @@ def solve_half_space(slip, fault, surface):
     hypersingular_kernel = LaplaceHypersingular()
     hypersingular_mthd = make_adaptive_integration_mthd(qs, hypersingular_kernel)
     rhs_op = integral_operator(surface, fault, hypersingular_mthd)
-    full_rhs = -(rhs_op.apply(slip))
+    full_rhs = (rhs_op.apply(slip))
     rhs = condense_vector(constraint_matrix, full_rhs)
 
     lhs_op = integral_operator(surface, surface, hypersingular_mthd)
@@ -61,7 +57,7 @@ def solve_half_space(slip, fault, surface):
 def half_space(refine):
     fault = line_mesh([0, -1], [0, 0])
     slip = np.ones(fault.n_dofs())
-    surface = line_mesh([-50, 0.0], [50, 0.0]).refine_repeatedly(refine)
+    surface = line_mesh([50, 0.0], [-50, 0.0]).refine_repeatedly(refine)
     soln = solve_half_space(slip, fault, surface)
     xs = surface.facets[:, :, 0].reshape((surface.n_facets() * 2))
     indices = [i for i in range(len(xs)) if 0 < np.abs(xs[i]) < 10]
@@ -73,7 +69,7 @@ def half_space(refine):
 def half_space_interior(refine):
     fault = line_mesh([0, -1], [0, 0])
     slip = np.ones(fault.n_dofs())
-    surface = line_mesh([-50, 0.0], [50, 0.0]).refine_repeatedly(refine)
+    surface = line_mesh([50, 0.0], [-50, 0.0]).refine_repeatedly(refine)
     qs = get_qs()
 
     soln = solve_half_space(slip, fault, surface)
@@ -81,28 +77,31 @@ def half_space_interior(refine):
     xs = np.linspace(-5, 5, 100)
     ys = np.linspace(-5, 0, 100)
 
-    pts_x = []
-    pts_y = []
+    normalsx = np.array([[1, 0]] * xs.shape[0] * ys.shape[0])
+    normalsy = np.array([[0, 1]] * xs.shape[0] * ys.shape[0])
+    pts = []
     for x in xs:
         for y in ys:
-            pts_x.append(ObsPt(0.001, [x, y], [1, 0], [0, -1]))
-            pts_y.append(ObsPt(0.001, [x, y], [0, 1], [0, -1]))
+            pts.append([x, y])
+    pts = np.array(pts)
+    ptsx = setup_obs_pts(pts, normalsx, [fault, surface])
+    ptsy = setup_obs_pts(pts, normalsy, [fault, surface])
 
     double_kernel = LaplaceDouble()
     hypersingular_kernel = LaplaceHypersingular()
     double_mthd = make_adaptive_integration_mthd(qs, double_kernel)
     hypersingular_mthd = make_adaptive_integration_mthd(qs, hypersingular_kernel)
 
-    disp = mesh_to_points_operator(pts_x, fault, double_mthd).apply(slip) +\
-           mesh_to_points_operator(pts_x, surface, double_mthd).apply(soln)
+    disp = mesh_to_points_operator(ptsx, fault, double_mthd).apply(slip) -\
+           mesh_to_points_operator(ptsx, surface, double_mthd).apply(soln)
 
-    tracx = mesh_to_points_operator(pts_x, fault, hypersingular_mthd).apply(slip) +\
-           mesh_to_points_operator(pts_x, surface, hypersingular_mthd).apply(soln)
-    tracy = mesh_to_points_operator(pts_y, fault, hypersingular_mthd).apply(slip) +\
-           mesh_to_points_operator(pts_y, surface, hypersingular_mthd).apply(soln)
+    tracx = mesh_to_points_operator(ptsx, fault, hypersingular_mthd).apply(slip)\
+        - mesh_to_points_operator(ptsx, surface, hypersingular_mthd).apply(soln)
+    tracy = mesh_to_points_operator(ptsy, fault, hypersingular_mthd).apply(slip)\
+        - mesh_to_points_operator(ptsy, surface, hypersingular_mthd).apply(soln)
 
-    x = np.array([p.loc[0] for p in pts_x])
-    y = np.array([p.loc[1] for p in pts_x])
+    x = np.array([p[0] for p in pts])
+    y = np.array([p[1] for p in pts])
 
     d = 1
     s = 1
@@ -131,7 +130,7 @@ def test_halfspace():
 
 def test_halfspace_interior():
     disp_error, tracx_error, tracy_error = half_space_interior(7)
-    assert(disp_error < 3e-4)
+    assert(disp_error < 4e-4)
     assert(tracx_error < 2e-3)
     assert(tracy_error < 2e-3)
 

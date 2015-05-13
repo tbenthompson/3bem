@@ -19,14 +19,13 @@ struct EvalProb {
         qs(gauss_order, near_eval, 2.0, 1e-2),
         obs_pt(random_pt<3>()),
         obs_n(random_pt<3>()),
-        obs_length_scale(std::sqrt(tri_area(sphere.facets[0]))),
         src_strength(std::vector<double>(sphere.n_dofs(), 1.0))
     {}
 
     double go(const Kernel<3,1,1>& k) {
-        ObsPt<3> obs{obs_length_scale, obs_pt, obs_n, obs_n};
         auto mthd = make_adaptive_integration_mthd(qs, k);
-        auto op = mesh_to_points_operator({obs}, sphere, mthd);
+        auto pts = setup_obs_pts<3>({obs_pt}, {obs_n}, {sphere});
+        auto op = mesh_to_points_operator(pts, sphere, mthd);
         return op.apply(src_strength)[0];
     }
 
@@ -34,7 +33,6 @@ struct EvalProb {
     QuadStrategy<3> qs;
     Vec3<double> obs_pt;
     Vec3<double> obs_n;
-    double obs_length_scale;
     std::vector<double> src_strength;
 }; 
 

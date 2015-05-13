@@ -9,8 +9,25 @@
 
 namespace tbem {
 
+template <size_t dim>
+std::vector<ObsPt<dim>> setup_obs_pts(const std::vector<Vec<double,dim>>& locs,
+    const std::vector<Vec<double,dim>>& normals, const std::vector<Mesh<dim>>& meshes)
+{
+    auto union_mesh = Mesh<dim>::create_union(meshes);
+    std::vector<ObsPt<dim>> out;
+    for (size_t i = 0; i < locs.size(); i++) {
+        auto nf = nearest_facets(locs[i], union_mesh.facets);
+        auto rich_dir = decide_richardson_dir(locs[i], nf);
+        auto rich_length = hypot(rich_dir);
+        out.push_back({
+            rich_length / 5.0, locs[i], normals[i], rich_dir / rich_length
+        });
+    }
+    return out;
+}
+
 template <size_t dim, size_t R, size_t C>
-DenseOperator mesh_to_points_operator(const std::vector<ObsPt<dim>>& obs_pts, 
+DenseOperator mesh_to_points_operator(const std::vector<ObsPt<dim>>& obs_pts,
     const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd)
 {
     auto n_obs_dofs = obs_pts.size();
@@ -19,9 +36,10 @@ DenseOperator mesh_to_points_operator(const std::vector<ObsPt<dim>>& obs_pts,
     DenseOperator op(R * n_obs_dofs, C * n_src_dofs, 0.0);
 
     auto src_facet_info = get_facet_info(src_mesh);
-#pragma omp parallel for
-    for (size_t pt_idx = 0; pt_idx < obs_pts.size(); pt_idx++) {
-        auto pt = obs_pts[pt_idx];
+// #pragma omp parallel for
+    for (size_t pt_idx = 0; pt_idx < n_obs_dofs; pt_idx++) {
+        const auto& pt = obs_pts[pt_idx];
+
         std::vector<Vec<Vec<double,C>,R>> result(src_mesh.n_dofs());
         FarNearLogic<dim> far_near_logic{mthd.far_threshold(), 1.0};
         for (size_t i = 0; i < src_mesh.facets.size(); i++) {

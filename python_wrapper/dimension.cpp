@@ -108,11 +108,8 @@ void export_dimension() {
     //TODO: don't expose this...??
     //TODO: Instead have a wrapper for mesh_to_points that takes a
     //numpy array for each of the constructor inputs to ObsPt
-    class_<ObsPt<dim>>("ObsPt", 
-        init<double, Vec<double,dim>, Vec<double,dim>, Vec<double,dim>>())
-        .add_property("loc", 
-            make_getter(&ObsPt<dim>::loc, return_value_policy<return_by_value>()));
-    VectorFromIterable().from_python<std::vector<ObsPt<dim>>>();
+    p::class_<std::vector<ObsPt<dim>>>("ObsPt", p::no_init);
+    def("setup_obs_pts", setup_obs_pts<dim>);
     def("mesh_to_points_operator", mesh_to_points_operator<dim,1,1>);
 
 

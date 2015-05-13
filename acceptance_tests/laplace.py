@@ -65,13 +65,13 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc,
     np_dudn = dudn
     boundary_error = np.sqrt(np.mean((np_soln - np_dudn) ** 2))
 
-    single_int = tbem.mesh_to_points_operator(obs_pts, mesh, single_mthd)\
-                    .apply(soln)
-    double_int = tbem.mesh_to_points_operator(obs_pts, mesh, double_mthd)\
-                    .apply(u)
+    pts = tbem.setup_obs_pts(obs_pts['locs'], obs_pts['normals'], [mesh])
+    single_int = tbem.mesh_to_points_operator(pts, mesh, single_mthd).apply(soln)
+    double_int = tbem.mesh_to_points_operator(pts, mesh, double_mthd).apply(u)
+
     result = single_int - double_int
 
-    exact = [u_fnc(p.loc) for p in obs_pts]
+    exact = [u_fnc(p) for p in obs_pts['locs']]
     max_interior_error = np.max(np.abs(exact - result))
     return boundary_error, max_interior_error
 

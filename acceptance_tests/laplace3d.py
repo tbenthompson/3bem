@@ -26,11 +26,10 @@ def random_pt_sphere(center, max_r):
     return pt
 
 def make_interior_pts(n, center, max_r):
-    pts = [random_pt_sphere(center, max_r) for i in range(n)]
-    inward_normal = center - np.array(pts)
+    pts = np.array([random_pt_sphere(center, max_r) for i in range(n)])
+    inward_normal = center - pts
     inward_normal /= np.reshape(np.linalg.norm(inward_normal, axis = 1), (n, 1))
-    obs_pts = [ObsPt(0.001, p, n, n) for (p, n) in zip(pts, inward_normal)]
-    return pts, obs_pts
+    return dict(locs = pts, normals = inward_normal)
 
 def run():
     refine = 3
@@ -38,8 +37,7 @@ def run():
     r = 3.0
     obs_radius = 2.9
 
-    pts, obs_pts = make_interior_pts(2000, center, obs_radius)
-    pts = np.array(pts)
+    obs_pts = make_interior_pts(2000, center, obs_radius)
     sphere = sphere_mesh(center, r, refine)
     return solve(3, sphere, solve_iterative, dense_integral_operator,
                  obs_pts, harmonic_u, make_harmonic_dudn(center))

@@ -37,11 +37,10 @@ def random_pt_circle(center, max_r):
     return [x, y]
 
 def make_interior_pts(n, center, max_r):
-    pts = [random_pt_circle(center, max_r) for i in range(n)]
-    inward_normal = center - np.array(pts)
+    pts = np.array([random_pt_circle(center, max_r) for i in range(n)])
+    inward_normal = center - pts
     inward_normal /= np.reshape(np.linalg.norm(inward_normal, axis = 1), (n, 1))
-    obs_pts = [ObsPt(0.001, p, n, n) for (p, n) in zip(pts, inward_normal)]
-    return pts, obs_pts
+    return dict(locs = pts, normals = inward_normal)
 
 def run(linear_solver, operator_builder, refine, u_fnc, dudn_fnc_builder,
     far_threshold = 3.0):
@@ -50,7 +49,7 @@ def run(linear_solver, operator_builder, refine, u_fnc, dudn_fnc_builder,
     obs_radius = 2.9
     n_test_pts = 100
 
-    pts, obs_pts = make_interior_pts(100, center, obs_radius)
+    obs_pts = make_interior_pts(100, center, obs_radius)
     circle = circle_mesh(center, r, refine)
     return solve(2, circle, linear_solver, operator_builder,
                  obs_pts, u_fnc, dudn_fnc_builder(center), far_threshold)
