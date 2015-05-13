@@ -1,7 +1,5 @@
 CURRENT: MISC
 ** acceptance test: setup fmm operators for python wrapper
-** easy load/save for solved problems
-** setup.py clean
 
 KERNEL OVERHAUL
 ** unit test: create a integration method with inline kernel parameter. currently, this would segfault, because a reference is stored rather 
@@ -21,7 +19,6 @@ NEXT: hanging nodes
 -- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
 
 INTEGRATION:
-** determine richardson_dir and len_scale based on src_mesh.
 ** acceptance test: solve planestrain fault problem with sinh-sigmoidal quadrature (finish up the sinh-sigmoidal work)
 ** characterize the sinh-sigmoidal method
 ** crack tip elements may require creating a basis structure

@@ -105,13 +105,8 @@ void export_dimension() {
     def("dense_integral_operator", dense_integral_operator<dim,1,1>);
     def("dense_integral_operator", dense_integral_operator<dim,dim,dim>);
 
-    //TODO: don't expose this...??
-    //TODO: Instead have a wrapper for mesh_to_points that takes a
-    //numpy array for each of the constructor inputs to ObsPt
-    p::class_<std::vector<ObsPt<dim>>>("ObsPt", p::no_init);
-    def("setup_obs_pts", setup_obs_pts<dim>);
     def("mesh_to_points_operator", mesh_to_points_operator<dim,1,1>);
-
+    def("mesh_to_points_operator", mesh_to_points_operator<dim,dim,dim>);
 
     auto mass_op = class_<MassOperator<dim>>("MassOperator", no_init);
     export_operator<MassOperator<dim>>(mass_op);

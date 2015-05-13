@@ -108,14 +108,17 @@ NearestFacets<dim> nearest_facets(const Vec<double,dim>& pt,
         auto ref_pt = closest_pt_facet(pt, facets[facet_idx]);
         auto mesh_pt = ref_to_real(ref_pt, facets[facet_idx]);
         auto dist2_to_mesh = dist2(pt, mesh_pt);
-        if (dist2_to_mesh < min_dist2) {
+        const double nearby_factor = 0.2;
+        if (dist2_to_mesh == min_dist2 || 
+            std::fabs(dist2_to_mesh - min_dist2) < nearby_factor * min_dist2) 
+        {
+            closest_facets.push_back(facets[facet_idx]);
+        } else if (dist2_to_mesh < min_dist2) {
             closest_facets.clear();
             closest_facets.push_back(facets[facet_idx]);
             min_dist2 = dist2_to_mesh;
             closest_pt = mesh_pt;
-        } else if (dist2_to_mesh == min_dist2) {
-            closest_facets.push_back(facets[facet_idx]);
-        }
+        } 
     }
     return {closest_facets, closest_pt, std::sqrt(min_dist2)};
 }

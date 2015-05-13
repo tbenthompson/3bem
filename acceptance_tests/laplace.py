@@ -48,7 +48,7 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc,
 
     double_kernel = tbem.LaplaceDouble()
     double_mthd = tbem.make_adaptive_integration_mthd(qs, double_kernel)
-    rhs_double = operator_builder(mesh, mesh, double_mthd).apply(u)
+    rhs_double = operator_builder(mesh, mesh, double_mthd, mesh).apply(u)
 
     rhs_mass = tbem.mass_operator_scalar(mesh, 3).apply(u);
 
@@ -57,7 +57,7 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc,
 
     single_kernel = tbem.LaplaceSingle()
     single_mthd = tbem.make_adaptive_integration_mthd(qs, single_kernel)
-    matrix = operator_builder(mesh, mesh, single_mthd);
+    matrix = operator_builder(mesh, mesh, single_mthd, mesh);
 
     soln_condensed = linear_solver(tbem, constraint_matrix, matrix, rhs_condensed)
     soln = tbem.distribute_vector(constraint_matrix, soln_condensed, mesh.n_dofs())
@@ -65,9 +65,12 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc,
     np_dudn = dudn
     boundary_error = np.sqrt(np.mean((np_soln - np_dudn) ** 2))
 
-    pts = tbem.setup_obs_pts(obs_pts['locs'], obs_pts['normals'], [mesh])
-    single_int = tbem.mesh_to_points_operator(pts, mesh, single_mthd).apply(soln)
-    double_int = tbem.mesh_to_points_operator(pts, mesh, double_mthd).apply(u)
+    single_int = tbem.mesh_to_points_operator(
+        obs_pts['locs'], obs_pts['normals'], mesh, single_mthd, mesh
+    ).apply(soln)
+    double_int = tbem.mesh_to_points_operator(
+        obs_pts['locs'], obs_pts['normals'], mesh, double_mthd, mesh
+    ).apply(u)
 
     result = single_int - double_int
 

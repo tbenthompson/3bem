@@ -15,8 +15,8 @@ void test_integral_operator(Mesh<2> m1, Mesh<2> m2)
     LaplaceDouble<2> k;
     auto mthd = make_adaptive_integration_mthd(qs, k);
     std::vector<double> v(random_list(m2.n_dofs()));
-    auto correct = dense_integral_operator(m1, m2, mthd).apply(v);
-    auto other_op = integral_operator(m1, m2, mthd);
+    auto correct = dense_integral_operator(m1, m2, mthd, {m2}).apply(v);
+    auto other_op = integral_operator(m1, m2, mthd, {m2});
     auto other = other_op.apply(v);
     REQUIRE(other_op.n_rows() == m1.n_dofs());
     REQUIRE(other_op.n_cols() == m2.n_dofs());
@@ -44,8 +44,8 @@ TEST_CASE("IntegralOperatorTensor", "[integral_operator]")
     ElasticHypersingular<2> k(1.0, 0.25);
     auto mthd = make_adaptive_integration_mthd(qs, k);
     auto v = random_list(2 * m2.n_dofs());
-    auto correct = dense_integral_operator(m1, m2, mthd).apply(v);
-    auto other_op = integral_operator(m1, m2, mthd);
+    auto correct = dense_integral_operator(m1, m2, mthd, {m2}).apply(v);
+    auto other_op = integral_operator(m1, m2, mthd, {m2});
     auto other = other_op.apply(v);
     REQUIRE(other_op.n_rows() == 2 * m1.n_dofs());
     REQUIRE(other_op.n_cols() == 2 * m2.n_dofs());
@@ -58,11 +58,11 @@ TEST_CASE("Constrained nearfield matrix", "[integral_operator]")
     QuadStrategy<2> qs(3, 8, 300000, 1e-4);
     LaplaceDouble<2> k;
     auto mthd = make_adaptive_integration_mthd(qs, k);
-    auto matrix = galerkin_nearfield(m, m, mthd);
+    auto matrix = galerkin_nearfield(m, m, mthd, {m});
     auto dense_matrix2 = matrix.to_dense();
 
     SECTION("Dense operator equals galerkin nearfield") {
-        auto dense_matrix1 = *dense_integral_operator(m, m, mthd).storage;
+        auto dense_matrix1 = *dense_integral_operator(m, m, mthd, {m}).storage;
         REQUIRE_ARRAY_CLOSE(dense_matrix1, dense_matrix2, dense_matrix1.size(), 1e-12);
     }
 

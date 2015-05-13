@@ -12,13 +12,12 @@ def full_space():
 
     double_kernel = LaplaceDouble()
     mthd = make_adaptive_integration_mthd(qs, double_kernel)
-    double_layer = integral_operator(surface, fault, mthd)
+    double_layer = integral_operator(surface, fault, mthd, fault)
 
     def fnc(x):
         if x[0] == 0.0:
             return 0.0
-        obs_pt = setup_obs_pts(np.array([x]), np.array([[0, 1]]), [fault])
-        op = mesh_to_points_operator(obs_pt, fault, mthd)
+        op = mesh_to_points_operator([x], [[0, 1]], fault, mthd, fault)
         val = op.apply(slip)
         exact = np.arctan(0.5 / x[0]) / np.pi
         assert(np.abs(exact - val) < 2e-4)
@@ -32,13 +31,15 @@ def solve_half_space(slip, fault, surface):
     constraint_matrix = faulted_surface_constraints(tbempy.TwoD, surface, fault, 1)
     qs = get_qs()
 
+    all_mesh = Mesh.create_union([surface, fault])
+
     hypersingular_kernel = LaplaceHypersingular()
     hypersingular_mthd = make_adaptive_integration_mthd(qs, hypersingular_kernel)
-    rhs_op = integral_operator(surface, fault, hypersingular_mthd)
+    rhs_op = integral_operator(surface, fault, hypersingular_mthd, all_mesh)
     full_rhs = (rhs_op.apply(slip))
     rhs = condense_vector(constraint_matrix, full_rhs)
 
-    lhs_op = integral_operator(surface, surface, hypersingular_mthd)
+    lhs_op = integral_operator(surface, surface, hypersingular_mthd, all_mesh)
 
     def mv(v):
         distributed = distribute_vector(constraint_matrix, v, surface.n_dofs())
@@ -71,6 +72,7 @@ def half_space_interior(refine):
     slip = np.ones(fault.n_dofs())
     surface = line_mesh([50, 0.0], [-50, 0.0]).refine_repeatedly(refine)
     qs = get_qs()
+    all_mesh = Mesh.create_union([surface, fault])
 
     soln = solve_half_space(slip, fault, surface)
 
@@ -84,21 +86,20 @@ def half_space_interior(refine):
         for y in ys:
             pts.append([x, y])
     pts = np.array(pts)
-    ptsx = setup_obs_pts(pts, normalsx, [fault, surface])
-    ptsy = setup_obs_pts(pts, normalsy, [fault, surface])
 
     double_kernel = LaplaceDouble()
     hypersingular_kernel = LaplaceHypersingular()
     double_mthd = make_adaptive_integration_mthd(qs, double_kernel)
     hypersingular_mthd = make_adaptive_integration_mthd(qs, hypersingular_kernel)
 
-    disp = mesh_to_points_operator(ptsx, fault, double_mthd).apply(slip) -\
-           mesh_to_points_operator(ptsx, surface, double_mthd).apply(soln)
+    mtpo = mesh_to_points_operator
+    disp = mtpo(pts, normalsx, fault, double_mthd, all_mesh).apply(slip) -\
+           mtpo(pts, normalsx,  surface, double_mthd, all_mesh).apply(soln)
 
-    tracx = mesh_to_points_operator(ptsx, fault, hypersingular_mthd).apply(slip)\
-        - mesh_to_points_operator(ptsx, surface, hypersingular_mthd).apply(soln)
-    tracy = mesh_to_points_operator(ptsy, fault, hypersingular_mthd).apply(slip)\
-        - mesh_to_points_operator(ptsy, surface, hypersingular_mthd).apply(soln)
+    tracx = mtpo(pts, normalsx, fault, hypersingular_mthd, all_mesh).apply(slip)\
+        - mtpo(pts, normalsx, surface, hypersingular_mthd, all_mesh).apply(soln)
+    tracy = mtpo(pts, normalsy, fault, hypersingular_mthd, all_mesh).apply(slip)\
+        - mtpo(pts, normalsy, surface, hypersingular_mthd, all_mesh).apply(soln)
 
     x = np.array([p[0] for p in pts])
     y = np.array([p[1] for p in pts])

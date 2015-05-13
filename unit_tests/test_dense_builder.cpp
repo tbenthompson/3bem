@@ -24,8 +24,7 @@ struct EvalProb {
 
     double go(const Kernel<3,1,1>& k) {
         auto mthd = make_adaptive_integration_mthd(qs, k);
-        auto pts = setup_obs_pts<3>({obs_pt}, {obs_n}, {sphere});
-        auto op = mesh_to_points_operator(pts, sphere, mthd);
+        auto op = mesh_to_points_operator({obs_pt}, {obs_n}, sphere, mthd, {sphere});
         return op.apply(src_strength)[0];
     }
 

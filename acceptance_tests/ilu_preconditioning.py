@@ -52,13 +52,13 @@ class Solver(object):
         M = scipy.sparse.linalg.LinearOperator((n, n), matvec = prec_fnc)
         A = scipy.sparse.linalg.LinearOperator((n, n), matvec = mv)
 
-        res = scipy.sparse.linalg.lgmres(A, rhs, tol = 1e-8, M = M)
+        res = scipy.sparse.linalg.gmres(A, rhs, tol = 1e-6, M = M)
         assert(res[1] == 0) #Check that the iterative solver succeeded
         return res[0]
 
 def test_ILU():
-    fault = tbempy.TwoD.line_mesh([-1, -1], [0, 0])
-    surface = tbempy.TwoD.line_mesh([-100, 0], [100, 0]).refine_repeatedly(9)
+    fault = tbempy.TwoD.line_mesh([-1, -1], [0, 0]).refine_repeatedly(2)
+    surface = tbempy.TwoD.line_mesh([100, 0], [-100, 0]).refine_repeatedly(9)
     slip = np.ones(2 * fault.n_dofs())
     qs = tbempy.TwoD.QuadStrategy(3, 8, 5.0, 1e-4)
     hyp = tbempy.TwoD.ElasticHypersingular(shear_modulus, 0.25)
@@ -66,7 +66,7 @@ def test_ILU():
     solver = Solver()
     soln = solve(2, surface, fault, hyp, qs, slip, linear_solver = solver.solve)
     check_planestrain_error(surface, soln)
-    assert(solver.iterations < 30)
+    assert(solver.iterations < 25)
 
 if __name__ == "__main__":
     test_ILU()

@@ -43,16 +43,18 @@ def solve(dim, surface, fault, hyp, qs, slip, linear_solver = None):
         linear_solver = default_linear_solver
     tbem = get_tbem(dim)
 
+    all_mesh = tbem.Mesh.create_union([surface, fault])
+
     n_dofs = tbem.dim * surface.n_dofs()
 
     mthd = tbem.make_adaptive_integration_mthd(qs, hyp)
     cm = faulted_surface_constraints(tbem, surface, fault, dim)
 
-    rhs_op = tbem.integral_operator(surface, fault, mthd)
+    rhs_op = tbem.integral_operator(surface, fault, mthd, all_mesh)
     all_dofs_rhs = rhs_op.apply(slip)
-    rhs = tbem.condense_vector(cm, all_dofs_rhs)
+    rhs = -tbem.condense_vector(cm, all_dofs_rhs)
 
-    lhs = tbem.integral_operator(surface, surface, mthd)
+    lhs = tbem.integral_operator(surface, surface, mthd, all_mesh)
     soln = linear_solver(tbem, cm, lhs, rhs)
     full_soln = tbem.distribute_vector(cm, soln, n_dofs)
     soln_components = []

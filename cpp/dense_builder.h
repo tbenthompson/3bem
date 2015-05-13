@@ -9,36 +9,25 @@
 
 namespace tbem {
 
-template <size_t dim>
-std::vector<ObsPt<dim>> setup_obs_pts(const std::vector<Vec<double,dim>>& locs,
-    const std::vector<Vec<double,dim>>& normals, const std::vector<Mesh<dim>>& meshes)
-{
-    auto union_mesh = Mesh<dim>::create_union(meshes);
-    std::vector<ObsPt<dim>> out;
-    for (size_t i = 0; i < locs.size(); i++) {
-        auto nf = nearest_facets(locs[i], union_mesh.facets);
-        auto rich_dir = decide_richardson_dir(locs[i], nf);
-        auto rich_length = hypot(rich_dir);
-        out.push_back({
-            rich_length / 5.0, locs[i], normals[i], rich_dir / rich_length
-        });
-    }
-    return out;
-}
-
 template <size_t dim, size_t R, size_t C>
-DenseOperator mesh_to_points_operator(const std::vector<ObsPt<dim>>& obs_pts,
-    const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd)
+DenseOperator mesh_to_points_operator(const std::vector<Vec<double,dim>>& locs,
+    const std::vector<Vec<double,dim>>& normals, const Mesh<dim>& src_mesh,
+    const IntegrationMethodI<dim,R,C>& mthd, const Mesh<dim>& all_mesh)
 {
-    auto n_obs_dofs = obs_pts.size();
+    auto n_obs_dofs = locs.size();
     auto n_src_dofs = src_mesh.n_dofs();
 
     DenseOperator op(R * n_obs_dofs, C * n_src_dofs, 0.0);
 
     auto src_facet_info = get_facet_info(src_mesh);
-// #pragma omp parallel for
-    for (size_t pt_idx = 0; pt_idx < n_obs_dofs; pt_idx++) {
-        const auto& pt = obs_pts[pt_idx];
+#pragma omp parallel for
+    for (size_t pt_idx = 0; pt_idx < locs.size(); pt_idx++) {
+        auto nf = nearest_facets(locs[pt_idx], all_mesh.facets);
+        auto rich_dir = decide_richardson_dir(locs[pt_idx], nf);
+        auto rich_length = hypot(rich_dir);
+        ObsPt<dim> pt{
+            rich_length / 5.0, locs[pt_idx], normals[pt_idx], rich_dir / rich_length
+        };
 
         std::vector<Vec<Vec<double,C>,R>> result(src_mesh.n_dofs());
         FarNearLogic<dim> far_near_logic{mthd.far_threshold(), 1.0};
@@ -66,7 +55,8 @@ DenseOperator mesh_to_points_operator(const std::vector<ObsPt<dim>>& obs_pts,
 
 template <size_t dim, size_t R, size_t C>
 DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
-    const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd)
+    const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd,
+    const Mesh<dim>& all_mesh)
 {
     size_t n_obs_dofs = obs_mesh.n_dofs();
     size_t n_src_dofs = src_mesh.n_dofs();
@@ -83,9 +73,8 @@ DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
         std::vector<Vec<Vec<Vec<double,C>,R>,dim>> row(n_src_dofs, 
                 zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make());
         for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
-            //TODO: This is ugly and messy
             auto pt = ObsPt<dim>::away_from_nearest_facets(
-                obs_quad[obs_q].x_hat, obs_face, src_mesh
+                obs_quad[obs_q].x_hat, obs_face, all_mesh
             );
 
             const auto basis = linear_basis(obs_quad[obs_q].x_hat);
