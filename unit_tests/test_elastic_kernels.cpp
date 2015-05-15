@@ -1,5 +1,6 @@
 #include "catch.hpp"
 #include "elastic_kernels.h"
+#include "gravity_kernels.h"
 
 #include <fstream>
 #include <string>
@@ -25,7 +26,8 @@ Vec<Vec<double,dim>,dim> call_kernel(const Vec<double,dim>& obs_loc,
                    const Vec<double,dim>& src_n,
                    const std::string& name,
                    double shear_modulus,
-                   double poisson_ratio) {
+                   double poisson_ratio,
+                   double b0, double b1) {
     if (name == "disp") {
          return ElasticDisplacement<dim>(shear_modulus, poisson_ratio)
             (obs_loc, src_loc, obs_n, src_n);
@@ -38,17 +40,23 @@ Vec<Vec<double,dim>,dim> call_kernel(const Vec<double,dim>& obs_loc,
     } else if (name == "hyp") {
          return ElasticHypersingular<dim>(shear_modulus, poisson_ratio)
             (obs_loc, src_loc, obs_n, src_n);
-    } 
+    } else if (name == "grav_disp") {
+        return GravityDisplacement<dim>(shear_modulus, poisson_ratio, {b0, b1})
+            (obs_loc, src_loc, obs_n, src_n);
+    } else if (name == "grav_trac") {
+        return GravityTraction<dim>(shear_modulus, poisson_ratio, {b0, b1})
+            (obs_loc, src_loc, obs_n, src_n);
+    }
     throw std::invalid_argument("name must be one of \
                                 ['disp', 'trac', 'adj_trac', 'hyp']");
 }
 
 template <size_t dim>
 void test_elastic_kernel(std::string name) {
-    const int src_loc_indices[3] = {6, 7, 8};
-    const int obs_loc_indices[3] = {9, 10, 11};
-    const int src_n_indices[3] = {12, 13, 14};
-    const int obs_n_indices[3] = {15, 16, 17};
+    const int src_loc_indices[3] = {8, 9, 10};
+    const int obs_loc_indices[3] = {11, 12, 13};
+    const int src_n_indices[3] = {14, 15, 16};
+    const int obs_n_indices[3] = {17, 18, 19};
 
     std::ifstream test_data;
     std::string line;
@@ -71,6 +79,8 @@ void test_elastic_kernel(std::string name) {
         }
         double shear_mod = std::stod(es[4]);
         double poisson_ratio = std::stod(es[5]);
+        double b0 = std::stod(es[6]);
+        double b1 = std::stod(es[7]);
 
         auto src_loc = vec_from_indices<dim>(es, src_loc_indices);
         auto obs_loc = vec_from_indices<dim>(es, obs_loc_indices);
@@ -79,10 +89,14 @@ void test_elastic_kernel(std::string name) {
 
         double exact = std::stod(es[0]);
         double attempt = call_kernel<dim>(obs_loc, src_loc, obs_n, src_n,
-                                          name, shear_mod, poisson_ratio)[k][j];
+                                          name, shear_mod, poisson_ratio, b0, b1)[k][j];
         double error = std::fabs(exact - attempt) /
                        ((std::fabs(exact) + std::fabs(attempt)) / 2);
-        REQUIRE_CLOSE(error, 0, 1e-8);
+        if (exact != 0.0) {
+            REQUIRE_CLOSE(error, 0, 1e-8);
+        } else {
+            REQUIRE(attempt == 0.0);
+        }
     }
 
     test_data.close();
@@ -101,6 +115,14 @@ TEST_CASE("TestElasticTensorKernels2DAdjointTraction", "[elastic_kernels]") {
 }
 
 TEST_CASE("TestElasticTensorKernels2DHypersingular", "[elastic_kernels]") {
+    test_elastic_kernel<2>("hyp");
+}
+
+TEST_CASE("TestElasticTensorKernels2DGravDisp", "[elastic_kernels]") {
+    test_elastic_kernel<2>("grav_disp");
+}
+
+TEST_CASE("TestElasticTensorKernels2DGravTrac", "[elastic_kernels]") {
     test_elastic_kernel<2>("hyp");
 }
 
