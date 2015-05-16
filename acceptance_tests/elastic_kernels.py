@@ -107,6 +107,7 @@ def derive_gravity_kernels(k, j, dimension):
     obs_pos_vec = [x2, y2, z2]
     obs_n = [mx, my, mz]
     grav_trac = traction_operator(obs_disp_vec, obs_pos_vec, k, obs_n, dimension)
+    import ipdb; ipdb.set_trace()
     return grav_disp, grav_trac
 
 # Displacement kernel is given.

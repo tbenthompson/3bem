@@ -123,7 +123,7 @@ TEST_CASE("TestElasticTensorKernels2DGravDisp", "[elastic_kernels]") {
 }
 
 TEST_CASE("TestElasticTensorKernels2DGravTrac", "[elastic_kernels]") {
-    test_elastic_kernel<2>("hyp");
+    test_elastic_kernel<2>("grav_trac");
 }
 
 TEST_CASE("TestElasticTensorKernels3DDisplacement", "[elastic_kernels]") {

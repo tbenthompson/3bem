@@ -40,9 +40,6 @@
 
 
 - Faster near-field matrix construction? Once FMM-BEM integration is implemented, this will be the main bottleneck for solving large problems.
--- Interface for integral term computation. The seam between bem.h and integral_term.h
--- Try out analytic methods for linear elements
--- adaptive quadrature on a GPU or vectorized? is it possible?
 -- Using vector instructions is difficult because it reduces portability and breaks standard design barrier, interface should be agnostic to implementation.
 -- try the nearly singular tri rule = http://www98.griffith.edu.au/dspace/bitstream/handle/10072/54329/86520_1.pdf?sequence=1
 -- Templating (mako, titen, etc) based solution for code generation of highly efficient core chunks of code? 

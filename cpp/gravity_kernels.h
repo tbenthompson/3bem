@@ -64,19 +64,11 @@ struct GravityDisplacement<3>: public Kernel<3,3,3>
 template <>
 struct GravityTraction<2>: public Kernel<2,2,2>
 {
-    const double grav_C1;
-    const double grav_C2;
-    const double grav_C3;
-    const double grav_C4;
     const double poisson_ratio;
     const Vec<double,2> intensity;
 
     GravityTraction(double shear_modulus, double poisson_ratio,
             Vec<double,2> intensity):
-        grav_C1(1.0 / (2 * M_PI)),
-        grav_C2(poisson_ratio / (1 - poisson_ratio)),
-        grav_C3(1.0 / (2 * (1 - poisson_ratio))),
-        grav_C4((1.0 - 2 * poisson_ratio) / 2),
         poisson_ratio(poisson_ratio),
         intensity(intensity)
     {}
@@ -86,24 +78,16 @@ struct GravityTraction<2>: public Kernel<2,2,2>
     {
         typename Kernel::OperatorType out;
         double r = std::sqrt(r2);
-        const auto dr = delta / r;
-        auto drdn = dot_product(dr, nsrc);
-        auto drdg = dot_product(dr, intensity);
-        auto drdm = dot_product(dr, nobs);
-        auto ndotm = dot_product(nobs, nsrc);
-        auto bdotm = dot_product(intensity, nobs);
-        auto bdotn = dot_product(intensity, nsrc);
-        for (int k = 0; k < 2; k++) {
-            out[k][0] = grav_C1 * (
-                (1 + std::log(r)) * (
-                    drdn * (intensity[k] * drdm + bdotm * dr[k] +
-                            grav_C2 * drdg * nobs[k]) -
-                    drdg * grav_C3 * (nsrc[k] * drdm + ndotm * dr[k])) -
-                grav_C3 * (0.5 + std::log(r)) * (
-                    grav_C4 * (intensity[k] * ndotm + bdotm * nsrc[k])
-                        + poisson_ratio * bdotn * nobs[k]));
-            out[k][1] = 0.0;
-        }
+        double logr = std::log(r);
+        auto deltaxy = delta[0] * delta[1];
+        auto deltax2 = delta[0] * delta[0];
+        auto deltay2 = delta[1] * delta[1];
+        auto denom = (16*M_PI*(-poisson_ratio + 1)*(2*poisson_ratio - 1)*r2);
+        double C1 = r2 * (0.25 * logr + 0.125);
+        out[0][0] = (nobs[0]*(16.0*poisson_ratio*(-intensity[0]*(2*nsrc[0]*(-poisson_ratio + 1)*(0.25*deltax2 + C1) - 1.0*nsrc[0]*(0.25*deltax2 + C1) + 0.5*nsrc[1]*(-poisson_ratio + 1)*deltaxy) - intensity[1]*(0.5*nsrc[0]*(-poisson_ratio + 1)*deltaxy + 2*nsrc[1]*(-poisson_ratio + 1)*(0.25*deltay2 + C1) - 1.0*nsrc[1]*(0.25*deltay2 + C1)) + 0.25*deltaxy*(intensity[0]*nsrc[1] + intensity[1]*nsrc[0])) + 4*(2*poisson_ratio - 1)*(4*intensity[0]*(2*nsrc[0]*(-poisson_ratio + 1)*(0.25*deltax2 + C1) - 1.0*nsrc[0]*(0.25*deltax2 + C1) + 0.5*nsrc[1]*(-poisson_ratio + 1)*deltaxy) - 1.0*intensity[1]*nsrc[0]*deltaxy)) - 8*nobs[1]*(2*poisson_ratio - 1)*(intensity[0]*nsrc[1]*(0.25*deltax2 + C1) - intensity[0]*(0.5*nsrc[0]*(-poisson_ratio + 1)*deltaxy - 0.25*nsrc[0]*deltaxy + 2*nsrc[1]*(-poisson_ratio + 1)*(0.25*deltay2 + C1)) + intensity[1]*nsrc[0]*(0.25*deltay2 + C1) - intensity[1]*(2*nsrc[0]*(-poisson_ratio + 1)*(0.25*deltax2 + C1) + 0.5*nsrc[1]*(-poisson_ratio + 1)*deltaxy - 0.25*nsrc[1]*deltaxy)))/denom;
+        out[1][0] = (-8*nobs[0]*(2*poisson_ratio - 1)*(intensity[0]*nsrc[1]*(0.25*deltax2 + C1) - intensity[0]*(0.5*nsrc[0]*(-poisson_ratio + 1)*deltaxy - 0.25*nsrc[0]*deltaxy + 2*nsrc[1]*(-poisson_ratio + 1)*(0.25*deltay2 + C1)) + intensity[1]*nsrc[0]*(0.25*deltay2 + C1) - intensity[1]*(2*nsrc[0]*(-poisson_ratio + 1)*(0.25*deltax2 + C1) + 0.5*nsrc[1]*(-poisson_ratio + 1)*deltaxy - 0.25*nsrc[1]*deltaxy)) - nobs[1]*(-16.0*poisson_ratio*(-intensity[0]*(2*nsrc[0]*(-poisson_ratio + 1)*(0.25*deltax2 + C1) - 1.0*nsrc[0]*(0.25*deltax2 + C1) + 0.5*nsrc[1]*(-poisson_ratio + 1)*deltaxy) - intensity[1]*(0.5*nsrc[0]*(-poisson_ratio + 1)*deltaxy + 2*nsrc[1]*(-poisson_ratio + 1)*(0.25*deltay2 + C1) - 1.0*nsrc[1]*(0.25*deltay2 + C1)) + 0.25*deltaxy*(intensity[0]*nsrc[1] + intensity[1]*nsrc[0])) + 4*(2*poisson_ratio - 1)*(intensity[0]*nsrc[1]*deltaxy - 4*intensity[1]*(0.5*nsrc[0]*(-poisson_ratio + 1)*deltaxy + 2*nsrc[1]*(-poisson_ratio + 1)*(0.25*deltay2 + C1) - 1.0*nsrc[1]*(0.25*deltay2 + C1)))))/denom;
+        out[0][1] = 0.0;
+        out[1][1] = 0.0;
         return out;
     }
 };
