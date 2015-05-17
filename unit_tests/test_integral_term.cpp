@@ -52,7 +52,7 @@ TEST_CASE("IntegralLaplaceSingle", "[integral_term]") {
     LaplaceSingle<3> single_kernel;
     auto mthd_adapt = make_adaptive_integration_mthd(qs, single_kernel);
     integral_laplace_single(mthd_adapt);
-    auto mthd_sinh = make_sinh_integration_mthd(qs, single_kernel);
+    auto mthd_sinh = make_sinh_integration_mthd(10, qs, single_kernel);
     integral_laplace_single(mthd_sinh);
 }
 
@@ -68,14 +68,14 @@ TEST_CASE("IntegralLaplaceDouble", "[integral_term]") {
     LaplaceDouble<3> double_kernel;
     auto mthd_adapt = make_adaptive_integration_mthd(qs, double_kernel);
     integral_laplace_double(mthd_adapt);
-    auto mthd_sinh = make_sinh_integration_mthd(qs, double_kernel);
+    auto mthd_sinh = make_sinh_integration_mthd(10, qs, double_kernel);
     integral_laplace_double(mthd_sinh);
 }
 
 TEST_CASE("IntegralElasticDisplacement", "[integral_term]") {
     ElasticDisplacement<3> k(1.0, 0.25);
     QuadStrategy<3> qs(2);
-    auto mthd = make_sinh_integration_mthd(qs, k);
+    auto mthd = make_sinh_integration_mthd(10, qs, k);
     integral_term_test(mthd, 20.0, 0.00265);
     integral_term_test(mthd, 1.0, 0.0495);
     integral_term_test(mthd, 1e-1, 0.1607);
@@ -84,14 +84,13 @@ TEST_CASE("IntegralElasticDisplacement", "[integral_term]") {
 
 template <size_t dim, size_t R, size_t C>
 void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K) {
-    QuadStrategy<dim> qs(2, 2, 8, 3.0, 1e-5);
+    QuadStrategy<dim> qs(2, 8, 3.0, 1e-5);
     auto mthd_adapt = make_adaptive_integration_mthd(qs, K);
-    auto mthd_sinh = make_sinh_integration_mthd(qs);
+    auto mthd_sinh = make_sinh_integration_mthd(10, qs, K);
 
     double max_x = 1.0;
     double max_y = 1.0;
     auto facet_info = FacetInfo<dim>::build({{{0,0,0},{max_x,0,0},{0,max_y,0}}});
-#pragma omp parallel for
     for (size_t ix = 1; ix < 10; ix++) {
         double x = (max_x / 10.0) * ix;
         for (double y_hat = 0.1; y_hat < 1.0; y_hat += 0.1) {
@@ -99,15 +98,14 @@ void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K) {
             for (double log_z = 2; log_z > -6; log_z -= 1) {
                 double z = std::pow(10.0, log_z);
                 ObsPt<3> obs{1.0, {x, y, z}, {0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}};
-                IntegralTerm<dim,R,C> term{K, obs, facet_info};
+                IntegralTerm<dim,R,C> term{obs, facet_info};
                 auto nearest_pt = FarNearLogic<dim>{3.0, 1.0}.decide(obs.loc, facet_info);
                 auto sinh_eval = mthd_sinh.compute_term(term, nearest_pt);
                 auto adapt_eval = mthd_adapt.compute_term(term, nearest_pt);
                 auto error = fabs(sinh_eval - adapt_eval) / fabs(adapt_eval);
-                if (error[0][0][0] > 1e-3) {
-                    std::cout << x << " " << y << " " << z << std::endl;
-                    // REQUIRE_CLOSE(sinh_eval, adapt_eval, 1e-3);
-                }
+                REQUIRE_ARRAY_CLOSE(
+                    &sinh_eval[0][0][0], &adapt_eval[0][0][0], dim * R * C, 1e-3
+                );
             }
         }
     }

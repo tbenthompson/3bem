@@ -38,16 +38,19 @@ def default_linear_solver(tbem, cm, lhs, rhs):
     res = sp_la.gmres(A, rhs, tol = 1e-8)
     return res[0]
 
-def solve(dim, surface, fault, hyp, qs, slip, linear_solver = None):
-    if linear_solver is None:
-        linear_solver = default_linear_solver
+def solve(dim, surface, fault, hyp, qs, slip, **kwargs):
     tbem = get_tbem(dim)
+
+    linear_solver = kwargs.get('linear_solver', default_linear_solver)
+    default_mthd = tbem.make_adaptive_integration_mthd
+    integration_mthd = kwargs.get('integration_mthd', default_mthd)
+
 
     all_mesh = tbem.Mesh.create_union([surface, fault])
 
     n_dofs = tbem.dim * surface.n_dofs()
 
-    mthd = tbem.make_adaptive_integration_mthd(qs, hyp)
+    mthd = integration_mthd(qs, hyp)
     cm = faulted_surface_constraints(tbem, surface, fault, dim)
 
     rhs_op = tbem.integral_operator(surface, fault, mthd, all_mesh)

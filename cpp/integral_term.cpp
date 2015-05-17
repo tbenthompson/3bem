@@ -176,32 +176,35 @@ template struct AdaptiveIntegrationMethod<3,1,1>;
 template struct AdaptiveIntegrationMethod<3,3,3>;
 
 template <size_t dim>
-QuadRule<dim-1> choose_sinh_quad(double S, double l, Vec<double,dim-1> singular_pt);
+QuadRule<dim-1> choose_sinh_quad(size_t sinh_order,
+    double S, double l, Vec<double,dim-1> singular_pt);
 
-static const auto G2d = gauss(10);
 template <>
-inline QuadRule<1> choose_sinh_quad<2>(double S, double l, Vec<double,1> singular_pt) {
+inline QuadRule<1> choose_sinh_quad<2>(size_t sinh_order, 
+    double S, double l, Vec<double,1> singular_pt) 
+{
     assert(l > 0);
     assert(S > 0);
     if ((l / S) > 1) {
-        return G2d;
+        return gauss(10);
     }
     else {
-        size_t n = static_cast<size_t>(10.0 * (1 + std::log(S / l)));
+        size_t n = static_cast<size_t>(sinh_order * (1 + std::log(S / l)));
         return sinh_transform(gauss(n), singular_pt[0], l, false);
     }
 }
 
-static const auto G3d = tri_gauss(10);
 template <>
-inline QuadRule<2> choose_sinh_quad<3>(double S, double l, Vec<double,2> singular_pt) {
+inline QuadRule<2> choose_sinh_quad<3>(size_t sinh_order,
+    double S, double l, Vec<double,2> singular_pt) 
+{
     assert(l > 0);
     assert(S > 0);
     if ((l / S) > 0.5) {
-        return G3d; 
+        return tri_gauss(10); 
     }
     else {
-        size_t n = static_cast<size_t>(8.0 * (1 + std::log(S / l)));
+        size_t n = static_cast<size_t>(sinh_order * (1 + std::log(S / l)));
         auto q = sinh_sigmoidal_transform(gauss(2.0 * n), gauss(n), 
             singular_pt[0], singular_pt[1], l, false);
         return q;
@@ -209,14 +212,14 @@ inline QuadRule<2> choose_sinh_quad<3>(double S, double l, Vec<double,2> singula
 }
 
 template <size_t dim, size_t R, size_t C>
-Vec<Vec<Vec<double,C>,R>,dim> sinh_integrate(const Kernel<dim,R,C>& k, double tolerance, 
-        const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& near_pt,
-        const Vec<double,dim>& nf_obs_pt) 
+Vec<Vec<Vec<double,C>,R>,dim> sinh_integrate(size_t sinh_order, 
+        const Kernel<dim,R,C>& k, const IntegralTerm<dim,R,C>& term,
+        const NearestPoint<dim>& near_pt, const Vec<double,dim>& nf_obs_pt) 
 {
     assert(near_pt.distance > 0);
     auto S = term.src_face.length_scale;
     auto l = near_pt.distance;
-    auto q = choose_sinh_quad<dim>(S, l, near_pt.ref_pt);
+    auto q = choose_sinh_quad<dim>(sinh_order, S, l, near_pt.ref_pt);
     auto integrals = zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make();
     for (size_t i = 0; i < q.size(); i++) {
         integrals += term.eval_point_influence(k, q[i].x_hat, nf_obs_pt) * q[i].w;
@@ -235,7 +238,7 @@ SinhIntegrationMethod<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>& te
         auto step_loc = get_step_loc(term.obs, qs.singular_steps[step_idx]);
         auto shifted_near_pt = FarNearLogic<dim>{qs.far_threshold, 1.0}
             .decide(step_loc, term.src_face);
-        steps[step_idx] = sinh_integrate(K, qs.near_tol, term, shifted_near_pt, step_loc);
+        steps[step_idx] = sinh_integrate(sinh_order, K, term, shifted_near_pt, step_loc);
     }
 
     return richardson_limit(2, steps);
@@ -246,7 +249,7 @@ Vec<Vec<Vec<double,C>,R>,dim>
 SinhIntegrationMethod<dim,R,C>::compute_nearfield(const IntegralTerm<dim,R,C>& term,
     const NearestPoint<dim>& nearest_pt) const 
 {
-    return sinh_integrate(K, qs.near_tol, term, nearest_pt, term.obs.loc);
+    return sinh_integrate(sinh_order, K, term, nearest_pt, term.obs.loc);
 }
 
 template <size_t dim, size_t R, size_t C>

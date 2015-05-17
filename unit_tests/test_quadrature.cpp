@@ -162,71 +162,6 @@ TEST_CASE("SinhTransform", "[quadrature]") {
     REQUIRE(test_sinh_transform(false, 1, a, b, fnc) < 1e-4);
 }
 
-void ElliotJohnston2007Test(double a, bool iterated, std::vector<double> correct_error,
-    std::function<std::function<double(Vec<double,1>)>(double)> f_builder) {
-    size_t idx = 0;
-    for (int log_b = -1; log_b >= -6; log_b--) {
-        double b = std::pow(10, log_b);
-        auto fnc = f_builder(b);
-        double error = test_sinh_transform(iterated, 1, a, b, fnc);
-        double error_error = fabs(error - correct_error[idx]) / fabs(correct_error[idx]);
-        REQUIRE_CLOSE(error_error, 0.0, 1e-3);
-        idx++;
-    }
-}
-
-void ElliotJohnston2007I2(bool iterated, std::vector<double> correct_error) {
-    double a = 0.25;
-    ElliotJohnston2007Test(a, iterated, correct_error, 
-        [=](double b) {
-            return [=] (Vec<double,1> xs) {
-                double x = xs[0];
-                return (1 - x * x) / std::sqrt(std::pow(x - a, 2) + b * b);
-            };
-        }
-    );
-}
-
-void ElliotJohnston2007I3(bool iterated, std::vector<double> correct_error) {
-    double a = 0.25;
-    ElliotJohnston2007Test(a, iterated, correct_error, 
-        [=](double b) {
-            return [=] (Vec<double,1> xs) {
-                double x = xs[0];
-                return (1 - x * x) / (std::pow(x - a, 2) + b * b);
-            };
-        }
-    );
-}
-// 
-// TEST_CASE("SinhTransformElliotJohnston2007I2NotIterated", "[quadrature]") {
-//     std::vector<double> correct_error = {
-//         1.8346e-11, 3.8039e-8, 1.8163e-6, 1.8068e-5, 8.0392e-5, 2.2492e-4
-//     };
-//     ElliotJohnston2007I2(false, correct_error);
-// }
-// 
-// TEST_CASE("SinhTransformElliotJohnston2007I2Iterated", "[quadrature]") {
-//     std::vector<double> correct_error = {
-//         2.2359e-6, 2.9066e-4, 2.2667e-3, 6.3398e-3, 1.0995e-2, 1.4802e-2
-//     };
-//     ElliotJohnston2007I2(true, correct_error);
-// }
-
-// TEST_CASE("SinhTransformElliotJohnston2007I3NotIterated", "[quadrature]") {
-//     std::vector<double> correct_error = {
-//         3.3753e-6, 4.6976e-3, 4.0194e-2, 1.2006e-1, 2.2969e-1, 3.4904e-1
-//     };
-//     ElliotJohnston2007I3(false, correct_error);
-// }
-
-// TEST_CASE("SinhTransformElliotJohnston2007I3Iterated", "[quadrature]") {
-//     std::vector<double> correct_error = {
-//         4.1270e-9, 8.6692e-7, 8.7829e-6, 3.0635e-5, 7.2012e-5, 1.4502e-4
-//     };
-//     ElliotJohnston2007I3(true, correct_error);
-// }
-
 TEST_CASE("SinhTransformScaled", "[quadrature]") {
     double a = 0.0;
     double b = 0.001;
@@ -255,7 +190,7 @@ void test_sinh_sigmoidal(double lambda, size_t nt, size_t nr, double x0, double 
                 return 1.0 / std::pow(dx * dx + dy * dy + b * b, lambda);
             });
 
-        double exact_error = 1e-7;
+        double exact_error = 1e-4;
         auto correct = adaptive_integrate<double>([&](double x) {
                 return adaptive_integrate<double>([&](double y) {
                     adapt_eval++;
@@ -266,15 +201,12 @@ void test_sinh_sigmoidal(double lambda, size_t nt, size_t nr, double x0, double 
             }, 0.0, 1.0, exact_error);
 
         auto error = std::fabs(res - correct) / std::fabs(correct);
-        REQUIRE_CLOSE(error, 0.0, 1e-5);
+        REQUIRE_CLOSE(error, 0.0, 1e-2);
     }
 }
 
 TEST_CASE("SinhSigmoidal2D", "[quadrature]") {
-    // TIC
-    // test_sinh_sigmoidal(1.5, 25, 25, 0.0, 0.0);
-    // test_sinh_sigmoidal(0.5, 19, 9, 0.2, 0.4);
-    // test_sinh_sigmoidal(1.0, 30, 20, 0.1, 0.1);
-    // test_sinh_sigmoidal(1.5, 70, 30, 0.4, 0.49);
-    // TOC("A");
+    test_sinh_sigmoidal(1.5, 17, 11, 0.0, 0.0);
+    test_sinh_sigmoidal(0.5, 11, 5, 0.2, 0.4);
+    test_sinh_sigmoidal(1.0, 20, 10, 0.1, 0.1);
 }
