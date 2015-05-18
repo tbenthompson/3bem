@@ -37,7 +37,7 @@ struct IntegrationMethodIWrap: public IntegrationMethodI<dim,R,C>,
     }
 };
 
-} // end namepsace tbem
+} // end namespace tbem
 
 template <size_t dim>
 void export_integration() {
@@ -48,16 +48,20 @@ void export_integration() {
     class_<IntegrationMethodIWrap<dim,dim,dim>, boost::noncopyable>
         ("IntegrationMethodITensor");
 
-    class_<AdaptiveIntegrationMethod<dim,1,1>, bases<IntegrationMethodI<dim,1,1>>>
+    class_<AdaptiveIntegrationMethod<dim,1,1>,
+            bases<IntegrationMethodI<dim,1,1>>>
         ("AdaptiveIntegrationMethodScalar", no_init);
-    class_<AdaptiveIntegrationMethod<dim,dim,dim>, bases<IntegrationMethodI<dim,dim,dim>>>
+    class_<AdaptiveIntegrationMethod<dim,dim,dim>,
+            bases<IntegrationMethodI<dim,dim,dim>>>
         ("AdaptiveIntegrationMethodTensor", no_init);
     def("make_adaptive_integration_mthd", make_adaptive_integration_mthd<dim,1,1>);
     def("make_adaptive_integration_mthd", make_adaptive_integration_mthd<dim,dim,dim>);
 
-    class_<SinhIntegrationMethod<dim,1,1>, bases<IntegrationMethodI<dim,1,1>>>
+    class_<SinhIntegrationMethod<dim,1,1>, 
+            bases<IntegrationMethodI<dim,1,1>>>
         ("SinhIntegrationMethodScalar", no_init);
-    class_<SinhIntegrationMethod<dim,dim,dim>, bases<IntegrationMethodI<dim,dim,dim>>>
+    class_<SinhIntegrationMethod<dim,dim,dim>,
+            bases<IntegrationMethodI<dim,dim,dim>>>
         ("SinhIntegrationMethodTensor", no_init);
     def("make_sinh_integration_mthd", make_sinh_integration_mthd<dim,1,1>);
     def("make_sinh_integration_mthd", make_sinh_integration_mthd<dim,dim,dim>);

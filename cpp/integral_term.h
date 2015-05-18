@@ -77,11 +77,11 @@ struct IntegrationMethodI {
 
 template <size_t dim,size_t R, size_t C>
 struct AdaptiveIntegrationMethod: public IntegrationMethodI<dim,R,C> {
-    const QuadStrategy<dim> qs;
-    const Kernel<dim,R,C>& K;
+    QuadStrategy<dim> qs;
+    std::shared_ptr<Kernel<dim,R,C>> K;
 
     AdaptiveIntegrationMethod(const QuadStrategy<dim>& qs, const Kernel<dim,R,C>& K):
-        qs(qs), K(K)
+        qs(qs), K(K.clone())
     {}
 
     virtual Vec<Vec<Vec<double,C>,R>,dim>
@@ -94,7 +94,7 @@ struct AdaptiveIntegrationMethod: public IntegrationMethodI<dim,R,C> {
     compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
 
     virtual double far_threshold() const {return qs.far_threshold;}
-    virtual const Kernel<dim,R,C>& get_kernel() const {return K;}
+    virtual const Kernel<dim,R,C>& get_kernel() const {return *K;}
     virtual QuadRule<dim-1> get_src_quad() const {return qs.src_far_quad;}
     virtual QuadRule<dim-1> get_obs_quad() const {return qs.obs_quad;}
 };
@@ -108,13 +108,14 @@ AdaptiveIntegrationMethod<dim,R,C> make_adaptive_integration_mthd(
 
 template <size_t dim,size_t R, size_t C>
 struct SinhIntegrationMethod: public IntegrationMethodI<dim,R,C> {
-    const QuadStrategy<dim> qs;
-    const AdaptiveIntegrationMethod<dim,R,C> adaptive;
-    const Kernel<dim,R,C>& K;
-    const size_t sinh_order;
+    QuadStrategy<dim> qs;
+    AdaptiveIntegrationMethod<dim,R,C> adaptive;
+    std::shared_ptr<Kernel<dim,R,C>> K;
+    size_t sinh_order;
 
-    SinhIntegrationMethod(size_t sinh_order, const QuadStrategy<dim>& qs, const Kernel<dim,R,C>& K):
-        sinh_order(sinh_order), qs(qs), adaptive(qs, K), K(K)
+    SinhIntegrationMethod(size_t sinh_order, const QuadStrategy<dim>& qs, 
+        const Kernel<dim,R,C>& K):
+        sinh_order(sinh_order), qs(qs), adaptive(qs, K), K(K.clone())
     {}
 
     virtual Vec<Vec<Vec<double,C>,R>,dim>
@@ -127,7 +128,7 @@ struct SinhIntegrationMethod: public IntegrationMethodI<dim,R,C> {
     compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
 
     virtual double far_threshold() const {return qs.far_threshold;}
-    virtual const Kernel<dim,R,C>& get_kernel() const {return K;}
+    virtual const Kernel<dim,R,C>& get_kernel() const {return *K;}
     virtual QuadRule<dim-1> get_src_quad() const {return qs.src_far_quad;}
     virtual QuadRule<dim-1> get_obs_quad() const {return qs.obs_quad;}
 };

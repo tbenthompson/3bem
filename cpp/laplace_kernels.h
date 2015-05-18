@@ -23,6 +23,11 @@ struct LaplaceSingle<3>: Kernel<3,1,1>
     {
         return {{{1.0 / (4.0 * M_PI * std::sqrt(r2))}}};
     }
+
+    virtual std::unique_ptr<Kernel<3,1,1>> clone() const
+    {
+        return std::unique_ptr<Kernel<3,1,1>>(new LaplaceSingle<3>());
+    }
 };
 
 template <>
@@ -32,6 +37,11 @@ struct LaplaceDouble<3>: Kernel<3,1,1>
         const Vec<double,3>& nobs, const Vec<double,3>& nsrc) const 
     {
         return {{{dot_product(nsrc, delta) / (4 * M_PI * r2 * std::sqrt(r2))}}};
+    }
+
+    virtual std::unique_ptr<Kernel<3,1,1>> clone() const
+    {
+        return std::unique_ptr<Kernel<3,1,1>>(new LaplaceDouble<3>());
     }
 };
 
@@ -43,6 +53,11 @@ struct LaplaceHypersingular<3>: Kernel<3,1,1>
     {
         throw std::exception();
     }
+
+    virtual std::unique_ptr<Kernel<3,1,1>> clone() const
+    {
+        return std::unique_ptr<Kernel<3,1,1>>(new LaplaceHypersingular<3>());
+    }
 };
 
 template <>
@@ -53,6 +68,11 @@ struct LaplaceSingle<2>: Kernel<2,1,1>
     {
         return {{{std::log(std::sqrt(r2)) / (2 * M_PI)}}};
     }
+
+    virtual std::unique_ptr<Kernel<2,1,1>> clone() const
+    {
+        return std::unique_ptr<Kernel<2,1,1>>(new LaplaceSingle<2>());
+    }
 };
 
 template <>
@@ -62,6 +82,11 @@ struct LaplaceDouble<2>: Kernel<2,1,1>
         const Vec<double,2>& nobs, const Vec<double,2>& nsrc) const 
     {
         return {{{dot_product(nsrc, delta) / (2 * M_PI * r2)}}};
+    }
+
+    virtual std::unique_ptr<Kernel<2,1,1>> clone() const
+    {
+        return std::unique_ptr<Kernel<2,1,1>>(new LaplaceDouble<2>());
     }
 };
 
@@ -74,6 +99,11 @@ struct LaplaceHypersingular<2>: Kernel<2,1,1>
         return {{{((-dot_product(nobs, nsrc) / r2) + 
                 ((2 * dot_product(nsrc, delta) * dot_product(nobs, delta)) / (r2 * r2)))
             / (2 * M_PI)}}};
+    }
+
+    virtual std::unique_ptr<Kernel<2,1,1>> clone() const
+    {
+        return std::unique_ptr<Kernel<2,1,1>>(new LaplaceHypersingular<2>());
     }
 };
 

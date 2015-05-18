@@ -8,12 +8,14 @@
 
 using namespace tbem;
 
-TEST_CASE("IdentityTensor", "[integral_term]") {
+TEST_CASE("IdentityTensor", "[integral_term]") 
+{
     IdentityTensor<3,3,3> K;
     (void)K;
 }
 
-TEST_CASE("IntegralOne", "[integral_term]") {
+TEST_CASE("IntegralOne", "[integral_term]") 
+{
     QuadStrategy<2> qs(2);
     IdentityScalar<2> identity;
     auto mthd = make_adaptive_integration_mthd(qs, identity);
@@ -40,14 +42,16 @@ void integral_term_test(const IntegrationMethodI<dim,R,C>& mthd,
     REQUIRE_CLOSE(est[0][0], exact, 1e-3);
 }
 
-void integral_laplace_single(const IntegrationMethodI<3,1,1>& mthd) {
+void integral_laplace_single(const IntegrationMethodI<3,1,1>& mthd) 
+{
     integral_term_test(mthd, 20.0, 0.00398);
     integral_term_test(mthd, 2.0, 0.0381);
     integral_term_test(mthd, 1e-1, 0.194);
     integral_term_test(mthd, 1e-6, 0.235);
 }
 
-TEST_CASE("IntegralLaplaceSingle", "[integral_term]") {
+TEST_CASE("IntegralLaplaceSingle", "[integral_term]") 
+{
     QuadStrategy<3> qs(2);
     LaplaceSingle<3> single_kernel;
     auto mthd_adapt = make_adaptive_integration_mthd(qs, single_kernel);
@@ -56,14 +60,16 @@ TEST_CASE("IntegralLaplaceSingle", "[integral_term]") {
     integral_laplace_single(mthd_sinh);
 }
 
-void integral_laplace_double(const IntegrationMethodI<3,1,1>& mthd) {
+void integral_laplace_double(const IntegrationMethodI<3,1,1>& mthd) 
+{
     integral_term_test(mthd, 20.0, -0.00020);
     integral_term_test(mthd, 1.0, -0.0549);
     integral_term_test(mthd, 1e-1, -0.336);
     integral_term_test(mthd, 1e-6, -0.500);
 }
 
-TEST_CASE("IntegralLaplaceDouble", "[integral_term]") {
+TEST_CASE("IntegralLaplaceDouble", "[integral_term]") 
+{
     QuadStrategy<3> qs(2);
     LaplaceDouble<3> double_kernel;
     auto mthd_adapt = make_adaptive_integration_mthd(qs, double_kernel);
@@ -72,7 +78,8 @@ TEST_CASE("IntegralLaplaceDouble", "[integral_term]") {
     integral_laplace_double(mthd_sinh);
 }
 
-TEST_CASE("IntegralElasticDisplacement", "[integral_term]") {
+TEST_CASE("IntegralElasticDisplacement", "[integral_term]") 
+{
     ElasticDisplacement<3> k(1.0, 0.25);
     QuadStrategy<3> qs(2);
     auto mthd = make_sinh_integration_mthd(10, qs, k);
@@ -83,7 +90,8 @@ TEST_CASE("IntegralElasticDisplacement", "[integral_term]") {
 }
 
 template <size_t dim, size_t R, size_t C>
-void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K) {
+void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K) 
+{
     QuadStrategy<dim> qs(2, 8, 3.0, 1e-5);
     auto mthd_adapt = make_adaptive_integration_mthd(qs, K);
     auto mthd_sinh = make_sinh_integration_mthd(10, qs, K);
@@ -111,13 +119,15 @@ void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K) {
     }
 }
 
-TEST_CASE("SinhSufficientAccuracy", "[integral_term]") {
+TEST_CASE("SinhSufficientAccuracy", "[integral_term]") 
+{
     // sinh_sufficient_accuracy(LaplaceSingle<3>());
     // sinh_sufficient_accuracy(ElasticTraction<3>(1.0, 0.25));
     /* sinh_sufficient_accuracy(ElasticHypersingular<3>(1.0, 0.25)); */
 }
 
-TEST_CASE("TensorKernel", "[integral_term]") {
+TEST_CASE("TensorKernel", "[integral_term]") 
+{
     ElasticDisplacement<2> k(1.0, 0.25);
     QuadStrategy<2> qs(2);
     auto facet_info = FacetInfo<2>::build({{{-1.0, 0.0}, {1.0, 0.0}}});
@@ -132,4 +142,15 @@ TEST_CASE("TensorKernel", "[integral_term]") {
     REQUIRE(result[1][0][0] == 0.0);
     REQUIRE(result[1][0][1] == 0.0);
     REQUIRE(result[1][1][0] == 0.0);
+}
+
+TEST_CASE("Kernel inline in mthd creation call", "[integral_term]")
+{
+    // When kernels were not copied, this test would segfault because the
+    // LaplaceDouble<3> object would go out of scope after the make_..._mthd
+    // call and be destroyed
+    auto mthd_adapt = make_adaptive_integration_mthd(
+        QuadStrategy<3>(2), LaplaceDouble<3>()
+    );
+    integral_laplace_double(mthd_adapt);
 }

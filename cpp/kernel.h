@@ -3,6 +3,7 @@
 
 #include "vec_ops.h"
 #include "geometry.h"
+#include <memory>
 
 namespace tbem {
 
@@ -15,7 +16,7 @@ struct Kernel {
     const static size_t n_rows = R;
     const static size_t n_cols = C;
 
-    virtual OperatorType operator()(
+    OperatorType operator()(
         const Vec<double,dim>& obs_pt, 
         const Vec<double,dim>& src_pt, 
         const Vec<double,dim>& obs_normal, 
@@ -28,6 +29,8 @@ struct Kernel {
 
     virtual OperatorType call(double r2, const Vec<double,dim>& delta, 
         const Vec<double,dim>& nobs, const Vec<double,dim>& nsrc) const = 0;
+
+    virtual std::unique_ptr<Kernel<dim,R,C>> clone() const = 0;
 };
 
 

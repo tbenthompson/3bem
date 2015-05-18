@@ -23,10 +23,14 @@ struct ElasticDisplacement<2>: public Kernel<2,2,2>
 {
     const double disp_C1;
     const double disp_C2;
+    const double shear_modulus;
+    const double poisson_ratio;
 
     ElasticDisplacement(double shear_modulus, double poisson_ratio):
         disp_C1(1.0 / (8 * M_PI * shear_modulus * (1 - poisson_ratio))),
-        disp_C2(3 - 4 * poisson_ratio)
+        disp_C2(3 - 4 * poisson_ratio),
+        shear_modulus(shear_modulus),
+        poisson_ratio(poisson_ratio)
     {}
 
     typename Kernel::OperatorType call(double r2, const Vec2<double>& delta, 
@@ -42,6 +46,13 @@ struct ElasticDisplacement<2>: public Kernel<2,2,2>
         }
         return out;
     }
+
+    virtual std::unique_ptr<Kernel<2,2,2>> clone() const
+    {
+        return std::unique_ptr<Kernel<2,2,2>>(
+            new ElasticDisplacement<2>(shear_modulus, poisson_ratio)
+        );
+    }
 };
 
 template <>
@@ -49,10 +60,14 @@ struct ElasticTraction<2>: public Kernel<2,2,2>
 {
     const double trac_C1;
     const double trac_C2;
+    const double shear_modulus;
+    const double poisson_ratio;
 
     ElasticTraction(double shear_modulus, double poisson_ratio):
         trac_C1(1.0 / (4 * M_PI * (1 - poisson_ratio))),
-        trac_C2(1 - 2 * poisson_ratio)
+        trac_C2(1 - 2 * poisson_ratio),
+        shear_modulus(shear_modulus),
+        poisson_ratio(poisson_ratio)
     {}
     
     Kernel::OperatorType call(double r2, const Vec2<double>& delta, 
@@ -72,6 +87,13 @@ struct ElasticTraction<2>: public Kernel<2,2,2>
         }
         return out;
     }
+
+    virtual std::unique_ptr<Kernel<2,2,2>> clone() const
+    {
+        return std::unique_ptr<Kernel<2,2,2>>(
+            new ElasticTraction<2>(shear_modulus, poisson_ratio)
+        );
+    }
 };
 
 template <>
@@ -79,10 +101,14 @@ struct ElasticAdjointTraction<2>: public Kernel<2,2,2>
 {
     const double trac_C1;
     const double trac_C2;
+    const double shear_modulus;
+    const double poisson_ratio;
 
     ElasticAdjointTraction(double shear_modulus, double poisson_ratio):
         trac_C1(1.0 / (4 * M_PI * (1 - poisson_ratio))),
-        trac_C2(1 - 2 * poisson_ratio)
+        trac_C2(1 - 2 * poisson_ratio),
+        shear_modulus(shear_modulus),
+        poisson_ratio(poisson_ratio)
     {}
     
     Kernel::OperatorType call(double r2, const Vec2<double>& delta, 
@@ -101,6 +127,13 @@ struct ElasticAdjointTraction<2>: public Kernel<2,2,2>
             }
         }
         return out;
+    }
+
+    virtual std::unique_ptr<Kernel<2,2,2>> clone() const
+    {
+        return std::unique_ptr<Kernel<2,2,2>>(
+            new ElasticAdjointTraction<2>(shear_modulus, poisson_ratio)
+        );
     }
 };
 
@@ -143,6 +176,13 @@ struct ElasticHypersingular<2>: public Kernel<2,2,2>
         }
         return out;
     }
+
+    virtual std::unique_ptr<Kernel<2,2,2>> clone() const
+    {
+        return std::unique_ptr<Kernel<2,2,2>>(
+            new ElasticHypersingular<2>(shear_modulus, poisson_ratio)
+        );
+    }
 };
 
 template <>
@@ -150,10 +190,14 @@ struct ElasticDisplacement<3>: public Kernel<3,3,3>
 {
     const double disp_C1;
     const double disp_C2;
+    const double shear_modulus;
+    const double poisson_ratio;
 
     ElasticDisplacement(double shear_modulus, double poisson_ratio):
         disp_C1(1.0 / (16 * M_PI * shear_modulus * (1 - poisson_ratio))),
-        disp_C2(3 - 4 * poisson_ratio)
+        disp_C2(3 - 4 * poisson_ratio),
+        shear_modulus(shear_modulus),
+        poisson_ratio(poisson_ratio)
     {}
 
     Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
@@ -169,6 +213,13 @@ struct ElasticDisplacement<3>: public Kernel<3,3,3>
         }
         return out;
     }
+
+    virtual std::unique_ptr<Kernel<3,3,3>> clone() const
+    {
+        return std::unique_ptr<Kernel<3,3,3>>(
+            new ElasticDisplacement<3>(shear_modulus, poisson_ratio)
+        );
+    }
 };
 
 template <>
@@ -176,10 +227,14 @@ struct ElasticTraction<3>: public Kernel<3,3,3>
 {
     const double trac_C1;
     const double trac_C2;
+    const double shear_modulus;
+    const double poisson_ratio;
 
     ElasticTraction(double shear_modulus, double poisson_ratio):
         trac_C1(1.0 / (8 * M_PI * (1 - poisson_ratio))),
-        trac_C2(1 - 2 * poisson_ratio)
+        trac_C2(1 - 2 * poisson_ratio),
+        shear_modulus(shear_modulus),
+        poisson_ratio(poisson_ratio)
     {}
     
     Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
@@ -199,6 +254,13 @@ struct ElasticTraction<3>: public Kernel<3,3,3>
         }
         return out;
     }
+
+    virtual std::unique_ptr<Kernel<3,3,3>> clone() const
+    {
+        return std::unique_ptr<Kernel<3,3,3>>(
+            new ElasticTraction<3>(shear_modulus, poisson_ratio)
+        );
+    }
 };
 
 template <>
@@ -206,10 +268,14 @@ struct ElasticAdjointTraction<3>: public Kernel<3,3,3>
 {
     const double trac_C1;
     const double trac_C2;
+    const double shear_modulus;
+    const double poisson_ratio;
 
     ElasticAdjointTraction(double shear_modulus, double poisson_ratio):
         trac_C1(1.0 / (8 * M_PI * (1 - poisson_ratio))),
-        trac_C2(1 - 2 * poisson_ratio)
+        trac_C2(1 - 2 * poisson_ratio),
+        shear_modulus(shear_modulus),
+        poisson_ratio(poisson_ratio)
     {}
     
     Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
@@ -229,12 +295,20 @@ struct ElasticAdjointTraction<3>: public Kernel<3,3,3>
         }
         return out;
     }
+
+    virtual std::unique_ptr<Kernel<3,3,3>> clone() const
+    {
+        return std::unique_ptr<Kernel<3,3,3>>(
+            new ElasticAdjointTraction<3>(shear_modulus, poisson_ratio)
+        );
+    }
 };
 
 template <>
 struct ElasticHypersingular<3>: public Kernel<3,3,3>
 {
     const double poisson_ratio;
+    const double shear_modulus;
     const double trac_C2;
     const double hyp_C1;
     const double hyp_C2;
@@ -242,6 +316,7 @@ struct ElasticHypersingular<3>: public Kernel<3,3,3>
 
     ElasticHypersingular(double shear_modulus, double poisson_ratio):
         poisson_ratio(poisson_ratio),
+        shear_modulus(shear_modulus),
         trac_C2(1 - 2 * poisson_ratio),
         hyp_C1(shear_modulus / (4 * M_PI * (1 - poisson_ratio))),
         hyp_C2(-1 + 4 * poisson_ratio),
@@ -273,6 +348,13 @@ struct ElasticHypersingular<3>: public Kernel<3,3,3>
             }
         }
         return out;
+    }
+
+    virtual std::unique_ptr<Kernel<3,3,3>> clone() const
+    {
+        return std::unique_ptr<Kernel<3,3,3>>(
+            new ElasticHypersingular<3>(shear_modulus, poisson_ratio)
+        );
     }
 };
 

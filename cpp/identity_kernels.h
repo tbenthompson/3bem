@@ -6,14 +6,14 @@
 
 namespace tbem {
 
-template <size_t dim, size_t n_rows, size_t n_cols>
-struct IdentityTensor: public Kernel<dim,n_rows,n_cols>
+template <size_t dim, size_t R, size_t C>
+struct IdentityTensor: public Kernel<dim,R,C>
 {
-    typedef Vec<Vec<double,n_cols>,n_rows> OperatorType;
+    typedef Vec<Vec<double,C>,R> OperatorType;
     OperatorType call_with_no_params() const {
         auto out = zeros<OperatorType>::make();
-        for (size_t i = 0; i < n_rows; i++) {
-            for (size_t j = 0; j < n_cols; j++) {
+        for (size_t i = 0; i < R; i++) {
+            for (size_t j = 0; j < C; j++) {
                 if (i == j) {
                     out[i][j] = 1.0;
                 }
@@ -26,6 +26,11 @@ struct IdentityTensor: public Kernel<dim,n_rows,n_cols>
         const Vec<double,dim>& nobs, const Vec<double,dim>& nsrc) const 
     {
         return call_with_no_params();
+    }
+
+    virtual std::unique_ptr<Kernel<dim,R,C>> clone() const
+    {
+        return std::unique_ptr<Kernel<dim,R,C>>(new IdentityTensor<dim,R,C>());
     }
 };
 

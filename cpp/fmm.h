@@ -121,7 +121,7 @@ struct FMMTasks
  */
 template <size_t dim, size_t R, size_t C>
 struct FMMOperator {
-    const Kernel<dim,R,C>& K;
+    const std::shared_ptr<Kernel<dim,R,C>> K;
     const NBodyData<dim> data;
     const TranslationSurface<dim> up_equiv_surface;
     const TranslationSurface<dim> up_check_surface;

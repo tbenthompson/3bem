@@ -124,7 +124,7 @@ mat_vec(const std::vector<double>& A, const std::vector<double>& x)
 template <size_t dim, size_t R, size_t C>
 FMMOperator<dim,R,C>::FMMOperator(const Kernel<dim,R,C>& K,
     const NBodyData<dim>& data, const FMMConfig& config):
-    K(K),
+    K(K.clone()),
     data(data),
     up_equiv_surface(
         TranslationSurface<dim>::up_equiv_surface(config.order, config.d)
@@ -182,7 +182,7 @@ CheckToEquiv FMMOperator<dim,R,C>::build_check_to_equiv(const Octree<dim>& cell,
             equiv_surf.move(cell.data.bounds), equiv_surf.normals,
             {}
         };
-        ops.push_back(svd_inverse_nbody(K, down_data));
+        ops.push_back(svd_inverse_nbody(*K, down_data));
     }
 
     for (const auto& c: cell.children) {
@@ -225,7 +225,7 @@ void FMMOperator<dim,R,C>::P2M(const Octree<dim>& cell,
         }
     }
 
-    auto check_eval = nbody_eval(K, s2c, src_str.data());
+    auto check_eval = nbody_eval(*K, s2c, src_str.data());
     auto equiv_srcs = mat_vec(check_to_equiv, check_eval);
 
     auto n_equiv = up_check_surface.pts.size();
@@ -275,7 +275,7 @@ void FMMOperator<dim,R,C>::M2M(const Octree<dim>& cell,
         child_idx++;
     }
 
-    auto check_eval = nbody_eval(K, c2c, src_str.data());
+    auto check_eval = nbody_eval(*K, c2c, src_str.data());
     auto equiv_srcs = mat_vec(check_to_equiv, check_eval);
 
 #pragma omp critical
@@ -314,7 +314,7 @@ void FMMOperator<dim,R,C>::P2P(const Octree<dim>& obs_cell,
         p2p.obs_normals[i] = data.obs_normals[obs_cell.data.indices[i]];
     }
 
-    auto res = nbody_eval(K, p2p, src_str.data());
+    auto res = nbody_eval(*K, p2p, src_str.data());
 
     for (size_t i = 0; i < n_obs; i++) {
         for (size_t d = 0; d < R; d++) {
@@ -352,7 +352,7 @@ void FMMOperator<dim,R,C>::P2L(const Octree<dim>& obs_cell,
         }
     }
 
-    auto check_eval = nbody_eval(K, s2c, src_str.data());
+    auto check_eval = nbody_eval(*K, s2c, src_str.data());
     auto equiv_srcs = mat_vec(check_to_equiv, check_eval);
 
     for (size_t i = 0; i < equiv_srcs.size(); i++) {
@@ -380,7 +380,7 @@ void FMMOperator<dim,R,C>::M2P(const Octree<dim>& obs_cell,
         m2p.obs_normals[i] = data.obs_normals[obs_cell.data.indices[i]];
     }
 
-    auto res = nbody_eval(K, m2p, multipoles);
+    auto res = nbody_eval(*K, m2p, multipoles);
 
     for (size_t i = 0; i < n_obs; i++) {
         for (size_t d = 0; d < R; d++) {
@@ -404,7 +404,7 @@ void FMMOperator<dim,R,C>::M2L(const Octree<dim>& obs_cell, const Octree<dim>& s
     m2l.obs_locs = down_check_surface.move(obs_cell.data.bounds);
     m2l.obs_normals = down_check_surface.normals;
 
-    auto check_eval = nbody_eval(K, m2l, multipoles);
+    auto check_eval = nbody_eval(*K, m2l, multipoles);
     auto solved = mat_vec(down_check_to_equiv, check_eval);
 
     for (size_t i = 0; i < solved.size(); i++) {
@@ -434,7 +434,7 @@ void FMMOperator<dim,R,C>::L2L(const Octree<dim>& cell,
         l2l.obs_locs = down_check_surface.move(child->data.bounds);
         l2l.obs_normals = down_check_surface.normals;
 
-        auto check_eval = nbody_eval(K, l2l, parent_locals);
+        auto check_eval = nbody_eval(*K, l2l, parent_locals);
         auto equiv_srcs = mat_vec(check_to_equiv, check_eval);
 
         for (size_t i = 0; i < equiv_srcs.size(); i++) {
@@ -462,7 +462,7 @@ void FMMOperator<dim,R,C>::L2P(const Octree<dim>& cell,
         l2p.obs_normals[i] = data.obs_normals[cell.data.indices[i]];
     }
 
-    auto res = nbody_eval(K, l2p, locals);
+    auto res = nbody_eval(*K, l2p, locals);
 
     for (size_t i = 0; i < n_obs; i++) {
         for (size_t d = 0; d < R; d++) {

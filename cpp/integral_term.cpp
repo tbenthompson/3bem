@@ -143,7 +143,7 @@ AdaptiveIntegrationMethod<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>
         auto shifted_near_pt = FarNearLogic<dim>{qs.far_threshold, 1.0}
             .decide(step_loc, term.src_face);
         UnitFacetAdaptiveIntegrator<dim> integrator;
-        near_steps[step_idx] = integrator(K, qs.near_tol, term, shifted_near_pt, step_loc);
+        near_steps[step_idx] = integrator(*K, qs.near_tol, term, shifted_near_pt, step_loc);
     }
 
     return richardson_limit(2, near_steps);
@@ -155,7 +155,7 @@ AdaptiveIntegrationMethod<dim,R,C>::compute_nearfield(const IntegralTerm<dim,R,C
     const NearestPoint<dim>& nearest_pt) const 
 {
     UnitFacetAdaptiveIntegrator<dim> integrator;
-    return integrator(K, qs.near_tol, term, nearest_pt, term.obs.loc);
+    return integrator(*K, qs.near_tol, term, nearest_pt, term.obs.loc);
 }
 
 template <size_t dim, size_t R, size_t C>
@@ -165,7 +165,7 @@ AdaptiveIntegrationMethod<dim,R,C>::compute_farfield(const IntegralTerm<dim,R,C>
 {
     auto integrals = zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make();
     for (size_t i = 0; i < qs.src_far_quad.size(); i++) {
-        integrals += term.eval_point_influence(K, qs.src_far_quad[i].x_hat) *
+        integrals += term.eval_point_influence(*K, qs.src_far_quad[i].x_hat) *
                      qs.src_far_quad[i].w;
     }
     return integrals;
@@ -238,7 +238,7 @@ SinhIntegrationMethod<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>& te
         auto step_loc = get_step_loc(term.obs, qs.singular_steps[step_idx]);
         auto shifted_near_pt = FarNearLogic<dim>{qs.far_threshold, 1.0}
             .decide(step_loc, term.src_face);
-        steps[step_idx] = sinh_integrate(sinh_order, K, term, shifted_near_pt, step_loc);
+        steps[step_idx] = sinh_integrate(sinh_order, *K, term, shifted_near_pt, step_loc);
     }
 
     return richardson_limit(2, steps);
@@ -249,7 +249,7 @@ Vec<Vec<Vec<double,C>,R>,dim>
 SinhIntegrationMethod<dim,R,C>::compute_nearfield(const IntegralTerm<dim,R,C>& term,
     const NearestPoint<dim>& nearest_pt) const 
 {
-    return sinh_integrate(sinh_order, K, term, nearest_pt, term.obs.loc);
+    return sinh_integrate(sinh_order, *K, term, nearest_pt, term.obs.loc);
 }
 
 template <size_t dim, size_t R, size_t C>
