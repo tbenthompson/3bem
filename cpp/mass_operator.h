@@ -3,6 +3,7 @@
 
 #include "galerkin_operator.h"
 #include "interpolation_operator.h"
+#include "sparse_operator.h"
 
 namespace tbem {
 
@@ -11,14 +12,14 @@ template <size_t dim>
 struct MassOperator: public OperatorI
 {
     const OperatorShape shape;
-    const InterpolationOperator<dim> interp;
-    const GalerkinOperator<dim> galerkin;
+    const SparseOperator interp;
+    const SparseOperator galerkin;
 
     MassOperator(const OperatorShape& shape,
         const Mesh<dim>& obs_mesh, const QuadRule<dim-1>& obs_quad):
         shape(shape),
-        interp(shape, obs_mesh, obs_quad),
-        galerkin(shape, obs_mesh, obs_quad)
+        interp(make_interpolation_operator(shape.n_cols, obs_mesh, obs_quad)),
+        galerkin(make_galerkin_operator(shape.n_rows, obs_mesh, obs_quad))
     {}
 
     virtual size_t n_rows() const {return galerkin.n_rows();} 

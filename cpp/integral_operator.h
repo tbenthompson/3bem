@@ -100,15 +100,15 @@ template <size_t dim, size_t R, size_t C>
 struct IntegralOperator: public OperatorI {
     const SparseOperator nearfield;
     const SparseOperator farfield_correction;
-    const GalerkinOperator<dim> galerkin;
+    const SparseOperator galerkin;
     const BlockDirectNBodyOperator<dim,R,C> farfield;
-    const InterpolationOperator<dim> interp;
+    const SparseOperator interp;
 
     IntegralOperator(const SparseOperator& nearfield,
         const SparseOperator& farfield_correction,
-        const GalerkinOperator<dim>& galerkin,
+        const SparseOperator& galerkin,
         const BlockDirectNBodyOperator<dim,R,C>& farfield,
-        const InterpolationOperator<dim>& interp):
+        const SparseOperator& interp):
         nearfield(nearfield),
         farfield_correction(farfield_correction),
         galerkin(galerkin),
@@ -151,8 +151,8 @@ IntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
 
     auto obs_quad = mthd.get_obs_quad();
     auto src_quad = mthd.get_src_quad();
-    GalerkinOperator<dim> galerkin({R,C}, obs_mesh, obs_quad);
-    InterpolationOperator<dim> interp({R,C}, src_mesh, src_quad);
+    auto galerkin = make_galerkin_operator(R, obs_mesh, obs_quad);
+    auto interp = make_interpolation_operator(C, src_mesh, src_quad);
 
     return IntegralOperator<dim,R,C>(
         nearfield, far_correction, galerkin, farfield, interp

@@ -22,7 +22,8 @@ struct EvalProb {
         src_strength(std::vector<double>(sphere.n_dofs(), 1.0))
     {}
 
-    double go(const Kernel<3,1,1>& k) {
+    double go(const Kernel<3,1,1>& k) 
+    {
         auto mthd = make_adaptive_integration_mthd(qs, k);
         auto op = mesh_to_points_operator({obs_pt}, {obs_n}, sphere, mthd, {sphere});
         return op.apply(src_strength)[0];
@@ -35,7 +36,8 @@ struct EvalProb {
     std::vector<double> src_strength;
 }; 
 
-TEST_CASE("EvalIntegralEquationSphereSurfaceArea", "[dense_builder]") {
+TEST_CASE("EvalIntegralEquationSphereSurfaceArea", "[dense_builder]") 
+{
     EvalProb ep(5, 3, 2);
     IdentityScalar<3> identity;
     double result = ep.go(identity);
@@ -43,20 +45,23 @@ TEST_CASE("EvalIntegralEquationSphereSurfaceArea", "[dense_builder]") {
     REQUIRE_CLOSE(result, exact_surf_area, 1e-1);
 }
 
-TEST_CASE("ConstantLaplace", "[dense_builder]") {
+TEST_CASE("ConstantLaplace", "[dense_builder]") 
+{
     EvalProb ep(5, 3, 2);
     LaplaceDouble<3> double_kernel;
     double result = ep.go(double_kernel);
     REQUIRE_CLOSE(result, -1.0, 1e-3);
 }
 
-TEST_CASE("MatrixRowVsEval", "[dense_builder]") {
+TEST_CASE("MatrixRowVsEval", "[dense_builder]") 
+{
     EvalProb ep(4, 3, 2);
     double result = ep.go(LaplaceDouble<3>());
     REQUIRE_CLOSE(result, -1.0, 1e-3);
 }
 
-TEST_CASE("FacetInfo2D", "[dense_builder]") {
+TEST_CASE("FacetInfo2D", "[dense_builder]") 
+{
     Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{3.0, 0.0}};
     auto face_info = FacetInfo<2>::build(f);
     REQUIRE(face_info.area_scale == 9);
@@ -65,7 +70,8 @@ TEST_CASE("FacetInfo2D", "[dense_builder]") {
     REQUIRE(face_info.normal == (Vec2<double>{0.0, 1.0}));
 }
 
-TEST_CASE("FacetInfo3D", "[dense_builder]") {
+TEST_CASE("FacetInfo3D", "[dense_builder]") 
+{
     Facet<3> f{
         Vec3<double>{0.0, 0.0, 0.0},
         Vec3<double>{2.0, 0.0, 0.0},
@@ -78,7 +84,15 @@ TEST_CASE("FacetInfo3D", "[dense_builder]") {
     REQUIRE(face_info.normal == (Vec3<double>{0.0, 0.0, 1.0}));
 }
 
-TEST_CASE("ObsPtFromFace", "[dense_builder]") {
+TEST_CASE("get_facet_info", "[dense_builder]") 
+{
+    auto m = line_mesh({0, 0}, {1, 0}).refine_repeatedly(4);
+    auto f = get_facet_info(m);
+    REQUIRE(f.size() == m.n_facets());
+}
+
+TEST_CASE("ObsPtFromFace", "[dense_builder]") 
+{
     Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{1.0, 1.0}};
     auto face_info = FacetInfo<2>::build(f);
     auto obs = ObsPt<2>::from_face({0}, face_info);

@@ -64,17 +64,17 @@ DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
     DenseOperator op(R * n_obs_dofs, C * n_src_dofs, 0.0);
 
     auto src_facet_info = get_facet_info(src_mesh);
+    auto obs_facet_info = get_facet_info(obs_mesh);
     const auto& obs_quad = mthd.get_obs_quad();
 
 #pragma omp parallel for
     for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) {
-        auto obs_face = FacetInfo<dim>::build(obs_mesh.facets[obs_idx]);
 
         std::vector<Vec<Vec<Vec<double,C>,R>,dim>> row(n_src_dofs, 
                 zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make());
         for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
             auto pt = ObsPt<dim>::away_from_nearest_facets(
-                obs_quad[obs_q].x_hat, obs_face, all_mesh
+                obs_quad[obs_q].x_hat, obs_facet_info[obs_idx], all_mesh
             );
 
             const auto basis = linear_basis(obs_quad[obs_q].x_hat);
@@ -89,8 +89,8 @@ DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
                 }
             }
             for (size_t dof = 0; dof < n_src_dofs; dof++) {
-                row[dof] += outer_product(basis,
-                    add_to_row[dof] * obs_quad[obs_q].w * obs_face.jacobian);
+                row[dof] += outer_product(basis, add_to_row[dof] *
+                    obs_quad[obs_q].w * obs_facet_info[obs_idx].jacobian);
             }
         }
 

@@ -3,8 +3,6 @@ CURRENT: MISC
 ** remove the double underscore if the ifdefs
 
 KERNEL OVERHAUL
-** unit test: create a integration method with inline kernel parameter. currently, this would segfault, because a reference is stored rather than copied
-** replace references to the kernel by pointer to the kernel
 ** capacity test: benchmark the fmm
 ** move obs, src loop into the kernel functions which will reduce the number of function calls and also allow sse/avx implementations of those kernel functions
 ** if a large number of obs and src points are passed to the kernel functions simultaneously, then maybe the output can simply be a vector rather than using the templated tensor arrays
