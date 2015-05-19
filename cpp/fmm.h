@@ -4,7 +4,6 @@
 #include <cassert>
 #include <memory>
 #include "kernel.h"
-#include "nbody_data.h"
 #include "octree.h"
 #include "numbers.h"
 #include "util.h"
@@ -111,6 +110,8 @@ struct FMMTasks
     std::vector<CellTask> l2ls;
     std::vector<CellTask> l2ps;
 };
+
+template <size_t dim> struct NBodyData;
 
 /* An implementation of the kernel independent fast multipole method
  * as described in:

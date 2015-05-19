@@ -1,4 +1,5 @@
 #include "fmm.h"
+#include "nbody_operator.h"
 
 namespace tbem {
 
@@ -51,61 +52,6 @@ TranslationSurface<3> TranslationSurface<3>::make_surrounding_surface(size_t ord
 
 template struct TranslationSurface<2>;
 template struct TranslationSurface<3>;
-
-template <size_t dim, size_t R, size_t C>
-std::vector<double>
-nbody_matrix(const Kernel<dim,R,C>& K, const NBodyData<dim>& data) 
-{
-    auto n_pairs = data.obs_locs.size() * data.src_locs.size();
-    auto n_blocks = R * C;
-    std::vector<double> op(n_pairs * n_blocks);
-
-    for (size_t i = 0; i < data.obs_locs.size(); i++) {
-        for (size_t j = 0; j < data.src_locs.size(); j++) {
-            auto kernel_val = K(
-                data.obs_locs[i], data.src_locs[j],
-                data.obs_normals[i], data.src_normals[j]
-            );
-
-            for (size_t d1 = 0; d1 < R; d1++) {
-                auto row = d1 * data.obs_locs.size() + i;
-                for (size_t d2 = 0; d2 < C; d2++) {
-                    auto col = d2 * data.src_locs.size() + j;
-                    auto matrix_idx = row * C * data.src_locs.size() + col;
-                    op[matrix_idx] = kernel_val[d1][d2];
-                }
-            }
-        }
-    }
-
-    return op;
-}
-
-template <size_t dim, size_t R, size_t C>
-std::vector<double>
-nbody_eval(const Kernel<dim,R,C>& K, const NBodyData<dim>& data,
-           double const* x) 
-{
-    std::vector<double> out(R * data.obs_locs.size(), 0.0);
-    for (size_t i = 0; i < data.obs_locs.size(); i++) {
-        for (size_t j = 0; j < data.src_locs.size(); j++) {
-            auto kernel_val = data.src_weights[j] * K(
-                data.obs_locs[i], data.src_locs[j],
-                data.obs_normals[i], data.src_normals[j]
-            );
-
-            for (size_t d1 = 0; d1 < R; d1++) {
-                auto row = d1 * data.obs_locs.size() + i;
-                for (size_t d2 = 0; d2 < C; d2++) {
-                    auto col = d2 * data.src_locs.size() + j;
-                    out[row] += kernel_val[d1][d2] * x[col];
-                }
-            }
-        }
-    }
-
-    return out;
-}
 
 std::vector<double> 
 mat_vec(const std::vector<double>& A, const std::vector<double>& x)
@@ -180,7 +126,7 @@ CheckToEquiv FMMOperator<dim,R,C>::build_check_to_equiv(const Octree<dim>& cell,
         NBodyData<dim> down_data{
             check_surf.move(cell.data.bounds), check_surf.normals,
             equiv_surf.move(cell.data.bounds), equiv_surf.normals,
-            {}
+            std::vector<double>(equiv_surf.pts.size(), 1.0)
         };
         ops.push_back(svd_inverse_nbody(*K, down_data));
     }

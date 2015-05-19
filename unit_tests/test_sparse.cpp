@@ -84,11 +84,45 @@ TEST_CASE("left multiply with dense", "[sparse]")
     auto op = SparseOperator::csr_from_coo(2, 2, {
         {0, 0, 1.0}, {1, 1, 2.0}, {0, 1, 1.0}
     });
-    auto out = op.left_multiply_with_dense(DenseOperator(2, 2, {
+    auto out = op.left_multiply_with_dense(DenseOperator(3, 2, {
+        1, 2, 3, 4, 5, 6
+    }));
+    REQUIRE(out.n_rows() == 3);
+    REQUIRE(out.n_cols() == 2);
+    std::vector<double> correct{
+        1, 5, 3, 11, 5, 17
+    };
+    CHECK_ARRAY_EQUAL(out.data(), correct, 4);
+}
+
+TEST_CASE("right multiply with dense", "[sparse]") 
+{
+    auto op = SparseOperator::csr_from_coo(2, 2, {
+        {0, 0, 1.0}, {1, 1, 2.0}, {0, 1, 1.0}
+    });
+    auto out = op.right_multiply_with_dense(DenseOperator(2, 3, {
+        1, 2, 3, 4, 5, 6
+    }));
+    REQUIRE(out.n_rows() == 2);
+    REQUIRE(out.n_cols() == 3);
+    std::vector<double> correct{
+        5, 7, 9, 8, 10, 12
+    };
+    CHECK_ARRAY_EQUAL(out.data(), correct, 4);
+}
+
+TEST_CASE("add with dense", "[sparse]") 
+{
+    auto op = SparseOperator::csr_from_coo(2, 2, {
+        {0, 0, 1.0}, {1, 1, 2.0}, {0, 1, 1.0}
+    });
+    auto out = op.add_with_dense(DenseOperator(2, 2, {
         1, 2, 3, 4
     }));
+    REQUIRE(out.n_rows() == 2);
+    REQUIRE(out.n_cols() == 2);
     std::vector<double> correct{
-        1, 5, 3, 11
+        2, 3, 3, 6
     };
     CHECK_ARRAY_EQUAL(out.data(), correct, 4);
 }

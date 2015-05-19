@@ -75,7 +75,7 @@ void test_kernel(const NBodyData<dim>& data, const Kernel<dim,R,C>& K,
     FMMOperator<dim,R,C> tree(K, data, {0.35, order, n_per_cell, 0.05, false});
     auto out = tree.apply(x);
 
-    BlockDirectNBodyOperator<dim,R,C> exact_op{data, K};
+    auto exact_op = make_direct_nbody_operator(data, K);
     auto exact = exact_op.apply(x);
     std::vector<double> error;
     for (size_t d = 0; d < R; d++) {

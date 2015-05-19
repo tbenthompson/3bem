@@ -57,6 +57,40 @@ DenseOperator SparseOperator::left_multiply_with_dense(const DenseOperator& othe
     return DenseOperator(other.n_rows(), n_cols(), out_matrix);
 }
 
+DenseOperator SparseOperator::right_multiply_with_dense(const DenseOperator& other) const
+{
+    assert(n_cols() == other.n_rows());
+
+    std::vector<double> out_matrix(n_rows() * other.n_cols(), 0.0);
+    for (size_t i = 0; i < n_rows(); i++) {
+        for (size_t c_idx = row_ptrs[i]; c_idx < row_ptrs[i + 1]; c_idx++) {
+            auto col = column_indices[c_idx];
+            for (size_t j = 0; j < other.n_cols(); j++) {
+                auto out_idx = i * other.n_cols() + j;
+                auto other_idx = col * other.n_cols() + j;
+                out_matrix[out_idx] += other[other_idx] * values[c_idx];
+            }
+        }
+    }
+    return DenseOperator(n_rows(), other.n_cols(), out_matrix);
+}
+
+DenseOperator SparseOperator::add_with_dense(const DenseOperator& other) const
+{
+    assert(n_rows() == other.n_rows());
+    assert(n_cols() == other.n_cols());
+
+    std::vector<double> out_matrix = other.data();
+    for (size_t i = 0; i < n_rows(); i++) {
+        for (size_t c_idx = row_ptrs[i]; c_idx < row_ptrs[i + 1]; c_idx++) {
+            auto out_col = column_indices[c_idx];
+            auto out_idx = i * n_cols() + out_col;
+            out_matrix[out_idx] += values[c_idx];
+        }
+    }
+    return DenseOperator(other.n_rows(), n_cols(), out_matrix);
+}
+
 SparseOperator SparseOperator::csr_from_coo(size_t n_rows, size_t n_cols,
     const std::vector<MatrixEntry>& entries)
 {

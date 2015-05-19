@@ -37,12 +37,19 @@ struct SparseOperator: public OperatorI
     virtual std::vector<double> apply(const std::vector<double>& x) const;
     std::vector<double> to_dense() const; 
 
-    /* Multiply a sparse matrix by a dense matrix getting a dense matrix
-     * as output. Simple dense matrix multiplication is an O(n^3) operation.
-     * These are implemented as O(nZ) where Z is the nnz of the sparse matrix.
+    /* Left multiply a sparse matrix by a dense matrix getting a dense matrix
+     * as output:
+     * (dense) * (sparse) = out
+     * Simple dense matrix multiplication is an O(n^3) operation.
+     * These are implemented as O(n^2 + nZ) where Z is the nnz of the sparse matrix.
      */
     DenseOperator left_multiply_with_dense(const DenseOperator& other) const;
+
+    /* Right multiply -- see comments on left_multiply_with_dense
+     */
     DenseOperator right_multiply_with_dense(const DenseOperator& other) const;
+
+    DenseOperator add_with_dense(const DenseOperator& other) const;
 
     static SparseOperator csr_from_coo(size_t n_rows, size_t n_cols,
         const std::vector<MatrixEntry>& entries);
