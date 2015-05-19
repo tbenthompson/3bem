@@ -19,8 +19,8 @@ struct DenseOperator: public OperatorI {
     DenseOperator(size_t n_rows, size_t n_cols);
     DenseOperator(size_t n_rows, size_t n_cols, double val);
 
-    virtual size_t n_rows() const override;
-    virtual size_t n_cols() const override;
+    virtual size_t n_rows() const;
+    virtual size_t n_cols() const;
     size_t n_elements() const; 
 
     virtual std::vector<double> apply(const std::vector<double>& x) const override;

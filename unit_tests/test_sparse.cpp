@@ -1,5 +1,6 @@
 #include "catch.hpp"
 #include "sparse_operator.h"
+#include "dense_operator.h"
 
 using namespace tbem;
 
@@ -76,4 +77,18 @@ TEST_CASE("To dense -- multiple values for one entry", "[sparse]")
         2.0, 2.0, 4.0, 0.0, 0.0, 4.0, 1.0, 0.0, 0.0
     };
     CHECK_ARRAY_EQUAL(d, correct, 9);
+}
+
+TEST_CASE("left multiply with dense", "[sparse]") 
+{
+    auto op = SparseOperator::csr_from_coo(2, 2, {
+        {0, 0, 1.0}, {1, 1, 2.0}, {0, 1, 1.0}
+    });
+    auto out = op.left_multiply_with_dense(DenseOperator(2, 2, {
+        1, 2, 3, 4
+    }));
+    std::vector<double> correct{
+        1, 5, 3, 11
+    };
+    CHECK_ARRAY_EQUAL(out.data(), correct, 4);
 }
