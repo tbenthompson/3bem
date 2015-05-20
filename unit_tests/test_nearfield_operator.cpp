@@ -26,20 +26,8 @@ TEST_CASE("Constrained nearfield matrix", "[nearfield_operator]")
     auto mthd = make_adaptive_integration_mthd(qs, k);
     auto galerkin = make_galerkin_operator(1, m, mthd.get_obs_quad());
     auto nearfield = make_nearfield_operator(m, m, mthd, {m});
-    auto dense_matrix = galerkin.right_multiply_with_dense(nearfield.to_dense());
-    std::vector<MatrixEntry> sparsified;
-    for (size_t i = 0; i < dense_matrix.n_rows(); i++) {
-        for (size_t j = 0; j < dense_matrix.n_cols(); j++) {
-            auto val = dense_matrix[i * dense_matrix.n_cols() + j];
-            if (val == 0.0) {
-                continue;
-            }
-            sparsified.push_back({i, j, val});
-        }
-    }
-    auto matrix = SparseOperator::csr_from_coo(
-        dense_matrix.n_rows(), dense_matrix.n_cols(), sparsified
-    );
+    auto matrix = galerkin.right_multiply(nearfield);
+    auto dense_matrix = matrix.to_dense();
 
     SECTION("Dense operator equals galerkin nearfield") {
         auto dense_matrix2 = *dense_integral_operator(m, m, mthd, {m}).storage;

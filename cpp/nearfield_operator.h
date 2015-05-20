@@ -41,34 +41,29 @@ SparseOperator nearfield_helper(const Mesh<dim>& obs_mesh,
 
     auto src_facet_info = get_facet_info(src_mesh);
     std::vector<MatrixEntry> entries;
+    auto obs_pts = nearfield_obs_pts(obs_mesh, obs_quad, all_mesh);
 #pragma omp parallel for
-    for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) {
-        auto obs_face = FacetInfo<dim>::build(obs_mesh.facets[obs_idx]);
-        for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
-            auto pt = ObsPt<dim>::away_from_nearest_facets(
-                obs_quad[obs_q].x_hat, obs_face, all_mesh
-            );
-            auto pt_idx = obs_idx * obs_quad.size() + obs_q;
+    for (size_t pt_idx = 0; pt_idx < obs_pts.size(); pt_idx++) {
+        auto pt = obs_pts[pt_idx];
 
-            for (size_t i = 0; i < src_mesh.facets.size(); i++) {
-                FarNearLogic<dim> far_near_logic{mthd.far_threshold(), 1.0};
-                auto nearest_pt = far_near_logic.decide(pt.loc, src_facet_info[i]);
-                if (nearest_pt.type == FarNearType::Farfield) {
-                    continue; 
-                }
-                IntegralTerm<dim,R,C> term{pt, src_facet_info[i]};
-                auto eval = f(term, nearest_pt);
-                for (size_t basis_idx = 0; basis_idx < dim; basis_idx++) {
-                    auto src_dof_idx = i * dim + basis_idx; 
-                    for (size_t d1 = 0; d1 < R; d1++) {
-                        auto row_idx = d1 * n_obs_pts + pt_idx;
-                        for (size_t d2 = 0; d2 < C; d2++) {
-                            auto col_idx = d2 * n_src_dofs + src_dof_idx;
+        for (size_t i = 0; i < src_mesh.facets.size(); i++) {
+            FarNearLogic<dim> far_near_logic{mthd.far_threshold(), 1.0};
+            auto nearest_pt = far_near_logic.decide(pt.loc, src_facet_info[i]);
+            if (nearest_pt.type == FarNearType::Farfield) {
+                continue; 
+            }
+            IntegralTerm<dim,R,C> term{pt, src_facet_info[i]};
+            auto eval = f(term, nearest_pt);
+            for (size_t basis_idx = 0; basis_idx < dim; basis_idx++) {
+                auto src_dof_idx = i * dim + basis_idx; 
+                for (size_t d1 = 0; d1 < R; d1++) {
+                    auto row_idx = d1 * n_obs_pts + pt_idx;
+                    for (size_t d2 = 0; d2 < C; d2++) {
+                        auto col_idx = d2 * n_src_dofs + src_dof_idx;
 #pragma omp critical
-                            entries.push_back({
-                                row_idx, col_idx, eval[basis_idx][d1][d2]
-                            });
-                        }
+                        entries.push_back({
+                            row_idx, col_idx, eval[basis_idx][d1][d2]
+                        });
                     }
                 }
             }

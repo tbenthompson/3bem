@@ -51,6 +51,8 @@ struct SparseOperator: public OperatorI
 
     DenseOperator add_with_dense(const DenseOperator& other) const;
 
+    SparseOperator right_multiply(const SparseOperator& other) const;
+
     static SparseOperator csr_from_coo(size_t n_rows, size_t n_cols,
         const std::vector<MatrixEntry>& entries);
 };

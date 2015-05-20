@@ -64,7 +64,7 @@ TEST_CASE("To dense", "[sparse]")
     std::vector<double> correct = {
         1.0, 2.0, 4.0, 0.0, 0.0, 4.0, 1.0, 0.0, 0.0
     };
-    CHECK_ARRAY_EQUAL(d.data(), correct, 9);
+    REQUIRE_ARRAY_EQUAL(d.data(), correct, 9);
 }
 
 TEST_CASE("To dense -- multiple values for one entry", "[sparse]") 
@@ -76,7 +76,7 @@ TEST_CASE("To dense -- multiple values for one entry", "[sparse]")
     std::vector<double> correct = {
         2.0, 2.0, 4.0, 0.0, 0.0, 4.0, 1.0, 0.0, 0.0
     };
-    CHECK_ARRAY_EQUAL(d, correct, 9);
+    REQUIRE_ARRAY_EQUAL(d, correct, 9);
 }
 
 TEST_CASE("left multiply with dense", "[sparse]") 
@@ -92,7 +92,7 @@ TEST_CASE("left multiply with dense", "[sparse]")
     std::vector<double> correct{
         1, 5, 3, 11, 5, 17
     };
-    CHECK_ARRAY_EQUAL(out.data(), correct, 4);
+    REQUIRE_ARRAY_EQUAL(out.data(), correct, 4);
 }
 
 TEST_CASE("right multiply with dense", "[sparse]") 
@@ -108,7 +108,7 @@ TEST_CASE("right multiply with dense", "[sparse]")
     std::vector<double> correct{
         5, 7, 9, 8, 10, 12
     };
-    CHECK_ARRAY_EQUAL(out.data(), correct, 4);
+    REQUIRE_ARRAY_EQUAL(out.data(), correct, 4);
 }
 
 TEST_CASE("add with dense", "[sparse]") 
@@ -124,5 +124,22 @@ TEST_CASE("add with dense", "[sparse]")
     std::vector<double> correct{
         2, 3, 3, 6
     };
-    CHECK_ARRAY_EQUAL(out.data(), correct, 4);
+    REQUIRE_ARRAY_EQUAL(out.data(), correct, 4);
+}
+
+TEST_CASE("sparse times sparse", "[sparse]") 
+{
+    auto op1 = SparseOperator::csr_from_coo(2, 2, {
+        {0, 0, 1.0}, {1, 1, 2.0}, {0, 1, 1.0}
+    });
+    auto op2 = SparseOperator::csr_from_coo(2, 4, {
+        {0, 1, 1}, {0, 3, 1}, {1, 0, 7}, {1, 1, -1}
+    });
+    auto out = op1.right_multiply(op2);
+    REQUIRE(out.n_rows() == 2);
+    REQUIRE(out.n_cols() == 4);
+    std::vector<double> correct{
+        7, 0, 0, 1, 14, -2, 0, 0
+    };
+    REQUIRE_ARRAY_EQUAL(out.to_dense().data(), correct, 8);
 }

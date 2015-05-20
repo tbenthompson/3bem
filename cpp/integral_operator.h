@@ -22,6 +22,7 @@ namespace tbem {
  * C is the nearfield correction op (to remove overlap with farfield)
  */
 
+template <size_t dim, size_t R, size_t C>
 struct IntegralOperator: public OperatorI {
     const SparseOperator nearfield;
     const SparseOperator farfield_correction;
@@ -44,13 +45,13 @@ struct IntegralOperator: public OperatorI {
     virtual size_t n_rows() const {return galerkin.n_rows();} 
     virtual size_t n_cols() const {return nearfield.n_cols();}
     virtual std::vector<double> apply(const std::vector<double>& x) const {
-        auto nbody_far = farfield.apply(interp.apply(x));
+        auto nbody_far = galerkin.apply(farfield.apply(interp.apply(x)));
         auto eval = nearfield.apply(x);
         auto correction = farfield_correction.apply(x);
         for (size_t i = 0; i < eval.size(); i++) {
             eval[i] += nbody_far[i] + correction[i];
         }
-        return galerkin.apply(eval);
+        return eval;
     }
 
     const SparseOperator& get_nearfield_matrix() {
@@ -60,7 +61,7 @@ struct IntegralOperator: public OperatorI {
 
 
 template <size_t dim, size_t R, size_t C>
-IntegralOperator integral_operator(const Mesh<dim>& obs_mesh,
+IntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd,
     const Mesh<dim>& all_mesh) 
 {
@@ -77,8 +78,10 @@ IntegralOperator integral_operator(const Mesh<dim>& obs_mesh,
     auto galerkin = make_galerkin_operator(R, obs_mesh, obs_quad);
     auto interp = make_interpolation_operator(C, src_mesh, src_quad);
 
-    return IntegralOperator(
-        nearfield, far_correction, galerkin, farfield, interp
+    return IntegralOperator<dim,R,C>(
+        galerkin.right_multiply(nearfield),
+        galerkin.right_multiply(far_correction),
+        galerkin, farfield, interp
     );
 }
 
@@ -88,10 +91,10 @@ DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& all_mesh)
 {
     auto op = integral_operator(obs_mesh, src_mesh, mthd, all_mesh);
-    auto out = op.galerkin.right_multiply_with_dense(
-        op.farfield_correction.add_with_dense(
-            op.nearfield.add_with_dense(
-                op.interp.left_multiply_with_dense(
+    auto out = op.farfield_correction.add_with_dense(
+        op.nearfield.add_with_dense(
+            op.interp.left_multiply_with_dense(
+                op.galerkin.right_multiply_with_dense(
                     op.farfield
                 )
             )

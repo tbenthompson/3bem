@@ -1,5 +1,6 @@
 #include "sparse_operator.h"
 #include "dense_operator.h"
+#include <map>
 
 namespace tbem {
 
@@ -89,6 +90,45 @@ DenseOperator SparseOperator::add_with_dense(const DenseOperator& other) const
         }
     }
     return DenseOperator(other.n_rows(), n_cols(), out_matrix);
+}
+
+std::vector<MatrixEntry> coo_from_dok(const std::map<size_t,double>& dok,
+    size_t n_cols)
+{
+    std::vector<MatrixEntry> entries;
+    for (auto it = dok.begin(); it != dok.end(); ++it) {
+        auto matrix_idx = it->first;
+        auto col = matrix_idx % n_cols;
+        auto row = (matrix_idx - col) / n_cols;
+        entries.push_back({row, col, it->second});
+    }
+    return entries;
+}
+
+SparseOperator SparseOperator::right_multiply(const SparseOperator& other) const
+{
+    std::map<size_t,double> dok;
+    for (size_t i = 0; i < n_rows(); i++) {
+        for (size_t ci_idx = row_ptrs[i];
+             ci_idx < row_ptrs[i + 1];
+             ci_idx++) 
+        {
+            auto col = column_indices[ci_idx];
+            for (size_t cj_idx = other.row_ptrs[col];
+                 cj_idx < other.row_ptrs[col + 1];
+                 cj_idx++) 
+            {
+                auto out_col = other.column_indices[cj_idx];
+                auto entry = other.values[cj_idx] * values[ci_idx];
+                auto out_entry = i * other.n_cols() + out_col;
+                dok[out_entry] += entry;
+            }
+        }
+    }
+    return SparseOperator::csr_from_coo(
+        n_rows(), other.n_cols(),
+        coo_from_dok(dok, other.n_cols())
+    );
 }
 
 SparseOperator SparseOperator::csr_from_coo(size_t n_rows, size_t n_cols,
