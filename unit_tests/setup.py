@@ -21,7 +21,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('test_runner', **ext_config)
     return config
 
-# distutils is good at building shared libraries. Here, I hack the system
+# distutils is good at building shared libraries. Here, hack the system
 # to make it produce an executable
 class TestBuildExt(tbempyBuildExt):
     def get_ext_filename(self, base):

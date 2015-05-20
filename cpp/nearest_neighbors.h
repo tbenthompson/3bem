@@ -101,6 +101,7 @@ template <size_t dim>
 NearestFacets<dim> nearest_facets(const Vec<double,dim>& pt,
     const std::vector<Vec<Vec<double,dim>,dim>>& facets) 
 {
+    assert(facets.size() > 0);
     std::vector<Vec<Vec<double,dim>,dim>> closest_facets;
     Vec<double,dim> closest_pt;
     auto min_dist2 = std::numeric_limits<double>::max();

@@ -102,8 +102,8 @@ def get_extension_config():
         '-fopenmp',
         '-UNDEBUG',
         '-DDEBUG=1',
-        '-Wno-missing-braces',
         '-O3',
+        '-Wall',
         '-Wextra'
     ]
     link_args = [

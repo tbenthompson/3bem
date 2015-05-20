@@ -10,6 +10,8 @@
 #include "laplace_kernels.h"
 #include "elastic_kernels.h"
 
+//TODO: This file should be split up
+
 using namespace tbem;
 struct EvalProb {
     EvalProb(int refine_level, int near_eval, int gauss_order,
@@ -91,14 +93,29 @@ TEST_CASE("get_facet_info", "[dense_builder]")
     REQUIRE(f.size() == m.n_facets());
 }
 
-TEST_CASE("ObsPtFromFace", "[dense_builder]") 
+TEST_CASE("interior obs pts", "[dense builder]")
 {
-    Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{1.0, 1.0}};
-    auto face_info = FacetInfo<2>::build(f);
-    auto obs = ObsPt<2>::from_face({0}, face_info);
-    REQUIRE(obs.len_scale == std::sqrt(2));
-    REQUIRE(obs.loc == (Vec2<double>{0.5, 0.5}));
-    REQUIRE(obs.normal == (Vec2<double>{-1.0 / std::sqrt(2), 1.0 / std::sqrt(2)}));
-    REQUIRE(obs.richardson_dir == obs.normal);
-}
+    auto pts = interior_obs_pts<2>(
+        {{0,1}, {2,0}},
+        {{1,0}, {0,1}},
+        Mesh<2>{{
+            {{
+                {0, 0}, {1, 0}
+            }}
+        }}
+    );
+    
+    SECTION("size") {
+        REQUIRE(pts.size() == 2);
+    }
 
+    SECTION("normalized richardson direction") {
+        auto dir = pts[0].richardson_dir;
+        REQUIRE(hypot(dir) == 1.0);
+    }
+
+    SECTION("richardson length divided by 5") {
+        auto len = pts[0].len_scale;
+        REQUIRE(len == 0.2);
+    }
+}

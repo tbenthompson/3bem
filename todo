@@ -1,6 +1,7 @@
 CURRENT: MISC
 ** acceptance test: setup fmm operators for python wrapper
 ** remove the double underscore if the ifdefs
+** test_dense_builder should be split up
 
 KERNEL OVERHAUL
 ** capacity test: benchmark the fmm

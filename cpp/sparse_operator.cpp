@@ -28,7 +28,7 @@ std::vector<double> SparseOperator::apply(const std::vector<double>& x) const
 }
 
 
-std::vector<double> SparseOperator::to_dense() const
+DenseOperator SparseOperator::to_dense() const
 {
     std::vector<double> dense(n_cols() * n_rows(), 0.0);
     for (size_t i = 0; i < row_ptrs.size() - 1; i++) {
@@ -36,7 +36,7 @@ std::vector<double> SparseOperator::to_dense() const
            dense[i * n_cols() + column_indices[c_idx]] += values[c_idx];
        }
     }
-    return dense;
+    return DenseOperator(n_rows(), n_cols(), dense);
 }
 
 DenseOperator SparseOperator::left_multiply_with_dense(const DenseOperator& other) const

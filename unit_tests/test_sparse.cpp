@@ -64,7 +64,7 @@ TEST_CASE("To dense", "[sparse]")
     std::vector<double> correct = {
         1.0, 2.0, 4.0, 0.0, 0.0, 4.0, 1.0, 0.0, 0.0
     };
-    CHECK_ARRAY_EQUAL(d, correct, 9);
+    CHECK_ARRAY_EQUAL(d.data(), correct, 9);
 }
 
 TEST_CASE("To dense -- multiple values for one entry", "[sparse]") 

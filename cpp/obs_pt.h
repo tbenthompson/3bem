@@ -9,18 +9,6 @@ namespace tbem {
 
 template <size_t dim>
 struct ObsPt {
-    static ObsPt<dim> from_face(const Vec<double,dim-1>& ref_loc,
-        const FacetInfo<dim>& obs_face)
-    {
-        const int basis_order = 1;
-        return {
-            obs_face.length_scale / basis_order,
-            ref_to_real(ref_loc, obs_face.face),
-            obs_face.normal,
-            obs_face.normal 
-        };
-    }
-
     static ObsPt<dim> away_from_nearest_facets(const Vec<double,dim-1>& ref_loc,
         const FacetInfo<dim>& obs_face, const Mesh<dim>& mesh)
     {
