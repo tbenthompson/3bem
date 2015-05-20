@@ -8,7 +8,55 @@
 
 using namespace tbem;
 
-TEST_CASE("interior obs pts", "[dense builder]")
+TEST_CASE("richardson direction far", "[nearfield_operator]") {
+    Facet<2> f{{{0, -1}, {1, -1}}};
+    Vec<double,2> p{0, 1};
+
+    auto dir = decide_richardson_dir(p, {{f}, p, 0.0});
+
+    REQUIRE(dir == (Vec<double,2>{0, 1}));
+}
+
+TEST_CASE("richardson direction touching", "[nearfield_operator]") {
+    Facet<2> f{{{0, 0}, {0, 1}}};
+    Vec<double,2> p{0, 0};
+
+    auto dir = decide_richardson_dir(p, {{f}, p, 0.0});
+
+    REQUIRE(dir == (Vec<double,2>{-1, 0}));
+}
+
+TEST_CASE("richardson direction backside", "[nearfield_operator]") {
+    Facet<2> f{{{0, -1}, {1, -1}}};
+    Vec<double,2> p{0, -2};
+
+    auto dir = decide_richardson_dir(p, {{f}, p, 0.0});
+
+    REQUIRE(dir == (Vec<double,2>{0, -1}));
+}
+
+TEST_CASE("richardson direction intersection", "[nearfield_operator]") {
+    Facet<2> f{{{0, 0}, {1, 0}}};
+    Facet<2> f2{{{0, 1}, {0, 0}}};
+    Vec<double,2> p{0, 0};
+    
+    auto dir = decide_richardson_dir(p, {{f, f2}, p, 0.0});
+    
+    REQUIRE(dir == (Vec<double,2>{0.5, 0.5}));
+}
+
+TEST_CASE("richardson direction normals dont cancel", "[nearfield_operator]") {
+    Facet<2> f{{{1, -1}, {1, 1}}};
+    Facet<2> f2{{{-1, 1}, {-1, -1}}};
+    Vec<double,2> p{0, 0};
+
+    auto dir = decide_richardson_dir(p, {{f, f2}, p, 0.0});
+
+    bool normals_not_canceled = (dir[0] != 0.0) || (dir[1] != 0.0);
+    REQUIRE(normals_not_canceled);
+}
+
+TEST_CASE("interior obs pts", "[nearfield_operator]")
 {
     auto pts = interior_obs_pts<2>(
         {{0,1}, {2,0}},

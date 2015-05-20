@@ -8,6 +8,36 @@
 namespace tbem {
 
 template <size_t dim>
+Vec<double,dim> away_from_facet_dir(const Vec<Vec<double,dim>,dim>& f,
+    const Vec<double,dim>& pt) 
+{
+    auto facet_normal = unscaled_normal(f); 
+    auto which_side = which_side_point(f, pt);
+    if (which_side == INTERSECT) {
+        return facet_normal;
+    } else if (which_side == FRONT) {
+        return facet_normal;
+    } else {
+        return -facet_normal;
+    }
+}
+
+template <size_t dim>
+Vec<double,dim> decide_richardson_dir(const Vec<double,dim>& pt,
+    const NearestFacets<dim>& nearest_facets) 
+{
+    auto direction = zeros<Vec<double,dim>>::make();
+    for (size_t i = 0; i < nearest_facets.facets.size(); i++) {
+        direction += away_from_facet_dir(nearest_facets.facets[i], pt);
+    }
+    if (all(direction == 0.0)) {
+        direction = away_from_facet_dir(nearest_facets.facets[0], pt);
+    }
+    direction /= (double)nearest_facets.facets.size();
+    return direction;
+}
+
+template <size_t dim>
 std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
     const QuadRule<dim-1>& obs_quad, const Mesh<dim>& all_mesh)
 {
