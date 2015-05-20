@@ -98,16 +98,6 @@ inline Vec3<double> ref_to_real(const Vec<double,2>& x_hat,
         dot_product(basis, Vec3<double>{{locs[0][2], locs[1][2], locs[2][2]}})
     }};
 }
-
-inline Vec3<Vec2<double>> ref_to_real_gradient(const Vec<double,2>& x_hat,
-    const Vec<Vec<double,3>,3>& locs) 
-{
-    return {{
-        {-locs[0][0] + locs[1][0], -locs[0][0] + locs[2][0]},
-        {-locs[0][1] + locs[1][1], -locs[0][0] + locs[2][1]},
-        {-locs[0][2] + locs[1][2], -locs[0][0] + locs[2][2]}
-    }};
-}
  
 } //END NAMESPACE tbem
 

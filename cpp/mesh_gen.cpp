@@ -63,7 +63,7 @@ Vec2<double> circlify(const Vec2<double>& center, double r, const Vec2<double>& 
     return (r / dist(x, center)) * (x - center) + center;
 }
 
-Mesh<2> circle_mesh(std::array<double,2> c, double r, int refinements) {
+Mesh<2> circle_mesh(const Vec2<double>& c, double r, int refinements) {
     std::vector<std::array<double,2>> vertices = {
         {c[0] + r, c[1]}, {c[0], c[1] + r}, {c[0] - r, c[1]}, {c[0], c[1] - r},
     };

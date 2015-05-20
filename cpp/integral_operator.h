@@ -69,10 +69,8 @@ IntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& all_mesh) 
 {
     auto obs_pts = galerkin_obs_pts(obs_mesh, mthd.get_obs_quad(), all_mesh);
-    auto nearfield = make_nearfield_operator(obs_pts, src_mesh, mthd, all_mesh);
-    auto far_correction = make_farfield_correction_operator(
-        obs_pts, src_mesh, mthd, all_mesh
-    );
+    auto nearfield = make_nearfield_operator(obs_pts, src_mesh, mthd);
+    auto far_correction = make_farfield_correction_operator(obs_pts, src_mesh, mthd);
 
     auto nbody_data = nbody_data_from_bem(obs_mesh, src_mesh,
         mthd.get_obs_quad(), mthd.get_src_quad());
@@ -108,16 +106,15 @@ DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
     return out;
 }
 
+//TODO: Consolidate the interior operator duplication with the integral_operators
 template <size_t dim, size_t R, size_t C>
 DenseOperator dense_interior_operator(const std::vector<Vec<double,dim>>& locs,
     const std::vector<Vec<double,dim>>& normals, const Mesh<dim>& src_mesh,
     const IntegrationMethodI<dim,R,C>& mthd, const Mesh<dim>& all_mesh)
 {
     auto obs_pts = interior_obs_pts(locs, normals, all_mesh);
-    auto nearfield = make_nearfield_operator(obs_pts, src_mesh, mthd, all_mesh);
-    auto far_correction = make_farfield_correction_operator(
-        obs_pts, src_mesh, mthd, all_mesh
-    );
+    auto nearfield = make_nearfield_operator(obs_pts, src_mesh, mthd);
+    auto far_correction = make_farfield_correction_operator(obs_pts, src_mesh, mthd);
 
     auto nbody_src = nbody_src_from_bem(src_mesh, mthd.get_src_quad());
     NBodyData<dim> nbody_data{

@@ -44,10 +44,3 @@ TEST_CASE("LinearInterpOnes", "[numerics]") {
         REQUIRE(std::fabs(result - exact) < 1e-12);
     }
 }
-
-TEST_CASE("RefToRealGradient", "[numerics]") {
-    Vec<Vec<double,3>,3> f{{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}};
-    auto result = ref_to_real_gradient({0, 0}, f);
-    Vec<Vec<double,2>,3> correct{{{1, 0}, {0, 1}, {0, 0}}};
-    REQUIRE(result == correct);
-}

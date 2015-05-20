@@ -115,10 +115,10 @@ AdaptiveIntegrationMethod<dim,R,C> make_adaptive_integration_mthd(
 
 template <size_t dim,size_t R, size_t C>
 struct SinhIntegrationMethod: public IntegrationMethodI<dim,R,C> {
+    size_t sinh_order;
     QuadStrategy<dim> qs;
     AdaptiveIntegrationMethod<dim,R,C> adaptive;
     std::shared_ptr<Kernel<dim,R,C>> K;
-    size_t sinh_order;
 
     SinhIntegrationMethod(size_t sinh_order, const QuadStrategy<dim>& qs, 
         const Kernel<dim,R,C>& K):

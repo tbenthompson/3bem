@@ -9,6 +9,8 @@
 
 namespace tbem { 
 
+template <size_t dim> struct Ball;
+
 /* A box class defined by its center and half_width. These are used as
  * bounding boxes for the nodes in the octree hierarchy.
  */
@@ -21,7 +23,7 @@ public:
     bool in_box(const Vec<double,dim>& pt, const Vec<bool,dim>& inclusive) const;
     bool in_box_inclusive(const Vec<double,dim>& pt) const;
 
-    static Box<dim> bounding_box(const std::vector<Vec<double,dim>>& x);
+    static Box<dim> bounding_box(const std::vector<Ball<dim>>& x);
 };
 
 template <size_t dim, typename T>
@@ -77,8 +79,10 @@ template <size_t dim>
 Vec<size_t,dim> make_child_idx(size_t i);
 
 template <size_t dim>
-Octree<dim> build_octree(const std::vector<Vec<double,dim>>& pts,
-    size_t min_pts_per_cell);
+Octree<dim> make_octree(const std::vector<Ball<dim>>& pts, size_t min_pts_per_cell);
+
+template <size_t dim>
+Octree<dim> make_octree(const std::vector<Vec<double,dim>>& pts, size_t min_pts_per_cell);
 
 } // END namespace tbem
 #endif

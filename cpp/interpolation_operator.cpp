@@ -11,7 +11,6 @@ SparseOperator make_interpolation_operator(size_t n_components,
     const Mesh<dim>& src_mesh, const QuadRule<dim-1>& src_quad)
 {
     auto n_quadrature_pts = src_mesh.n_facets() * src_quad.size();
-    auto n_rows = n_components * n_quadrature_pts;
     std::vector<MatrixEntry> entries;
     for (size_t idx = 0; idx < src_mesh.facets.size(); idx++) 
     {

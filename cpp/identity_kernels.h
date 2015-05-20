@@ -25,6 +25,7 @@ struct IdentityTensor: public Kernel<dim,R,C>
     OperatorType call(double r2, const Vec<double,dim>& delta,
         const Vec<double,dim>& nobs, const Vec<double,dim>& nsrc) const 
     {
+        (void)r2; (void)delta; (void)nobs; (void)nsrc;
         return call_with_no_params();
     }
 

@@ -78,7 +78,7 @@ nearby_points(const Vec<double,dim>& ptA,
     const std::vector<Vec<double,dim>>& ptsB,
     const Octree<dim>& octB, double r)
 {
-    auto octA = build_octree<dim>({ptA}, 1);
+    auto octA = make_octree<dim>({ptA}, 1);
     auto pairs = nearby_points_all_pairs({ptA}, ptsB, octA, octB, r);
     std::vector<size_t> out_indices(pairs.size());
     for (size_t i = 0; i < pairs.size(); i++) {

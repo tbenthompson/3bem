@@ -35,6 +35,7 @@ struct GravityDisplacement<2>: public Kernel<2,2,2>
     typename Kernel::OperatorType call(double r2, const Vec2<double>& delta, 
         const Vec2<double>& nobs, const Vec2<double>& nsrc) const 
     {
+        (void)nobs;
         typename Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto dr = delta / r;
@@ -52,34 +53,6 @@ struct GravityDisplacement<2>: public Kernel<2,2,2>
     {
         return std::unique_ptr<Kernel<2,2,2>>(
             new GravityDisplacement<2>(shear_modulus, poisson_ratio, intensity)
-        );
-    }
-};
-
-template <>
-struct GravityDisplacement<3>: public Kernel<3,3,3>
-{
-    const double poisson_ratio;
-    const double shear_modulus;
-    // gravitational field multiplied by density of material
-    const Vec<double,3> intensity;
-
-    GravityDisplacement(double shear_modulus, double poisson_ratio,
-            Vec<double,3> intensity):
-        poisson_ratio(poisson_ratio),
-        shear_modulus(shear_modulus),
-        intensity(intensity)
-    {}
-
-    typename Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
-        const Vec3<double>& nobs, const Vec3<double>& nsrc) const 
-    {
-    }
-
-    virtual std::unique_ptr<Kernel<3,3,3>> clone() const
-    {
-        return std::unique_ptr<Kernel<3,3,3>>(
-            new GravityDisplacement<3>(shear_modulus, poisson_ratio, intensity)
         );
     }
 };
@@ -125,6 +98,36 @@ struct GravityTraction<2>: public Kernel<2,2,2>
 };
 
 template <>
+struct GravityDisplacement<3>: public Kernel<3,3,3>
+{
+    const double poisson_ratio;
+    const double shear_modulus;
+    // gravitational field multiplied by density of material
+    const Vec<double,3> intensity;
+
+    GravityDisplacement(double shear_modulus, double poisson_ratio,
+            Vec<double,3> intensity):
+        poisson_ratio(poisson_ratio),
+        shear_modulus(shear_modulus),
+        intensity(intensity)
+    {}
+
+    typename Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
+        const Vec3<double>& nobs, const Vec3<double>& nsrc) const 
+    {
+        (void)r2; (void)delta; (void)nobs; (void)nsrc;
+        return zeros<Kernel::OperatorType>::make();
+    }
+
+    virtual std::unique_ptr<Kernel<3,3,3>> clone() const
+    {
+        return std::unique_ptr<Kernel<3,3,3>>(
+            new GravityDisplacement<3>(shear_modulus, poisson_ratio, intensity)
+        );
+    }
+};
+
+template <>
 struct GravityTraction<3>: public Kernel<3,3,3>
 {
     const double shear_modulus;
@@ -142,6 +145,8 @@ struct GravityTraction<3>: public Kernel<3,3,3>
         const Vec3<double>& nobs, const Vec3<double>& nsrc) const 
 
     {
+        (void)r2; (void)delta; (void)nobs; (void)nsrc;
+        return zeros<Kernel::OperatorType>::make();
     }
 
     virtual std::unique_ptr<Kernel<3,3,3>> clone() const

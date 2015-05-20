@@ -53,6 +53,7 @@ TranslationSurface<3> TranslationSurface<3>::make_surrounding_surface(size_t ord
 template struct TranslationSurface<2>;
 template struct TranslationSurface<3>;
 
+//TODO: use dense operators...
 std::vector<double> 
 mat_vec(const std::vector<double>& A, const std::vector<double>& x)
 {
@@ -60,7 +61,6 @@ mat_vec(const std::vector<double>& A, const std::vector<double>& x)
     std::vector<double> out(x.size(), 0.0);
     for (size_t i = 0; i < x.size(); i++) {
         for (size_t j = 0; j < x.size(); j++) {
-            auto old = out[i];
             out[i] += A[i * x.size() + j] * x[j];
         }
     }
@@ -84,8 +84,8 @@ FMMOperator<dim,R,C>::FMMOperator(const Kernel<dim,R,C>& K,
     down_check_surface(
         TranslationSurface<dim>::down_check_surface(config.order, config.d)
     ),
-    src_oct(build_octree(data.src_locs, config.min_pts_per_cell)),
-    obs_oct(build_octree(data.obs_locs, config.min_pts_per_cell)),
+    src_oct(make_octree(data.src_locs, config.min_pts_per_cell)),
+    obs_oct(make_octree(data.obs_locs, config.min_pts_per_cell)),
     config(config),
     up_check_to_equiv(
         build_check_to_equiv(src_oct, 0, up_equiv_surface, up_check_surface)

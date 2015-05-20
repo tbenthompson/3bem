@@ -101,7 +101,7 @@ TEST_CASE("Constrained nearfield matrix", "[nearfield_operator]")
     auto mthd = make_adaptive_integration_mthd(qs, k);
     auto galerkin = make_galerkin_operator(1, m, mthd.get_obs_quad());
     auto obs_pts = galerkin_obs_pts(m, mthd.get_obs_quad(), m);
-    auto nearfield = make_nearfield_operator(obs_pts, m, mthd, m);
+    auto nearfield = make_nearfield_operator(obs_pts, m, mthd);
     auto matrix = galerkin.right_multiply(nearfield);
     auto dense_matrix = matrix.to_dense();
 

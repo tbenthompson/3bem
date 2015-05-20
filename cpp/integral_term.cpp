@@ -84,16 +84,14 @@ template <size_t dim>
 struct UnitFacetAdaptiveIntegrator {
     template <size_t R, size_t C>
     Vec<Vec<Vec<double,C>,R>,2> operator()(const Kernel<dim,R,C>& k, double tolerance, 
-        const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& near_pt,
-        const Vec<double,dim>& nf_obs_pt);
+        const IntegralTerm<dim,R,C>& term, const Vec<double,dim>& nf_obs_pt);
 };
 
 template <>
 struct UnitFacetAdaptiveIntegrator<2> {
     template <size_t R, size_t C>
     Vec<Vec<Vec<double,C>,R>,2> operator()(const Kernel<2,R,C>& k, double tolerance, 
-        const IntegralTerm<2,R,C>& term, const NearestPoint<2>& near_pt,
-        const Vec<double,2>& nf_obs_pt) 
+        const IntegralTerm<2,R,C>& term, const Vec<double,2>& nf_obs_pt) 
     {
         return adaptive_integrate<Vec<Vec<Vec<double,C>,R>,2>>(
             [&] (double x_hat) {
@@ -107,8 +105,7 @@ template <>
 struct UnitFacetAdaptiveIntegrator<3> {
     template <size_t R, size_t C>
     Vec<Vec<Vec<double,C>,R>,3> operator()(const Kernel<3,R,C>& k, double tolerance, 
-        const IntegralTerm<3,R,C>& term, const NearestPoint<3>& near_pt,
-        const Vec<double,3>& nf_obs_pt) 
+        const IntegralTerm<3,R,C>& term, const Vec<double,3>& nf_obs_pt) 
     {
         return adaptive_integrate<Vec<Vec<Vec<double,C>,R>,3>>(
             [&] (double x_hat) {
@@ -136,14 +133,14 @@ Vec<Vec<Vec<double,C>,R>,dim>
 AdaptiveIntegrationMethod<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>& term,
     const NearestPoint<dim>& nearest_pt) const 
 {
+    (void)nearest_pt;
     std::vector<Vec<Vec<Vec<double,C>,R>,dim>> near_steps(qs.n_singular_steps);
 
     for (int step_idx = 0; step_idx < qs.n_singular_steps; step_idx++) {
         auto step_loc = get_step_loc(term.obs, qs.singular_steps[step_idx]);
-        auto shifted_near_pt = FarNearLogic<dim>{qs.far_threshold, 1.0}
-            .decide(step_loc, term.src_face);
-        UnitFacetAdaptiveIntegrator<dim> integrator;
-        near_steps[step_idx] = integrator(*K, qs.near_tol, term, shifted_near_pt, step_loc);
+        near_steps[step_idx] = UnitFacetAdaptiveIntegrator<dim>()(
+            *K, qs.near_tol, term, step_loc
+        );
     }
 
     return richardson_limit(2, near_steps);
@@ -154,8 +151,8 @@ Vec<Vec<Vec<double,C>,R>,dim>
 AdaptiveIntegrationMethod<dim,R,C>::compute_nearfield(const IntegralTerm<dim,R,C>& term,
     const NearestPoint<dim>& nearest_pt) const 
 {
-    UnitFacetAdaptiveIntegrator<dim> integrator;
-    return integrator(*K, qs.near_tol, term, nearest_pt, term.obs.loc);
+    (void)nearest_pt;
+    return UnitFacetAdaptiveIntegrator<dim>()(*K, qs.near_tol, term, term.obs.loc);
 }
 
 template <size_t dim, size_t R, size_t C>
@@ -163,6 +160,7 @@ Vec<Vec<Vec<double,C>,R>,dim>
 AdaptiveIntegrationMethod<dim,R,C>::compute_farfield(const IntegralTerm<dim,R,C>& term,
     const NearestPoint<dim>& nearest_pt) const 
 {
+    (void)nearest_pt;
     auto integrals = zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make();
     for (size_t i = 0; i < qs.src_far_quad.size(); i++) {
         integrals += term.eval_point_influence(*K, qs.src_far_quad[i].x_hat) *
@@ -232,6 +230,8 @@ Vec<Vec<Vec<double,C>,R>,dim>
 SinhIntegrationMethod<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>& term,
     const NearestPoint<dim>& nearest_pt) const 
 {
+    //TODO: Remove nearest_pt parameter? nothing seems to use it...
+    (void)nearest_pt;
     std::vector<Vec<Vec<Vec<double,C>,R>,dim>> steps(qs.n_singular_steps);
 
     for (int step_idx = 0; step_idx < qs.n_singular_steps; step_idx++) {

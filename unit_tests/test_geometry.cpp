@@ -131,6 +131,14 @@ TEST_CASE("Point in ball", "[geometry]")
     }
 }
 
+TEST_CASE("balls from centers radii", "[geometry]")
+{
+    auto bs = balls_from_centers_radii<2>({{0, 2}, {1, 0}}, {3, 4});
+    REQUIRE(bs.size() == 2);
+    REQUIRE(bs[0].center == (Vec<double,2>{0, 2}));
+    REQUIRE(bs[0].radius == 3);
+}
+
 TEST_CASE("Centroid 3D", "[geometry]") 
 {
     Vec<Vec<double,3>,3> f{{

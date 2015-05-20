@@ -36,6 +36,7 @@ struct ElasticDisplacement<2>: public Kernel<2,2,2>
     typename Kernel::OperatorType call(double r2, const Vec2<double>& delta, 
         const Vec2<double>& nobs, const Vec2<double>& nsrc) const 
     {
+        (void)nsrc; (void)nobs;
         typename Kernel::OperatorType out;
         double r = std::sqrt(r2);
         for (int k = 0; k < 2; k++) {
@@ -73,6 +74,7 @@ struct ElasticTraction<2>: public Kernel<2,2,2>
     Kernel::OperatorType call(double r2, const Vec2<double>& delta, 
         const Vec2<double>& nobs, const Vec2<double>& nsrc) const 
     {
+        (void)nobs;
         Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto drdn = dot_product(delta, nsrc) / r;
@@ -114,6 +116,7 @@ struct ElasticAdjointTraction<2>: public Kernel<2,2,2>
     Kernel::OperatorType call(double r2, const Vec2<double>& delta, 
         const Vec2<double>& nobs, const Vec2<double>& nsrc) const 
     {
+        (void)nsrc;
         Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto drdm = dot_product(delta, nobs) / r;
@@ -203,6 +206,7 @@ struct ElasticDisplacement<3>: public Kernel<3,3,3>
     Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
         const Vec3<double>& nobs, const Vec3<double>& nsrc) const 
     {
+        (void)nsrc; (void)nobs;
         Kernel::OperatorType out;
         for (int k = 0; k < 3; k++) {
             for (int j = 0; j < 3; j++) {
@@ -240,6 +244,7 @@ struct ElasticTraction<3>: public Kernel<3,3,3>
     Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
         const Vec3<double>& nobs, const Vec3<double>& nsrc) const 
     {
+        (void)nobs; 
         Kernel::OperatorType out;
         const double r = std::sqrt(r2);
         const auto drdn = dot_product(delta, nsrc) / r;
@@ -281,6 +286,7 @@ struct ElasticAdjointTraction<3>: public Kernel<3,3,3>
     Kernel::OperatorType call(double r2, const Vec3<double>& delta, 
         const Vec3<double>& nobs, const Vec3<double>& nsrc) const 
     {
+        (void)nsrc;
         Kernel::OperatorType out;
         double r = std::sqrt(r2);
         const auto drdm = dot_product(delta, nobs) / r;

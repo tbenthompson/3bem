@@ -242,6 +242,7 @@ std::vector<MatrixEntry> remove_constrained(const ConstraintMatrix& row_cm,
     auto row_map = constraint_dof_map(row_cm, n_rows);
     auto col_map = constraint_dof_map(col_cm, n_cols);
     for (auto it = matrix.begin(); it != matrix.end(); ++it) {
+        //TODO: General purpose DOK-->COO sparse matrix function
         auto matrix_idx = it->first;
         auto in_col = matrix_idx % n_cols;
         auto in_row = (matrix_idx - in_col) / n_cols;

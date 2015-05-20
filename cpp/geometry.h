@@ -1,6 +1,7 @@
 #ifndef __QQQQQQQ2222222_GEOMETRY_H
 #define __QQQQQQQ2222222_GEOMETRY_H
 #include "vec_ops.h"
+#include <cassert>
 
 namespace tbem {
 
@@ -206,7 +207,17 @@ struct Ball
     }
 };
 
-
+template <size_t dim>
+std::vector<Ball<dim>> balls_from_centers_radii(
+    const std::vector<Vec<double,dim>>& centers, const std::vector<double> radii)
+{
+    assert(centers.size() == radii.size());
+    std::vector<Ball<dim>> out(centers.size());
+    for (size_t i = 0; i < centers.size(); i++) {
+        out[i] = {centers[i], radii[i]};
+    }
+    return out;
+}
 
 //TODO: In the 3D case, this is not the minimum bounding ball. 
 //see here: http://realtimecollisiondetection.net/blog/?p=20

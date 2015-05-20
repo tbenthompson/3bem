@@ -2,6 +2,7 @@
 #include "numerics.h"
 #include "vec_ops.h"
 #include "util.h"
+#include "geometry.h"
 #include <assert.h>
 
 namespace tbem {
@@ -48,14 +49,20 @@ bool Box<dim>::in_box_inclusive(const Vec<double,dim>& pt) const
 }
 
 template <size_t dim>
-Box<dim> Box<dim>::bounding_box(const std::vector<Vec<double,dim>>& x)
+Box<dim> Box<dim>::bounding_box(const std::vector<Ball<dim>>& pts)
 {
-    auto min_corner = x[0];
-    auto max_corner = x[0];
-    for (int i = 0; i < x.size(); ++i) {
+    if (pts.size() == 0) {
+        auto z = zeros<Vec<double,dim>>::make();
+        return {z, z};
+    }
+    auto min_corner = pts[0].center - pts[0].radius;
+    auto max_corner = pts[0].center + pts[0].radius;
+    for (int i = 1; i < pts.size(); ++i) {
+        auto c = pts[i].center;
+        auto r = pts[i].radius;
         for (unsigned int d = 0; d < dim; ++d) {
-            min_corner[d] = std::min(min_corner[d], x[i][d]);
-            max_corner[d] = std::max(max_corner[d], x[i][d]);
+            min_corner[d] = std::min(min_corner[d], c[d] - r);
+            max_corner[d] = std::max(max_corner[d], c[d] + r);
         }
     }
     auto center = (max_corner + min_corner) / 2.0;
@@ -82,23 +89,16 @@ template
 Vec<size_t,3> make_child_idx<3>(size_t i);
 
 template <size_t dim>
-typename Octree<dim>::ChildrenType
-build_children(const Box<dim>& bounds, 
-    const std::vector<Vec<double,dim>>& pts, const std::vector<int>& indices,
-    size_t level, size_t min_pts_per_cell, size_t& next_index) 
+std::array<std::vector<int>,Octree<dim>::split> split_pts_into_children(
+    const Box<dim>& bounds, const std::vector<Ball<dim>>& pts, 
+    const std::vector<int>& indices)
 {
-    typename Octree<dim>::ChildrenType children;
-    if (indices.size() <= min_pts_per_cell) {
-        return std::move(children);
-    }
-
     std::array<std::vector<int>,Octree<dim>::split> child_indices;
-
     for (size_t i = 0; i < indices.size(); i++) {
         auto pt = pts[indices[i]];
         size_t child_idx = 0;
         for (size_t d = 0; d < dim; d++) {
-            if (pt[d] > bounds.center[d]) {
+            if (pt.center[d] > bounds.center[d]) {
                 child_idx++; 
             }
             if (d < dim - 1) {
@@ -108,6 +108,21 @@ build_children(const Box<dim>& bounds,
 
         child_indices[child_idx].push_back(indices[i]);
     }
+    return child_indices;
+}
+
+template <size_t dim>
+typename Octree<dim>::ChildrenType
+build_children(const Box<dim>& bounds, 
+    const std::vector<Ball<dim>>& pts, const std::vector<int>& indices,
+    size_t level, size_t min_pts_per_cell, size_t& next_index) 
+{
+    typename Octree<dim>::ChildrenType children;
+    if (indices.size() <= min_pts_per_cell) {
+        return std::move(children);
+    }
+
+    auto child_indices = split_pts_into_children(bounds, pts, indices);
 
     auto child_level = level + 1;
 #pragma omp parallel for if(level == 0)
@@ -118,7 +133,7 @@ build_children(const Box<dim>& bounds,
         auto idx = make_child_idx<dim>(i);
         auto child_bounds = bounds.get_subcell(idx);
 
-        std::vector<Vec<double,dim>> tight_pts(child_indices[i].size());
+        std::vector<Ball<dim>> tight_pts(child_indices[i].size());
         for (size_t pt_idx = 0; pt_idx < child_indices[i].size(); pt_idx++) {
             tight_pts[pt_idx] = pts[child_indices[i][pt_idx]];
         }
@@ -147,8 +162,7 @@ build_children(const Box<dim>& bounds,
 }
 
 template <size_t dim>
-Octree<dim> build_octree(const std::vector<Vec<double,dim>>& pts,
-    size_t min_pts_per_cell)
+Octree<dim> make_octree(const std::vector<Ball<dim>>& pts, size_t min_pts_per_cell)
 {
     auto box = Box<dim>::bounding_box(pts);
     auto half_width = box.half_width;
@@ -166,11 +180,19 @@ Octree<dim> build_octree(const std::vector<Vec<double,dim>>& pts,
     };
 }
 
+template <size_t dim>
+Octree<dim> make_octree(const std::vector<Vec<double,dim>>& pts,
+    size_t min_pts_per_cell)
+{
+    auto bs = balls_from_centers_radii(pts, std::vector<double>(pts.size(), 0.0));
+    return make_octree(bs, min_pts_per_cell);
+}
+
 template 
-Octree<2> build_octree(const std::vector<Vec<double,2>>& pts,
-    size_t min_pts_per_cell);
+Octree<2>
+make_octree(const std::vector<Vec<double,2>>& pts, size_t min_pts_per_cell);
 template 
-Octree<3> build_octree(const std::vector<Vec<double,3>>& pts,
-    size_t min_pts_per_cell);
+Octree<3>
+make_octree(const std::vector<Vec<double,3>>& pts, size_t min_pts_per_cell);
 
 } // END namespace tbem

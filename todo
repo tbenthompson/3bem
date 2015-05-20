@@ -15,11 +15,8 @@ KERNEL OVERHAUL
 NEXT: hanging nodes 
 ** acceptance test #1: fault intersecting surface not at point
 ** acceptance test #2: adaptively refined okada solution (using the real error as the refinement criterion, so not technically adaptive meshing yet)
-** octree for balls (circles, spheres)
 ** nearest_neighbors for point->triangle or triangle->triangle intersection
-** Handle the general case when fault-surface intersection does not occur at a vertex.
--- Linked to hanging nodes in that lots of geometry code needs to be used/written.
--- (DD) Should I use CGAL or other comp-geom library (write a note on the decision)
+** Handle when fault-surface intersection does not occur at a vertex.
 
 INTEGRATION:
 ** acceptance test: 3D problem with sinh-sigmoidal quadrature
@@ -42,4 +39,4 @@ MISC:
 ** automated build testing on mac, ubuntu, with clang, gcc, intel compilers -- maybe turn the mac mini into a build server
 http://www.joelonsoftware.com/articles/fog0000000023.html
 ** some simple capacity tests. how to make sure these run in the same conditions? remove timings from standard unit tests
-** add a size function to constraint_matrix for the total number of constraints
+** test with python3

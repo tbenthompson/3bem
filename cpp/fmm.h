@@ -47,12 +47,14 @@ struct TranslationSurface {
 
     static TranslationSurface<dim> up_equiv_surface(size_t order, double d)
     {
+        (void)d;
         auto r_ref = 0.3;//std::sqrt(2) + d;
         return make_surrounding_surface(order).scale(r_ref);
     }
 
     static TranslationSurface<dim> down_check_surface(size_t order, double d)
     {
+        (void)d;
         auto r_ref = 0.3;//std::sqrt(2) + d;
         return make_surrounding_surface(order).scale(r_ref);
     }

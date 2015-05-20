@@ -45,7 +45,7 @@ find_overlapping_vertices(const VertexIterator<dim>& A_begin,
     for (auto B_it = B_begin; !B_it.is_end(); ++B_it) {
         target_pts.push_back(*B_it);
     }
-    auto oct = build_octree(target_pts, 1);
+    auto oct = make_octree(target_pts, 1);
 
     std::vector<OverlapPair<dim>> overlaps;
     for (auto A_it = A_begin; !A_it.is_end(); ++A_it) {
@@ -63,7 +63,7 @@ OverlapMap<dim>
 find_overlapping_vertices_same_mesh(const VertexIterator<dim>& A_begin, 
     double eps = 1e-15) 
 {
-    auto overlap_map = find_overlapping_vertices(A_begin, A_begin);
+    auto overlap_map = find_overlapping_vertices(A_begin, A_begin, eps);
     std::vector<OverlapPair<dim>> filtered_overlaps;
     for (const auto& o: overlap_map) {
         if (o.first.absolute_index() < o.second.absolute_index()) {

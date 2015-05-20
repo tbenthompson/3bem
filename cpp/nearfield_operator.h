@@ -45,14 +45,37 @@ std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
     for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(obs_mesh.facets[obs_idx]);
         for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
+            // New flow:
+            // find loc
+            // auto ref_loc = obs_quad[obs_q].x_hat;
+            // auto loc = ref_to_real(ref_loc, obs_face.face);
+            //
+            // find nearfield facets (depends on facet octree/ball octree)
+            //
+            // find the facets that could possibly intersect with the richardson
+            // vector
+            //
+            // determine the richardson vector
+            //
+            // form and return observation point
+
             auto ref_loc = obs_quad[obs_q].x_hat;
             auto loc = ref_to_real(ref_loc, obs_face.face);
             auto nf = nearest_facets(loc, all_mesh.facets);
+
+            // Shifting the point that is used to decide the richardson 
+            // direction slightly in the direction of the observation normal
+            // ensures that the richardson direction points towards the interior
+            // of the domain.
             double interior_shift = facet_ball(obs_face.face).radius * 1e-8;
             auto slightly_interior_loc = loc + interior_shift * obs_face.normal;
+
             auto rich_dir = decide_richardson_dir(slightly_interior_loc, nf);
             auto rich_length = hypot(rich_dir);
-            out.push_back({rich_length, loc, obs_face.normal, rich_dir / rich_length});
+
+            out.push_back({
+                rich_length, loc, obs_face.normal, rich_dir / rich_length
+            });
         }
     }
     return out;
@@ -83,7 +106,7 @@ using NearfieldFnc = std::function<Vec<Vec<Vec<double,C>,R>,dim>(
 template <size_t dim, size_t R, size_t C>
 SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
     const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd,
-    const NearfieldFnc<dim,R,C>& f, const Mesh<dim>& all_mesh)
+    const NearfieldFnc<dim,R,C>& f)
 {
     size_t n_src_dofs = src_mesh.n_dofs();
     auto src_facet_info = get_facet_info(src_mesh);
@@ -128,25 +151,25 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
 template <size_t dim, size_t R, size_t C>
 SparseOperator make_nearfield_operator(
     const std::vector<ObsPt<dim>>& obs_pts, const Mesh<dim>& src_mesh,
-    const IntegrationMethodI<dim,R,C>& mthd, const Mesh<dim>& all_mesh) 
+    const IntegrationMethodI<dim,R,C>& mthd) 
 {
     NearfieldFnc<dim,R,C> f = 
         [&] (const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& pt) {
             return mthd.compute_term(term, pt); 
         };
-    return nearfield_inner_integral(obs_pts, src_mesh, mthd, f, all_mesh);
+    return nearfield_inner_integral(obs_pts, src_mesh, mthd, f);
 }
 
 template <size_t dim, size_t R, size_t C>
 SparseOperator make_farfield_correction_operator(
     const std::vector<ObsPt<dim>>& obs_pts, const Mesh<dim>& src_mesh,
-    const IntegrationMethodI<dim,R,C>& mthd, const Mesh<dim>& all_mesh) 
+    const IntegrationMethodI<dim,R,C>& mthd) 
 {
     NearfieldFnc<dim,R,C> f = 
         [&] (const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& pt) {
             return -mthd.compute_farfield(term, pt); 
         };
-    return nearfield_inner_integral(obs_pts, src_mesh, mthd, f, all_mesh);
+    return nearfield_inner_integral(obs_pts, src_mesh, mthd, f);
 }
 
 
