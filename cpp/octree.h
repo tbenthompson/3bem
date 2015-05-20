@@ -19,7 +19,10 @@ class Box {
 public:
     const Vec<double,dim> center;
     const Vec<double,dim> half_width;
+
+    Box<dim> expand_by_max_axis_multiple(double factor) const;
     Box<dim> get_subcell(const Vec<size_t,dim>& idx) const;
+    bool in_box(const Ball<dim>& b) const;
     bool in_box(const Vec<double,dim>& pt, const Vec<bool,dim>& inclusive) const;
     bool in_box_inclusive(const Vec<double,dim>& pt) const;
 
@@ -66,7 +69,7 @@ struct OctreeData {
 template <size_t dim>
 struct OctreeCell {
     const Box<dim> bounds;
-    const Box<dim> tight_bounds;
+    const Box<dim> true_bounds;
     const std::vector<int> indices;
     const size_t level;
     const size_t index;

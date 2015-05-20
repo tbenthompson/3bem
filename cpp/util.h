@@ -20,7 +20,7 @@ namespace tbem {
               << time_ms\
               << "ms.\n";
 
-std::vector<double> random_list(int N);
+std::vector<double> random_list(size_t N, double a = 0, double b = 1);
 
 template <size_t dim>
 Vec<double,dim> random_pt();

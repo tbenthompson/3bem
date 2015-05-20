@@ -13,6 +13,13 @@ std::ostream& operator<<(std::ostream& os, const Box<dim>& obj)
     os << "{Box center=" << obj.center << ", half_width=" << obj.half_width << "}";
     return os;
 }
+
+template <size_t dim>
+Box<dim> Box<dim>::expand_by_max_axis_multiple(double factor) const
+{
+    auto max_axis = max(half_width);
+    return {center, half_width + factor * max_axis};
+}
     
 template <size_t dim>
 Box<dim> Box<dim>::get_subcell(const Vec<size_t,dim>& idx) const
@@ -23,6 +30,13 @@ Box<dim> Box<dim>::get_subcell(const Vec<size_t,dim>& idx) const
         new_center[d] += ((static_cast<double>(idx[d]) * 2) - 1) * new_halfwidth[d];
     }
     return {new_center, new_halfwidth};
+}
+
+template <size_t dim>
+bool Box<dim>::in_box(const Ball<dim>& b) const
+{
+    return all(center - half_width <= b.center - b.radius) &&
+        all(center + half_width >= b.center + b.radius);
 }
 
 template <size_t dim>
@@ -137,7 +151,8 @@ build_children(const Box<dim>& bounds,
         for (size_t pt_idx = 0; pt_idx < child_indices[i].size(); pt_idx++) {
             tight_pts[pt_idx] = pts[child_indices[i][pt_idx]];
         }
-        auto tight_bounds = Box<dim>::bounding_box(tight_pts);
+        auto tight_bounds = Box<dim>::bounding_box(tight_pts).
+            expand_by_max_axis_multiple(1e-5);
 
         typename Octree<dim>::ChildrenType sub_children;
         if (any(tight_bounds.half_width != 0.0)) {
@@ -165,10 +180,7 @@ template <size_t dim>
 Octree<dim> make_octree(const std::vector<Ball<dim>>& pts, size_t min_pts_per_cell)
 {
     auto box = Box<dim>::bounding_box(pts);
-    auto half_width = box.half_width;
-    auto max_axis = max(half_width);
-    half_width += 1e-5 * max_axis;
-    Box<dim> expanded_box{box.center, half_width};
+    auto expanded_box = box.expand_by_max_axis_multiple(1e-5);
     auto all_indices = range(pts.size());
     size_t next_index = 1;
     auto children = build_children(

@@ -6,6 +6,18 @@
 #include <set>
 using namespace tbem;
 
+template <size_t dim>
+std::vector<Ball<dim>> random_balls(size_t n, double r_max)
+{
+    auto pts = random_pts<dim>(n);
+    auto r = random_list(n, 0, r_max);
+    std::vector<Ball<dim>> balls(n);
+    for (size_t i = 0; i < n; i++) {
+        balls[i] = {pts[i], r[i]};
+    }
+    return balls;
+}
+
 std::vector<Ball<3>> three_pts() {
     return {
         {{1.0, 2.0, 0.0}, 0.0}, {{-1.0, 0.0, -3.0}, 0.0}, {{0.0, -2.0, 3.0}, 0.0}
@@ -40,9 +52,29 @@ TEST_CASE("bounding box no pts", "[octree]")
 
 TEST_CASE("bounding box nonzero radius one pt", "[octree]")
 {
-    auto bb = Box<2>::bounding_box({{{1.0, 0.0}, 1.0}});
+    Ball<2> b{{1.0, 0.0}, 1.0};
+    auto bb = Box<2>::bounding_box({b});
     REQUIRE(bb.center == (Vec<double,2>{1.0, 0.0}));
     REQUIRE(bb.half_width == (Vec<double,2>{1.0, 1.0}));
+    REQUIRE(bb.in_box(b));
+}
+
+TEST_CASE("bounding box nonzero radius contains its pts", "[octree]")
+{
+    for (size_t i = 0; i < 100; i++) {
+        auto balls = random_balls<2>(10, 0.05); 
+        auto box = Box<2>::bounding_box(balls).expand_by_max_axis_multiple(1e-3);
+        for (auto b: balls) {
+            if (!box.in_box(b)) {
+                for (auto b2: balls) {
+                    std::cout << b2.center << " " << b2.radius << std::endl;
+                }
+                std::cout << box.center << " " << box.half_width << std::endl;
+                std::cout << b.center << " " << b.radius << std::endl;
+            }
+            REQUIRE(box.in_box(b));
+        }
+    }
 }
 
 TEST_CASE("make child idx 3d", "[octree]") 
@@ -64,6 +96,20 @@ TEST_CASE("get subcell", "[octree]")
     auto child = box.get_subcell({1,0,1});
     REQUIRE_ARRAY_CLOSE(child.center, (Vec<double,3>{1,0,1}), 3, 1e-14);
     REQUIRE_ARRAY_CLOSE(child.half_width, (Vec<double,3>{1,1,1}), 3, 1e-14);
+}
+
+TEST_CASE("in box circle", "[octree]")
+{
+    Box<2> box{{0, 0}, {1, 1}};
+    SECTION("inside") {
+        REQUIRE(box.in_box(Ball<2>{{0, 0}, 0.5}));
+    }
+    SECTION("outside") {
+        REQUIRE(!box.in_box(Ball<2>{{3, 0}, 0.5}));
+    }
+    SECTION("intersection") {
+        REQUIRE(!box.in_box(Ball<2>{{1, 0}, 0.5}));
+    }
 }
 
 TEST_CASE("in box", "[octree]") 
@@ -238,20 +284,31 @@ TEST_CASE("check cells have unique indices", "[octree]")
     check_indices_unique(oct, std::set<size_t>{});
 }
 
-template <size_t dim>
-std::vector<Ball<dim>> random_balls(size_t n)
-{
-    auto pts = random_pts<dim>(n);
-    auto r = random_list(n);
-    std::vector<Ball<dim>> balls(n);
-    for (size_t i = 0; i < n; i++) {
-        balls[i] = {pts[i], r[i]};
-    }
-    return balls;
-}
-
 TEST_CASE("non zero ball radius", "[octree]")
 {
-    auto balls = random_balls<3>(10);
+    auto balls = random_balls<3>(10, 0.1);
     auto oct = make_octree(balls, 1);
+}
+
+template <size_t dim>
+void check_true_bounds_contain_balls(const Octree<dim>& oct,
+    const std::vector<Ball<dim>>& balls)
+{
+    for (size_t i = 0; i < oct.data.indices.size(); i++) {
+        auto ball_idx = oct.data.indices[i];
+        REQUIRE(oct.data.true_bounds.in_box(balls[ball_idx]));
+    }
+    for (auto& c: oct.children) {
+        if (c == nullptr) {
+            continue;
+        }
+        check_true_bounds_contain_balls(*c, balls);
+    }
+}
+
+TEST_CASE("test true bounds non-zero radii", "[octree]")
+{
+    auto balls = random_balls<3>(100, 0.05);
+    auto oct = make_octree(balls, 1);
+    check_true_bounds_contain_balls(oct, balls);
 }

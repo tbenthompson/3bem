@@ -3,12 +3,12 @@
 
 namespace tbem {
 
-std::vector<double> random_list(int N) {
+std::vector<double> random_list(size_t N, double a, double b) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0, 1);
+    std::uniform_real_distribution<> dis(a, b);
     std::vector<double> es(N);
-    for (int i = 0; i < N; ++i) {
+    for (size_t i = 0; i < N; ++i) {
         es[i] = dis(gen);
     }
     return es;
