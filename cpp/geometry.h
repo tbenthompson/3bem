@@ -104,8 +104,8 @@ unscaled_normal(const std::array<Vec2<double>,2>& corners)
     };
 }
 
-inline Vec3<double> 
-tri_normal(const std::array<Vec3<double>,3>& corners) 
+template <size_t dim>
+Vec<double,dim> facet_normal(const std::array<Vec<double,dim>,dim>& corners) 
 {
     auto unscaled = unscaled_normal(corners);
     return normalized(unscaled);

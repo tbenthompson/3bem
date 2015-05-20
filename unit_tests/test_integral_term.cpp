@@ -1,4 +1,5 @@
 #include "catch.hpp"
+#include "mesh_gen.h"
 #include "integral_term.h"
 #include "laplace_kernels.h"
 #include "elastic_kernels.h"
@@ -8,10 +9,35 @@
 
 using namespace tbem;
 
-TEST_CASE("IdentityTensor", "[integral_term]") 
+TEST_CASE("FacetInfo2D", "[dense_builder]") 
 {
-    IdentityTensor<3,3,3> K;
-    (void)K;
+    Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{3.0, 0.0}};
+    auto face_info = FacetInfo<2>::build(f);
+    REQUIRE(face_info.area_scale == 9);
+    REQUIRE(face_info.length_scale == 3);
+    REQUIRE(face_info.jacobian == 1.5);
+    REQUIRE(face_info.normal == (Vec2<double>{0.0, 1.0}));
+}
+
+TEST_CASE("FacetInfo3D", "[dense_builder]") 
+{
+    Facet<3> f{
+        Vec3<double>{0.0, 0.0, 0.0},
+        Vec3<double>{2.0, 0.0, 0.0},
+        Vec3<double>{0.0, 2.0, 0.0}
+    };
+    auto face_info = FacetInfo<3>::build(f);
+    REQUIRE(face_info.area_scale == 2.0);
+    REQUIRE(face_info.length_scale == std::sqrt(2.0));
+    REQUIRE(face_info.jacobian == 4.0);
+    REQUIRE(face_info.normal == (Vec3<double>{0.0, 0.0, 1.0}));
+}
+
+TEST_CASE("get_facet_info", "[dense_builder]") 
+{
+    auto m = line_mesh({0, 0}, {1, 0}).refine_repeatedly(4);
+    auto f = get_facet_info(m);
+    REQUIRE(f.size() == m.n_facets());
 }
 
 TEST_CASE("IntegralOne", "[integral_term]") 

@@ -2,9 +2,9 @@
 #include "mesh_gen.h"
 #include "util.h"
 #include "identity_kernels.h"
-#include "dense_builder.h"
 #include "mass_operator.h"
 #include "laplace_kernels.h"
+#include "mesh.h"
 
 using namespace tbem;
 

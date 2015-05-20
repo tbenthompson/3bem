@@ -3,11 +3,18 @@
 
 #include "vec.h"
 #include "kernel.h"
-#include "obs_pt.h"
 #include "facet_info.h"
 #include "quadrature.h"
 
 namespace tbem {
+
+template <size_t dim>
+struct ObsPt {
+    const double len_scale;
+    const Vec<double,dim> loc;
+    const Vec<double,dim> normal;
+    const Vec<double,dim> richardson_dir;
+};
 
 /* Data transfer object for computing integral terms. 
  * Values are stored by reference for efficiency's sake.

@@ -17,7 +17,7 @@ def full_space():
     def fnc(x):
         if x[0] == 0.0:
             return 0.0
-        op = mesh_to_points_operator([x], [[0, 1]], fault, mthd, fault)
+        op = dense_interior_operator([x], [[0, 1]], fault, mthd, fault)
         val = op.apply(slip)
         exact = np.arctan(0.5 / x[0]) / np.pi
         assert(np.abs(exact - val) < 2e-4)
@@ -92,7 +92,7 @@ def half_space_interior(refine):
     double_mthd = make_adaptive_integration_mthd(qs, double_kernel)
     hypersingular_mthd = make_adaptive_integration_mthd(qs, hypersingular_kernel)
 
-    mtpo = mesh_to_points_operator
+    mtpo = dense_interior_operator
     disp = mtpo(pts, normalsx, fault, double_mthd, all_mesh).apply(slip) -\
            mtpo(pts, normalsx,  surface, double_mthd, all_mesh).apply(soln)
 

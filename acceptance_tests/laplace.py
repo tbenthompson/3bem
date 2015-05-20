@@ -65,10 +65,10 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc,
     np_dudn = dudn
     boundary_error = np.sqrt(np.mean((np_soln - np_dudn) ** 2))
 
-    single_int = tbem.mesh_to_points_operator(
+    single_int = tbem.dense_interior_operator(
         obs_pts['locs'], obs_pts['normals'], mesh, single_mthd, mesh
     ).apply(soln)
-    double_int = tbem.mesh_to_points_operator(
+    double_int = tbem.dense_interior_operator(
         obs_pts['locs'], obs_pts['normals'], mesh, double_mthd, mesh
     ).apply(u)
 

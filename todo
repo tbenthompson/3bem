@@ -3,6 +3,8 @@ CURRENT: MISC
 ** remove the double underscore if the ifdefs
 ** test_dense_builder should be split up
 
+** automated testing tools against pdetool
+
 KERNEL OVERHAUL
 ** capacity test: benchmark the fmm
 ** move obs, src loop into the kernel functions which will reduce the number of function calls and also allow sse/avx implementations of those kernel functions

@@ -14,6 +14,19 @@
 namespace tbem {
 
 template <size_t dim>
+struct NBodyObservationPoints {
+    std::vector<Vec<double,dim>> locs;
+    std::vector<Vec<double,dim>> normals;
+};
+
+template <size_t dim>
+struct NBodySourcePoints {
+    std::vector<Vec<double,dim>> locs;
+    std::vector<Vec<double,dim>> normals;
+    std::vector<double> weights;
+};
+
+template <size_t dim>
 struct NBodyData {
     std::vector<Vec<double,dim>> obs_locs;
     std::vector<Vec<double,dim>> obs_normals;
@@ -23,8 +36,8 @@ struct NBodyData {
 };
 
 template <size_t dim>
-NBodyData<dim> nbody_data_from_bem(const Mesh<dim>& obs_mesh, const Mesh<dim>& src_mesh,
-    const QuadRule<dim-1>& obs_quad, const QuadRule<dim-1>& src_quad)
+NBodyObservationPoints<dim> nbody_obs_from_bem(const Mesh<dim>& obs_mesh,
+    const QuadRule<dim-1>& obs_quad)
 {
     auto n_obs_dofs = obs_mesh.n_facets() * obs_quad.size();
     std::vector<Vec<double,dim>> obs_locs(n_obs_dofs);
@@ -37,7 +50,13 @@ NBodyData<dim> nbody_data_from_bem(const Mesh<dim>& obs_mesh, const Mesh<dim>& s
             obs_locs[obs_dof] = ref_to_real(obs_quad[obs_q].x_hat, obs_face.face);
         }
     }
+    return {obs_locs, obs_normals};
+}
 
+template <size_t dim>
+NBodySourcePoints<dim> nbody_src_from_bem(const Mesh<dim>& src_mesh,
+    const QuadRule<dim-1>& src_quad)
+{
     auto n_src_dofs = src_mesh.n_facets() * src_quad.size();
     std::vector<Vec<double,dim>> src_locs(n_src_dofs);
     std::vector<Vec<double,dim>> src_normals(n_src_dofs);
@@ -52,7 +71,16 @@ NBodyData<dim> nbody_data_from_bem(const Mesh<dim>& obs_mesh, const Mesh<dim>& s
         }
     }
 
-    return NBodyData<dim>{obs_locs, obs_normals, src_locs, src_normals, src_weights};
+    return {src_locs, src_normals, src_weights};
+}
+
+template <size_t dim>
+NBodyData<dim> nbody_data_from_bem(const Mesh<dim>& obs_mesh, const Mesh<dim>& src_mesh,
+    const QuadRule<dim-1>& obs_quad, const QuadRule<dim-1>& src_quad)
+{
+    auto src = nbody_src_from_bem(src_mesh, src_quad);
+    auto obs = nbody_obs_from_bem(obs_mesh, obs_quad);
+    return NBodyData<dim>{obs.locs, obs.normals, src.locs, src.normals, src.weights};
 }
 
 template <size_t dim, size_t R, size_t C>

@@ -8,11 +8,38 @@
 
 using namespace tbem;
 
+TEST_CASE("interior obs pts", "[dense builder]")
+{
+    auto pts = interior_obs_pts<2>(
+        {{0,1}, {2,0}},
+        {{1,0}, {0,1}},
+        Mesh<2>{{
+            {{
+                {0, 0}, {1, 0}
+            }}
+        }}
+    );
+    
+    SECTION("size") {
+        REQUIRE(pts.size() == 2);
+    }
+
+    SECTION("normalized richardson direction") {
+        auto dir = pts[0].richardson_dir;
+        REQUIRE(hypot(dir) == 1.0);
+    }
+
+    SECTION("richardson length divided by 5") {
+        auto len = pts[0].len_scale;
+        REQUIRE(len == 0.2);
+    }
+}
+
 TEST_CASE("nearfield obs pts", "[nearfield_operator]")
 {
     auto m = circle_mesh({0, 0}, 1.0, 1);
     REQUIRE(m.facets.size() == 8);
-    auto pts = nearfield_obs_pts(m, gauss(2), m);
+    auto pts = galerkin_obs_pts(m, gauss(2), m);
     REQUIRE(pts.size() == 16);
 }
 
@@ -25,7 +52,8 @@ TEST_CASE("Constrained nearfield matrix", "[nearfield_operator]")
     LaplaceDouble<2> k;
     auto mthd = make_adaptive_integration_mthd(qs, k);
     auto galerkin = make_galerkin_operator(1, m, mthd.get_obs_quad());
-    auto nearfield = make_nearfield_operator(m, m, mthd, {m});
+    auto obs_pts = galerkin_obs_pts(m, mthd.get_obs_quad(), m);
+    auto nearfield = make_nearfield_operator(obs_pts, m, mthd, m);
     auto matrix = galerkin.right_multiply(nearfield);
     auto dense_matrix = matrix.to_dense();
 

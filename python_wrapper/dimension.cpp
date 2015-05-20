@@ -7,8 +7,6 @@
 #include "continuity_builder.h"
 #include "quadrature.h"
 #include "vertex_iterator.h"
-#include "obs_pt.h"
-#include "dense_builder.h"
 #include "integral_operator.h"
 #include "mass_operator.h"
 #include "basis.h"
@@ -105,8 +103,8 @@ void export_dimension() {
     def("dense_integral_operator", dense_integral_operator<dim,1,1>);
     def("dense_integral_operator", dense_integral_operator<dim,dim,dim>);
 
-    def("mesh_to_points_operator", mesh_to_points_operator<dim,1,1>);
-    def("mesh_to_points_operator", mesh_to_points_operator<dim,dim,dim>);
+    def("dense_interior_operator", dense_interior_operator<dim,1,1>);
+    def("dense_interior_operator", dense_interior_operator<dim,dim,dim>);
 
     auto mass_op = class_<MassOperator<dim>>("MassOperator", no_init);
     export_operator<MassOperator<dim>>(mass_op);
