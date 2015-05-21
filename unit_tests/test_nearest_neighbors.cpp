@@ -65,10 +65,25 @@ TEST_CASE("AllPairsPerformance", "[nearest_neighbors]")
     auto result = nearby_points_all_pairs(pts, pts, oct, oct, 0.0);
 }
 
+TEST_CASE("test nearest facet", "[nearest_neighbors]") {
+    //Test the fast version against the brute force version through many
+    //random examples
+    size_t n_facets = 10;
+    for (size_t i = 0; i < 100; i++) {
+        std::vector<Facet<2>> fs;
+        for (size_t j = 0; j < n_facets; j++) {
+            auto vs = random_pts<2>(2);
+            fs.push_back({vs[0], vs[1]});
+        }
+        // auto brute_force = nearest_facet_brute_force(
+    }
+}
+
 TEST_CASE("NearestFacetsOneFacetEndpoint", "[nearest_neighbors]") {
     Facet<2> f{{{1,1},{2,1}}};
     Mesh<2> m{{f}};
     auto result = nearest_facets({0, 0}, m.facets);
+    REQUIRE(result.facets.size() == 1);
     REQUIRE(result.facets[0] == m.facets[0]);
     REQUIRE(result.pt == m.facets[0][0]);
     REQUIRE(result.distance == std::sqrt(2));

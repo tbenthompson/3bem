@@ -202,6 +202,12 @@ Octree<dim> make_octree(const std::vector<Vec<double,dim>>& pts,
 
 template 
 Octree<2>
+make_octree(const std::vector<Ball<2>>& pts, size_t min_pts_per_cell);
+template 
+Octree<3>
+make_octree(const std::vector<Ball<3>>& pts, size_t min_pts_per_cell);
+template 
+Octree<2>
 make_octree(const std::vector<Vec<double,2>>& pts, size_t min_pts_per_cell);
 template 
 Octree<3>

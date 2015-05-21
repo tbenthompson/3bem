@@ -3,7 +3,7 @@
 #include "richardson.h"
 #include "adaptive_quad.h"
 #include "numerics.h"
-#include "closest_pt.h"
+#include "closest_pt_on_facet.h"
 
 namespace tbem {
 

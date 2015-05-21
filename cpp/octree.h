@@ -82,10 +82,12 @@ template <size_t dim>
 Vec<size_t,dim> make_child_idx(size_t i);
 
 template <size_t dim>
-Octree<dim> make_octree(const std::vector<Ball<dim>>& pts, size_t min_pts_per_cell);
+Octree<dim>
+make_octree(const std::vector<Ball<dim>>& pts, size_t min_pts_per_cell);
 
 template <size_t dim>
-Octree<dim> make_octree(const std::vector<Vec<double,dim>>& pts, size_t min_pts_per_cell);
+Octree<dim> 
+make_octree(const std::vector<Vec<double,dim>>& pts, size_t min_pts_per_cell);
 
 } // END namespace tbem
 #endif
