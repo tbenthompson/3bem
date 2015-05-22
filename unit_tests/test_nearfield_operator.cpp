@@ -6,9 +6,14 @@
 #include "mesh_gen.h"
 #include "integral_operator.h"
 
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+
 using namespace tbem;
 
-TEST_CASE("richardson direction far", "[nearfield_operator]") {
+TEST_CASE("richardson direction far", "[nearfield_operator]") 
+{
     Facet<2> f{{{0, -1}, {1, -1}}};
     Vec<double,2> p{0, 1};
 
@@ -17,7 +22,8 @@ TEST_CASE("richardson direction far", "[nearfield_operator]") {
     REQUIRE(dir == (Vec<double,2>{0, 1}));
 }
 
-TEST_CASE("richardson direction touching", "[nearfield_operator]") {
+TEST_CASE("richardson direction touching", "[nearfield_operator]") 
+{
     Facet<2> f{{{0, 0}, {0, 1}}};
     Vec<double,2> p{0, 0};
 
@@ -26,7 +32,8 @@ TEST_CASE("richardson direction touching", "[nearfield_operator]") {
     REQUIRE(dir == (Vec<double,2>{-1, 0}));
 }
 
-TEST_CASE("richardson direction backside", "[nearfield_operator]") {
+TEST_CASE("richardson direction backside", "[nearfield_operator]") 
+{
     Facet<2> f{{{0, -1}, {1, -1}}};
     Vec<double,2> p{0, -2};
 
@@ -35,7 +42,8 @@ TEST_CASE("richardson direction backside", "[nearfield_operator]") {
     REQUIRE(dir == (Vec<double,2>{0, -1}));
 }
 
-TEST_CASE("richardson direction intersection", "[nearfield_operator]") {
+TEST_CASE("richardson direction intersection", "[nearfield_operator]") 
+{
     Facet<2> f{{{0, 0}, {1, 0}}};
     Facet<2> f2{{{0, 1}, {0, 0}}};
     Vec<double,2> p{0, 0};
@@ -45,7 +53,8 @@ TEST_CASE("richardson direction intersection", "[nearfield_operator]") {
     REQUIRE(dir == (Vec<double,2>{0.5, 0.5}));
 }
 
-TEST_CASE("richardson direction normals dont cancel", "[nearfield_operator]") {
+TEST_CASE("richardson direction normals dont cancel", "[nearfield_operator]") 
+{
     Facet<2> f{{{1, -1}, {1, 1}}};
     Facet<2> f2{{{-1, 1}, {-1, -1}}};
     Vec<double,2> p{0, 0};
@@ -54,6 +63,38 @@ TEST_CASE("richardson direction normals dont cancel", "[nearfield_operator]") {
 
     bool normals_not_canceled = (dir[0] != 0.0) || (dir[1] != 0.0);
     REQUIRE(normals_not_canceled);
+}
+
+TEST_CASE("richardson points always inside", "[nearfield_operator]")
+{
+    std::vector<Vec<double,2>> polygon{
+        {1, 0.1}, {0, 0}, {1, -0.1}
+    };
+    polygon.push_back(polygon[0]);
+
+    auto R = 5;
+    std::vector<Mesh<2>> mesh_pieces;
+    for (size_t i = 0; i < polygon.size() - 1; i++) {
+        mesh_pieces.push_back(line_mesh(polygon[i], polygon[i + 1]));
+    }
+    auto m = Mesh<2>::create_union(mesh_pieces).refine_repeatedly(R);
+
+    auto pts = galerkin_obs_pts(m, gauss_facet<2>(2), m);
+    // auto pts = interior_obs_pts({{0.149646, 0.0149646}}, {{0, 1}}, m);
+
+    typedef boost::geometry::model::d2::point_xy<double> point_type;
+    typedef boost::geometry::model::polygon<point_type> polygon_type;
+    polygon_type poly;
+    for (size_t i = 0; i < polygon.size(); i++) {
+        poly.outer().push_back({polygon[i][0], polygon[i][1]});
+    }
+
+    for(auto p: pts) {
+        auto interior_pt = p.loc + p.len_scale * p.richardson_dir;
+        point_type bg_p(interior_pt[0], interior_pt[1]);
+        std::cout << p.loc << " " << interior_pt << std::endl;
+        REQUIRE(boost::geometry::within(bg_p, poly));
+    }
 }
 
 TEST_CASE("interior obs pts", "[nearfield_operator]")

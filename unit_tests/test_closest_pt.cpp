@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "closest_pt.h"
+#include "closest_pt_on_facet.h"
 #include "vec_ops.h"
 #include "numerics.h"
 

@@ -74,7 +74,7 @@ std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
             auto rich_length = hypot(rich_dir);
 
             out.push_back({
-                rich_length, loc, obs_face.normal, rich_dir / rich_length
+                rich_length / 5.0, loc, obs_face.normal, rich_dir / rich_length
             });
         }
     }

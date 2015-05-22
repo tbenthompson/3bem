@@ -26,7 +26,7 @@ def check_planestrain_error(surface, soln):
     uy = soln[1][indices]
     ux_error = np.sqrt(np.mean((ux - exact_ux) ** 2))
     uy_error = np.sqrt(np.mean((uy - exact_uy) ** 2))
-    assert(ux_error < 2e-3)
+    assert(ux_error < 3e-3)
     assert(uy_error < 6e-3)
 
 def planestrain_with_integration_mthd(mthd):

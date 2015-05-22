@@ -1,9 +1,10 @@
 CURRENT: MISC
 ** acceptance test: setup fmm operators for python wrapper
 ** remove the double underscore if the ifdefs
-** test_dense_builder should be split up
-
 ** automated testing tools against pdetool
+** search radius for richardson vector should be the nearest element's length
+** get rid of quad strategy
+** pass quad orders to interp and galerk
 
 KERNEL OVERHAUL
 ** capacity test: benchmark the fmm
@@ -29,6 +30,7 @@ CRACK TIPS:
 
 MISC:
 ** characterize the sinh-sigmoidal method
+** 
 ** use iterators for traversing point sets?
 ** characterize the galerkin BEM for hypersingular kernels
 ** split out the fmm scheduler/traversal

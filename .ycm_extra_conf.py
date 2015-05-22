@@ -5,7 +5,7 @@ import ycm_core
 # compilation database set (by default, one is not set).
 # CHANGE THIS LIST OF FLAGS. YES, THIS IS THE DROID YOU HAVE BEEN LOOKING FOR.
 includes = [
-    'cpp',
+    'cpp', 'unit_tests'
 ]
 flags = '-std=c++11 -fopenmp'.split()
 flags.extend(['-I' + loc for loc in includes])
