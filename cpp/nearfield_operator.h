@@ -8,8 +8,8 @@
 namespace tbem {
 
 template <size_t dim>
-Vec<double,dim> away_from_facet_dir(const Vec<Vec<double,dim>,dim>& f,
-    const Vec<double,dim>& pt) 
+Vec<double,dim> away_from_facet_dir(const Vec<double,dim>& pt,
+    const Vec<Vec<double,dim>,dim>& f) 
 {
     auto facet_normal = unscaled_normal(f); 
     auto which_side = which_side_point(f, pt);
@@ -26,14 +26,9 @@ template <size_t dim>
 Vec<double,dim> decide_richardson_dir(const Vec<double,dim>& pt,
     const NearestFacets<dim>& nearest_facets) 
 {
-    auto direction = zeros<Vec<double,dim>>::make();
-    for (size_t i = 0; i < nearest_facets.facets.size(); i++) {
-        direction += away_from_facet_dir(nearest_facets.facets[i], pt);
-    }
-    if (all(direction == 0.0)) {
-        direction = away_from_facet_dir(nearest_facets.facets[0], pt);
-    }
-    direction /= (double)nearest_facets.facets.size();
+    auto close_center = centroid(nearest_facets.nearest_facet);
+    auto close_dir = away_from_facet_dir(pt, nearest_facets.nearest_facet);
+    auto direction = (close_center + close_dir) - pt;
     return direction;
 }
 

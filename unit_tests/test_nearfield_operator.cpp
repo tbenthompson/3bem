@@ -17,7 +17,7 @@ TEST_CASE("richardson direction far", "[nearfield_operator]")
     Facet<2> f{{{0, -1}, {1, -1}}};
     Vec<double,2> p{0, 1};
 
-    auto dir = decide_richardson_dir(p, {{f}, p, 0.0});
+    auto dir = decide_richardson_dir(p, {{f}, f, p, 0.0});
 
     REQUIRE(dir == (Vec<double,2>{0, 1}));
 }
@@ -27,9 +27,9 @@ TEST_CASE("richardson direction touching", "[nearfield_operator]")
     Facet<2> f{{{0, 0}, {0, 1}}};
     Vec<double,2> p{0, 0};
 
-    auto dir = decide_richardson_dir(p, {{f}, p, 0.0});
+    auto dir = decide_richardson_dir(p, {{f}, f, p, 0.0});
 
-    REQUIRE(dir == (Vec<double,2>{-1, 0}));
+    REQUIRE(dir == (Vec<double,2>{-1, 0.5}));
 }
 
 TEST_CASE("richardson direction backside", "[nearfield_operator]") 
@@ -37,8 +37,9 @@ TEST_CASE("richardson direction backside", "[nearfield_operator]")
     Facet<2> f{{{0, -1}, {1, -1}}};
     Vec<double,2> p{0, -2};
 
-    auto dir = decide_richardson_dir(p, {{f}, p, 0.0});
+    auto dir = decide_richardson_dir(p, {{f}, f, p, 0.0});
 
+    std::cout << dir << std::endl;
     REQUIRE(dir == (Vec<double,2>{0, -1}));
 }
 
@@ -48,7 +49,7 @@ TEST_CASE("richardson direction intersection", "[nearfield_operator]")
     Facet<2> f2{{{0, 1}, {0, 0}}};
     Vec<double,2> p{0, 0};
     
-    auto dir = decide_richardson_dir(p, {{f, f2}, p, 0.0});
+    auto dir = decide_richardson_dir(p, {{f, f2}, f, p, 0.0});
     
     REQUIRE(dir == (Vec<double,2>{0.5, 0.5}));
 }
@@ -59,10 +60,21 @@ TEST_CASE("richardson direction normals dont cancel", "[nearfield_operator]")
     Facet<2> f2{{{-1, 1}, {-1, -1}}};
     Vec<double,2> p{0, 0};
 
-    auto dir = decide_richardson_dir(p, {{f, f2}, p, 0.0});
+    auto dir = decide_richardson_dir(p, {{f, f2}, f, p, 0.0});
 
     bool normals_not_canceled = (dir[0] != 0.0) || (dir[1] != 0.0);
     REQUIRE(normals_not_canceled);
+}
+
+TEST_CASE("richardson direction for reflex angle", "[nearfield_operator]")
+{
+    Facet<2> f{{{1, 0}, {0, 0}}};
+    Facet<2> f2{{{0, 0}, {-1, 1}}};
+
+    Vec<double,2> p{0.001, 0};
+    auto dir = decide_richardson_dir(p, {{f, f2}, f, p, 0});
+    REQUIRE_ARRAY_CLOSE(dir, Vec<double,2>{-0.5, -1.0}, 2, 1e-12);
+    std::cout << dir << std::endl;
 }
 
 TEST_CASE("richardson points always inside", "[nearfield_operator]")
