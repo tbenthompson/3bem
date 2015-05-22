@@ -92,7 +92,6 @@ TEST_CASE("richardson points always inside", "[nearfield_operator]")
     for(auto p: pts) {
         auto interior_pt = p.loc + p.len_scale * p.richardson_dir;
         point_type bg_p(interior_pt[0], interior_pt[1]);
-        std::cout << p.loc << " " << interior_pt << std::endl;
         REQUIRE(boost::geometry::within(bg_p, poly));
     }
 }
