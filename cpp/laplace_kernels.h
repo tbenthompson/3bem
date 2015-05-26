@@ -48,6 +48,22 @@ struct LaplaceDouble<3>: Kernel<3,1,1>
 };
 
 template <>
+struct LaplaceHypersingular<3>: Kernel<3,1,1>
+{
+    virtual Vec1<Vec1<double>> call(double r2, const Vec<double,3>& delta,
+        const Vec<double,3>& nobs, const Vec<double,3>& nsrc) const 
+    {
+        (void)r2; (void) delta; (void)nobs; (void)nsrc;
+        return {{0}};
+    }
+
+    virtual std::unique_ptr<Kernel<3,1,1>> clone() const
+    {
+        return std::unique_ptr<Kernel<3,1,1>>(new LaplaceHypersingular<3>());
+    }
+};
+
+template <>
 struct LaplaceSingle<2>: Kernel<2,1,1>
 {
     virtual Vec1<Vec1<double>> call(double r2, const Vec<double,2>& delta,

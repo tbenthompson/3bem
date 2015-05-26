@@ -5,6 +5,9 @@ CURRENT: MISC
 ** test for richardson points always being inside the mesh
 ** finish the nearest neighbors works and provide some rigorous testing for it
 ** look into boost::geometry
+** search radius for richardson vector should be the nearest element's length
+** get rid of quad strategy
+** pass quad orders to interp and galerk
 
 KERNEL OVERHAUL
 ** capacity test: benchmark the fmm
@@ -30,6 +33,7 @@ CRACK TIPS:
 
 MISC:
 ** characterize the sinh-sigmoidal method
+** 
 ** use iterators for traversing point sets?
 ** characterize the galerkin BEM for hypersingular kernels
 ** split out the fmm scheduler/traversal
