@@ -8,7 +8,8 @@
 
 using namespace tbem;
 
-TEST_CASE("richardson direction far", "[nearfield_operator]") {
+TEST_CASE("richardson direction far", "[nearfield_operator]") 
+{
     Facet<2> f{{{0, -1}, {1, -1}}};
     Vec<double,2> p{0, 1};
 
@@ -17,7 +18,8 @@ TEST_CASE("richardson direction far", "[nearfield_operator]") {
     REQUIRE(dir == (Vec<double,2>{0, 1}));
 }
 
-TEST_CASE("richardson direction touching", "[nearfield_operator]") {
+TEST_CASE("richardson direction touching", "[nearfield_operator]") 
+{
     Facet<2> f{{{0, 0}, {0, 1}}};
     Vec<double,2> p{0, 0};
 
@@ -26,7 +28,8 @@ TEST_CASE("richardson direction touching", "[nearfield_operator]") {
     REQUIRE(dir == (Vec<double,2>{-1, 0}));
 }
 
-TEST_CASE("richardson direction backside", "[nearfield_operator]") {
+TEST_CASE("richardson direction backside", "[nearfield_operator]") 
+{
     Facet<2> f{{{0, -1}, {1, -1}}};
     Vec<double,2> p{0, -2};
 
@@ -35,7 +38,8 @@ TEST_CASE("richardson direction backside", "[nearfield_operator]") {
     REQUIRE(dir == (Vec<double,2>{0, -1}));
 }
 
-TEST_CASE("richardson direction intersection", "[nearfield_operator]") {
+TEST_CASE("richardson direction intersection", "[nearfield_operator]") 
+{
     Facet<2> f{{{0, 0}, {1, 0}}};
     Facet<2> f2{{{0, 1}, {0, 0}}};
     Vec<double,2> p{0, 0};
@@ -45,7 +49,8 @@ TEST_CASE("richardson direction intersection", "[nearfield_operator]") {
     REQUIRE(dir == (Vec<double,2>{0.5, 0.5}));
 }
 
-TEST_CASE("richardson direction normals dont cancel", "[nearfield_operator]") {
+TEST_CASE("richardson direction normals dont cancel", "[nearfield_operator]") 
+{
     Facet<2> f{{{1, -1}, {1, 1}}};
     Facet<2> f2{{{-1, 1}, {-1, -1}}};
     Vec<double,2> p{0, 0};
@@ -54,6 +59,27 @@ TEST_CASE("richardson direction normals dont cancel", "[nearfield_operator]") {
 
     bool normals_not_canceled = (dir[0] != 0.0) || (dir[1] != 0.0);
     REQUIRE(normals_not_canceled);
+}
+
+TEST_CASE("richardson points always inside", "[nearfield_operator]")
+{
+    std::vector<Vec<double,2>> polygon{
+        {1, 0.1}, {0, 0}, {1, -0.1}
+    };
+
+    std::vector<Mesh<2>> mesh_pieces;
+    polygon.push_back(polygon[0]);
+    for (size_t i = 0; i < polygon.size() - 1; i++) {
+        mesh_pieces.push_back(line_mesh(polygon[i], polygon[i + 1]));
+    }
+
+    auto R = 0;
+    auto m = Mesh<2>::create_union(mesh_pieces).refine_repeatedly(R);
+
+    auto pts = galerkin_obs_pts(m, gauss_facet<2>(2), m);
+    for(auto p: pts) {
+        //REQUIRE(in_polygon(polygon, p.loc));
+    }
 }
 
 TEST_CASE("interior obs pts", "[nearfield_operator]")

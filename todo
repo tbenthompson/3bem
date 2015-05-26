@@ -1,9 +1,10 @@
 CURRENT: MISC
 ** acceptance test: setup fmm operators for python wrapper
 ** remove the double underscore if the ifdefs
-** test_dense_builder should be split up
-
 ** automated testing tools against pdetool
+** test for richardson points always being inside the mesh
+** finish the nearest neighbors works and provide some rigorous testing for it
+** look into boost::geometry
 
 KERNEL OVERHAUL
 ** capacity test: benchmark the fmm
