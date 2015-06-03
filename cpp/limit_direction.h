@@ -10,7 +10,7 @@ template <size_t dim> struct NearestFacets;
 
 template <size_t dim>
 Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
-    const NearestFacets<dim>& nearest_facets);
+    const NearestFacets<dim>& nearest_facets, double epsilon = 1e-12);
 
 }
 

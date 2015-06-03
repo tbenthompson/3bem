@@ -16,7 +16,7 @@ TEST_CASE("richardson points always inside", "[nearfield_operator]")
     };
     polygon.push_back(polygon[0]);
 
-    auto R = 0;
+    auto R = 3;
     std::vector<Mesh<2>> mesh_pieces;
     for (size_t i = 0; i < polygon.size() - 1; i++) {
         mesh_pieces.push_back(line_mesh(polygon[i], polygon[i + 1]));
@@ -26,7 +26,6 @@ TEST_CASE("richardson points always inside", "[nearfield_operator]")
     auto pts = galerkin_obs_pts(m, gauss_facet<2>(2), m);
 
     for(auto p: pts) {
-        std::cout << "(LOC,OFFSET)" << p.loc << " " << p.loc + p.richardson_dir << std::endl;
         REQUIRE(in_polygon(polygon, p.loc + p.richardson_dir));
     }
 }
@@ -34,7 +33,7 @@ TEST_CASE("richardson points always inside", "[nearfield_operator]")
 TEST_CASE("interior obs pts", "[nearfield_operator]")
 {
     auto pts = interior_obs_pts<2>(
-        {{0,1}, {2,0}},
+        {{0,1}, {1,0}},
         {{1,0}, {0,1}},
         Mesh<2>{{
             {{
@@ -49,7 +48,8 @@ TEST_CASE("interior obs pts", "[nearfield_operator]")
 
     SECTION("richardson length") {
         auto dir = pts[0].richardson_dir;
-        REQUIRE(hypot(dir) == 0.2);
+        REQUIRE(hypot(pts[0].richardson_dir) == 0.0);
+        REQUIRE_CLOSE(hypot(pts[1].richardson_dir), std::sqrt(2) / 2, 1e-12);
     }
 }
 
