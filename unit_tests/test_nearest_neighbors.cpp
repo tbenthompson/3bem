@@ -47,7 +47,8 @@ std::vector<Vec<double,2>> line_pts(size_t n)
     return pts;
 }
 
-TEST_CASE("AllPairs", "[nearest_neighbors]") {
+TEST_CASE("AllPairs", "[nearest_neighbors]") 
+{
     size_t n = 500;
     auto pts = line_pts(n);
     auto oct = make_octree(pts, 50);
@@ -65,7 +66,8 @@ TEST_CASE("AllPairsPerformance", "[nearest_neighbors]")
     auto result = nearby_points_all_pairs(pts, pts, oct, oct, 0.0);
 }
 
-TEST_CASE("test nearest facet", "[nearest_neighbors]") {
+TEST_CASE("test nearest facet", "[nearest_neighbors]") 
+{
     //Test the fast version against the brute force version through many
     //random examples
     size_t n_facets = 10;
@@ -79,43 +81,47 @@ TEST_CASE("test nearest facet", "[nearest_neighbors]") {
     }
 }
 
-TEST_CASE("NearestFacetsOneFacetEndpoint", "[nearest_neighbors]") {
+TEST_CASE("nearest facets on line", "[nearest_neighbors]") 
+{
     Facet<2> f{{{1,1},{2,1}}};
     Mesh<2> m{{f}};
     auto result = nearest_facets({0, 0}, m.facets);
-    REQUIRE(result.facets.size() == 1);
-    REQUIRE(result.facets[0] == m.facets[0]);
+    REQUIRE(result.facets.size() == 0);
+    REQUIRE(result.nearest_facet == f);
     REQUIRE(result.pt == m.facets[0][0]);
     REQUIRE(result.distance == std::sqrt(2));
 }
 
-TEST_CASE("NearestFacetsOneFacetNotEndpoint", "[nearest_neighbors]") {
+TEST_CASE("nearest facets out of line", "[nearest_neighbors]") 
+{
     Facet<2> f{{{-1,-1},{1,-1}}};
     Mesh<2> m{{f}};
     auto result = nearest_facets({0, 0}, m.facets);
-    REQUIRE(result.facets[0] == m.facets[0]);
+    REQUIRE(result.nearest_facet == m.facets[0]);
     REQUIRE_ARRAY_CLOSE(result.pt, Vec<double,2>{0,-1}, 2, 1e-14);
     REQUIRE(result.distance == 1.0);
 }
 
-TEST_CASE("NearestFacetsTwoFacetsNotEndpoint", "[nearest_neighbors]") {
+TEST_CASE("nearest facets two edges", "[nearest_neighbors]") 
+{
     Facet<2> f{{{0.5,-1},{1,-1}}};
     Facet<2> f2{{{-1,-1},{0.5,-1}}};
     Mesh<2> m{{f,f2}};
     auto result = nearest_facets({0, 0}, m.facets);
-    REQUIRE(result.facets[0] == m.facets[1]);
+    REQUIRE(result.nearest_facet == f2);
     REQUIRE_ARRAY_CLOSE(result.pt, Vec<double,2>{0,-1}, 2, 1e-14);
     REQUIRE(result.distance == 1.0);
 }
 
-TEST_CASE("NearestFacetsIntersection", "[nearest_neighbors]") {
+TEST_CASE("nearest facets at intersection", "[nearest_neighbors]") 
+{
     Facet<2> f{{{0,0},{1,0}}};
     Facet<2> f2{{{0,1},{0,0}}};
     Mesh<2> m{{f,f2}};
     auto result = nearest_facets({0, 0}, m.facets);
-    REQUIRE(result.facets.size() == 2);
-    bool correct_facets = (result.facets[0] == f || result.facets[1] == f) &&
-        (result.facets[0] == f2 || result.facets[1] == f2);
+    REQUIRE(result.facets.size() == 1);
+    bool correct_facets = (result.facets[0] == f || result.nearest_facet == f) &&
+        (result.facets[0] == f2 || result.nearest_facet == f2);
     REQUIRE(correct_facets);
     REQUIRE_ARRAY_CLOSE(result.pt, Vec<double,2>{0,0}, 2, 1e-14);
     REQUIRE(result.distance == 0.0);

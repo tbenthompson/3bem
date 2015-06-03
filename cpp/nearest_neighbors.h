@@ -198,7 +198,7 @@ NearestFacets<dim> nearest_facets(const Vec<double,dim>& pt,
     const std::vector<Vec<Vec<double,dim>,dim>>& facets) 
 {
     assert(facets.size() > 0);
-    Vec<Vec<double,dim>,dim> closest_facet;
+    size_t closest_facet_idx = 0;
     Vec<double,dim> closest_pt;
     auto min_dist2 = std::numeric_limits<double>::max();
     for (size_t facet_idx = 0; facet_idx < facets.size(); facet_idx++) {
@@ -206,20 +206,24 @@ NearestFacets<dim> nearest_facets(const Vec<double,dim>& pt,
         auto mesh_pt = ref_to_real(ref_pt, facets[facet_idx]);
         auto dist2_to_mesh = dist2(pt, mesh_pt);
         if (dist2_to_mesh < min_dist2) {
-            closest_facet = facets[facet_idx];
+            closest_facet_idx = facet_idx;
             min_dist2 = dist2_to_mesh;
             closest_pt = mesh_pt;
         } 
     }
 
+    auto closest_facet = facets[closest_facet_idx];
     auto search_ball = facet_ball(closest_facet);
     auto search_r2 = std::pow(search_ball.radius, 2);
     if (search_r2 < min_dist2) {
-        return {{closest_facet}, closest_facet, closest_pt, std::sqrt(min_dist2)};
+        return {{}, closest_facet, closest_pt, std::sqrt(min_dist2)};
     }
 
     std::vector<Vec<Vec<double,dim>,dim>> close_facets;
     for (size_t facet_idx = 0; facet_idx < facets.size(); facet_idx++) {
+        if (facet_idx == closest_facet_idx) {
+            continue;
+        }
         auto ref_pt = closest_pt_facet(pt, facets[facet_idx]);
         auto mesh_pt = ref_to_real(ref_pt, facets[facet_idx]);
         auto dist2_to_mesh = dist2(pt, mesh_pt);

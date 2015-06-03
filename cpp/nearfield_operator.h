@@ -4,33 +4,9 @@
 #include "sparse_operator.h"
 #include "integral_term.h"
 #include "nearest_neighbors.h"
+#include "limit_direction.h"
 
 namespace tbem {
-
-template <size_t dim>
-Vec<double,dim> away_from_facet_dir(const Vec<double,dim>& pt,
-    const Vec<Vec<double,dim>,dim>& f) 
-{
-    auto facet_normal = unscaled_normal(f); 
-    auto which_side = which_side_point(f, pt);
-    if (which_side == INTERSECT) {
-        return facet_normal;
-    } else if (which_side == FRONT) {
-        return facet_normal;
-    } else {
-        return -facet_normal;
-    }
-}
-
-template <size_t dim>
-Vec<double,dim> decide_richardson_dir(const Vec<double,dim>& pt,
-    const NearestFacets<dim>& nearest_facets) 
-{
-    auto close_center = centroid(nearest_facets.nearest_facet);
-    auto close_dir = away_from_facet_dir(pt, nearest_facets.nearest_facet);
-    auto direction = (close_center + close_dir) - pt;
-    return direction;
-}
 
 template <size_t dim>
 std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
@@ -58,19 +34,10 @@ std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
             auto loc = ref_to_real(ref_loc, obs_face.face);
             auto nf = nearest_facets(loc, all_mesh.facets);
 
-            // Shifting the point that is used to decide the richardson 
-            // direction slightly in the direction of the observation normal
-            // ensures that the richardson direction points towards the interior
-            // of the domain.
-            double interior_shift = facet_ball(obs_face.face).radius * 1e-8;
-            auto slightly_interior_loc = loc + interior_shift * obs_face.normal;
-
-            auto rich_dir = decide_richardson_dir(slightly_interior_loc, nf);
+            auto rich_dir = decide_limit_dir(loc, nf);
             auto rich_length = hypot(rich_dir);
 
-            out.push_back({
-                rich_length / 5.0, loc, obs_face.normal, rich_dir / rich_length
-            });
+            out.push_back({loc, obs_face.normal, rich_dir});
         }
     }
     return out;
@@ -83,11 +50,8 @@ std::vector<ObsPt<dim>> interior_obs_pts(const std::vector<Vec<double,dim>>& loc
     std::vector<ObsPt<dim>> out;
     for (size_t pt_idx = 0; pt_idx < locs.size(); pt_idx++) {
         auto nf = nearest_facets(locs[pt_idx], all_mesh.facets);
-        auto rich_dir = decide_richardson_dir(locs[pt_idx], nf);
-        auto rich_length = hypot(rich_dir);
-        ObsPt<dim> pt{
-            rich_length / 5.0, locs[pt_idx], normals[pt_idx], rich_dir / rich_length
-        };
+        auto rich_dir = decide_limit_dir(locs[pt_idx], nf);
+        ObsPt<dim> pt{locs[pt_idx], normals[pt_idx], rich_dir};
         out.push_back(pt);
     }
     return out;

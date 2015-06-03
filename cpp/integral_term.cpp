@@ -123,8 +123,8 @@ struct UnitFacetAdaptiveIntegrator<3> {
 
 template <size_t dim>
 Vec<double,dim> get_step_loc(const ObsPt<dim>& obs, double step_size) {
-    const double safe_dist_ratio = 5.0;
-    double step_distance = safe_dist_ratio * obs.len_scale * step_size;
+    const double safe_dist_ratio = 1.0;
+    double step_distance = safe_dist_ratio * step_size;
     return obs.loc + step_distance * obs.richardson_dir;
 }
 

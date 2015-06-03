@@ -45,7 +45,7 @@ TEST_CASE("IntegralOne", "[integral_term]")
     QuadStrategy<2> qs(2);
     IdentityScalar<2> identity;
     auto mthd = make_adaptive_integration_mthd(qs, identity);
-    ObsPt<2> obs{0.01, {0.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}};
+    ObsPt<2> obs{{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.01}};
     auto facet_info = FacetInfo<2>::build({{{0,0},{1,0}}});
     IntegralTerm<2,1,1> term{obs, facet_info};
     NearestPoint<2> nearest_pt{{0.0}, {0.0, 0.0}, 0.0, FarNearType::Farfield};
@@ -59,7 +59,7 @@ void integral_term_test(const IntegrationMethodI<dim,R,C>& mthd,
     double distance, double exact) 
 {
     QuadStrategy<3> quad_strategy(2);
-    ObsPt<3> obs{0.01, {0.5, 0.1, distance}, {1.0, 0.0, 0.0}, {0.0, 0.0, 1.0}};
+    ObsPt<3> obs{{0.5, 0.1, distance}, {1.0, 0.0, 0.0}, {0.0, 0.0, 0.01}};
     auto facet_info = FacetInfo<3>::build({{{0,0,0},{2,0,0},{0,1,0}}});
     IntegralTerm<dim,R,C> term{obs, facet_info};
     auto nearest_pt = FarNearLogic<3>{3.0, 1.0}.decide(obs.loc, facet_info);
@@ -131,7 +131,7 @@ void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K)
             double y = y_hat * max_y * ((max_x - x) / max_x);
             for (double log_z = 2; log_z > -6; log_z -= 1) {
                 double z = std::pow(10.0, log_z);
-                ObsPt<3> obs{1.0, {x, y, z}, {0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}};
+                ObsPt<3> obs{{x, y, z}, {0.0, 0.0, 1.0}, {0.0, 0.0, 1.0}};
                 IntegralTerm<dim,R,C> term{obs, facet_info};
                 auto nearest_pt = FarNearLogic<dim>{3.0, 1.0}.decide(obs.loc, facet_info);
                 auto sinh_eval = mthd_sinh.compute_term(term, nearest_pt);
@@ -157,7 +157,7 @@ TEST_CASE("TensorKernel", "[integral_term]")
     ElasticDisplacement<2> k(1.0, 0.25);
     QuadStrategy<2> qs(2);
     auto facet_info = FacetInfo<2>::build({{{-1.0, 0.0}, {1.0, 0.0}}});
-    ObsPt<2> obs{0.1, {0.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}};
+    ObsPt<2> obs{{0.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}};
     IntegralTerm<2,2,2> term{obs, facet_info};
     auto result = term.eval_point_influence(k, {0.0});
     REQUIRE_CLOSE(result[0][1][1], 0.0265258, 1e-6);

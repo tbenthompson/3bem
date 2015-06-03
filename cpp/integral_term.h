@@ -10,7 +10,6 @@ namespace tbem {
 
 template <size_t dim>
 struct ObsPt {
-    const double len_scale;
     const Vec<double,dim> loc;
     const Vec<double,dim> normal;
     const Vec<double,dim> richardson_dir;

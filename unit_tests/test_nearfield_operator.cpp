@@ -5,10 +5,7 @@
 #include "laplace_kernels.h"
 #include "mesh_gen.h"
 #include "integral_operator.h"
-
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
+#include "boost_geometry_wrapper.h"
 
 using namespace tbem;
 
@@ -19,7 +16,7 @@ TEST_CASE("richardson points always inside", "[nearfield_operator]")
     };
     polygon.push_back(polygon[0]);
 
-    auto R = 5;
+    auto R = 0;
     std::vector<Mesh<2>> mesh_pieces;
     for (size_t i = 0; i < polygon.size() - 1; i++) {
         mesh_pieces.push_back(line_mesh(polygon[i], polygon[i + 1]));
@@ -27,19 +24,10 @@ TEST_CASE("richardson points always inside", "[nearfield_operator]")
     auto m = Mesh<2>::create_union(mesh_pieces).refine_repeatedly(R);
 
     auto pts = galerkin_obs_pts(m, gauss_facet<2>(2), m);
-    // auto pts = interior_obs_pts({{0.149646, 0.0149646}}, {{0, 1}}, m);
-
-    typedef boost::geometry::model::d2::point_xy<double> point_type;
-    typedef boost::geometry::model::polygon<point_type> polygon_type;
-    polygon_type poly;
-    for (size_t i = 0; i < polygon.size(); i++) {
-        poly.outer().push_back({polygon[i][0], polygon[i][1]});
-    }
 
     for(auto p: pts) {
-        auto interior_pt = p.loc + p.len_scale * p.richardson_dir;
-        point_type bg_p(interior_pt[0], interior_pt[1]);
-        REQUIRE(boost::geometry::within(bg_p, poly));
+        std::cout << "(LOC,OFFSET)" << p.loc << " " << p.loc + p.richardson_dir << std::endl;
+        REQUIRE(in_polygon(polygon, p.loc + p.richardson_dir));
     }
 }
 
@@ -59,14 +47,9 @@ TEST_CASE("interior obs pts", "[nearfield_operator]")
         REQUIRE(pts.size() == 2);
     }
 
-    SECTION("normalized richardson direction") {
+    SECTION("richardson length") {
         auto dir = pts[0].richardson_dir;
-        REQUIRE(hypot(dir) == 1.0);
-    }
-
-    SECTION("richardson length divided by 5") {
-        auto len = pts[0].len_scale;
-        REQUIRE(len == 0.2);
+        REQUIRE(hypot(dir) == 0.2);
     }
 }
 

@@ -1,20 +1,20 @@
 CURRENT: MISC
 ** acceptance test: setup fmm operators for python wrapper
 ** remove the double underscore if the ifdefs
-** automated testing tools against pdetool
-** test for richardson points always being inside the mesh
-** finish the nearest neighbors works and provide some rigorous testing for it
+** automated test for richardson points always being inside the mesh
+** finish the nearest neighbors work and provide some rigorous testing for it
 ** look into boost::geometry
 ** search radius for richardson vector should be the nearest element's length
 ** get rid of quad strategy
 ** pass quad orders to interp and galerk
+** segment-segment intersection test
+** segment-triangle intersection test
 
 KERNEL OVERHAUL
-** capacity test: benchmark the fmm
 ** move obs, src loop into the kernel functions which will reduce the number of function calls and also allow sse/avx implementations of those kernel functions
 ** if a large number of obs and src points are passed to the kernel functions simultaneously, then maybe the output can simply be a vector rather than using the templated tensor arrays
-** AVX kernel implementation
-** GPU kernel implementation
+** remove the templating on kernel tensor shape in favor of returning a large double array from a kernel function called with a bunch of inputs simultaneously
+** faster (AVX, GPU) kernel implementations + capacity test
 
 NEXT: hanging nodes 
 ** acceptance test #1: fault intersecting surface not at point
@@ -24,24 +24,34 @@ NEXT: hanging nodes
 
 INTEGRATION:
 ** acceptance test: 3D problem with sinh-sigmoidal quadrature
-** capacity test: time to perform 3D nearfield integration
 ** try other nearly-singular quadrature methods (not sinh-sigmoidal)
 
 CRACK TIPS:
+** is this necessary? can simple refinement solve the problem for all practical cases? maybe move to long-term 
 ** crack tip elements may require creating a basis structure
 ** acceptance test: high accuracy crack tip stress intensity factor (crack-tip elements)
 
+CAPACITY TESTING/BUILD TESTING:
+** automated build testing on mac, ubuntu, with clang, gcc, intel compilers -- maybe turn the mac mini into a build server
+http://www.joelonsoftware.com/articles/fog0000000023.html
+** test the build system on a fresh ubuntu (just use a docker container)
+** test with python3
+** some simple capacity tests. how to make sure these run in the same conditions? remove timings from standard unit tests
+** capacity test: benchmark the fmm
+** capacity test: time to perform 3D nearfield integration
+** capacity test: solve a laplace problem
+** capacity test: reuse the adaptively refined okada problem, but time it, realistic!
+** need a compilation time test -- a recompile using ccache should take < 2 seconds? this poses the same hardware-specific capacity testing issues as the speed stuff. 
+** one solution to the capacity testing issue is to enforce that new versions should run faster than old versions or to provide specific git revisions that are benchmarks for a given capacity. this could result in a long capacity test, but
+
 MISC:
 ** characterize the sinh-sigmoidal method
-** 
 ** use iterators for traversing point sets?
 ** characterize the galerkin BEM for hypersingular kernels
 ** split out the fmm scheduler/traversal
 ** create a continuity builder struct, move continuity builder stuff to cpp file
 -- this may imply using a struct or redesigning the interface
 ** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
-** test the build system on a fresh ubuntu (just use a docker container)
-** automated build testing on mac, ubuntu, with clang, gcc, intel compilers -- maybe turn the mac mini into a build server
-http://www.joelonsoftware.com/articles/fog0000000023.html
-** some simple capacity tests. how to make sure these run in the same conditions? remove timings from standard unit tests
-** test with python3
+** stub out a separate basis structure -- maybe have a interpolator interface, with a linear interpolator implementation
+** stub out a separate mesh basis structure
+** automated testing tools against pdetool? -- probably excessive
