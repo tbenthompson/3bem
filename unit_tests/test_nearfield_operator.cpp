@@ -49,7 +49,8 @@ TEST_CASE("interior obs pts", "[nearfield_operator]")
     SECTION("richardson length") {
         auto dir = pts[0].richardson_dir;
         REQUIRE(hypot(pts[0].richardson_dir) == 0.0);
-        REQUIRE_CLOSE(hypot(pts[1].richardson_dir), std::sqrt(2) / 2, 1e-12);
+        auto length = hypot(pts[1].richardson_dir);
+        REQUIRE_CLOSE(length, std::sqrt(1.25) / 2, 1e-12);
     }
 }
 

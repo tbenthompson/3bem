@@ -16,26 +16,13 @@ std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
     for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(obs_mesh.facets[obs_idx]);
         for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
-            // New flow:
-            // find loc
-            // auto ref_loc = obs_quad[obs_q].x_hat;
-            // auto loc = ref_to_real(ref_loc, obs_face.face);
-            //
-            // find nearfield facets (depends on facet octree/ball octree)
-            //
-            // find the facets that could possibly intersect with the richardson
-            // vector
-            //
-            // determine the richardson vector
-            //
-            // form and return observation point
-
             auto ref_loc = obs_quad[obs_q].x_hat;
             auto loc = ref_to_real(ref_loc, obs_face.face);
+            //TODO: this can be split into the nearest neighbors functions
+            //and the limit direction parts -- feature envy in some sense
             auto nf = nearest_facets(loc, all_mesh.facets);
 
             auto rich_dir = decide_limit_dir(loc, nf);
-            auto rich_length = hypot(rich_dir);
 
             out.push_back({loc, obs_face.normal, rich_dir});
         }

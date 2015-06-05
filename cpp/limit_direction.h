@@ -6,6 +6,8 @@
 
 namespace tbem {
 
+//TODO: feature envy -- this structure and its respective builder should be
+//in this header/compilation unit
 template <size_t dim> struct NearestFacets;
 
 template <size_t dim>

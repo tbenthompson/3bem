@@ -14,7 +14,7 @@ TEST_CASE("limit direction isolated edge", "[limit_direction]")
         auto y_val = random<double>(0, 1);
         Vec<double,2> p{0, y_val};
         auto dir = decide_limit_dir(p, {{}, f, p, 0.0});
-        REQUIRE(dir == (Vec<double,2>{-0.5, -y_val + 0.5}));
+        REQUIRE(dir == (Vec<double,2>{-0.5, (-y_val / 2) + 0.25}));
     }
 }
 
@@ -26,10 +26,10 @@ TEST_CASE("limit direction intersection", "[limit_direction]")
     Vec<double,2> p{0, 0};
     
     auto dir = decide_limit_dir(p, {{f2}, f, p, 0.0});
-    REQUIRE(dir == (Vec<double,2>{0.5, 0.5}));
+    REQUIRE(dir == (Vec<double,2>{0.25, 0.5}));
 
     auto dir2 = decide_limit_dir(p, {{f}, f2, p, 0.0});
-    REQUIRE(dir2 == (Vec<double,2>{0.5, 0.5}));
+    REQUIRE(dir2 == (Vec<double,2>{0.5, 0.25}));
 }
 
 TEST_CASE("limit direction reflex angle", "[limit_direction]")
@@ -39,7 +39,7 @@ TEST_CASE("limit direction reflex angle", "[limit_direction]")
 
     Vec<double,2> p{-0.001, 0.001};
     auto dir = decide_limit_dir(p, {{f}, f2, p, 0});
-    REQUIRE_ARRAY_CLOSE(dir, Vec<double,2>{-0.999, -0.001}, 2, 1e-12);
+    REQUIRE_ARRAY_CLOSE(dir, Vec<double,2>{-0.7495, -0.2505}, 2, 1e-12);
 }
 
 TEST_CASE("limit direction distance cutoff", "[limit_direction]")
@@ -73,5 +73,16 @@ TEST_CASE("limit direction acute angle", "[limit_direction]")
 
     Vec<double,2> p{0.5, 0};
     auto dir = decide_limit_dir(p, {{f2}, f, p, 0});
-    REQUIRE_ARRAY_CLOSE(dir, Vec<double,2>{0, 0.025}, 2, 1e-12);
+    REQUIRE_ARRAY_CLOSE(dir, Vec<double,2>{0, 0.0125}, 2, 1e-12);
+}
+
+TEST_CASE("limit direction radius is equal to separation", "[limit_direction]")
+{
+
+    Facet<2> f{{{0, 0}, {1, 0}}};
+    Facet<2> f2{{{0, 0.5}, {1, 0.5}}};
+
+    Vec<double,2> p{0.5, 0};
+    auto dir = decide_limit_dir(p, {{f2}, f, p, 0});
+    REQUIRE_ARRAY_CLOSE(dir, Vec<double,2>{0, 0.125}, 2, 1e-12);
 }

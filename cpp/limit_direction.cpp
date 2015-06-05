@@ -9,9 +9,9 @@ template <size_t dim>
 Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     const NearestFacets<dim>& nearest_facets, double epsilon) 
 {
+    //TODO: Document this function by splitting it into its component pieces
     const auto& closest_facet = nearest_facets.nearest_facet;
-    const double diam_to_radius = 0.5;
-    double len_scale = hypot(closest_facet[0] - closest_facet[1]) * diam_to_radius;
+    double len_scale = hypot(closest_facet[0] - closest_facet[1]);
     double threshold = len_scale * epsilon;
     if (nearest_facets.distance > threshold) {
         return zeros<Vec<double,dim>>::make();
@@ -34,7 +34,8 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
         }
     }
 
-    return end_pt - pt;
+    const double diam_to_radius = 0.5;
+    return (end_pt - pt) * diam_to_radius;
 }
 
 template 
