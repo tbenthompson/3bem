@@ -3,49 +3,56 @@
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/segment.hpp> 
 #include <boost/geometry/algorithms/intersection.hpp>
+#include <gte/Include/GTEngine.h>
 
+//TODO: Remove the remainder of the boost geometry junk and rename to gte_wrapper
 namespace tbem {
 
 std::vector<Vec<double,2>> seg_seg_intersection(const Vec<Vec<double,2>,2>& A,
     const Vec<Vec<double,2>,2>& B)
 {
-    typedef boost::geometry::model::d2::point_xy<double> Point;
-    typedef boost::geometry::model::segment<Point> Segment;
-    Segment seg0(Point(A[0][0],A[0][1]), Point(A[1][0], A[1][1]));
-    Segment seg1(Point(B[0][0],B[0][1]), Point(B[1][0], B[1][1]));
-    
-    std::vector<Point> intersect_pts; 
-    boost::geometry::intersection(seg0, seg1, intersect_pts);
+    gte::Segment<2,double> seg0(
+        gte::Vector<2,double>({A[0][0], A[0][1]}),
+        gte::Vector<2,double>({A[1][0], A[1][1]})
+    );
+    gte::Segment<2,double> seg1(
+        gte::Vector<2,double>({B[0][0], B[0][1]}),
+        gte::Vector<2,double>({B[1][0], B[1][1]})
+    );
+    gte::FIQuery<double,gte::Segment2<double>,gte::Segment2<double>> Q;
+    auto result = Q(seg0, seg1);
 
-    std::vector<Vec<double,2>> out;
-    for (auto p: intersect_pts) {
-        out.push_back({p.x(), p.y()});
+    if (result.numIntersections == 0) {
+        return {};
+    } else if (result.numIntersections == 1) {
+        return {Vec<double,2>{result.point[0][0], result.point[0][1]}};
+    } else if (result.numIntersections == 2) {
+        return {
+            Vec<double,2>{result.point[0][0], result.point[0][1]},
+            Vec<double,2>{result.point[1][0], result.point[1][1]}
+        };
     }
-    return out;
 }
 
 std::vector<Vec<double,3>> seg_tri_intersection(const Vec<Vec<double,3>,3>& A,
     const Vec<Vec<double,3>,2>& B)
 {
-    assert(false);//NOT IMPLEMENTED
-    typedef boost::geometry::model::point<
-        double,3,boost::geometry::cs::cartesian> Point;
-    typedef boost::geometry::model::polygon<Point> Polygon;
-    typedef boost::geometry::model::segment<Point> Segment;
-    Polygon tri;
-    tri.outer().push_back(Point(A[0][0], A[0][1], A[0][2]));
-    tri.outer().push_back(Point(A[1][0], A[1][1], A[1][2]));
-    tri.outer().push_back(Point(A[2][0], A[2][1], A[2][2]));
-    Segment seg(Point(B[0][0], B[0][1], B[0][2]), Point(B[1][0], B[1][1], B[1][2]));
-    
-    std::vector<Point> intersect_pts; 
-    // boost::geometry::intersection(tri, seg, intersect_pts);
-
-    std::vector<Vec<double,3>> out;
-    // for (auto p: intersect_pts) {
-    //     out.push_back({p.get<0>(), p.get<1>(), p.get<2>()});
-    // }
-    return out;
+    gte::Triangle3<double> tri(
+        gte::Vector<3,double>({A[0][0], A[0][1], A[0][2]}),
+        gte::Vector<3,double>({A[1][0], A[1][1], A[1][2]}),
+        gte::Vector<3,double>({A[2][0], A[2][1], A[2][2]})
+    );
+    gte::Segment<3,double> seg(
+        gte::Vector<3,double>({B[0][0], B[0][1], B[0][2]}),
+        gte::Vector<3,double>({B[1][0], B[1][1], B[1][2]})
+    );
+    gte::FIQuery<double,gte::Segment3<double>,gte::Triangle3<double>> Q;
+    auto result = Q(seg, tri);
+    if (result.intersect) {
+        return {Vec<double,3>{result.point[0], result.point[1], result.point[2]}};
+    } else {
+        return {};
+    }
 }
 
 template <> 

@@ -24,6 +24,25 @@ TEST_CASE("seg seg same segment", "[boost_geometry]")
     REQUIRE_ARRAY_CLOSE(pts[1], (Vec<double,2>{0, 1}), 2, 1e-12);
 }
 
+TEST_CASE("seg tri no intersection", "[boost_geometry]") 
+{
+    auto pts = seg_tri_intersection(
+        {{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}},
+        {{{-0.1, -0.1, -1}, {-0.1, -0.1, 1}}}
+    );
+    REQUIRE(pts.size() == 0);
+}
+
+TEST_CASE("seg tri intersection", "[boost_geometry]") 
+{
+    auto pts = seg_tri_intersection(
+        {{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}},
+        {{{0.1, 0.1, -1}, {0.1, 0.1, 1}}}
+    );
+    REQUIRE(pts.size() == 1);
+    REQUIRE_ARRAY_CLOSE(pts[0], (Vec<double,3>{0.1, 0.1, 0}), 3, 1e-12);
+}
+
 TEST_CASE("in polygon", "[boost_geometry]")
 {
     std::vector<Vec<double,2>> poly{

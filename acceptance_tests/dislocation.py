@@ -53,9 +53,7 @@ def solve(dim, surface, fault, hyp, qs, slip, **kwargs):
     mthd = integration_mthd(qs, hyp)
     cm = faulted_surface_constraints(tbem, surface, fault, dim)
 
-    print('rhs start')
     rhs_op = tbem.integral_operator(surface, fault, mthd, all_mesh)
-    print('rhs success')
     all_dofs_rhs = rhs_op.apply(slip)
     rhs = -tbem.condense_vector(cm, all_dofs_rhs)
 

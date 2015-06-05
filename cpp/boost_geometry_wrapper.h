@@ -16,14 +16,6 @@ template <size_t dim>
 std::vector<Vec<double,dim>> seg_facet_intersection(const Vec<Vec<double,dim>,dim>& f,
     const Vec<Vec<double,dim>,2>& seg);
 
-template <> 
-std::vector<Vec<double,2>> seg_facet_intersection(const Vec<Vec<double,2>,2>& f,
-    const Vec<Vec<double,2>,2>& seg);
-
-template <> 
-std::vector<Vec<double,3>> seg_facet_intersection(const Vec<Vec<double,3>,3>& f,
-    const Vec<Vec<double,3>,2>& seg);
-
 bool in_polygon(const std::vector<Vec<double,2>>& poly, const Vec<double,2>& pt);
 
 }
