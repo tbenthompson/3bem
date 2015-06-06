@@ -6,27 +6,54 @@
 #include "mesh_gen.h"
 #include "integral_operator.h"
 #include "gte_wrapper.h"
+#include "util.h"
 
 using namespace tbem;
 
-TEST_CASE("richardson points always inside", "[nearfield_operator]")
+TEST_CASE("richardson points always inside2", "[nearfield_operator]")
 {
-    std::vector<Vec<double,2>> polygon{
-        {1, 0.1}, {0, 0}, {1, -0.1}
-    };
-    polygon.push_back(polygon[0]);
+    //TODO: This test should probably be in the test_limit_direction file
+    for (size_t i = 0; i < 30; i++) {
+        // make a random triangle
+        auto polygon = random_pts<2>(3); 
 
-    auto R = 3;
-    std::vector<Mesh<2>> mesh_pieces;
-    for (size_t i = 0; i < polygon.size() - 1; i++) {
-        mesh_pieces.push_back(line_mesh(polygon[i], polygon[i + 1]));
-    }
-    auto m = Mesh<2>::create_union(mesh_pieces).refine_repeatedly(R);
+        // then ensure that it is oriented counterclockwise by flipping the 
+        // orientation if it isn't
+        auto normal = unscaled_normal({
+            Vec<double,3>{polygon[0][0], polygon[0][1], 0.0},
+            Vec<double,3>{polygon[1][0], polygon[1][1], 0.0},
+            Vec<double,3>{polygon[2][0], polygon[2][1], 0.0}
+        });
 
-    auto pts = galerkin_obs_pts(m, gauss_facet<2>(2), m);
+        if (normal[2] < 0) {
+            std::swap(polygon[0], polygon[1]);
+        }
 
-    for(auto p: pts) {
-        REQUIRE(in_polygon(polygon, p.loc + p.richardson_dir));
+        // the polygon must be closed (note that this cannot be done before 
+        // the clockwise check because vertices are swapped
+        polygon.push_back(polygon[0]);
+        
+        // turn the points into a 3bem mesh
+        std::vector<Mesh<2>> mesh_pieces;
+        for (size_t i = 0; i < polygon.size() - 1; i++) {
+            mesh_pieces.push_back(line_mesh(polygon[i], polygon[i + 1]));
+        }
+        auto refine_level = 5;
+        auto m = Mesh<2>::create_union(mesh_pieces).refine_repeatedly(refine_level);
+
+        // generate the observation points for a galerkin evaluation
+        auto pts = galerkin_obs_pts(m, gauss_facet<2>(2), m);
+        
+        // and check that they are all with the polygon
+        for(auto p: pts) {
+            auto success = in_polygon(polygon, p.loc + p.richardson_dir);
+            if (!success) {
+                std::cout << polygon[0] << std::endl; 
+                std::cout << polygon[1] << std::endl; 
+                std::cout << polygon[2] << std::endl; 
+            }
+            REQUIRE(success);
+        }
     }
 }
 

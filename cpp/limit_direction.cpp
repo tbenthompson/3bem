@@ -10,7 +10,11 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     const NearestFacets<dim>& nearest_facets, double epsilon) 
 {
     const auto& closest_facet = nearest_facets.nearest_facet;
-    double len_scale = hypot(closest_facet[0] - closest_facet[1]);
+    // TODO: The length scale here needs to be exactly double the length scale
+    // used in finding the nearest facets, which means that the functions should
+    // be unified. Basically, the function to find nearest_facets deserves to be
+    // in this file.
+    double len_scale = facet_ball(closest_facet).radius * 2;
 
     // If the point isn't lying precisely on any facet, then no limit 
     // needs to be taken, in which case the limit direction is the 0 vector.
@@ -40,11 +44,12 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
         }
     }
 
-    // Scaling from facet length scale down to half facet length scale(radius) 
-    // after doing the intersection tests is safer because a wider range of
+    // Scaling from facet length scale down after doing the 
+    // intersection tests is safer because a wider range of
     // facet intersections are checked and avoided.
-    const double diam_to_radius = 0.5;
-    return (end_pt - pt) * diam_to_radius;
+    // TODO: safety_factor = 0.5 should work, but doesn't. Why?
+    const double safety_factor = 0.4;
+    return (end_pt - pt) * safety_factor;
 }
 
 template 

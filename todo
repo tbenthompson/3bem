@@ -1,6 +1,5 @@
 CURRENT: MISC
 ** acceptance test: setup fmm operators for python wrapper
-** automated test for richardson points always being inside the mesh
 ** finish the nearest neighbors work and provide some rigorous testing for it
 ** get rid of quad strategy
 ** pass quad orders to interp and galerk
