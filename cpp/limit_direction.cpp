@@ -7,7 +7,8 @@ namespace tbem {
 
 template <size_t dim>
 Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
-    const NearestFacets<dim>& nearest_facets, double epsilon) 
+    const NearestFacets<dim>& nearest_facets, double epsilon, 
+    double safety_factor) 
 {
     const auto& closest_facet = nearest_facets.nearest_facet;
     // TODO: The length scale here needs to be exactly double the length scale
@@ -47,16 +48,14 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     // Scaling from facet length scale down after doing the 
     // intersection tests is safer because a wider range of
     // facet intersections are checked and avoided.
-    // TODO: safety_factor = 0.5 should work, but doesn't. Why?
-    const double safety_factor = 0.4;
     return (end_pt - pt) * safety_factor;
 }
 
 template 
 Vec<double,2> decide_limit_dir(const Vec<double,2>& pt,
-    const NearestFacets<2>& nearest_facets, double epsilon);
+    const NearestFacets<2>& nearest_facets, double epsilon, double safety_factor);
 template 
 Vec<double,3> decide_limit_dir(const Vec<double,3>& pt,
-    const NearestFacets<3>& nearest_facets, double epsilon);
+    const NearestFacets<3>& nearest_facets, double epsilon, double safety_factor);
 
 } // end namespace tbem

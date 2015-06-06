@@ -1,9 +1,23 @@
 CURRENT: MISC
-** acceptance test: setup fmm operators for python wrapper
-** finish the nearest neighbors work and provide some rigorous testing for it
+** fix up the design of the integration methods
+-- nearfieldintegrationmethod
+
+new quadstrategy
+-- src_far_quad
+-- obs_far_quad
+-- nearfield_integrator
+-- far_threshold
+-- n_singular_steps
+-- singular_steps
+-- compute_term
+-- compute_farfield
+-- compute_singular
 ** get rid of quad strategy
-** pass quad orders to interp and galerk
+
+** finish the nearest neighbors work and provide some rigorous testing for it
 ** check the downloading procedure for gte
+
+** acceptance test: setup fmm operators for python wrapper, solve a large problem in 2D and confirm (log)linear time cost with refinement
 
 KERNEL OVERHAUL
 ** move obs, src loop into the kernel functions which will reduce the number of function calls and also allow sse/avx implementations of those kernel functions
@@ -36,7 +50,7 @@ http://www.joelonsoftware.com/articles/fog0000000023.html
 ** capacity test: time to perform 3D nearfield integration
 ** capacity test: solve a laplace problem
 ** capacity test: reuse the adaptively refined okada problem, but time it, realistic!
-** need a compilation time test -- a recompile using ccache should take < 2 seconds? this poses the same hardware-specific capacity testing issues as the speed stuff. 
+** need a compilation time test -- a recompile using ccache should take < 2 seconds? this poses the same hardware-specific capacity testing issues as the speed stuff. also would like a compilation time test for the initial compile -- under 20 seconds would be nice
 ** one solution to the capacity testing issue is to enforce that new versions should run faster than old versions or to provide specific git revisions that are benchmarks for a given capacity. this could result in a long capacity test, but
 
 MISC:

@@ -44,7 +44,7 @@ TEST_CASE("IntegralOne", "[integral_term]")
 {
     QuadStrategy<2> qs(2);
     IdentityScalar<2> identity;
-    auto mthd = make_adaptive_integration_mthd(qs, identity);
+    auto mthd = make_adaptive_integrator(qs, identity);
     ObsPt<2> obs{{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.01}};
     auto facet_info = FacetInfo<2>::build({{{0,0},{1,0}}});
     IntegralTerm<2,1,1> term{obs, facet_info};
@@ -55,7 +55,7 @@ TEST_CASE("IntegralOne", "[integral_term]")
 }
 
 template <size_t dim, size_t R, size_t C>
-void integral_term_test(const IntegrationMethodI<dim,R,C>& mthd,
+void integral_term_test(const IntegrationStrategy<dim,R,C>& mthd,
     double distance, double exact) 
 {
     QuadStrategy<3> quad_strategy(2);
@@ -68,7 +68,7 @@ void integral_term_test(const IntegrationMethodI<dim,R,C>& mthd,
     REQUIRE_CLOSE(est[0][0], exact, 1e-3);
 }
 
-void integral_laplace_single(const IntegrationMethodI<3,1,1>& mthd) 
+void integral_laplace_single(const IntegrationStrategy<3,1,1>& mthd) 
 {
     integral_term_test(mthd, 20.0, 0.00398);
     integral_term_test(mthd, 2.0, 0.0381);
@@ -80,13 +80,13 @@ TEST_CASE("IntegralLaplaceSingle", "[integral_term]")
 {
     QuadStrategy<3> qs(2);
     LaplaceSingle<3> single_kernel;
-    auto mthd_adapt = make_adaptive_integration_mthd(qs, single_kernel);
+    auto mthd_adapt = make_adaptive_integrator(qs, single_kernel);
     integral_laplace_single(mthd_adapt);
-    auto mthd_sinh = make_sinh_integration_mthd(10, qs, single_kernel);
+    auto mthd_sinh = make_sinh_integrator(10, qs, single_kernel);
     integral_laplace_single(mthd_sinh);
 }
 
-void integral_laplace_double(const IntegrationMethodI<3,1,1>& mthd) 
+void integral_laplace_double(const IntegrationStrategy<3,1,1>& mthd) 
 {
     integral_term_test(mthd, 20.0, -0.00020);
     integral_term_test(mthd, 1.0, -0.0549);
@@ -98,9 +98,9 @@ TEST_CASE("IntegralLaplaceDouble", "[integral_term]")
 {
     QuadStrategy<3> qs(2);
     LaplaceDouble<3> double_kernel;
-    auto mthd_adapt = make_adaptive_integration_mthd(qs, double_kernel);
+    auto mthd_adapt = make_adaptive_integrator(qs, double_kernel);
     integral_laplace_double(mthd_adapt);
-    auto mthd_sinh = make_sinh_integration_mthd(10, qs, double_kernel);
+    auto mthd_sinh = make_sinh_integrator(10, qs, double_kernel);
     integral_laplace_double(mthd_sinh);
 }
 
@@ -108,7 +108,7 @@ TEST_CASE("IntegralElasticDisplacement", "[integral_term]")
 {
     ElasticDisplacement<3> k(1.0, 0.25);
     QuadStrategy<3> qs(2);
-    auto mthd = make_sinh_integration_mthd(10, qs, k);
+    auto mthd = make_sinh_integrator(10, qs, k);
     integral_term_test(mthd, 20.0, 0.00265);
     integral_term_test(mthd, 1.0, 0.0495);
     integral_term_test(mthd, 1e-1, 0.1607);
@@ -119,8 +119,8 @@ template <size_t dim, size_t R, size_t C>
 void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K) 
 {
     QuadStrategy<dim> qs(2, 8, 3.0, 1e-5);
-    auto mthd_adapt = make_adaptive_integration_mthd(qs, K);
-    auto mthd_sinh = make_sinh_integration_mthd(10, qs, K);
+    auto mthd_adapt = make_adaptive_integrator(qs, K);
+    auto mthd_sinh = make_sinh_integrator(10, qs, K);
 
     double max_x = 1.0;
     double max_y = 1.0;
@@ -175,7 +175,7 @@ TEST_CASE("Kernel inline in mthd creation call", "[integral_term]")
     // When kernels were not copied, this test would segfault because the
     // LaplaceDouble<3> object would go out of scope after the make_..._mthd
     // call and be destroyed
-    auto mthd_adapt = make_adaptive_integration_mthd(
+    auto mthd_adapt = make_adaptive_integrator(
         QuadStrategy<3>(2), LaplaceDouble<3>()
     );
     integral_laplace_double(mthd_adapt);

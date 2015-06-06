@@ -131,7 +131,7 @@ def test_halfspace():
 
 def test_halfspace_interior():
     disp_error, tracx_error, tracy_error = half_space_interior(7)
-    assert(disp_error < 4e-4)
+    assert(disp_error < 6e-4)
     assert(tracx_error < 2e-3)
     assert(tracy_error < 2e-3)
 

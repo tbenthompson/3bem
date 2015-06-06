@@ -35,6 +35,9 @@ struct IntegrationMethodIWrap: public IntegrationMethodI<dim,R,C>,
     virtual QuadRule<dim-1> get_obs_quad() const {
         return this->get_override("get_obs_quad")();
     }
+    virtual std::vector<double> get_singular_steps() const {
+        return this->get_override("get_singular_steps")();
+    }
 };
 
 } // end namespace tbem
@@ -54,8 +57,8 @@ void export_integration() {
     class_<AdaptiveIntegrationMethod<dim,dim,dim>,
             bases<IntegrationMethodI<dim,dim,dim>>>
         ("AdaptiveIntegrationMethodTensor", no_init);
-    def("make_adaptive_integration_mthd", make_adaptive_integration_mthd<dim,1,1>);
-    def("make_adaptive_integration_mthd", make_adaptive_integration_mthd<dim,dim,dim>);
+    def("make_adaptive_integrator", make_adaptive_integrator<dim,1,1>);
+    def("make_adaptive_integrator", make_adaptive_integrator<dim,dim,dim>);
 
     class_<SinhIntegrationMethod<dim,1,1>, 
             bases<IntegrationMethodI<dim,1,1>>>

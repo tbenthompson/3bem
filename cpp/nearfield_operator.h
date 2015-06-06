@@ -22,7 +22,7 @@ std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
             //and the limit direction parts -- feature envy in some sense
             auto nf = nearest_facets(loc, all_mesh.facets);
 
-            auto rich_dir = decide_limit_dir(loc, nf);
+            auto rich_dir = decide_limit_dir(loc, nf, 1e-12, 0.4);
 
             out.push_back({loc, obs_face.normal, rich_dir});
         }
@@ -37,7 +37,7 @@ std::vector<ObsPt<dim>> interior_obs_pts(const std::vector<Vec<double,dim>>& loc
     std::vector<ObsPt<dim>> out;
     for (size_t pt_idx = 0; pt_idx < locs.size(); pt_idx++) {
         auto nf = nearest_facets(locs[pt_idx], all_mesh.facets);
-        auto rich_dir = decide_limit_dir(locs[pt_idx], nf);
+        auto rich_dir = decide_limit_dir(locs[pt_idx], nf, 1e-12, 0.4);
         ObsPt<dim> pt{locs[pt_idx], normals[pt_idx], rich_dir};
         out.push_back(pt);
     }
@@ -51,7 +51,7 @@ using NearfieldFnc = std::function<Vec<Vec<Vec<double,C>,R>,dim>(
 
 template <size_t dim, size_t R, size_t C>
 SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
-    const Mesh<dim>& src_mesh, const IntegrationMethodI<dim,R,C>& mthd,
+    const Mesh<dim>& src_mesh, const IntegrationStrategy<dim,R,C>& mthd,
     const NearfieldFnc<dim,R,C>& f)
 {
     size_t n_src_dofs = src_mesh.n_dofs();
@@ -64,7 +64,9 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
 
         for (size_t i = 0; i < src_mesh.facets.size(); i++) {
 
-            FarNearLogic<dim> far_near_logic{mthd.far_threshold(), 1.0};
+            //TODO: This is accessing an internal of integrationstrategy, maybe 
+            //that's a bit of a code smell
+            FarNearLogic<dim> far_near_logic{mthd.far_threshold, 1.0};
             auto nearest_pt = far_near_logic.decide(pt.loc, src_facet_info[i]);
             if (nearest_pt.type == FarNearType::Farfield) {
                 continue; 
@@ -97,7 +99,7 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
 template <size_t dim, size_t R, size_t C>
 SparseOperator make_nearfield_operator(
     const std::vector<ObsPt<dim>>& obs_pts, const Mesh<dim>& src_mesh,
-    const IntegrationMethodI<dim,R,C>& mthd) 
+    const IntegrationStrategy<dim,R,C>& mthd) 
 {
     NearfieldFnc<dim,R,C> f = 
         [&] (const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& pt) {
@@ -109,7 +111,7 @@ SparseOperator make_nearfield_operator(
 template <size_t dim, size_t R, size_t C>
 SparseOperator make_farfield_correction_operator(
     const std::vector<ObsPt<dim>>& obs_pts, const Mesh<dim>& src_mesh,
-    const IntegrationMethodI<dim,R,C>& mthd) 
+    const IntegrationStrategy<dim,R,C>& mthd) 
 {
     NearfieldFnc<dim,R,C> f = 
         [&] (const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& pt) {

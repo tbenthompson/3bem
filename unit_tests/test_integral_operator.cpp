@@ -17,14 +17,14 @@ TEST_CASE("interior operator", "[dense_builder]")
     std::vector<double> src_strength(sphere.n_dofs(), 1.0);
 
     SECTION("sphere surface area") {
-        auto mthd = make_adaptive_integration_mthd(qs, IdentityScalar<3>());
+        auto mthd = make_adaptive_integrator(qs, IdentityScalar<3>());
         auto op = dense_interior_operator({obs_pt}, {obs_n}, sphere, mthd, sphere);
         auto result = op.apply(src_strength)[0];
         REQUIRE_CLOSE(result, 4 * M_PI * 9, 1e-1);
     }
 
     SECTION("constant laplace") {
-        auto mthd = make_adaptive_integration_mthd(qs, LaplaceDouble<3>());
+        auto mthd = make_adaptive_integrator(qs, LaplaceDouble<3>());
         auto op = dense_interior_operator({obs_pt}, {obs_n}, sphere, mthd, sphere);
         auto result = op.apply(src_strength)[0];
         REQUIRE_CLOSE(result, -1.0, 1e-3);
@@ -35,7 +35,7 @@ void test_integral_operator(Mesh<2> m1, Mesh<2> m2)
 {
     QuadStrategy<2> qs(3);
     LaplaceDouble<2> k;
-    auto mthd = make_adaptive_integration_mthd(qs, k);
+    auto mthd = make_adaptive_integrator(qs, k);
     std::vector<double> v(random_list(m2.n_dofs()));
     auto correct = dense_integral_operator(m1, m2, mthd, {m2}).apply(v);
     auto other_op = integral_operator(m1, m2, mthd, {m2});
@@ -64,7 +64,7 @@ TEST_CASE("IntegralOperatorTensor", "[integral_operator]")
     auto m2 = m1;
     QuadStrategy<2> qs(3);
     ElasticHypersingular<2> k(1.0, 0.25);
-    auto mthd = make_adaptive_integration_mthd(qs, k);
+    auto mthd = make_adaptive_integrator(qs, k);
     auto v = random_list(2 * m2.n_dofs());
     auto correct = dense_integral_operator(m1, m2, mthd, {m2}).apply(v);
     auto other_op = integral_operator(m1, m2, mthd, {m2});
@@ -80,7 +80,7 @@ TEST_CASE("nearfield matrix", "[integral_operator]")
     //far threshold of 1e10 forces nearfield matrix to be equivalent to the
     //full matrix
     QuadStrategy<2> qs(3, 8, 1e10, 1e-4);
-    auto mthd = make_adaptive_integration_mthd(qs, LaplaceDouble<2>());
+    auto mthd = make_adaptive_integrator(qs, LaplaceDouble<2>());
     auto op = integral_operator(m, m, mthd, m);
     auto v = random_list(m.n_dofs());
 

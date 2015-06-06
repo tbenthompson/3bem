@@ -58,7 +58,7 @@ template struct IntegralTerm<3,1,1>;
 template struct IntegralTerm<3,3,3>;
 
 template <size_t dim, size_t R, size_t C>
-Vec<Vec<Vec<double,C>,R>,dim> IntegrationMethodI<dim,R,C>::compute_term(
+Vec<Vec<Vec<double,C>,R>,dim> IntegrationStrategy<dim,R,C>::compute_term(
     const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& nearest_pt) const
 {
     switch (nearest_pt.type) {
@@ -66,7 +66,7 @@ Vec<Vec<Vec<double,C>,R>,dim> IntegrationMethodI<dim,R,C>::compute_term(
             return compute_singular(term, nearest_pt);
             break;
         case FarNearType::Nearfield:
-            return compute_nearfield(term, nearest_pt);
+            return nearfield_integrator->compute_nearfield(*K, term, nearest_pt);
             break;
         case FarNearType::Farfield:
             return compute_farfield(term, nearest_pt);
@@ -75,10 +75,49 @@ Vec<Vec<Vec<double,C>,R>,dim> IntegrationMethodI<dim,R,C>::compute_term(
     throw std::exception();
 }
 
-template struct IntegrationMethodI<2,1,1>;
-template struct IntegrationMethodI<2,2,2>;
-template struct IntegrationMethodI<3,1,1>;
-template struct IntegrationMethodI<3,3,3>;
+template <size_t dim, size_t R, size_t C>
+Vec<Vec<Vec<double,C>,R>,dim> 
+IntegrationStrategy<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>& term,
+    const NearestPoint<dim>& nearest_pt) const 
+{
+    (void)nearest_pt;
+    std::vector<Vec<Vec<Vec<double,C>,R>,dim>> steps(singular_steps.size());
+
+    for (int step_idx = 0; step_idx < singular_steps.size(); step_idx++) {
+        auto step_loc = get_step_loc(term.obs, singular_steps[step_idx]);
+        auto shifted_near_pt = FarNearLogic<dim>{far_threshold, 1.0}
+            .decide(step_loc, term.src_face);
+        steps[step_idx] = nearfield_integrator->compute_nearfield(
+            *K,
+            {
+                {step_loc, term.obs.normal, term.obs.richardson_dir},
+                term.src_face
+            },
+            shifted_near_pt
+        );
+    }
+
+    return richardson_limit(2, steps);
+}
+
+template <size_t dim, size_t R, size_t C>
+Vec<Vec<Vec<double,C>,R>,dim> 
+IntegrationStrategy<dim,R,C>::compute_farfield(const IntegralTerm<dim,R,C>& term,
+    const NearestPoint<dim>& nearest_pt) const 
+{
+    (void)nearest_pt;
+    auto integrals = zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make();
+    for (size_t i = 0; i < src_far_quad.size(); i++) {
+        integrals += term.eval_point_influence(*K, src_far_quad[i].x_hat) *
+                     src_far_quad[i].w;
+    }
+    return integrals;
+}
+
+template struct IntegrationStrategy<2,1,1>;
+template struct IntegrationStrategy<2,2,2>;
+template struct IntegrationStrategy<3,1,1>;
+template struct IntegrationStrategy<3,3,3>;
 
 template <size_t dim>
 struct UnitFacetAdaptiveIntegrator {
@@ -128,50 +167,21 @@ Vec<double,dim> get_step_loc(const ObsPt<dim>& obs, double step_size) {
     return obs.loc + step_distance * obs.richardson_dir;
 }
 
-template <size_t dim, size_t R, size_t C>
-Vec<Vec<Vec<double,C>,R>,dim> 
-AdaptiveIntegrationMethod<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>& term,
-    const NearestPoint<dim>& nearest_pt) const 
-{
-    (void)nearest_pt;
-    std::vector<Vec<Vec<Vec<double,C>,R>,dim>> near_steps(qs.n_singular_steps);
-
-    for (int step_idx = 0; step_idx < qs.n_singular_steps; step_idx++) {
-        auto step_loc = get_step_loc(term.obs, qs.singular_steps[step_idx]);
-        near_steps[step_idx] = UnitFacetAdaptiveIntegrator<dim>()(
-            *K, qs.near_tol, term, step_loc
-        );
-    }
-
-    return richardson_limit(2, near_steps);
-}
 
 template <size_t dim, size_t R, size_t C>
 Vec<Vec<Vec<double,C>,R>,dim> 
-AdaptiveIntegrationMethod<dim,R,C>::compute_nearfield(const IntegralTerm<dim,R,C>& term,
+AdaptiveIntegrator<dim,R,C>::compute_nearfield(const Kernel<dim,R,C>& K, 
+    const IntegralTerm<dim,R,C>& term,
     const NearestPoint<dim>& nearest_pt) const 
 {
     (void)nearest_pt;
-    return UnitFacetAdaptiveIntegrator<dim>()(*K, qs.near_tol, term, term.obs.loc);
+    return UnitFacetAdaptiveIntegrator<dim>()(K, near_tol, term, term.obs.loc);
 }
 
-template <size_t dim, size_t R, size_t C>
-Vec<Vec<Vec<double,C>,R>,dim> 
-AdaptiveIntegrationMethod<dim,R,C>::compute_farfield(const IntegralTerm<dim,R,C>& term,
-    const NearestPoint<dim>& nearest_pt) const 
-{
-    (void)nearest_pt;
-    auto integrals = zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make();
-    for (size_t i = 0; i < qs.src_far_quad.size(); i++) {
-        integrals += term.eval_point_influence(*K, qs.src_far_quad[i].x_hat) *
-                     qs.src_far_quad[i].w;
-    }
-    return integrals;
-}
-template struct AdaptiveIntegrationMethod<2,1,1>;
-template struct AdaptiveIntegrationMethod<2,2,2>;
-template struct AdaptiveIntegrationMethod<3,1,1>;
-template struct AdaptiveIntegrationMethod<3,3,3>;
+template struct AdaptiveIntegrator<2,1,1>;
+template struct AdaptiveIntegrator<2,2,2>;
+template struct AdaptiveIntegrator<3,1,1>;
+template struct AdaptiveIntegrator<3,3,3>;
 
 template <size_t dim>
 QuadRule<dim-1> choose_sinh_quad(size_t sinh_order,
@@ -227,42 +237,16 @@ Vec<Vec<Vec<double,C>,R>,dim> sinh_integrate(size_t sinh_order,
 
 template <size_t dim, size_t R, size_t C>
 Vec<Vec<Vec<double,C>,R>,dim> 
-SinhIntegrationMethod<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>& term,
+SinhIntegrator<dim,R,C>::compute_nearfield(const Kernel<dim,R,C>& K, 
+    const IntegralTerm<dim,R,C>& term,
     const NearestPoint<dim>& nearest_pt) const 
 {
-    //TODO: Remove nearest_pt parameter? nothing seems to use it...
-    (void)nearest_pt;
-    std::vector<Vec<Vec<Vec<double,C>,R>,dim>> steps(qs.n_singular_steps);
-
-    for (int step_idx = 0; step_idx < qs.n_singular_steps; step_idx++) {
-        auto step_loc = get_step_loc(term.obs, qs.singular_steps[step_idx]);
-        auto shifted_near_pt = FarNearLogic<dim>{qs.far_threshold, 1.0}
-            .decide(step_loc, term.src_face);
-        steps[step_idx] = sinh_integrate(sinh_order, *K, term, shifted_near_pt, step_loc);
-    }
-
-    return richardson_limit(2, steps);
+    return sinh_integrate(sinh_order, K, term, nearest_pt, term.obs.loc);
 }
 
-template <size_t dim, size_t R, size_t C>
-Vec<Vec<Vec<double,C>,R>,dim> 
-SinhIntegrationMethod<dim,R,C>::compute_nearfield(const IntegralTerm<dim,R,C>& term,
-    const NearestPoint<dim>& nearest_pt) const 
-{
-    return sinh_integrate(sinh_order, *K, term, nearest_pt, term.obs.loc);
-}
-
-template <size_t dim, size_t R, size_t C>
-Vec<Vec<Vec<double,C>,R>,dim> 
-SinhIntegrationMethod<dim,R,C>::compute_farfield(const IntegralTerm<dim,R,C>& term,
-    const NearestPoint<dim>& nearest_pt) const 
-{
-    return adaptive.compute_farfield(term, nearest_pt);
-}
-
-template struct SinhIntegrationMethod<2,1,1>;
-template struct SinhIntegrationMethod<2,2,2>;
-template struct SinhIntegrationMethod<3,1,1>;
-template struct SinhIntegrationMethod<3,3,3>;
+template struct SinhIntegrator<2,1,1>;
+template struct SinhIntegrator<2,2,2>;
+template struct SinhIntegrator<3,1,1>;
+template struct SinhIntegrator<3,3,3>;
 
 } //end namespace tbem

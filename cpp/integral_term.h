@@ -59,20 +59,26 @@ struct FarNearLogic {
 };
 
 template <size_t dim,size_t R, size_t C>
-struct IntegrationMethodI {
-    virtual Vec<Vec<Vec<double,C>,R>,dim>
-    compute_singular(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const = 0;
-
+struct NearfieldIntegratorI {
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
-    compute_nearfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const = 0;
+    compute_nearfield(const Kernel<dim,R,C>&, const IntegralTerm<dim,R,C>&,
+        const NearestPoint<dim>&) const = 0;
+};
 
-    virtual Vec<Vec<Vec<double,C>,R>,dim> 
-    compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const = 0;
+template <size_t dim,size_t R, size_t C>
+struct IntegrationStrategy {
+    std::shared_ptr<Kernel<dim,R,C>> K;
+    QuadRule<dim-1> src_far_quad;
+    QuadRule<dim-1> obs_quad;
+    std::vector<double> singular_steps;
+    double far_threshold;
+    std::unique_ptr<NearfieldIntegratorI<dim,R,C>> nearfield_integrator;
 
-    virtual double far_threshold() const = 0;
-    virtual const Kernel<dim,R,C>& get_kernel() const = 0;
-    virtual QuadRule<dim-1> get_src_quad() const = 0;
-    virtual QuadRule<dim-1> get_obs_quad() const = 0;
+    Vec<Vec<Vec<double,C>,R>,dim>
+    compute_singular(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
+
+    Vec<Vec<Vec<double,C>,R>,dim> 
+    compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
 
     /* Compute the full influence of a source facet on an observation point, given
      * a kernel function/Green's function
@@ -82,68 +88,61 @@ struct IntegrationMethodI {
 };
 
 template <size_t dim,size_t R, size_t C>
-struct AdaptiveIntegrationMethod: public IntegrationMethodI<dim,R,C> {
-    QuadStrategy<dim> qs;
-    std::shared_ptr<Kernel<dim,R,C>> K;
+struct AdaptiveIntegrator: public NearfieldIntegratorI<dim,R,C> {
+    double near_tol;
 
-    AdaptiveIntegrationMethod(const QuadStrategy<dim>& qs, const Kernel<dim,R,C>& K):
-        qs(qs), K(K.clone())
+    AdaptiveIntegrator(double near_tol):
+        near_tol(near_tol)
     {}
 
-    virtual Vec<Vec<Vec<double,C>,R>,dim>
-    compute_singular(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
-
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
-    compute_nearfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
-
-    virtual Vec<Vec<Vec<double,C>,R>,dim> 
-    compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
-
-    virtual double far_threshold() const {return qs.far_threshold;}
-    virtual const Kernel<dim,R,C>& get_kernel() const {return *K;}
-    virtual QuadRule<dim-1> get_src_quad() const {return qs.src_far_quad;}
-    virtual QuadRule<dim-1> get_obs_quad() const {return qs.obs_quad;}
+    compute_nearfield(const Kernel<dim,R,C>& K, const IntegralTerm<dim,R,C>&,
+        const NearestPoint<dim>&) const;
 };
 
 template <size_t dim,size_t R, size_t C>
-AdaptiveIntegrationMethod<dim,R,C> make_adaptive_integration_mthd(
+IntegrationStrategy<dim,R,C> make_adaptive_integrator(
     const QuadStrategy<dim>& qs, const Kernel<dim,R,C>& K) 
 {
-    return AdaptiveIntegrationMethod<dim,R,C>(qs, K);
+    return {
+        K.clone(), 
+        qs.src_far_quad,
+        qs.obs_quad,
+        qs.singular_steps,
+        qs.far_threshold,
+        std::unique_ptr<AdaptiveIntegrator<dim,R,C>>(
+            new AdaptiveIntegrator<dim,R,C>(qs.near_tol)
+        )
+    };
 }
 
 template <size_t dim,size_t R, size_t C>
-struct SinhIntegrationMethod: public IntegrationMethodI<dim,R,C> {
+struct SinhIntegrator: public NearfieldIntegratorI<dim,R,C> {
     size_t sinh_order;
-    QuadStrategy<dim> qs;
-    AdaptiveIntegrationMethod<dim,R,C> adaptive;
-    std::shared_ptr<Kernel<dim,R,C>> K;
 
-    SinhIntegrationMethod(size_t sinh_order, const QuadStrategy<dim>& qs, 
-        const Kernel<dim,R,C>& K):
-        sinh_order(sinh_order), qs(qs), adaptive(qs, K), K(K.clone())
+    SinhIntegrator(size_t sinh_order):
+        sinh_order(sinh_order)
     {}
 
-    virtual Vec<Vec<Vec<double,C>,R>,dim>
-    compute_singular(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
-
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
-    compute_nearfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
-
-    virtual Vec<Vec<Vec<double,C>,R>,dim> 
-    compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
-
-    virtual double far_threshold() const {return qs.far_threshold;}
-    virtual const Kernel<dim,R,C>& get_kernel() const {return *K;}
-    virtual QuadRule<dim-1> get_src_quad() const {return qs.src_far_quad;}
-    virtual QuadRule<dim-1> get_obs_quad() const {return qs.obs_quad;}
+    compute_nearfield(const Kernel<dim,R,C>& K, const IntegralTerm<dim,R,C>&,
+        const NearestPoint<dim>&) const;
 };
 
 template <size_t dim,size_t R, size_t C>
-SinhIntegrationMethod<dim,R,C> make_sinh_integration_mthd(size_t sinh_order,
+IntegrationStrategy<dim,R,C> make_sinh_integrator(size_t sinh_order,
     const QuadStrategy<dim>& qs, const Kernel<dim,R,C>& K) 
 {
-    return SinhIntegrationMethod<dim,R,C>(sinh_order, qs, K);
+    return {
+        K.clone(), 
+        qs.src_far_quad,
+        qs.obs_quad,
+        qs.singular_steps,
+        qs.far_threshold,
+        std::unique_ptr<SinhIntegrator<dim,R,C>>(
+            new SinhIntegrator<dim,R,C>(sinh_order)
+        )
+    };
 }
 
 

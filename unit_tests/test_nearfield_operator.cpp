@@ -77,7 +77,7 @@ TEST_CASE("interior obs pts", "[nearfield_operator]")
         auto dir = pts[0].richardson_dir;
         REQUIRE(hypot(pts[0].richardson_dir) == 0.0);
         auto length = hypot(pts[1].richardson_dir);
-        REQUIRE_CLOSE(length, std::sqrt(1.25) / 2, 1e-12);
+        REQUIRE_CLOSE(length, std::sqrt(1.25) * 0.4, 1e-12);
     }
 }
 
@@ -96,9 +96,9 @@ TEST_CASE("Constrained nearfield matrix", "[nearfield_operator]")
     // be nearfield.
     QuadStrategy<2> qs(3, 8, 300000, 1e-4);
     LaplaceDouble<2> k;
-    auto mthd = make_adaptive_integration_mthd(qs, k);
-    auto galerkin = make_galerkin_operator(1, m, mthd.get_obs_quad());
-    auto obs_pts = galerkin_obs_pts(m, mthd.get_obs_quad(), m);
+    auto mthd = make_adaptive_integrator(qs, k);
+    auto galerkin = make_galerkin_operator(1, m, mthd.obs_quad);
+    auto obs_pts = galerkin_obs_pts(m, mthd.obs_quad, m);
     auto nearfield = make_nearfield_operator(obs_pts, m, mthd);
     auto matrix = galerkin.right_multiply(nearfield);
     auto dense_matrix = matrix.to_dense();
