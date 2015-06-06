@@ -3,12 +3,9 @@ CURRENT: MISC
 ** remove the double underscore if the ifdefs
 ** automated test for richardson points always being inside the mesh
 ** finish the nearest neighbors work and provide some rigorous testing for it
-** look into boost::geometry
-** search radius for richardson vector should be the nearest element's length
 ** get rid of quad strategy
 ** pass quad orders to interp and galerk
-** segment-segment intersection test
-** segment-triangle intersection test
+** check the downloading procedure for gte
 
 KERNEL OVERHAUL
 ** move obs, src loop into the kernel functions which will reduce the number of function calls and also allow sse/avx implementations of those kernel functions

@@ -5,7 +5,7 @@
 #include "laplace_kernels.h"
 #include "mesh_gen.h"
 #include "integral_operator.h"
-#include "boost_geometry_wrapper.h"
+#include "gte_wrapper.h"
 
 using namespace tbem;
 

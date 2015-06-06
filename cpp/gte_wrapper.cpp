@@ -1,11 +1,6 @@
-#include "boost_geometry_wrapper.h"
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/geometries/segment.hpp> 
-#include <boost/geometry/algorithms/intersection.hpp>
+#include "gte_wrapper.h"
 #include <gte/Include/GTEngine.h>
 
-//TODO: Remove the remainder of the boost geometry junk and rename to gte_wrapper
 namespace tbem {
 
 std::vector<Vec<double,2>> seg_seg_intersection(const Vec<Vec<double,2>,2>& A,
@@ -72,14 +67,12 @@ std::vector<Vec<double,3>> seg_facet_intersection(const Vec<Vec<double,3>,3>& f,
 bool in_polygon(const std::vector<Vec<double,2>>& poly,
     const Vec<double,2>& pt) 
 {
-    typedef boost::geometry::model::d2::point_xy<double> point_type;
-    typedef boost::geometry::model::polygon<point_type> polygon_type;
-    polygon_type boost_geom_poly;
+    std::vector<gte::Vector<2,double>> gte_pts;
     for (size_t i = 0; i < poly.size(); i++) {
-        boost_geom_poly.outer().push_back({poly[i][0], poly[i][1]});
+        gte_pts.push_back({poly[i][0], poly[i][1]});
     }
-    point_type boost_geom_pt(pt[0], pt[1]);
-    return boost::geometry::within(boost_geom_pt, boost_geom_poly);
+    gte::PointInPolygon2<double> gte_poly(gte_pts.size(), gte_pts.data());
+    return gte_poly.Contains({pt[0], pt[1]});
 }
 
 } //end namespace tbem
