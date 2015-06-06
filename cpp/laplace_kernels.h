@@ -1,5 +1,5 @@
-#ifndef __ddddddddddddEQwQWEA_LAPLACE_KERNELS_H
-#define __ddddddddddddEQwQWEA_LAPLACE_KERNELS_H
+#ifndef TBEMddddddddddddEQwQWEA_LAPLACE_KERNELS_H
+#define TBEMddddddddddddEQwQWEA_LAPLACE_KERNELS_H
 
 #include <exception>
 #include "vec_ops.h"

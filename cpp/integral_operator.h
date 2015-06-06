@@ -1,5 +1,5 @@
-#ifndef __ALJSDLAJKHAH_INTEGRAL_OPERATOR_H
-#define __ALJSDLAJKHAH_INTEGRAL_OPERATOR_H
+#ifndef TBEMALJSDLAJKHAH_INTEGRAL_OPERATOR_H
+#define TBEMALJSDLAJKHAH_INTEGRAL_OPERATOR_H
 #include "sparse_operator.h"
 #include "galerkin_operator.h"
 #include "interpolation_operator.h"

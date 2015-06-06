@@ -1,5 +1,5 @@
-#ifndef __DSHLHJASDHJ_RICHARDSON_H
-#define __DSHLHJASDHJ_RICHARDSON_H
+#ifndef TBEMDSHLHJASDHJ_RICHARDSON_H
+#define TBEMDSHLHJASDHJ_RICHARDSON_H
 
 #include <vector>
 #include <cmath>

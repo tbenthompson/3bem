@@ -1,5 +1,5 @@
-#ifndef __NUMERICS_H
-#define __NUMERICS_H
+#ifndef TBEMNUMERICS_H
+#define TBEMNUMERICS_H
 
 #include <vector>
 #include <cmath>

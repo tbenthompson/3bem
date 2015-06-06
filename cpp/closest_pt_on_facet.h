@@ -1,5 +1,5 @@
-#ifndef __ASHKLHLA_CLOSEST_PT_H
-#define __ASHKLHLA_CLOSEST_PT_H
+#ifndef TBEMASHKLHLA_CLOSEST_PT_H
+#define TBEMASHKLHLA_CLOSEST_PT_H
 
 #include "vec.h"
 

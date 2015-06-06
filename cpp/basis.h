@@ -1,5 +1,5 @@
-#ifndef __NWQPOISJMNLJSDROIT_BASIS_H
-#define __NWQPOISJMNLJSDROIT_BASIS_H
+#ifndef TBEMNWQPOISJMNLJSDROIT_BASIS_H
+#define TBEMNWQPOISJMNLJSDROIT_BASIS_H
 #include <functional>
 #include <vector>
 #include "vec.h"

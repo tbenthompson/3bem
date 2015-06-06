@@ -1,5 +1,5 @@
-#ifndef __123786172627689192_MASS_OPERATOR_H
-#define __123786172627689192_MASS_OPERATOR_H
+#ifndef TBEM123786172627689192_MASS_OPERATOR_H
+#define TBEM123786172627689192_MASS_OPERATOR_H
 
 #include "galerkin_operator.h"
 #include "interpolation_operator.h"

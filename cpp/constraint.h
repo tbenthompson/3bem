@@ -1,5 +1,5 @@
-#ifndef __AAABBBEEEEDDD_CONSTRAINT_H
-#define __AAABBBEEEEDDD_CONSTRAINT_H
+#ifndef TBEMAAABBBEEEEDDD_CONSTRAINT_H
+#define TBEMAAABBBEEEEDDD_CONSTRAINT_H
 #include <vector>
 #include <cassert>
 #include <iosfwd>

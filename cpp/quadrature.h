@@ -1,5 +1,5 @@
-#ifndef __QEWKJQWEMNZ_QUADRATURE_H
-#define __QEWKJQWEMNZ_QUADRATURE_H
+#ifndef TBEMQEWKJQWEMNZ_QUADRATURE_H
+#define TBEMQEWKJQWEMNZ_QUADRATURE_H
 #include <vector>
 #include <utility>
 #include <functional>

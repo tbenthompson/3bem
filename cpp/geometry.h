@@ -1,5 +1,5 @@
-#ifndef __QQQQQQQ2222222_GEOMETRY_H
-#define __QQQQQQQ2222222_GEOMETRY_H
+#ifndef TBEMQQQQQQQ2222222_GEOMETRY_H
+#define TBEMQQQQQQQ2222222_GEOMETRY_H
 #include "vec_ops.h"
 #include <cassert>
 

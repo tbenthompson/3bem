@@ -1,5 +1,5 @@
-#ifndef __NMMMNBNBBHSKSKS_KERNEL_H
-#define __NMMMNBNBBHSKSKS_KERNEL_H
+#ifndef TBEMNMMMNBNBBHSKSKS_KERNEL_H
+#define TBEMNMMMNBNBBHSKSKS_KERNEL_H
 
 #include "vec_ops.h"
 #include "geometry.h"

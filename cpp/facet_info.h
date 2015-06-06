@@ -1,5 +1,5 @@
-#ifndef __ALNANSNNADNN_FACET_INFO_H
-#define __ALNANSNNADNN_FACET_INFO_H
+#ifndef TBEMALNANSNNADNN_FACET_INFO_H
+#define TBEMALNANSNNADNN_FACET_INFO_H
 
 #include "mesh.h"
 #include "vec.h"

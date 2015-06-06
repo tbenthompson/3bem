@@ -1,5 +1,5 @@
-#ifndef __ASDASDQ12123_CONSTRAINT_MATRIX_H
-#define __ASDASDQ12123_CONSTRAINT_MATRIX_H
+#ifndef TBEMASDASDQ12123_CONSTRAINT_MATRIX_H
+#define TBEMASDASDQ12123_CONSTRAINT_MATRIX_H
 #include <vector>
 #include <unordered_map>
 #include "constraint.h"

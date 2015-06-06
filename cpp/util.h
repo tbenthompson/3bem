@@ -1,5 +1,5 @@
-#ifndef __TEST_SHARED_H
-#define __TEST_SHARED_H
+#ifndef TBEMTEST_SHARED_H
+#define TBEMTEST_SHARED_H
 
 #include <vector>
 #include <chrono>

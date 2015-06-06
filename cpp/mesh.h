@@ -1,5 +1,5 @@
-#ifndef __GGggGGggTTFDSSDf_MESH_H
-#define __GGggGGggTTFDSSDf_MESH_H
+#ifndef TBEMGGggGGggTTFDSSDf_MESH_H
+#define TBEMGGggGGggTTFDSSDf_MESH_H
 #include <vector>
 #include "vec.h"
 

@@ -1,5 +1,5 @@
-#ifndef __BKJSLDFLJHLERW_MESH_GEN_H
-#define __BKJSLDFLJHLERW_MESH_GEN_H
+#ifndef TBEMBKJSLDFLJHLERW_MESH_GEN_H
+#define TBEMBKJSLDFLJHLERW_MESH_GEN_H
 #include "vec.h"
 
 namespace tbem {
