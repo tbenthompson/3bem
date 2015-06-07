@@ -60,11 +60,13 @@ def test_ILU():
     fault = tbempy.TwoD.line_mesh([-1, -1], [0, 0]).refine_repeatedly(2)
     surface = tbempy.TwoD.line_mesh([100, 0], [-100, 0]).refine_repeatedly(9)
     slip = np.ones(2 * fault.n_dofs())
-    qs = tbempy.TwoD.QuadStrategy(3, 8, 5.0, 1e-4)
-    hyp = tbempy.TwoD.ElasticHypersingular(shear_modulus, 0.25)
 
+    mthd = tbempy.TwoD.make_adaptive_integrator(
+        1e-4, 3, 8, 5.0,
+        tbempy.TwoD.ElasticHypersingular(shear_modulus, 0.25)
+    )
     solver = Solver()
-    soln = solve(2, surface, fault, hyp, qs, slip, linear_solver = solver.solve)
+    soln = solve(2, surface, fault, mthd, slip, linear_solver = solver.solve)
     check_planestrain_error(surface, soln)
     assert(solver.iterations < 25)
 

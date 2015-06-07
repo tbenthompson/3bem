@@ -34,14 +34,12 @@ def planestrain_with_integration_mthd(mthd):
     surface = line_mesh([100, 0], [-100, 0]).refine_repeatedly(9)
     slip = np.ones(2 * fault.n_dofs())
 
-    qs = QuadStrategy(3, 8, 3.0, 1e-4)
-
-    hyp = ElasticHypersingular(30e9, 0.25)
-    soln = solve(2, surface, fault, hyp, qs, slip, integration_mthd = mthd)
+    soln = solve(2, surface, fault, mthd, slip, integration_mthd = mthd)
     check_planestrain_error(surface, soln)
 
 def test_planestrain():
-    planestrain_with_integration_mthd(make_adaptive_integration_mthd)
+    mthd = make_adaptive_integrator(1e-4, 3, 8, 3.0, ElasticHypersingular(30e9, 0.25))
+    planestrain_with_integration_mthd(mthd)
 
 if __name__ == "__main__":
     test_planestrain()

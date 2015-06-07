@@ -36,20 +36,5 @@ QuadRule<1> sinh_transform(const QuadRule<1>& gauss_rule,
 QuadRule<2> sinh_sigmoidal_transform(const QuadRule<1>& gauss_theta,
     const QuadRule<1>& gauss_r, double x0, double y0, double b, bool iterated_sinh);
 
-template <size_t dim>
-struct QuadStrategy {
-    QuadStrategy(size_t obs_order);
-    QuadStrategy(size_t obs_order, size_t n_singular_steps,
-                 double far_threshold, double near_tol);
-
-    const QuadRule<dim-1> obs_quad;
-    const QuadRule<dim-1> src_far_quad;
-    
-    const double far_threshold;
-    const size_t n_singular_steps;
-    const std::vector<double> singular_steps;
-    const double near_tol;
-};
-
 } // END namespace tbem
 #endif

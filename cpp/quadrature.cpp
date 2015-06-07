@@ -232,32 +232,4 @@ QuadRule<2> sinh_sigmoidal_transform(const QuadRule<1>& gauss_theta,
     return out;
 }
 
-std::vector<double> get_singular_steps(size_t n_steps) {
-    static constexpr double initial_dist = 1.0;
-    std::vector<double> dist(n_steps);
-    for (size_t nf = 0; nf < n_steps; nf++) {
-        dist[nf] = initial_dist / (std::pow(2.0, nf));
-    }
-    return dist;
-}
-
-template <size_t dim>
-QuadStrategy<dim>::QuadStrategy(size_t obs_order):
-    QuadStrategy(obs_order, 8, 3.0, 1e-4)
-{}
-
-template <size_t dim>
-QuadStrategy<dim>::QuadStrategy(size_t obs_order, size_t n_singular_steps,
-        double far_threshold, double near_tol):
-    obs_quad(gauss_facet<dim>(obs_order)),
-    src_far_quad(gauss_facet<dim>(obs_order + 1)),
-    far_threshold(far_threshold),
-    n_singular_steps(n_singular_steps),
-    singular_steps(get_singular_steps(n_singular_steps)),
-    near_tol(near_tol)
-{}
-
-template struct QuadStrategy<2>;
-template struct QuadStrategy<3>;
-
 } //END NAMESPACE tbem

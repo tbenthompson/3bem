@@ -1,7 +1,6 @@
-from tbempy.TwoD import make_sinh_integration_mthd
+from tbempy.TwoD import make_sinh_integrator, ElasticHypersingular
 from planestrain_fault import planestrain_with_integration_mthd
 
 def test_sinh_integration():
-    def make_mthd(qs, K):
-        return make_sinh_integration_mthd(12, qs, K)
-    planestrain_with_integration_mthd(make_mthd)
+    mthd = make_sinh_integrator(12, 3, 8, 3.0, ElasticHypersingular(30e9, 0.25))
+    planestrain_with_integration_mthd(mthd)

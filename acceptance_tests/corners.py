@@ -10,7 +10,6 @@ def test_corners():
     refine_level = 8;
     linear_solve_tol = 1e-7;
     switch_dof = 500
-    qs = QuadStrategy(4, 10, 3.0, 1e-5);
     surface = circle_mesh(center, r, refine_level);
     n_dofs = surface.n_dofs();
     if switch_dof > n_dofs:
@@ -32,10 +31,10 @@ def test_corners():
     single_kernel = LaplaceSingle()
     double_kernel = LaplaceDouble()
 
-    single_mthd = make_adaptive_integration_mthd(qs, single_kernel)
+    single_mthd = make_adaptive_integrator(1e-5, 4, 10, 3.0, single_kernel)
     single_op = dense_integral_operator(surface, surface, single_mthd, surface)
 
-    double_mthd = make_adaptive_integration_mthd(qs, double_kernel)
+    double_mthd = make_adaptive_integrator(1e-5, 4, 10, 3.0, double_kernel)
     double_op = dense_integral_operator(surface, surface, double_mthd, surface)
 
     mass_op = mass_operator_scalar(surface, 2)
@@ -85,7 +84,7 @@ def test_corners():
     error_flux = np.sqrt(np.mean((soln_flux - exact_flux) ** 2))
     error_potential = np.sqrt(np.mean((soln_potential - exact_potential) ** 2))
     assert(error_flux < 2e-4)
-    assert(error_potential < 2e-6)
+    assert(error_potential < 5e-6)
 
 if __name__ == "__main__":
     test_corners()

@@ -66,8 +66,6 @@ void export_dimension() {
     VectorFromIterable().from_python<std::vector<Mesh<dim>>>();
     
 
-    class_<QuadStrategy<dim>>("QuadStrategy", init<int,int,double,double>());
-
     class_<OverlapMap<dim>>("OverlapMap")
         .def("size", &OverlapMap<dim>::size);
     def("mesh_continuity", mesh_continuity<dim>);

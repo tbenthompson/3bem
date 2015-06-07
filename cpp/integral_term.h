@@ -72,7 +72,7 @@ struct IntegrationStrategy {
     QuadRule<dim-1> obs_quad;
     std::vector<double> singular_steps;
     double far_threshold;
-    std::unique_ptr<NearfieldIntegratorI<dim,R,C>> nearfield_integrator;
+    std::shared_ptr<NearfieldIntegratorI<dim,R,C>> nearfield_integrator;
 
     Vec<Vec<Vec<double,C>,R>,dim>
     compute_singular(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
@@ -86,6 +86,33 @@ struct IntegrationStrategy {
     Vec<Vec<Vec<double,C>,R>,dim> compute_term(const IntegralTerm<dim,R,C>& term,
         const NearestPoint<dim>& nearest_pt) const;
 };
+
+//TODO: Maybe this should be combined with richardson.h and limitdirection.h
+//into a module directed towards richardson extrapolation quadrature
+inline std::vector<double> make_singular_steps(size_t n_steps) {
+    static constexpr double initial_dist = 1.0;
+    std::vector<double> dist(n_steps);
+    for (size_t nf = 0; nf < n_steps; nf++) {
+        dist[nf] = initial_dist / (std::pow(2.0, nf));
+    }
+    return dist;
+}
+
+template <size_t dim,size_t R, size_t C>
+IntegrationStrategy<dim,R,C> make_integrator(
+    std::unique_ptr<NearfieldIntegratorI<dim,R,C>>& nearfield,
+    size_t obs_order, size_t n_singular_steps, double far_threshold,
+    const Kernel<dim,R,C>& K)
+{
+    return {
+        K.clone(), 
+        gauss_facet<dim>(obs_order),
+        gauss_facet<dim>(obs_order + 1),
+        make_singular_steps(n_singular_steps),
+        far_threshold,
+        std::move(nearfield)
+    };
+}
 
 template <size_t dim,size_t R, size_t C>
 struct AdaptiveIntegrator: public NearfieldIntegratorI<dim,R,C> {
@@ -101,19 +128,14 @@ struct AdaptiveIntegrator: public NearfieldIntegratorI<dim,R,C> {
 };
 
 template <size_t dim,size_t R, size_t C>
-IntegrationStrategy<dim,R,C> make_adaptive_integrator(
-    const QuadStrategy<dim>& qs, const Kernel<dim,R,C>& K) 
+IntegrationStrategy<dim,R,C> make_adaptive_integrator(double near_tol,
+    size_t obs_order, size_t n_singular_steps, double far_threshold,
+    const Kernel<dim,R,C>& K) 
 {
-    return {
-        K.clone(), 
-        qs.src_far_quad,
-        qs.obs_quad,
-        qs.singular_steps,
-        qs.far_threshold,
-        std::unique_ptr<AdaptiveIntegrator<dim,R,C>>(
-            new AdaptiveIntegrator<dim,R,C>(qs.near_tol)
-        )
-    };
+    std::unique_ptr<NearfieldIntegratorI<dim,R,C>> near(
+            new AdaptiveIntegrator<dim,R,C>(near_tol)
+    );
+    return make_integrator(near, obs_order, n_singular_steps, far_threshold, K);
 }
 
 template <size_t dim,size_t R, size_t C>
@@ -131,18 +153,13 @@ struct SinhIntegrator: public NearfieldIntegratorI<dim,R,C> {
 
 template <size_t dim,size_t R, size_t C>
 IntegrationStrategy<dim,R,C> make_sinh_integrator(size_t sinh_order,
-    const QuadStrategy<dim>& qs, const Kernel<dim,R,C>& K) 
+    size_t obs_order, size_t n_singular_steps, double far_threshold,
+    const Kernel<dim,R,C>& K) 
 {
-    return {
-        K.clone(), 
-        qs.src_far_quad,
-        qs.obs_quad,
-        qs.singular_steps,
-        qs.far_threshold,
-        std::unique_ptr<SinhIntegrator<dim,R,C>>(
-            new SinhIntegrator<dim,R,C>(sinh_order)
-        )
-    };
+    std::unique_ptr<NearfieldIntegratorI<dim,R,C>> near(
+        new SinhIntegrator<dim,R,C>(sinh_order)
+    );
+    return make_integrator(near, obs_order, n_singular_steps, far_threshold, K);
 }
 
 

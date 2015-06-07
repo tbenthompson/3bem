@@ -1,21 +1,19 @@
 CURRENT: MISC
-** fix up the design of the integration methods
--- nearfieldintegrationmethod
-
-new quadstrategy
--- src_far_quad
--- obs_far_quad
--- nearfield_integrator
--- far_threshold
--- n_singular_steps
--- singular_steps
--- compute_term
--- compute_farfield
--- compute_singular
-** get rid of quad strategy
-
 ** finish the nearest neighbors work and provide some rigorous testing for it
 ** check the downloading procedure for gte
+
+moving files:
+integral_term.cpp           
+facet_info.h
+integral_term.h
+richardson.h
+nearest_neighbors.h
+closest_pt_on_facet.cpp
+closest_pt_on_facet.h
+geometry.h
+limit_direction.cpp
+limit_direction.h
+nearfield_operator.h
 
 ** acceptance test: setup fmm operators for python wrapper, solve a large problem in 2D and confirm (log)linear time cost with refinement
 

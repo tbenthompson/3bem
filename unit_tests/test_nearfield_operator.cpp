@@ -94,9 +94,8 @@ TEST_CASE("Constrained nearfield matrix", "[nearfield_operator]")
     auto m = circle_mesh({0, 0}, 1.0, 2);
     // Use a very large nearfield range (300000) to force everything to
     // be nearfield.
-    QuadStrategy<2> qs(3, 8, 300000, 1e-4);
     LaplaceDouble<2> k;
-    auto mthd = make_adaptive_integrator(qs, k);
+    auto mthd = make_adaptive_integrator(1e-4, 3, 8, 300000, k);
     auto galerkin = make_galerkin_operator(1, m, mthd.obs_quad);
     auto obs_pts = galerkin_obs_pts(m, mthd.obs_quad, m);
     auto nearfield = make_nearfield_operator(obs_pts, m, mthd);

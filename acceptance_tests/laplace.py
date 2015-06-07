@@ -37,7 +37,6 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc,
         tbem = tbempy.TwoD
     else:
         tbem = tbempy.ThreeD
-    qs = tbem.QuadStrategy(3, 8, far_threshold, 1e-5)
 
     continuity = tbem.mesh_continuity(mesh.begin())
     constraints = tbem.convert_to_constraints(continuity)
@@ -47,7 +46,9 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc,
     dudn = tbem.interpolate(mesh, dudn_fnc)
 
     double_kernel = tbem.LaplaceDouble()
-    double_mthd = tbem.make_adaptive_integration_mthd(qs, double_kernel)
+    double_mthd = tbem.make_adaptive_integrator(
+        1e-5, 3, 8, far_threshold, double_kernel
+    )
     rhs_double = operator_builder(mesh, mesh, double_mthd, mesh).apply(u)
 
     rhs_mass = tbem.mass_operator_scalar(mesh, 3).apply(u);
@@ -56,7 +57,9 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc,
     rhs_condensed = tbem.condense_vector(constraint_matrix, rhs);
 
     single_kernel = tbem.LaplaceSingle()
-    single_mthd = tbem.make_adaptive_integration_mthd(qs, single_kernel)
+    single_mthd = tbem.make_adaptive_integrator(
+        1e-5, 3, 8, far_threshold, single_kernel
+    )
     matrix = operator_builder(mesh, mesh, single_mthd, mesh);
 
     soln_condensed = linear_solver(tbem, constraint_matrix, matrix, rhs_condensed)

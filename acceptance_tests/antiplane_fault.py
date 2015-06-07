@@ -8,10 +8,8 @@ def full_space():
     slip = np.ones(fault.n_dofs())
     surface = line_mesh([-10, -0.5], [10, -0.5]).refine_repeatedly(8)
 
-    qs = QuadStrategy(5, 8, 4.0, 1e-13);
-
     double_kernel = LaplaceDouble()
-    mthd = make_adaptive_integration_mthd(qs, double_kernel)
+    mthd = make_adaptive_integrator(1e-13, 5, 8, 4.0, double_kernel)
     double_layer = integral_operator(surface, fault, mthd, fault)
 
     def fnc(x):
@@ -24,17 +22,14 @@ def full_space():
         return val[0]
     u = interpolate(surface, fnc)
 
-def get_qs():
-    return QuadStrategy(5, 10, 3.0, 1e-5)
-
 def solve_half_space(slip, fault, surface):
     constraint_matrix = faulted_surface_constraints(tbempy.TwoD, surface, fault, 1)
-    qs = get_qs()
 
     all_mesh = Mesh.create_union([surface, fault])
 
-    hypersingular_kernel = LaplaceHypersingular()
-    hypersingular_mthd = make_adaptive_integration_mthd(qs, hypersingular_kernel)
+    hypersingular_mthd = make_adaptive_integrator(
+        1e-5, 5, 10, 3.0, LaplaceHypersingular()
+    )
     rhs_op = integral_operator(surface, fault, hypersingular_mthd, all_mesh)
     full_rhs = (rhs_op.apply(slip))
     rhs = condense_vector(constraint_matrix, full_rhs)
@@ -71,7 +66,6 @@ def half_space_interior(refine):
     fault = line_mesh([0, -1], [0, 0])
     slip = np.ones(fault.n_dofs())
     surface = line_mesh([50, 0.0], [-50, 0.0]).refine_repeatedly(refine)
-    qs = get_qs()
     all_mesh = Mesh.create_union([surface, fault])
 
     soln = solve_half_space(slip, fault, surface)
@@ -89,8 +83,8 @@ def half_space_interior(refine):
 
     double_kernel = LaplaceDouble()
     hypersingular_kernel = LaplaceHypersingular()
-    double_mthd = make_adaptive_integration_mthd(qs, double_kernel)
-    hypersingular_mthd = make_adaptive_integration_mthd(qs, hypersingular_kernel)
+    double_mthd = make_adaptive_integrator(1e-5, 5, 10, 3.0, double_kernel)
+    hypersingular_mthd = make_adaptive_integrator(1e-5, 5, 10, 3.0, hypersingular_kernel)
 
     mtpo = dense_interior_operator
     disp = mtpo(pts, normalsx, fault, double_mthd, all_mesh).apply(slip) -\
