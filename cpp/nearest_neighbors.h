@@ -6,7 +6,7 @@
 #include "octree.h"
 #include "vec_ops.h"
 #include "geometry.h"
-#include "closest_pt_on_facet.h"
+#include "gte_wrapper.h"
 #include "numerics.h"
 
 namespace tbem {

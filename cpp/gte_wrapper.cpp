@@ -1,5 +1,8 @@
 #include "gte_wrapper.h"
 #include <gte/Include/GTEngine.h>
+//TODO: Remove:
+#include "vec_ops.h"
+#include "geometry.h"
 
 namespace tbem {
 
@@ -73,6 +76,52 @@ bool in_polygon(const std::vector<Vec<double,2>>& poly,
     }
     gte::PointInPolygon2<double> gte_poly(gte_pts.size(), gte_pts.data());
     return gte_poly.Contains({pt[0], pt[1]});
+}
+
+Vec<double,1> closest_pt_seg(const Vec<double,2>& pt, const Vec<Vec<double,2>,2> seg)
+{
+    gte::Segment<2,double> gte_seg(
+        gte::Vector<2,double>({seg[0][0], seg[0][1]}),
+        gte::Vector<2,double>({seg[1][0], seg[1][1]})
+    );
+    gte::Vector<2,double> gte_pt({pt[0], pt[1]});
+    gte::DCPQuery<double,gte::Vector<2,double>,gte::Segment<2,double>> Q;
+    auto result = Q(gte_pt, gte_seg);
+    return {2 * result.segmentParameter - 1};
+}
+
+/* Find the closest reference point on a triangle. I took this from somewhere 
+ * online and can't remember where. 
+ *
+ * A faster approach might be to treat the problem as a quadratic minimization
+ * for the triangle reference coordinates. (see Ericson's Real-Time Collision
+ * Detection)
+ */
+Vec<double,2> closest_pt_tri(const Vec<double,3>& pt, const Vec<Vec<double,3>,3> tri) 
+{
+    gte::Triangle3<double> gte_tri(
+        gte::Vector<3,double>({tri[0][0], tri[0][1], tri[0][2]}),
+        gte::Vector<3,double>({tri[1][0], tri[1][1], tri[1][2]}),
+        gte::Vector<3,double>({tri[2][0], tri[2][1], tri[2][2]})
+    );
+    gte::Vector<3,double> gte_pt({pt[0], pt[1], pt[2]});
+    gte::DCPQuery<double,gte::Vector<3,double>,gte::Triangle<3,double>> Q;
+    auto result = Q(gte_pt, gte_tri);
+    return {result.parameter[1], result.parameter[2]};
+}
+
+template <>
+Vec<double,1> closest_pt_facet(const Vec<double,2>& pt,
+    const Vec<Vec<double,2>,2> tri) 
+{
+    return closest_pt_seg(pt, tri);
+}
+
+template <>
+Vec<double,2> closest_pt_facet(const Vec<double,3>& pt,
+    const Vec<Vec<double,3>,3> tri) 
+{
+    return closest_pt_tri(pt, tri);
 }
 
 } //end namespace tbem

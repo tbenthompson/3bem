@@ -8,8 +8,6 @@ facet_info.h
 integral_term.h
 richardson.h
 nearest_neighbors.h
-closest_pt_on_facet.cpp
-closest_pt_on_facet.h
 geometry.h
 limit_direction.cpp
 limit_direction.h
