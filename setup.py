@@ -62,6 +62,7 @@ def download_gte():
     proc.wait()
     os.remove('gte.archive')
     shutil.move('GeometricTools/GTEngine', os.path.join('lib', 'gte'))
+    os.rmdir('GeometricTools')
 
 def configuration(parent_package='', top_path = None):
     config = Configuration(None, parent_package, top_path)

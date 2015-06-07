@@ -43,14 +43,14 @@ find_overlapping_vertices(const VertexIterator<dim>& A_begin,
 
     std::vector<Ball<dim>> target_pts;
     for (auto B_it = B_begin; !B_it.is_end(); ++B_it) {
-        target_pts.push_back({*B_it, eps});
+        target_pts.push_back({*B_it, 0});
     }
     auto oct = make_octree(target_pts, 20);
 
     std::vector<OverlapPair<dim>> overlaps;
     for (auto A_it = A_begin; !A_it.is_end(); ++A_it) {
         auto A_pt = *A_it;
-        auto ident_pts_indices = intersect_balls({A_pt, 0.0}, target_pts, oct);
+        auto ident_pts_indices = intersect_balls({A_pt, eps}, target_pts, oct);
         for (const auto& idx: ident_pts_indices) {
             overlaps.push_back({A_it, B_begin + idx});
         }

@@ -205,6 +205,11 @@ struct Ball
     {
         return dist2(pt, center) < std::pow(radius, 2);
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const Ball<dim>& b) {
+        os << "(" << b.center << ", " << b.radius << ")";
+        return os;
+    }
 };
 
 template <size_t dim>

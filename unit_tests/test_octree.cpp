@@ -312,3 +312,12 @@ TEST_CASE("test true bounds non-zero radii", "[octree]")
     auto oct = make_octree(balls, 1);
     check_true_bounds_contain_balls(oct, balls);
 }
+
+TEST_CASE("impossible subdivision", "[octree]")
+{
+    std::vector<Ball<2>> bs{
+        {{0, 0}, 0.5},
+        {{0, 0}, 1.0}
+    };
+    /* auto oct = make_octree(bs, 1); */
+}

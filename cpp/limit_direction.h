@@ -21,7 +21,7 @@ struct NearfieldFacets {
 template <size_t dim>
 struct NearfieldFacetFinder {
     const static size_t n_facets_per_leaf = 20;
-    const std::vector<Vec<Vec<double,dim>,dim>>& facets;
+    const std::vector<Vec<Vec<double,dim>,dim>> facets;
     const std::vector<Ball<dim>> facet_balls;
     const Octree<dim> oct;
 

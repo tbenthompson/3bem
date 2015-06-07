@@ -10,7 +10,7 @@
 
 using namespace tbem;
 
-TEST_CASE("richardson points always inside2", "[nearfield_operator]")
+TEST_CASE("richardson points always inside", "[nearfield_operator]")
 {
     //TODO: This test should probably be in the test_limit_direction file
     for (size_t i = 0; i < 30; i++) {
