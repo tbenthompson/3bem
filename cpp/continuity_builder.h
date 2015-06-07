@@ -8,7 +8,7 @@
 #include "vec_ops.h"
 #include "geometry.h"
 #include "octree.h"
-#include "nearest_neighbors.h"
+#include "intersect_balls.h"
     
 namespace tbem {
 
@@ -50,7 +50,7 @@ find_overlapping_vertices(const VertexIterator<dim>& A_begin,
     std::vector<OverlapPair<dim>> overlaps;
     for (auto A_it = A_begin; !A_it.is_end(); ++A_it) {
         auto A_pt = *A_it;
-        auto ident_pts_indices = nearby_points(A_pt, target_pts, oct, eps);
+        auto ident_pts_indices = intersect_balls(A_pt, target_pts, oct, eps);
         for (const auto& idx: ident_pts_indices) {
             overlaps.push_back({A_it, B_begin + idx});
         }

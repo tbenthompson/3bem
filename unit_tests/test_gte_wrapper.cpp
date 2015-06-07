@@ -1,6 +1,5 @@
 #include "catch.hpp"
 #include "gte_wrapper.h"
-//TODO: Possible to remove?
 #include "numerics.h"
 
 using namespace tbem;

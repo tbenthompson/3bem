@@ -42,6 +42,7 @@ enum class FarNearType {
     Farfield 
 };
 
+//TODO: This mostly duplicates the return type of the gte distance query
 template <size_t dim>
 struct NearestPoint {
     const Vec<double,dim-1> ref_pt;

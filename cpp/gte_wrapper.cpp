@@ -1,8 +1,5 @@
 #include "gte_wrapper.h"
 #include <gte/Include/GTEngine.h>
-//TODO: Remove:
-#include "vec_ops.h"
-#include "geometry.h"
 
 namespace tbem {
 
@@ -24,7 +21,7 @@ std::vector<Vec<double,2>> seg_seg_intersection(const Vec<Vec<double,2>,2>& A,
         return {};
     } else if (result.numIntersections == 1) {
         return {Vec<double,2>{result.point[0][0], result.point[0][1]}};
-    } else if (result.numIntersections == 2) {
+    } else {
         return {
             Vec<double,2>{result.point[0][0], result.point[0][1]},
             Vec<double,2>{result.point[1][0], result.point[1][1]}

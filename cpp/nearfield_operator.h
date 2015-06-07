@@ -20,9 +20,9 @@ std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
             auto loc = ref_to_real(ref_loc, obs_face.face);
             //TODO: this can be split into the nearest neighbors functions
             //and the limit direction parts -- feature envy in some sense
-            auto nf = nearest_facets(loc, all_mesh.facets);
+            auto nf = nearfield_facets(loc, all_mesh.facets);
 
-            auto rich_dir = decide_limit_dir(loc, nf, 1e-12, 0.4);
+            auto rich_dir = decide_limit_dir(loc, nf, 0.4);
 
             out.push_back({loc, obs_face.normal, rich_dir});
         }
@@ -36,8 +36,8 @@ std::vector<ObsPt<dim>> interior_obs_pts(const std::vector<Vec<double,dim>>& loc
 {
     std::vector<ObsPt<dim>> out;
     for (size_t pt_idx = 0; pt_idx < locs.size(); pt_idx++) {
-        auto nf = nearest_facets(locs[pt_idx], all_mesh.facets);
-        auto rich_dir = decide_limit_dir(locs[pt_idx], nf, 1e-12, 0.4);
+        auto nf = nearfield_facets(locs[pt_idx], all_mesh.facets);
+        auto rich_dir = decide_limit_dir(locs[pt_idx], nf, 0.4);
         ObsPt<dim> pt{locs[pt_idx], normals[pt_idx], rich_dir};
         out.push_back(pt);
     }
@@ -65,7 +65,8 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
         for (size_t i = 0; i < src_mesh.facets.size(); i++) {
 
             //TODO: This is accessing an internal of integrationstrategy, maybe 
-            //that's a bit of a code smell
+            //that's a bit of a code smell, seems like this should be within the
+            //integration strategy
             FarNearLogic<dim> far_near_logic{mthd.far_threshold, 1.0};
             auto nearest_pt = far_near_logic.decide(pt.loc, src_facet_info[i]);
             if (nearest_pt.type == FarNearType::Farfield) {

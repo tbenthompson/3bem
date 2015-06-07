@@ -1,3 +1,9 @@
+CRACK TIPS:
+** is this necessary? can simple refinement solve the problem for all practical cases? maybe move to long-term 
+** crack tip elements may require creating a basis structure
+** acceptance test: high accuracy crack tip stress intensity factor (crack-tip elements)
+
+
 - Three-dimensional variations in material poperties. Two ways to implement:
 -- Multiple subdomains with boundaries. Simpler when the elastic structure has a small number of components
 -- Smooth volumetric variations -- treat this as a body force and integrate volumetrically. Possibly simpler when the elastic structure is very complex.
