@@ -208,6 +208,12 @@ struct Ball
 };
 
 template <size_t dim>
+bool balls_intersect(const Ball<dim>& a, const Ball<dim>& b) 
+{
+    return all(fabs(a.center - b.center) <= a.radius + b.radius);
+}
+
+template <size_t dim>
 std::vector<Ball<dim>> balls_from_centers_radii(
     const std::vector<Vec<double,dim>>& centers, const std::vector<double> radii)
 {
@@ -235,6 +241,7 @@ Ball<dim> facet_ball(const Vec<Vec<double,dim>,dim>& f)
     }
     return {c, std::sqrt(r2)};
 }
+
 
 } // end namespace tbem
 

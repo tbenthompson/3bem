@@ -10,7 +10,7 @@ TEST_CASE("nearfield facets on line", "[limit_direction]")
 {
     Facet<2> f{{{1,1},{2,1}}};
     Mesh<2> m{{f}};
-    auto result = nearfield_facets({0, 0}, m.facets);
+    auto result = NearfieldFacetFinder<2>(m.facets).find({0, 0});
     REQUIRE(result.facets.size() == 0);
     REQUIRE(result.nearest_facet == f);
     REQUIRE(result.pt == m.facets[0][0]);
@@ -21,7 +21,7 @@ TEST_CASE("nearfield facets out of line", "[limit_direction]")
 {
     Facet<2> f{{{-1,-1},{1,-1}}};
     Mesh<2> m{{f}};
-    auto result = nearfield_facets({0, 0}, m.facets);
+    auto result = NearfieldFacetFinder<2>(m.facets).find({0, 0});
     REQUIRE(result.nearest_facet == m.facets[0]);
     REQUIRE_ARRAY_CLOSE(result.pt, Vec<double,2>{0,-1}, 2, 1e-14);
     REQUIRE(result.distance == 1.0);
@@ -32,7 +32,7 @@ TEST_CASE("nearfield facets two edges", "[limit_direction]")
     Facet<2> f{{{0.5,-1},{1,-1}}};
     Facet<2> f2{{{-1,-1},{0.5,-1}}};
     Mesh<2> m{{f,f2}};
-    auto result = nearfield_facets({0, 0}, m.facets);
+    auto result = NearfieldFacetFinder<2>(m.facets).find({0, 0});
     REQUIRE(result.nearest_facet == f2);
     REQUIRE_ARRAY_CLOSE(result.pt, Vec<double,2>{0,-1}, 2, 1e-14);
     REQUIRE(result.distance == 1.0);
@@ -43,7 +43,7 @@ TEST_CASE("nearfield facets at intersection", "[limit_direction]")
     Facet<2> f{{{0,0},{1,0}}};
     Facet<2> f2{{{0,1},{0,0}}};
     Mesh<2> m{{f,f2}};
-    auto result = nearfield_facets({0, 0}, m.facets);
+    auto result = NearfieldFacetFinder<2>(m.facets).find({0, 0});
     REQUIRE(result.facets.size() == 1);
     bool correct_facets = (result.facets[0] == f || result.nearest_facet == f) &&
         (result.facets[0] == f2 || result.nearest_facet == f2);

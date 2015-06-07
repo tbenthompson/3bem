@@ -163,3 +163,15 @@ TEST_CASE("Bounding circle 3D", "[geometry]")
     REQUIRE_CLOSE(facet_ball(f).radius, std::sqrt(37), 1e-15);
 }
 
+TEST_CASE("intersecting balls", "[geometry]") 
+{
+    auto bs = balls_from_centers_radii<2>({{0, 0}, {2, 0}}, {1, 1.1});
+    REQUIRE(balls_intersect(bs[0], bs[1]));
+}
+
+TEST_CASE("not intersecting balls", "[geometry]") 
+{
+    auto bs = balls_from_centers_radii<2>({{0, 0}, {2, 0}}, {1, 0.5});
+    REQUIRE(!balls_intersect(bs[0], bs[1]));
+}
+

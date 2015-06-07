@@ -13,14 +13,13 @@ std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
     const QuadRule<dim-1>& obs_quad, const Mesh<dim>& all_mesh)
 {
     std::vector<ObsPt<dim>> out;
+    NearfieldFacetFinder<dim> nearfield_finder(all_mesh.facets);
     for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(obs_mesh.facets[obs_idx]);
         for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
             auto ref_loc = obs_quad[obs_q].x_hat;
             auto loc = ref_to_real(ref_loc, obs_face.face);
-            //TODO: this can be split into the nearest neighbors functions
-            //and the limit direction parts -- feature envy in some sense
-            auto nf = nearfield_facets(loc, all_mesh.facets);
+            auto nf = nearfield_finder.find(loc);
 
             auto rich_dir = decide_limit_dir(loc, nf, 0.4);
 
@@ -35,8 +34,9 @@ std::vector<ObsPt<dim>> interior_obs_pts(const std::vector<Vec<double,dim>>& loc
     const std::vector<Vec<double,dim>>& normals, const Mesh<dim>& all_mesh)
 {
     std::vector<ObsPt<dim>> out;
+    NearfieldFacetFinder<dim> nearfield_finder(all_mesh.facets);
     for (size_t pt_idx = 0; pt_idx < locs.size(); pt_idx++) {
-        auto nf = nearfield_facets(locs[pt_idx], all_mesh.facets);
+        auto nf = nearfield_finder.find(locs[pt_idx]);
         auto rich_dir = decide_limit_dir(locs[pt_idx], nf, 0.4);
         ObsPt<dim> pt{locs[pt_idx], normals[pt_idx], rich_dir};
         out.push_back(pt);

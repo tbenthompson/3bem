@@ -179,6 +179,7 @@ build_children(const Box<dim>& bounds,
 template <size_t dim>
 Octree<dim> make_octree(const std::vector<Ball<dim>>& pts, size_t min_pts_per_cell)
 {
+    assert(min_pts_per_cell > 0);
     auto box = Box<dim>::bounding_box(pts);
     auto expanded_box = box.expand_by_max_axis_multiple(1e-5);
     auto all_indices = range(pts.size());

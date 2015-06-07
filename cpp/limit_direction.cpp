@@ -2,12 +2,31 @@
 #include "geometry.h"
 #include "nearest_neighbors.h"
 #include "gte_wrapper.h"
+#include "intersect_balls.h"
 
 namespace tbem {
 
 template <size_t dim>
-NearfieldFacets<dim> nearfield_facets(const Vec<double,dim>& pt,
-    const std::vector<Vec<Vec<double,dim>,dim>>& facets) 
+std::vector<Ball<dim>> make_facet_balls(const std::vector<Vec<Vec<double,dim>,dim>>& f)
+{
+    std::vector<Ball<dim>> out(f.size());
+    for (size_t i = 0; i < f.size(); i++) {
+        out[i] = facet_ball(f[i]);
+    }
+    return out;
+}
+
+template <size_t dim>
+NearfieldFacetFinder<dim>::NearfieldFacetFinder(
+    const std::vector<Vec<Vec<double,dim>,dim>>& facets):
+    facets(facets),
+    facet_balls(make_facet_balls(facets)),
+    oct(make_octree<dim>(facet_balls, n_facets_per_leaf))
+{}
+
+template <size_t dim> 
+NearfieldFacets<dim> 
+NearfieldFacetFinder<dim>::find(const Vec<double,dim>& pt)
 {
     //steps:
     //-- find the nearest facet (nearest neighbors search)
@@ -19,21 +38,24 @@ NearfieldFacets<dim> nearfield_facets(const Vec<double,dim>& pt,
     //-- determine the search radius for nearfield facets
     auto closest_facet = facets[closest_facet_idx];
     auto search_ball = facet_ball(closest_facet);
-    auto search_r2 = std::pow(search_ball.radius, 2);
-    if (search_r2 < std::pow(nearest_neighbor.distance, 2)) {
+    if (search_ball.radius < nearest_neighbor.distance) {
         return {{}, closest_facet, closest_pt, nearest_neighbor.distance};
     }
 
-    //-- find the facets intersecting the sphere with that radius
+    //-- find the facet balls intersecting the sphere with that radius
+    auto near_ball_indices = intersect_balls(search_ball, facet_balls, oct);
+
+    //-- filter the facet balls to find the facets that actually intersected 
+    //by the sphere (rather than just the surrounding ball)
     std::vector<Vec<Vec<double,dim>,dim>> close_facets;
-    for (size_t facet_idx = 0; facet_idx < facets.size(); facet_idx++) {
+    for (size_t facet_idx: near_ball_indices) {
         if (facet_idx == closest_facet_idx) {
             continue;
         }
         auto ref_pt = closest_pt_facet(pt, facets[facet_idx]);
         auto mesh_pt = ref_to_real(ref_pt, facets[facet_idx]);
-        auto dist2_to_mesh = dist2(pt, mesh_pt);
-        if (dist2_to_mesh <= search_r2) {
+        auto dist_to_mesh = dist(pt, mesh_pt);
+        if (dist_to_mesh <= search_ball.radius) {
             close_facets.push_back(facets[facet_idx]);
         } 
     }
@@ -41,11 +63,8 @@ NearfieldFacets<dim> nearfield_facets(const Vec<double,dim>& pt,
     return {close_facets, closest_facet, closest_pt, nearest_neighbor.distance};
 }
 
-template NearfieldFacets<2>
-nearfield_facets(const Vec<double,2>&, const std::vector<Vec<Vec<double,2>,2>>&);
-
-template NearfieldFacets<3>
-nearfield_facets(const Vec<double,3>&, const std::vector<Vec<Vec<double,3>,3>>&); 
+template struct NearfieldFacetFinder<2>;
+template struct NearfieldFacetFinder<3>;
 
 template <size_t dim>
 Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,

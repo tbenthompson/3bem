@@ -4,8 +4,11 @@
 #include <cstdlib>
 #include <vector>
 #include "vec.h"
+#include "octree.h"
 
 namespace tbem {
+
+template <size_t dim> struct Ball;
 
 template <size_t dim>
 struct NearfieldFacets {
@@ -16,8 +19,17 @@ struct NearfieldFacets {
 };
 
 template <size_t dim>
-NearfieldFacets<dim> nearfield_facets(const Vec<double,dim>& pt,
-    const std::vector<Vec<Vec<double,dim>,dim>>& facets);
+struct NearfieldFacetFinder {
+    const static size_t n_facets_per_leaf = 20;
+    const std::vector<Vec<Vec<double,dim>,dim>>& facets;
+    const std::vector<Ball<dim>> facet_balls;
+    const Octree<dim> oct;
+
+    NearfieldFacetFinder(const std::vector<Vec<Vec<double,dim>,dim>>& facets);
+
+    NearfieldFacets<dim> find(const Vec<double,dim>& pt);
+};
+
 
 // A safety factor of 0.4 should work for all cases.
 template <size_t dim>

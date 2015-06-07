@@ -2,22 +2,23 @@
 #include "intersect_balls.h"
 #include "geometry.h"
 #include "vec_ops.h"
+#include "octree.h"
 
 namespace tbem {
 
+
 template <size_t dim>
 std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
-    const std::vector<Vec<double,dim>>& ptsA,
-    const std::vector<Vec<double,dim>>& ptsB,
+    const std::vector<Ball<dim>>& ptsA,
+    const std::vector<Ball<dim>>& ptsB,
     const Octree<dim>& cellA,
-    const Octree<dim>& cellB, 
-    double r)
+    const Octree<dim>& cellB)
 {
     auto rA = hypot(cellA.data.true_bounds.half_width);
     auto rB = hypot(cellB.data.true_bounds.half_width);
     auto sep = hypot(cellB.data.true_bounds.center - 
         cellA.data.true_bounds.center);
-    if (sep > rA + rB + 2 * r) {
+    if (sep > rA + rB) {
         // the cells are too far apart, ignore them
         return {};
     }
@@ -27,8 +28,7 @@ std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
         std::vector<std::pair<size_t,size_t>> out_pairs;
         for (const auto& idxA: cellA.data.indices) {
             for (const auto& idxB: cellB.data.indices) {
-                bool close_pts = all(fabs(ptsA[idxA] - ptsB[idxB]) <= r);
-                if (close_pts) {
+                if (balls_intersect(ptsA[idxA], ptsB[idxB])) {
                     out_pairs.push_back({idxA, idxB});
                 }
             }
@@ -47,7 +47,7 @@ std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
                 continue;
             }
             auto child_pairs = intersect_balls_all_pairs(
-                ptsA, ptsB, cellA, *cellB.children[c], r
+                ptsA, ptsB, cellA, *cellB.children[c]
             );
             out_pairs.insert(out_pairs.end(), child_pairs.begin(), child_pairs.end());
         }
@@ -58,7 +58,7 @@ std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
                 continue;
             }
             auto child_pairs = intersect_balls_all_pairs(
-                ptsA, ptsB, *cellA.children[c], cellB, r
+                ptsA, ptsB, *cellA.children[c], cellB
             );
             out_pairs.insert(out_pairs.end(), child_pairs.begin(), child_pairs.end());
         }
@@ -67,29 +67,34 @@ std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
     return out_pairs;
 }
 
-template 
+template <size_t dim>
 std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
-    const std::vector<Vec<double,2>>& ptsA,
-    const std::vector<Vec<double,2>>& ptsB,
-    const Octree<2>& cellA,
-    const Octree<2>& cellB, 
-    double r);
+    const std::vector<Ball<dim>>& ptsA,
+    const std::vector<Ball<dim>>& ptsB)
+{
+    auto octA = make_octree(ptsA, 20);
+    auto octB = make_octree(ptsB, 20);
+    return intersect_balls_all_pairs(ptsA, ptsB, octA, octB);
+}
 
 template 
 std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
-    const std::vector<Vec<double,3>>& ptsA,
-    const std::vector<Vec<double,3>>& ptsB,
-    const Octree<3>& cellA,
-    const Octree<3>& cellB, 
-    double r);
+    const std::vector<Ball<2>>& ptsA,
+    const std::vector<Ball<2>>& ptsB);
+
+template 
+std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
+    const std::vector<Ball<3>>& ptsA,
+    const std::vector<Ball<3>>& ptsB);
+
+
 
 template <size_t dim>
-std::vector<size_t> intersect_balls(const Vec<double,dim>& ptA, 
-    const std::vector<Vec<double,dim>>& ptsB,
-    const Octree<dim>& octB, double r)
+std::vector<size_t> intersect_balls(const Ball<dim>& ptA, 
+    const std::vector<Ball<dim>>& ptsB, const Octree<dim>& octB)
 {
     auto octA = make_octree<dim>({ptA}, 1);
-    auto pairs = intersect_balls_all_pairs({ptA}, ptsB, octA, octB, r);
+    auto pairs = intersect_balls_all_pairs({ptA}, ptsB, octA, octB);
     std::vector<size_t> out_indices(pairs.size());
     for (size_t i = 0; i < pairs.size(); i++) {
         assert(pairs[i].first == 0);
@@ -98,13 +103,11 @@ std::vector<size_t> intersect_balls(const Vec<double,dim>& ptA,
     return out_indices;
 }
 template 
-std::vector<size_t> intersect_balls(const Vec<double,2>& ptA, 
-    const std::vector<Vec<double,2>>& ptsB,
-    const Octree<2>& octB, double r);
+std::vector<size_t> intersect_balls(const Ball<2>& ptA, 
+    const std::vector<Ball<2>>& ptsB, const Octree<2>& octB);
 
 template 
-std::vector<size_t> intersect_balls(const Vec<double,3>& ptA, 
-    const std::vector<Vec<double,3>>& ptsB,
-    const Octree<3>& octB, double r);
+std::vector<size_t> intersect_balls(const Ball<3>& ptA, 
+    const std::vector<Ball<3>>& ptsB, const Octree<3>& octB);
 
 } // end namespace tbem
