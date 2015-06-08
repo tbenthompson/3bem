@@ -43,7 +43,7 @@ def test_okada():
     hyp = ElasticHypersingular(mu, pr)
     mthd = make_adaptive_integrator(1e-3, 2, 5, 3.0, hyp)
     soln = solve(3, surface, fault, mthd, slip)
-    np.save('okada.dat', soln)
+    # np.save('okada.dat', soln)
     # soln = np.load('okada.dat')
 
     vs = surface.facets.reshape((surface.n_facets() * 3, 3))

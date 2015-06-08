@@ -18,7 +18,7 @@ NearfieldFacetFinder<dim>::find(const Vec<double,dim>& pt)
 {
     //steps:
     //-- find the nearest facet (nearest neighbors search)
-    auto nearest_neighbor = nearest_facet_brute_force(pt, nn_data);
+    auto nearest_neighbor = nearest_facet(pt, nn_data);
     auto closest_facet_idx = nearest_neighbor.idx;
     auto closest_pt = nearest_neighbor.pt;
 

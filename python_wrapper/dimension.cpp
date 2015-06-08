@@ -29,7 +29,7 @@ interpolate_wrapper(const Mesh<dim>& mesh, const boost::python::object& fnc)
 template <size_t dim>
 std::vector<ConstraintEQ> interpolate_bc_constraints_wrapper(
     const Mesh<dim>& m,
-    const std::vector<int>& which_dofs,
+    const std::vector<size_t>& which_dofs,
     const boost::python::object& fnc) 
 {
     return interpolate_bc_constraints<dim>(m, which_dofs,
