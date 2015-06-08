@@ -82,18 +82,13 @@ void export_dimension() {
 
     auto integral_op_scalar = class_<
             IntegralOperator<dim,1,1>
-        >("IntegralOperatorScalar", no_init).
-        def("get_nearfield_matrix",
-            &IntegralOperator<dim,1,1>::get_nearfield_matrix,
-            p::return_value_policy<p::reference_existing_object>());
+        >("IntegralOperatorScalar", no_init)
+        .def_readonly("nearfield", &IntegralOperator<dim,1,1>::nearfield);
     export_operator<IntegralOperator<dim,1,1>>(integral_op_scalar);
 
-    auto integral_op_tensor = class_<
-            IntegralOperator<dim,dim,dim>
-        >("IntegralOperatorTensor", no_init).
-        def("get_nearfield_matrix",
-            &IntegralOperator<dim,dim,dim>::get_nearfield_matrix,
-            p::return_value_policy<p::reference_existing_object>());
+    auto integral_op_tensor = class_<IntegralOperator<dim,dim,dim>>(
+            "IntegralOperatorTensor", no_init)
+        .def_readonly("nearfield", &IntegralOperator<dim,dim,dim>::nearfield);
     export_operator<IntegralOperator<dim,dim,dim>>(integral_op_tensor);
 
     def("integral_operator", integral_operator<dim,1,1>);

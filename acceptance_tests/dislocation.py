@@ -36,7 +36,7 @@ def default_linear_solver(tbem, cm, lhs, rhs):
 
     A = sp_la.LinearOperator((rhs.shape[0], rhs.shape[0]),
                              matvec = mv, dtype = np.float64)
-    res = sp_la.gmres(A, rhs, tol = 1e-7)
+    res = sp_la.gmres(A, rhs, tol = 1e-8)
     return res[0]
 
 def solve(dim, surface, fault, mthd, slip, **kwargs):

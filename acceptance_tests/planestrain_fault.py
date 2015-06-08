@@ -31,7 +31,7 @@ def check_planestrain_error(surface, soln):
 
 def planestrain_with_integration_mthd(mthd):
     fault = line_mesh([-1, -1], [0, 0]).refine_repeatedly(2)
-    surface = line_mesh([100, 0], [-100, 0]).refine_repeatedly(11)
+    surface = line_mesh([100, 0], [-100, 0]).refine_repeatedly(9)
     slip = np.ones(2 * fault.n_dofs())
 
     soln = solve(2, surface, fault, mthd, slip, integration_mthd = mthd)

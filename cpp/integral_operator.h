@@ -63,14 +63,6 @@ struct IntegralOperator: public OperatorI {
         TOC("ADD");
         return eval;
     }
-
-    /* The nearfield matrix can be useful for preconditioning as it approximates
-     * the most important parts of the full matrix but is still sparse.
-     * TODO: why does this need to be a function? just access the nearfield member
-     */
-    const SparseOperator& get_nearfield_matrix() {
-        return nearfield;
-    }
 };
 
 

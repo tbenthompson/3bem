@@ -11,7 +11,7 @@ shear_modulus = 30e9
 
 def form_preconditioner(tbem, constraint_matrix, op):
     nearfield_condensed = tbem.condense_matrix(
-        constraint_matrix, constraint_matrix, op.get_nearfield_matrix()
+        constraint_matrix, constraint_matrix, op.nearfield
     )
 
     scaled_values = nearfield_condensed.values / shear_modulus
