@@ -1,5 +1,6 @@
 #include "gte_wrapper.h"
 #include <gte/Include/GTEngine.h>
+#include "geometry.h"
 
 namespace tbem {
 
@@ -120,5 +121,27 @@ Vec<double,2> closest_pt_facet(const Vec<double,3>& pt,
 {
     return closest_pt_tri(pt, tri);
 }
+
+template <size_t dim>
+bool is_intersection_box_ball(const Box<dim>& box, const Ball<dim>& ball)
+{
+    gte::TIQuery<double,gte::OrientedBox<dim,double>,gte::Hypersphere<dim,double>> Q;
+    gte::Hypersphere<dim,double> S(gte::Vector<dim,double>(ball.center), ball.radius);
+    std::array<gte::Vector<dim,double>,dim> axes;
+    for (size_t d = 0; d < dim; d++) {
+        axes[d] = gte::Vector<dim,double>(unit<double,dim>(d));
+    }
+    gte::OrientedBox<dim,double> B(
+        gte::Vector<dim,double>(box.center),
+        axes,
+        gte::Vector<dim,double>(box.half_width)
+    );
+    return Q(B, S).intersect;
+}
+
+template 
+bool is_intersection_box_ball<2>(const Box<2>& box, const Ball<2>& ball);
+template 
+bool is_intersection_box_ball<3>(const Box<3>& box, const Ball<3>& ball);
 
 } //end namespace tbem

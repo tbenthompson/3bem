@@ -67,6 +67,9 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
             //TODO: This is accessing an internal of integrationstrategy, maybe 
             //that's a bit of a code smell, seems like this should be within the
             //integration strategy
+            //TODO: This should be merged in with the nearfieldfacetfinder so that
+            //nearfield facets are found once and for all and in a O(logn) time
+            //fashion
             FarNearLogic<dim> far_near_logic{mthd.far_threshold, 1.0};
             auto nearest_pt = far_near_logic.decide(pt.loc, src_facet_info[i]);
             if (nearest_pt.type == FarNearType::Farfield) {

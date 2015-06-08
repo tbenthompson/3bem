@@ -16,6 +16,12 @@ template <size_t dim>
 Vec<double,dim-1> closest_pt_facet(const Vec<double,dim>& pt,
     const Vec<Vec<double,dim>,dim> tri);
 
+
+template <size_t dim> struct Box;
+template <size_t dim> struct Ball;
+template <size_t dim>
+bool is_intersection_box_ball(const Box<dim>& box, const Ball<dim>& ball);
+
 }
 
 #endif

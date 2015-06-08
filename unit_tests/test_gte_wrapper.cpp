@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include "gte_wrapper.h"
 #include "numerics.h"
+#include "geometry.h"
 
 using namespace tbem;
 
@@ -99,4 +100,38 @@ TEST_CASE("nearest point triangle outside", "[gte_wrapper]")
     Vec<Vec<double,3>,3> f{{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}};
     auto result = ref_to_real(closest_pt_facet<3>({1.5, 1.1, 1}, f), f);
     REQUIRE_CLOSE(result, Vec<double,3>{0.7, 0.3, 0}, 1e-12);
+}
+
+TEST_CASE("intersect ball box 3d", "[gte_wrapper]") 
+{
+    Box<3> b{{0, 0, 0}, {1, 1, 1}};
+
+    SECTION("fully contained") {
+        REQUIRE(is_intersection_box_ball<3>(b, {{0.5, 0.5, 0.5}, 0.1}));
+    }
+
+    SECTION("partially contained") {
+        REQUIRE(is_intersection_box_ball<3>(b, {{1.1, 0.5, 0.5}, 0.9}));
+    }
+
+    SECTION("outside") {
+        REQUIRE(!is_intersection_box_ball<3>(b, {{1.5, 0.5, 0.5}, 0.1}));
+    }
+}
+
+TEST_CASE("intersect ball box 2d", "[gte_wrapper]") 
+{
+    Box<3> b{{0, 0}, {1, 1}};
+
+    SECTION("fully contained") {
+        REQUIRE(is_intersection_box_ball<3>(b, {{0.5, 0.5}, 0.1}));
+    }
+
+    SECTION("partially contained") {
+        REQUIRE(is_intersection_box_ball<3>(b, {{1.1, 0.5}, 0.9}));
+    }
+
+    SECTION("outside") {
+        REQUIRE(!is_intersection_box_ball<3>(b, {{1.5, 0.5}, 0.1}));
+    }
 }
