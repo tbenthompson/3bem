@@ -41,9 +41,22 @@ bool Octree<dim>::is_leaf() const {
 }
 
 template <size_t dim>
-size_t Octree<dim>::find_containing_child(const Vec<double,dim>& pt) const
+size_t Octree<dim>::find_closest_nonempty_child(const Vec<double,dim>& pt) const
 {
-    return bounds.find_containing_subcell(pt);
+    size_t closest_child = 0;
+    double dist2_to_closest_child = std::numeric_limits<double>::max();
+    for (size_t c_idx = 0; c_idx < Octree<dim>::split; c_idx++) {
+        auto& c = children[c_idx];
+        if (c == nullptr) {
+            continue;
+        }
+        auto dist2_child = dist2(pt, c->bounds.center);
+        if (dist2_child < dist2_to_closest_child) {
+            closest_child = c_idx;
+            dist2_to_closest_child = dist2_child;
+        }
+    }
+    return closest_child;
 }
 
 template struct Octree<2>;

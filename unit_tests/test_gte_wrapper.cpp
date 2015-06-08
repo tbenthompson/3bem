@@ -121,17 +121,19 @@ TEST_CASE("intersect ball box 3d", "[gte_wrapper]")
 
 TEST_CASE("intersect ball box 2d", "[gte_wrapper]") 
 {
-    Box<3> b{{0, 0}, {1, 1}};
+    Box<3> b{{3, 3}, {1, 1}};
 
     SECTION("fully contained") {
-        REQUIRE(is_intersection_box_ball<3>(b, {{0.5, 0.5}, 0.1}));
+        REQUIRE(is_intersection_box_ball<3>(b, {{3.5, 3.5}, 0.1}));
+        REQUIRE(is_intersection_box_ball<3>(b, {{3.0, 3.0}, 0.0}));
     }
 
     SECTION("partially contained") {
-        REQUIRE(is_intersection_box_ball<3>(b, {{1.1, 0.5}, 0.9}));
+        REQUIRE(is_intersection_box_ball<3>(b, {{4.1, 3.5}, 0.9}));
+        REQUIRE(is_intersection_box_ball<3>(b, {{3.9, 3.9}, 0.2}));
     }
 
     SECTION("outside") {
-        REQUIRE(!is_intersection_box_ball<3>(b, {{1.5, 0.5}, 0.1}));
+        REQUIRE(!is_intersection_box_ball<3>(b, {{4.5, 3.5}, 0.1}));
     }
 }

@@ -216,14 +216,12 @@ TEST_CASE("impossible subdivision", "[octree]")
     /* auto oct = make_octree(bs, 1); */
 }
 
-TEST_CASE("find containing child", "[nearest_neighbors]")
+TEST_CASE("find closest nonempty child", "[nearest_neighbors]")
 {
-    auto pts = random_pts<3>(100);
+    std::vector<Vec<double,3>> pts{
+        {1, 1, 1}, {-1, -1, -1}
+    };
     auto oct = make_octree(pts, 1);  
-    for (size_t i = 0; i < pts.size(); i++) {
-        auto index = oct.find_containing_child(pts[i]);
-        auto child_indices = oct.children[index]->indices;
-        REQUIRE(std::find(child_indices.begin(), child_indices.end(), i) != 
-            child_indices.end());
-    }
+    auto idx = oct.find_closest_nonempty_child({0.1, 0.1, -1});
+    REQUIRE(idx == 0);
 }

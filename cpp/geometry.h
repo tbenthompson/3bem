@@ -221,7 +221,7 @@ struct Ball
     Vec<double,dim> center;
     double radius;
 
-    bool inside(const Vec<double,dim>& pt) 
+    bool inside(const Vec<double,dim>& pt) const
     {
         return dist2(pt, center) < std::pow(radius, 2);
     }
@@ -261,8 +261,7 @@ Ball<dim> facet_ball(const Vec<Vec<double,dim>,dim>& f)
     auto c = centroid(f);
     double r2 = dist2(f[0], c);
     for (size_t d = 1; d < dim; d++) {
-        double r2_temp = dist2(f[d], c);
-        r2 = std::max(r2, r2_temp);
+        r2 = std::max(r2, dist2(f[d], c));
     }
     return {c, std::sqrt(r2)};
 }

@@ -25,7 +25,7 @@ struct Octree {
     size_t n_immediate_children() const; 
     size_t n_children() const; 
     bool is_leaf() const; 
-    size_t find_containing_child(const Vec<double,dim>& pt) const;
+    size_t find_closest_nonempty_child(const Vec<double,dim>& pt) const;
 };
 
 template <size_t dim>

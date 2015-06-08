@@ -2,22 +2,23 @@
 #define TBEMRRRRJJJJJJZZZZZZEEEAKSDJLKJ_CONSTANTS_H
 #include <vector>
 #include <cstddef>
-#include <numeric>
 
 namespace tbem {
 
 /* Equivalent of python's range, returns all n for which min <= n < max
  */
-template <typename T = int>
+template <typename T>
 std::vector<T> range(T min, T max) {
     std::vector<T> indices(max - min);
-    std::iota(indices.begin(), indices.end(), min);
+    for (T i = min; i < max; i++) {
+        indices[i - min] = i;
+    }
     return indices;
 }
 
 /* range(0, max)
  */
-template <typename T = int>
+template <typename T>
 std::vector<T> range(T max) {
     return range<T>(0, max);
 }

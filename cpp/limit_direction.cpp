@@ -9,7 +9,7 @@ namespace tbem {
 template <size_t dim>
 NearfieldFacetFinder<dim>::NearfieldFacetFinder(
     const std::vector<Vec<Vec<double,dim>,dim>>& facets):
-    nn_data(facets)
+    nn_data(facets, 20)
 {}
 
 template <size_t dim> 
@@ -18,7 +18,7 @@ NearfieldFacetFinder<dim>::find(const Vec<double,dim>& pt)
 {
     //steps:
     //-- find the nearest facet (nearest neighbors search)
-    auto nearest_neighbor = nearest_facet_brute_force(pt, nn_data.facets);
+    auto nearest_neighbor = nearest_facet_brute_force(pt, nn_data);
     auto closest_facet_idx = nearest_neighbor.idx;
     auto closest_pt = nearest_neighbor.pt;
 
