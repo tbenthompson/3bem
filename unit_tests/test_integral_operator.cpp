@@ -80,7 +80,7 @@ TEST_CASE("nearfield matrix", "[integral_operator]")
     auto op = integral_operator(m, m, mthd, m);
     auto v = random_list(m.n_dofs());
 
-    auto nearfield_apply = op.get_nearfield_matrix().apply(v);
+    auto nearfield_apply = op.nearfield.apply(v);
     auto full_apply = op.apply(v);
 
     REQUIRE_ARRAY_CLOSE(nearfield_apply, full_apply, nearfield_apply.size(), 1e-12);

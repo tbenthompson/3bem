@@ -32,7 +32,11 @@ def parallelCCompile(self, sources, output_dir = None, macros = None,
             src, ext = build[obj]
         except KeyError:
             return
+        # import time
+        # start = time.time()
         self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+        # end = time.time()
+        # print("took " + str(end - start) + " to compile " + str(obj))
 
     # imap is evaluated on demand, converting to list() forces execution
     list(multiprocessing.pool.ThreadPool(N).imap(_single_compile,objects))

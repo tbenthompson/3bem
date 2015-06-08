@@ -8,8 +8,10 @@ namespace tbem {
 
 template <size_t dim>
 NearfieldFacetFinder<dim>::NearfieldFacetFinder(
-    const std::vector<Vec<Vec<double,dim>,dim>>& facets):
-    nn_data(facets, 20)
+    const std::vector<Vec<Vec<double,dim>,dim>>& facets,
+    double far_threshold):
+    nn_data(facets, 20),
+    far_threshold(far_threshold)
 {}
 
 template <size_t dim> 
@@ -24,9 +26,12 @@ NearfieldFacetFinder<dim>::find(const Vec<double,dim>& pt)
 
     //-- determine the search radius for nearfield facets
     auto closest_facet = nn_data.facets[closest_facet_idx];
-    auto search_ball = facet_ball(closest_facet);
+    auto closest_facet_ball = facet_ball(closest_facet);
+    Ball<dim> search_ball{
+        closest_facet_ball.center, closest_facet_ball.radius * far_threshold
+    };
     if (search_ball.radius < nearest_neighbor.distance) {
-        return {{}, closest_facet, closest_pt, nearest_neighbor.distance};
+        return {{}, closest_facet_idx, closest_pt, nearest_neighbor.distance};
     }
 
     //-- find the facet balls intersecting the sphere with that radius
@@ -36,20 +41,20 @@ NearfieldFacetFinder<dim>::find(const Vec<double,dim>& pt)
 
     //-- filter the facet balls to find the facets that actually intersected 
     //by the sphere (rather than just the surrounding ball)
-    std::vector<Vec<Vec<double,dim>,dim>> close_facets;
+    std::vector<size_t> close_facet_indices;
     for (size_t facet_idx: near_ball_indices) {
-        if (facet_idx == closest_facet_idx) {
-            continue;
-        }
         auto ref_pt = closest_pt_facet(pt, nn_data.facets[facet_idx]);
         auto mesh_pt = ref_to_real(ref_pt, nn_data.facets[facet_idx]);
         auto dist_to_mesh = dist(pt, mesh_pt);
         if (dist_to_mesh <= search_ball.radius) {
-            close_facets.push_back(nn_data.facets[facet_idx]);
+            close_facet_indices.push_back(facet_idx);
         } 
     }
 
-    return {close_facets, closest_facet, closest_pt, nearest_neighbor.distance};
+    return {
+        close_facet_indices, closest_facet_idx,
+        closest_pt, nearest_neighbor.distance
+    };
 }
 
 template struct NearfieldFacetFinder<2>;
@@ -57,10 +62,12 @@ template struct NearfieldFacetFinder<3>;
 
 template <size_t dim>
 Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
-    const NearfieldFacets<dim>& nearfield_facets, double safety_factor, 
+    const NearfieldFacets<dim>& nearfield_facets, 
+    const std::vector<Vec<Vec<double,dim>,dim>>& facets, 
+    double safety_factor, 
     double epsilon) 
 {
-    const auto& closest_facet = nearfield_facets.nearest_facet;
+    const auto& closest_facet = facets[nearfield_facets.nearest_facet_idx];
     // TODO: The length scale here needs to be exactly double the length scale
     // used in finding the nearest facets, which means that the functions should
     // be unified. Basically, the function to find nearfield_facets deserves to be
@@ -85,8 +92,11 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     // Check if the vector intersects any facets.
     // If it does, back up to halfway between the intersection point and the
     // singular point
-    for (auto f: nearfield_facets.facets) {
-        assert(f != closest_facet);
+    for (auto f_idx: nearfield_facets.facet_indices) {
+        if (f_idx == nearfield_facets.nearest_facet_idx) {
+            continue;
+        }
+        auto& f = facets[f_idx];
         std::vector<Vec<double,dim>> intersections =
             seg_facet_intersection<dim>(f, {end_pt, pt});
         assert(intersections.size() != 2);
@@ -102,9 +112,10 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
 }
 
 template Vec<double,2> 
-decide_limit_dir(const Vec<double,2>&, const NearfieldFacets<2>&, double, double);
+decide_limit_dir(const Vec<double,2>&, const NearfieldFacets<2>&,
+    const std::vector<Vec<Vec<double,2>,2>>&, double, double);
 
-template Vec<double,3>
-decide_limit_dir(const Vec<double,3>& pt, const NearfieldFacets<3>&, double, double);
-
+template Vec<double,3> 
+decide_limit_dir(const Vec<double,3>&, const NearfieldFacets<3>&,
+    const std::vector<Vec<Vec<double,3>,3>>&, double, double);
 } // end namespace tbem

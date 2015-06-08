@@ -1,7 +1,10 @@
 import sys
 import os
+# Prepending the parent directory to the path is necessary to force the
+# tbempy.* imports to import from this directory rather than a globally installed
+# copy of tbempy
 this_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(this_dir, os.pardir))
+sys.path.insert(0, os.path.join(this_dir, os.pardir))
 
 from tbempy.setup import get_extension_config, setup_parallel_compile, \
     files_in_dir
@@ -10,7 +13,8 @@ from numpy.distutils.misc_util import Configuration
 from numpy.distutils.core import setup
 
 def get_test_srces():
-    return files_in_dir('unit_tests', 'cpp')
+    srces = files_in_dir('unit_tests', 'cpp')
+    return srces
 
 def configuration(parent_package='',top_path=None):
     config = Configuration('unit_tests', parent_package, top_path)
@@ -47,6 +51,8 @@ def setup_package():
     metadata['cmdclass'] = dict(build_ext = TestBuildExt)
 
     # Default to building in place, the most common use case during development.
+    # Removing the existing executable is necessary in order to force a rebuild
+    # a rebuild is desirable because distutils does a poor job detecting changes
     if len(sys.argv) == 1:
         executable_path = os.path.join('unit_tests', 'test_runner')
         if os.path.exists(executable_path):

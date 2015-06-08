@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include "intersect_balls.h"
 #include "geometry.h"
+#include "octree.h"
 
 using namespace tbem;
 

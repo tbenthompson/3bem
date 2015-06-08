@@ -30,12 +30,13 @@ def default_linear_solver(tbem, cm, lhs, rhs):
         soln = tbem.distribute_vector(cm, v, lhs.n_rows())
         applied = lhs.apply(soln)
         out = tbem.condense_vector(cm, applied)
+        print(mv.it)
         return out
     mv.it = 0
 
     A = sp_la.LinearOperator((rhs.shape[0], rhs.shape[0]),
                              matvec = mv, dtype = np.float64)
-    res = sp_la.gmres(A, rhs, tol = 1e-8)
+    res = sp_la.gmres(A, rhs, tol = 1e-7)
     return res[0]
 
 def solve(dim, surface, fault, mthd, slip, **kwargs):

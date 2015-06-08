@@ -12,8 +12,8 @@ template <size_t dim> struct Ball;
 
 template <size_t dim>
 struct NearfieldFacets {
-    const std::vector<Vec<Vec<double,dim>,dim>> facets;
-    const Vec<Vec<double,dim>,dim> nearest_facet;
+    const std::vector<size_t> facet_indices;
+    const size_t nearest_facet_idx;
     const Vec<double,dim> pt;
     const double distance;
 };
@@ -22,8 +22,10 @@ struct NearfieldFacets {
 template <size_t dim>
 struct NearfieldFacetFinder {
     const NearestNeighborData<dim> nn_data;
+    double far_threshold;
 
-    NearfieldFacetFinder(const std::vector<Vec<Vec<double,dim>,dim>>& facets);
+    NearfieldFacetFinder(const std::vector<Vec<Vec<double,dim>,dim>>& facets,
+        double far_threshold);
 
     NearfieldFacets<dim> find(const Vec<double,dim>& pt);
 };
@@ -32,7 +34,9 @@ struct NearfieldFacetFinder {
 // A safety factor of 0.4 should work for all cases.
 template <size_t dim>
 Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
-    const NearfieldFacets<dim>& nearest_facets, double safety_factor,
+    const NearfieldFacets<dim>& nearest_facets, 
+    const std::vector<Vec<Vec<double,dim>,dim>>& facets, 
+    double safety_factor,
     double epsilon = 1e-12);
 
 }

@@ -6,6 +6,8 @@
 #include "nbody_operator.h"
 #include "integral_term.h"
 #include "nearfield_operator.h"
+//TODO: remove
+#include "util.h"
 
 namespace tbem {
 
@@ -45,12 +47,20 @@ struct IntegralOperator: public OperatorI {
     virtual size_t n_rows() const {return galerkin.n_rows();} 
     virtual size_t n_cols() const {return nearfield.n_cols();}
     virtual std::vector<double> apply(const std::vector<double>& x) const {
+        TIC
         auto nbody_far = galerkin.apply(farfield.apply(interp.apply(x)));
+        TOC("FAR");
+        TIC2;
         auto eval = nearfield.apply(x);
+        TOC("NEAR");
+        TIC2;
         auto correction = farfield_correction.apply(x);
+        TOC("CORRECTION");
+        TIC2;
         for (size_t i = 0; i < eval.size(); i++) {
             eval[i] += nbody_far[i] + correction[i];
         }
+        TOC("ADD");
         return eval;
     }
 

@@ -4,7 +4,6 @@
 #include <cassert>
 #include <vector>
 #include "vec.h"
-#include "octree.h"
 
 namespace tbem {
 
@@ -15,6 +14,7 @@ std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
     const std::vector<Ball<dim>>& ptsA,
     const std::vector<Ball<dim>>& ptsB);
 
+template <size_t dim> struct Octree;
 template <size_t dim>
 std::vector<size_t>
 intersect_balls(const Ball<dim>& ptA, const std::vector<Ball<dim>>& ptsB,
