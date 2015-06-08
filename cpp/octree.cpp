@@ -1,11 +1,53 @@
+#include <assert.h>
+#include <limits>
 #include "octree.h"
 #include "numerics.h"
 #include "vec_ops.h"
 #include "util.h"
 #include "geometry.h"
-#include <assert.h>
 
 namespace tbem {
+
+template <size_t dim>
+size_t Octree<dim>::n_immediate_children() const {
+    size_t c = 0;
+    for (const auto& p: children) {
+        if (p != nullptr) {
+            c++;
+        }
+    }
+    return c;
+}
+
+template <size_t dim>
+size_t Octree<dim>::n_children() const {
+    size_t c = 0;
+    for (const auto& p: children) {
+        if (p != nullptr) {
+            c += 1 + p->n_children();
+        }
+    }
+    return c;
+}
+
+template <size_t dim>
+bool Octree<dim>::is_leaf() const {
+    for (const auto& p: children) {
+        if (p != nullptr) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template <size_t dim>
+size_t Octree<dim>::find_containing_child(const Vec<double,dim>& pt) const
+{
+    return bounds.find_containing_subcell(pt);
+}
+
+template struct Octree<2>;
+template struct Octree<3>;
 
 template <size_t dim>
 Vec<size_t,dim> make_child_idx(size_t i) 
@@ -24,23 +66,13 @@ template
 Vec<size_t,3> make_child_idx<3>(size_t i);
 
 template <size_t dim>
-std::array<std::vector<int>,Octree<dim>::split> split_pts_into_children(
+std::array<std::vector<size_t>,Octree<dim>::split> split_pts_into_children(
     const Box<dim>& bounds, const std::vector<Ball<dim>>& pts, 
-    const std::vector<int>& indices)
+    const std::vector<size_t>& indices)
 {
-    std::array<std::vector<int>,Octree<dim>::split> child_indices;
+    std::array<std::vector<size_t>,Octree<dim>::split> child_indices;
     for (size_t i = 0; i < indices.size(); i++) {
-        auto pt = pts[indices[i]];
-        size_t child_idx = 0;
-        for (size_t d = 0; d < dim; d++) {
-            if (pt.center[d] > bounds.center[d]) {
-                child_idx++; 
-            }
-            if (d < dim - 1) {
-                child_idx = child_idx << 1;
-            }
-        }
-
+        auto child_idx = bounds.find_containing_subcell(pts[indices[i]].center);
         child_indices[child_idx].push_back(indices[i]);
     }
     return child_indices;
@@ -49,7 +81,7 @@ std::array<std::vector<int>,Octree<dim>::split> split_pts_into_children(
 template <size_t dim>
 typename Octree<dim>::ChildrenType
 build_children(const Box<dim>& bounds, 
-    const std::vector<Ball<dim>>& pts, const std::vector<int>& indices,
+    const std::vector<Ball<dim>>& pts, const std::vector<size_t>& indices,
     size_t level, size_t min_pts_per_cell, size_t& next_index) 
 {
     typename Octree<dim>::ChildrenType children;
@@ -90,7 +122,7 @@ build_children(const Box<dim>& bounds,
             next_index++;
         }
         children[i] = std::unique_ptr<Octree<dim>>(new Octree<dim>{
-            {child_bounds, tight_bounds, child_indices[i], child_level, child_idx},
+            child_bounds, tight_bounds, child_indices[i], child_level, child_idx,
             std::move(sub_children)
         });
     }
@@ -109,8 +141,7 @@ Octree<dim> make_octree(const std::vector<Ball<dim>>& pts, size_t min_pts_per_ce
         box, pts, all_indices, 0, min_pts_per_cell, next_index
     );
     return Octree<dim>{
-        {expanded_box, expanded_box, all_indices, 0, 0},
-        std::move(children)
+        expanded_box, expanded_box, all_indices, 0, 0, std::move(children)
     };
 }
 

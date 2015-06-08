@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <vector>
 #include "vec.h"
-#include "octree.h"
+#include "nearest_neighbors.h"
 
 namespace tbem {
 
@@ -18,12 +18,10 @@ struct NearfieldFacets {
     const double distance;
 };
 
+//TODO: This could be simplified to take a NearestNData as param and kill the struct
 template <size_t dim>
 struct NearfieldFacetFinder {
-    const static size_t n_facets_per_leaf = 20;
-    const std::vector<Vec<Vec<double,dim>,dim>> facets;
-    const std::vector<Ball<dim>> facet_balls;
-    const Octree<dim> oct;
+    const NearestNeighborData<dim> nn_data;
 
     NearfieldFacetFinder(const std::vector<Vec<Vec<double,dim>,dim>>& facets);
 

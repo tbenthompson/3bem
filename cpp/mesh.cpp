@@ -78,7 +78,7 @@ std::array<Facet<3>,4> refine_facet(const Facet<3>& f) {
 
 template <size_t dim>
 Mesh<dim> 
-Mesh<dim>::refine(const std::vector<int>& refine_these) const {
+Mesh<dim>::refine(const std::vector<size_t>& refine_these) const {
     if (refine_these.empty()) {
         return *this;
     }
@@ -87,7 +87,7 @@ Mesh<dim>::refine(const std::vector<int>& refine_these) const {
 
     // Sort the refined edges so that we only have to check the
     // next one at any point in the loop.
-    std::vector<int> sorted_refines = refine_these;
+    std::vector<size_t> sorted_refines = refine_these;
     std::sort(sorted_refines.begin(), sorted_refines.end());
 
     // The next index of sorted_refines.
@@ -117,7 +117,7 @@ Mesh<dim>::refine() const {
 /* A helper function to refine all the facets multiple times. */
 template <size_t dim>
 Mesh<dim> 
-Mesh<dim>::refine_repeatedly(unsigned int times) const {
+Mesh<dim>::refine_repeatedly(size_t times) const {
     if (times == 0) {
         return *this;
     }

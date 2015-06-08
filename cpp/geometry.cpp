@@ -78,6 +78,22 @@ Box<dim> Box<dim>::bounding_box(const std::vector<Ball<dim>>& pts)
     auto half_width = (max_corner - min_corner) / 2.0;
     return {center, half_width};
 }
+
+template <size_t dim>
+size_t Box<dim>::find_containing_subcell(const Vec<double,dim>& pt) const
+{
+    size_t child_idx = 0;
+    for (size_t d = 0; d < dim; d++) {
+        if (pt[d] > center[d]) {
+            child_idx++; 
+        }
+        if (d < dim - 1) {
+            child_idx = child_idx << 1;
+        }
+    }
+    return child_idx;
+}
+
 template class Box<2>;
 template class Box<3>;
 

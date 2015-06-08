@@ -1,5 +1,6 @@
 #include "util.h"
 #include <random>
+#include "geometry.h"
 
 namespace tbem {
 
@@ -57,5 +58,20 @@ Vec<double,dim> random_pt()
 }
 template Vec<double,2> random_pt<2>();
 template Vec<double,3> random_pt<3>();
+
+template <size_t dim>
+std::vector<Ball<dim>> random_balls(size_t n, double r_max)
+{
+    auto pts = random_pts<dim>(n);
+    auto r = random_list(n, 0, r_max);
+    std::vector<Ball<dim>> balls(n);
+    for (size_t i = 0; i < n; i++) {
+        balls[i] = {pts[i], r[i]};
+    }
+    return balls;
+}
+
+template std::vector<Ball<2>> random_balls(size_t n, double r_max);
+template std::vector<Ball<3>> random_balls(size_t n, double r_max);
 
 } //END NAMESPACE TBEM

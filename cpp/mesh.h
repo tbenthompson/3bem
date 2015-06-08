@@ -27,9 +27,9 @@ struct Mesh {
     VertexIterator<dim> begin() const;
     VertexIterator<dim> end() const;
 
-    Mesh<dim> refine(const std::vector<int>& refine_these) const;
+    Mesh<dim> refine(const std::vector<size_t>& refine_these) const;
     Mesh<dim> refine() const;
-    Mesh<dim> refine_repeatedly(unsigned int times) const;
+    Mesh<dim> refine_repeatedly(size_t times) const;
 
     static Mesh<dim> create_union(const std::vector<Mesh<dim>>& others);
 

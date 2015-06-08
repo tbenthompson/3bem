@@ -1,65 +1,32 @@
-#ifndef _OCTREE2_H
-#define _OCTREE2_H
+#ifndef TBEM_12312312_OCTREE_H
+#define TBEM_12312312_OCTREE_H
 
 #include <array>
 #include <vector>
 #include <memory>
 #include "vec.h"
-#include "numbers.h"
 
 namespace tbem { 
 
 template <size_t dim> struct Ball;
 template <size_t dim> struct Box;
 
-template <size_t dim, typename T>
-struct OctreeData {
-    static const size_t split = 2<<(dim-1);
-    typedef std::array<std::unique_ptr<OctreeData<dim,T>>,split> ChildrenType;
-    T data;
-    ChildrenType children;
-
-    size_t n_immediate_children() const {
-        size_t c = 0;
-        for (const auto& p: children) {
-            if (p != nullptr) {
-                c++;
-            }
-        }
-        return c;
-    }
-    
-    size_t n_children() const {
-        size_t c = 0;
-        for (const auto& p: children) {
-            if (p != nullptr) {
-                c += 1 + p->n_children();
-            }
-        }
-        return c;
-    }
-
-    bool is_leaf() const {
-        for (const auto& p: children) {
-            if (p != nullptr) {
-                return false;
-            }
-        }
-        return true;
-    }
-};
-
 template <size_t dim>
-struct OctreeCell {
+struct Octree {
+    static const size_t split = 2<<(dim-1);
+    typedef std::array<std::unique_ptr<Octree<dim>>,split> ChildrenType;
     const Box<dim> bounds;
     const Box<dim> true_bounds;
-    const std::vector<int> indices;
+    const std::vector<size_t> indices;
     const size_t level;
     const size_t index;
-};
+    ChildrenType children;
 
-template <size_t dim>
-using Octree = OctreeData<dim,OctreeCell<dim>>;
+    size_t n_immediate_children() const; 
+    size_t n_children() const; 
+    bool is_leaf() const; 
+    size_t find_containing_child(const Vec<double,dim>& pt) const;
+};
 
 template <size_t dim>
 Vec<size_t,dim> make_child_idx(size_t i);

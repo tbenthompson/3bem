@@ -31,5 +31,10 @@ T random(T min, T max);
 template <size_t dim>
 std::vector<Vec<double,dim>> random_pts(size_t N, double a = 0, double b = 1);
 
+//TODO: Should this be here? Or in geometry.h
+template <size_t dim> struct Ball;
+template <size_t dim>
+std::vector<Ball<dim>> random_balls(size_t n, double r_max);
+
 } //END namespace tbem
 #endif

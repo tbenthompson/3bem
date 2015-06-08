@@ -14,19 +14,23 @@ TEST_CASE("nearest facet brute force", "[nearest_neighbors]")
     REQUIRE(result.distance == 1.0);
     REQUIRE_ARRAY_CLOSE(result.pt, Vec<double,2>{0, 1}, 2, 1e-12);
 }
-// 
-// TEST_CASE("test nearest facet", "[nearest_neighbors]") 
-// {
-//     //Test the fast version against the brute force version through many
-//     //random examples
-//     size_t n_facets = 10;
-//     for (size_t i = 0; i < 100; i++) {
-//         std::vector<Facet<2>> fs;
-//         for (size_t j = 0; j < n_facets; j++) {
-//             auto vs = random_pts<2>(2);
-//             fs.push_back({vs[0], vs[1]});
-//         }
-//         // auto brute_force = nearest_facet_brute_force(
-//     }
-// }
+
+TEST_CASE("test nearest facet", "[nearest_neighbors]") 
+{
+    //Test the fast version against the brute force version through many
+    //random examples
+    size_t n_facets = 500;
+    for (size_t i = 0; i < 100; i++) {
+        std::vector<Facet<2>> fs;
+        for (size_t j = 0; j < n_facets; j++) {
+            auto vs = random_pts<2>(2);
+            fs.push_back({vs[0], vs[1]});
+        }
+        auto brute_force = nearest_facet_brute_force({0.5, 0.5}, fs);
+        auto fast = nearest_facet({0.5, 0.5}, NearestNeighborData<2>(fs));
+        REQUIRE(brute_force.idx == fast.idx);
+        REQUIRE(brute_force.pt == fast.pt);
+        REQUIRE(brute_force.distance == fast.distance);
+    }
+}
 

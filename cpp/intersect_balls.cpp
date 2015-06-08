@@ -14,10 +14,10 @@ std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
     const Octree<dim>& cellA,
     const Octree<dim>& cellB)
 {
-    auto rA = hypot(cellA.data.true_bounds.half_width);
-    auto rB = hypot(cellB.data.true_bounds.half_width);
-    auto sep = hypot(cellB.data.true_bounds.center - 
-        cellA.data.true_bounds.center);
+    auto rA = hypot(cellA.true_bounds.half_width);
+    auto rB = hypot(cellB.true_bounds.half_width);
+    auto sep = hypot(cellB.true_bounds.center - 
+        cellA.true_bounds.center);
     if (sep > rA + rB) {
         // the cells are too far apart, ignore them
         return {};
@@ -26,8 +26,8 @@ std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
     if (cellA.is_leaf() && cellB.is_leaf()) {
         // the cells are intersecting leaf cells. perform a direct intersection
         std::vector<std::pair<size_t,size_t>> out_pairs;
-        for (const auto& idxA: cellA.data.indices) {
-            for (const auto& idxB: cellB.data.indices) {
+        for (const auto& idxA: cellA.indices) {
+            for (const auto& idxB: cellB.indices) {
                 if (balls_intersect(ptsA[idxA], ptsB[idxB])) {
                     out_pairs.push_back({idxA, idxB});
                 }
@@ -38,7 +38,7 @@ std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
 
     // recurse
     std::vector<std::pair<size_t,size_t>> out_pairs;
-    bool B_is_shallower = cellA.data.level > cellB.data.level;
+    bool B_is_shallower = cellA.level > cellB.level;
     bool splitB = (B_is_shallower && !cellB.is_leaf()) || cellA.is_leaf();
     if (splitB) {
         //split B because it is shallower

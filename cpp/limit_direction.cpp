@@ -7,21 +7,9 @@
 namespace tbem {
 
 template <size_t dim>
-std::vector<Ball<dim>> make_facet_balls(const std::vector<Vec<Vec<double,dim>,dim>>& f)
-{
-    std::vector<Ball<dim>> out(f.size());
-    for (size_t i = 0; i < f.size(); i++) {
-        out[i] = facet_ball(f[i]);
-    }
-    return out;
-}
-
-template <size_t dim>
 NearfieldFacetFinder<dim>::NearfieldFacetFinder(
     const std::vector<Vec<Vec<double,dim>,dim>>& facets):
-    facets(facets),
-    facet_balls(make_facet_balls(facets)),
-    oct(make_octree<dim>(facet_balls, n_facets_per_leaf))
+    nn_data(facets)
 {}
 
 template <size_t dim> 
@@ -30,20 +18,21 @@ NearfieldFacetFinder<dim>::find(const Vec<double,dim>& pt)
 {
     //steps:
     //-- find the nearest facet (nearest neighbors search)
-    assert(facets.size() > 0);
-    auto nearest_neighbor = nearest_facet_brute_force(pt, facets);
+    auto nearest_neighbor = nearest_facet_brute_force(pt, nn_data.facets);
     auto closest_facet_idx = nearest_neighbor.idx;
     auto closest_pt = nearest_neighbor.pt;
 
     //-- determine the search radius for nearfield facets
-    auto closest_facet = facets[closest_facet_idx];
+    auto closest_facet = nn_data.facets[closest_facet_idx];
     auto search_ball = facet_ball(closest_facet);
     if (search_ball.radius < nearest_neighbor.distance) {
         return {{}, closest_facet, closest_pt, nearest_neighbor.distance};
     }
 
     //-- find the facet balls intersecting the sphere with that radius
-    auto near_ball_indices = intersect_balls(search_ball, facet_balls, oct);
+    auto near_ball_indices = intersect_balls(
+        search_ball, nn_data.facet_balls, nn_data.oct
+    );
 
     //-- filter the facet balls to find the facets that actually intersected 
     //by the sphere (rather than just the surrounding ball)
@@ -52,11 +41,11 @@ NearfieldFacetFinder<dim>::find(const Vec<double,dim>& pt)
         if (facet_idx == closest_facet_idx) {
             continue;
         }
-        auto ref_pt = closest_pt_facet(pt, facets[facet_idx]);
-        auto mesh_pt = ref_to_real(ref_pt, facets[facet_idx]);
+        auto ref_pt = closest_pt_facet(pt, nn_data.facets[facet_idx]);
+        auto mesh_pt = ref_to_real(ref_pt, nn_data.facets[facet_idx]);
         auto dist_to_mesh = dist(pt, mesh_pt);
         if (dist_to_mesh <= search_ball.radius) {
-            close_facets.push_back(facets[facet_idx]);
+            close_facets.push_back(nn_data.facets[facet_idx]);
         } 
     }
 

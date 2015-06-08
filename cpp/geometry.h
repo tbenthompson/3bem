@@ -20,6 +20,7 @@ struct Box {
     bool in_box(const Ball<dim>& b) const;
     bool in_box(const Vec<double,dim>& pt, const Vec<bool,dim>& inclusive) const;
     bool in_box_inclusive(const Vec<double,dim>& pt) const;
+    size_t find_containing_subcell(const Vec<double,dim>& pt) const;
 
     static Box<dim> bounding_box(const std::vector<Ball<dim>>& x);
 };
