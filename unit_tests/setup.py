@@ -6,6 +6,7 @@ import os
 this_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(this_dir, os.pardir))
 
+from tbempy.download import download_libs
 from tbempy.setup import get_extension_config, setup_parallel_compile, \
     files_in_dir
 from tbempy.build_ext import tbempyBuildExt
@@ -44,6 +45,7 @@ class TestBuildExt(tbempyBuildExt):
         tbempyBuildExt.build_extension(self, ext)
 
 def setup_package():
+    download_libs()
     setup_parallel_compile()
 
     metadata = dict(name = 'tbempy')

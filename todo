@@ -30,11 +30,10 @@ CAPACITY TESTING/BUILD TESTING:
 http://www.joelonsoftware.com/articles/fog0000000023.html
 ** test the build system on a fresh ubuntu (just use a docker container)
 ** test with python3
-** some simple capacity tests. how to make sure these run in the same conditions? remove timings from standard unit tests
+** do capacity testing by comparing the ratio with a simple matrix-multiply test case
 ** capacity test: benchmark the fmm
 ** capacity test: time to perform 3D nearfield integration
 ** capacity test: solve a laplace problem
 ** capacity test: reuse the adaptively refined okada problem, but time it, realistic!
-** need a compilation time test -- a recompile using ccache should take < 2 seconds? this poses the same hardware-specific capacity testing issues as the speed stuff. also would like a compilation time test for the initial compile -- under 20 seconds would be nice
-** one solution to the capacity testing issue is to enforce that new versions should run faster than old versions or to provide specific git revisions that are benchmarks for a given capacity. this could result in a long capacity test, but
+** need a compilation time test -- a recompile using ccache should take < 2 seconds? also would like a compilation time test for the initial compile -- under 20 seconds would be nice
 ** compilation timing code is in tbempy/setup.py indicating which files take longer to compile

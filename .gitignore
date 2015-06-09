@@ -12,3 +12,6 @@ build/*
 notes/method_desc/*
 lib/*
 unit_tests/test_runner
+.tox/*
+MANIFEST
+dist/*

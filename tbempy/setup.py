@@ -93,11 +93,8 @@ def get_blas_flags():
             sys.stderr = self.old_stderr
 
     devnull = open(os.devnull, 'w')
-    with warnings.catch_warnings():
-        with RedirectStdStreams(stdout=devnull, stderr=devnull):
-            warnings.simplefilter("ignore")
-            blas_lapack_info = np_config_info('lapack_opt', 0)
-            return blas_lapack_info
+    blas_lapack_info = np_config_info('lapack_opt', 0)
+    return blas_lapack_info
 
 def get_extension_config():
     # -UNDEBUG and -DDEBUG=1 ensure that asserts are turned on
