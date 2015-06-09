@@ -6,6 +6,7 @@
 #include "nbody_operator.h"
 #include "integral_term.h"
 #include "nearfield_operator.h"
+#include "fmm.h"
 //TODO: remove
 #include "util.h"
 
@@ -29,13 +30,13 @@ struct IntegralOperator: public OperatorI {
     const SparseOperator nearfield;
     const SparseOperator farfield_correction;
     const SparseOperator galerkin;
-    const DenseOperator farfield;
+    const std::shared_ptr<OperatorI> farfield;
     const SparseOperator interp;
 
     IntegralOperator(const SparseOperator& nearfield,
         const SparseOperator& farfield_correction,
         const SparseOperator& galerkin,
-        const DenseOperator& farfield,
+        const std::shared_ptr<OperatorI>& farfield,
         const SparseOperator& interp):
         nearfield(nearfield),
         farfield_correction(farfield_correction),
@@ -48,7 +49,7 @@ struct IntegralOperator: public OperatorI {
     virtual size_t n_cols() const {return nearfield.n_cols();}
     virtual std::vector<double> apply(const std::vector<double>& x) const {
         TIC
-        auto nbody_far = galerkin.apply(farfield.apply(interp.apply(x)));
+        auto nbody_far = galerkin.apply(farfield->apply(interp.apply(x)));
         TOC("FAR");
         TIC2;
         auto eval = nearfield.apply(x);
@@ -65,11 +66,40 @@ struct IntegralOperator: public OperatorI {
     }
 };
 
-
 template <size_t dim, size_t R, size_t C>
 IntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationStrategy<dim,R,C>& mthd,
     const Mesh<dim>& all_mesh) 
+{
+    auto obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_quad, all_mesh);
+    auto nearfield = make_nearfield_operator(obs_pts, src_mesh, mthd);
+    auto far_correction = make_farfield_correction_operator(obs_pts, src_mesh, mthd);
+
+    auto nbody_data = nbody_data_from_bem(
+        obs_mesh, src_mesh, mthd.obs_quad, mthd.src_far_quad
+    );
+    // auto farfield = std::make_shared<FMMOperator<dim,R,C>>(
+    //     FMMOperator<dim,R,C>(*mthd.K, nbody_data, {4.0, 20, 20, 0.05, true})
+    // );
+    auto farfield = std::make_shared<DenseOperator>(
+        make_direct_nbody_operator(nbody_data, *mthd.K)
+    );
+    std::shared_ptr<OperatorI> farfield_ptr = farfield;
+
+    auto galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_quad);
+    auto interp = make_interpolation_operator(C, src_mesh, mthd.src_far_quad);
+
+    return IntegralOperator<dim,R,C>(
+        galerkin.right_multiply(nearfield),
+        galerkin.right_multiply(far_correction),
+        galerkin, farfield_ptr, interp
+    );
+}
+
+template <size_t dim, size_t R, size_t C>
+DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
+    const Mesh<dim>& src_mesh, const IntegrationStrategy<dim,R,C>& mthd,
+    const Mesh<dim>& all_mesh)
 {
     auto obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_quad, all_mesh);
     auto nearfield = make_nearfield_operator(obs_pts, src_mesh, mthd);
@@ -83,24 +113,11 @@ IntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
     auto galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_quad);
     auto interp = make_interpolation_operator(C, src_mesh, mthd.src_far_quad);
 
-    return IntegralOperator<dim,R,C>(
-        galerkin.right_multiply(nearfield),
-        galerkin.right_multiply(far_correction),
-        galerkin, farfield, interp
-    );
-}
-
-template <size_t dim, size_t R, size_t C>
-DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
-    const Mesh<dim>& src_mesh, const IntegrationStrategy<dim,R,C>& mthd,
-    const Mesh<dim>& all_mesh)
-{
-    auto op = integral_operator(obs_mesh, src_mesh, mthd, all_mesh);
-    auto out = op.farfield_correction.add_with_dense(
-        op.nearfield.add_with_dense(
-            op.interp.left_multiply_with_dense(
-                op.galerkin.right_multiply_with_dense(
-                    op.farfield
+    auto out = galerkin.right_multiply_with_dense(
+        far_correction.add_with_dense(
+            nearfield.add_with_dense(
+                interp.left_multiply_with_dense(
+                    farfield
                 )
             )
         )

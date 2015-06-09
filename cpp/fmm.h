@@ -8,6 +8,7 @@
 #include "numbers.h"
 #include "util.h"
 #include "blas_wrapper.h"
+#include "operator.h"
 
 namespace tbem {
 
@@ -123,7 +124,7 @@ template <size_t dim> struct NBodyData;
  * Physics, 196(2), 591-626, 2004.
  */
 template <size_t dim, size_t R, size_t C>
-struct FMMOperator {
+struct FMMOperator: public OperatorI {
     const std::shared_ptr<Kernel<dim,R,C>> K;
     const NBodyData<dim> data;
     const TranslationSurface<dim> up_equiv_surface;
@@ -223,6 +224,13 @@ struct FMMOperator {
         const CheckToEquiv& down_check_to_equiv) const;
 
     std::vector<double> apply(const std::vector<double>& x) const;
+    //TODO: cleanup
+    virtual size_t n_rows() const {
+        return data.obs_locs.size() * R;
+    }
+    virtual size_t n_cols() const {
+        return data.src_locs.size() * C;
+    }
 };
 
 } // END namespace tbem
