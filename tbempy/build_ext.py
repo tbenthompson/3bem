@@ -27,7 +27,7 @@ def check_compiler(compiler):
         stderr = subprocess.PIPE
     )
     p.wait()
-    out = p.stdout.read().lower()
+    out = p.stdout.read().lower().decode('utf-8')
     if 'llvm' in out:
         return 'clang++'
     if 'Free Software Foundation' in out:

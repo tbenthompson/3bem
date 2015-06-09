@@ -164,7 +164,7 @@ def create_tensor_entry_data(pair, data_file, dimension):
     arg_sets = get_arg_sets()
 
     disp, trac, adj_trac, hyp = derive_kernels(k, j, dimension)
-    print k,j
+    print(k,j)
 
     args = (sm, pr, b0, b1, x1, y1, z1, x2, y2, z2, nx, ny, nz, mx, my, mz)
     disp_fnc = sp.utilities.lambdify(args, disp)

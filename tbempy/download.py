@@ -8,10 +8,6 @@ import subprocess
 def download_libs():
     if not os.path.exists('lib'):
         os.makedirs('lib')
-    print(os.listdir('lib'))
-    print(os.listdir('lib'))
-    print(os.listdir('lib'))
-    print(os.listdir('lib'))
     if not os.path.exists('lib/_catch.hpp'):
         download_catch()
     else:
