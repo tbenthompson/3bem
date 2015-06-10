@@ -6,6 +6,7 @@ from tbempy.build_ext import tbempyBuildExt
 from tbempy.download import download_libs
 import sys
 import os
+import shutil
 
 def configuration(parent_package='', top_path = None):
     config = Configuration(None, parent_package, top_path)
@@ -30,6 +31,10 @@ def setup_package():
         if os.path.exists(tbempy_path):
             os.remove(tbempy_path)
         sys.argv.extend(['build_ext', '--inplace'])
+    elif sys.argv[1] == 'reinstall':
+        if os.path.exists('build'):
+            shutil.rmtree('build')
+        sys.argv[1] = 'install'
     setup(**metadata)
 
 if __name__ == '__main__':

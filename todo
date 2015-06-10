@@ -1,5 +1,10 @@
 CURRENT: 
 ** acceptance test: setup fmm operators for python wrapper, solve a large problem in 2D and confirm (log)linear time cost with refinement
+** specify fmm from the python interface -- including the parameters
+** fix the singular vs nearfield identification code
+** some benchmarking, what is slow?
+** replace the dense operator multiply with blas
+** think about and implement a interpolation test for the singular integration
 
 NEXT: hanging nodes 
 ** acceptance test #1: fault intersecting surface not at point
@@ -24,16 +29,3 @@ MISC:
 ** create a continuity builder struct, move continuity builder stuff to cpp file
 ** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
 ** automated testing tools against pdetool? -- probably excessive
-
-CAPACITY TESTING/BUILD TESTING:
-** automated build testing on mac, ubuntu, with clang, gcc, intel compilers -- maybe turn the mac mini into a build server
-http://www.joelonsoftware.com/articles/fog0000000023.html
-** test the build system on a fresh ubuntu (just use a docker container)
-** test with python3
-** do capacity testing by comparing the ratio with a simple matrix-multiply test case
-** capacity test: benchmark the fmm
-** capacity test: time to perform 3D nearfield integration
-** capacity test: solve a laplace problem
-** capacity test: reuse the adaptively refined okada problem, but time it, realistic!
-** need a compilation time test -- a recompile using ccache should take < 2 seconds? also would like a compilation time test for the initial compile -- under 20 seconds would be nice
-** compilation timing code is in tbempy/setup.py indicating which files take longer to compile

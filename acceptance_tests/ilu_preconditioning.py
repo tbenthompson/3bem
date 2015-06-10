@@ -68,7 +68,7 @@ def test_ILU():
     solver = Solver()
     soln = solve(2, surface, fault, mthd, slip, linear_solver = solver.solve)
     check_planestrain_error(surface, soln)
-    assert(solver.iterations < 25)
+    assert(solver.iterations <= 30)
 
 if __name__ == "__main__":
     test_ILU()

@@ -64,3 +64,14 @@ CRACK TIPS:
     2) radius of check surface
     3) order of expansion
     4) multipole acceptance criteria
+
+CAPACITY TESTING/BUILD TESTING:
+** turn the mac mini into a jenkins build server, put it in a VM or docker container, see what packages are required (in ubuntu)
+** test with python3, use tox to run acceptance tests on a variety of platforms
+** do capacity testing by comparing the ratio with a simple matrix-multiply test case as a benchmark of the raw computational performance of a given machine.
+** capacity test: benchmark the fmm
+** capacity test: time to perform 3D nearfield integration
+** capacity test: solve a laplace problem
+** capacity test: reuse the adaptively refined okada problem, but time it, realistic!
+** need a compilation time test -- a recompile using ccache should take < 2 seconds? also would like a compilation time test for the initial compile -- under 20 seconds would be nice
+** compilation timing code is in tbempy/setup.py indicating which files take longer to compile

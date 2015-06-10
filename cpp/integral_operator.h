@@ -7,8 +7,6 @@
 #include "integral_term.h"
 #include "nearfield_operator.h"
 #include "fmm.h"
-//TODO: remove
-#include "util.h"
 
 namespace tbem {
 
@@ -48,24 +46,18 @@ struct IntegralOperator: public OperatorI {
     virtual size_t n_rows() const {return galerkin.n_rows();} 
     virtual size_t n_cols() const {return nearfield.n_cols();}
     virtual std::vector<double> apply(const std::vector<double>& x) const {
-        TIC
         auto nbody_far = galerkin.apply(farfield->apply(interp.apply(x)));
-        TOC("FAR");
-        TIC2;
         auto eval = nearfield.apply(x);
-        TOC("NEAR");
-        TIC2;
         auto correction = farfield_correction.apply(x);
-        TOC("CORRECTION");
-        TIC2;
         for (size_t i = 0; i < eval.size(); i++) {
             eval[i] += nbody_far[i] + correction[i];
         }
-        TOC("ADD");
         return eval;
     }
 };
 
+//TODO Lots of ugly duplication in this file
+//TODO Rename to boundary_operator and dense_*
 template <size_t dim, size_t R, size_t C>
 IntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationStrategy<dim,R,C>& mthd,
@@ -79,7 +71,7 @@ IntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
         obs_mesh, src_mesh, mthd.obs_quad, mthd.src_far_quad
     );
     // auto farfield = std::make_shared<FMMOperator<dim,R,C>>(
-    //     FMMOperator<dim,R,C>(*mthd.K, nbody_data, {4.0, 20, 20, 0.05, true})
+    //     FMMOperator<dim,R,C>(*mthd.K, nbody_data, {0.3, 30, 20, 0.05, true})
     // );
     auto farfield = std::make_shared<DenseOperator>(
         make_direct_nbody_operator(nbody_data, *mthd.K)
@@ -125,7 +117,6 @@ DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
     return out;
 }
 
-//TODO: Consolidate the interior operator duplication with the integral_operators
 template <size_t dim, size_t R, size_t C>
 DenseOperator dense_interior_operator(const std::vector<Vec<double,dim>>& locs,
     const std::vector<Vec<double,dim>>& normals, const Mesh<dim>& src_mesh,

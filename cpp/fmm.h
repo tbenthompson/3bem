@@ -224,13 +224,9 @@ struct FMMOperator: public OperatorI {
         const CheckToEquiv& down_check_to_equiv) const;
 
     std::vector<double> apply(const std::vector<double>& x) const;
-    //TODO: cleanup
-    virtual size_t n_rows() const {
-        return data.obs_locs.size() * R;
-    }
-    virtual size_t n_cols() const {
-        return data.src_locs.size() * C;
-    }
+
+    virtual size_t n_rows() const {return data.obs_locs.size() * R;}
+    virtual size_t n_cols() const {return data.src_locs.size() * C;}
 };
 
 } // END namespace tbem

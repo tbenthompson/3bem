@@ -5,6 +5,7 @@
 #include "integral_term.h"
 #include "nearest_neighbors.h"
 #include "limit_direction.h"
+#include "util.h"
 
 namespace tbem {
 
