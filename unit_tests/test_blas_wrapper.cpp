@@ -74,3 +74,22 @@ TEST_CASE("Condition number", "[blas_wrapper]")
     double cond = condition_number(svd);
     REQUIRE(cond == Approx(2.7630857945186595).epsilon(1e-12));
 }
+
+TEST_CASE("matrix vector product", "[blas_wrapper]")
+{
+    
+    std::vector<double> matrix{
+        2, 1, -1, 0.5
+    };
+    auto result = matrix_vector_product({2, 1, -1, 0.5}, {4, -2});
+    REQUIRE_ARRAY_CLOSE(result, std::vector<double>{6, -5}, 2, 1e-15);
+}
+
+TEST_CASE("matrix vector non-square", "[blas_wrapper]")
+{
+    std::vector<double> matrix{
+        2, 1, 1, -1, 0.5, 10
+    };
+    auto result = matrix_vector_product(matrix, {4, -2, 0.5});
+    REQUIRE_ARRAY_CLOSE(result, std::vector<double>{6.5, 0}, 2, 1e-15);
+}

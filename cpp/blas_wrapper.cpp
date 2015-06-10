@@ -12,6 +12,8 @@ extern "C" void dgesvd_(char* JOBU, char* JOBVT, int* M, int* N, double* A,
 extern "C" void dgemm_(char* TRANSA, char* TRANSB, int* M, int* N, int* K, 
     double* ALPHA, double* A, int* LDA, double* B, int* LDB, double* BETA,
     double* C, int* LDC);
+extern "C" void dgemv_(char* TRANS, int* M, int* N, double* ALPHA, double* A,
+    int* LDA, double* X, int* INCX, double* BETA, double* Y, int* INCY);
 
 namespace tbem {
 
@@ -163,6 +165,25 @@ double condition_number(const SVDPtr& svd)
     auto first = svd->singular_values.front();
     auto last = svd->singular_values.back();
     return first / last;
+}
+
+std::vector<double> matrix_vector_product(const std::vector<double>& matrix,
+    const std::vector<double>& vector)
+{
+    char TRANS = 'T';
+    int n_cols = static_cast<int>(vector.size());
+    int n_matrix_els = static_cast<int>(matrix.size());
+    int n_rows = n_matrix_els / n_cols;
+    double alpha = 1;
+    double beta = 0;
+    int inc = 1;
+    assert(n_rows * n_cols == n_matrix_els);
+    std::vector<double> out(n_rows);
+    //IMPORTANT that n_cols and n_rows are switched because the 3bem internal
+    //matrix is in row-major order and BLAS expects column major
+    dgemv_(&TRANS, &n_cols, &n_rows, &alpha, (double*)matrix.data(),
+        &n_cols, (double*)vector.data(), &inc, &beta, out.data(), &inc);
+    return out;
 }
 
 }// end namespace tbem

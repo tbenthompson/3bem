@@ -1,5 +1,6 @@
 #include "dense_operator.h"
 #include <cassert>
+#include "blas_wrapper.h"
 
 namespace tbem {
 
@@ -33,17 +34,8 @@ size_t DenseOperator::n_elements() const {
 
 std::vector<double> DenseOperator::apply(const std::vector<double>& x) const {
     assert(x.size() == n_cols());
-   
-    std::vector<double> res(n_rows(), 0.0);
-#pragma omp parallel for
-    for (size_t i = 0; i < n_rows(); i++) {
-        for (size_t j = 0; j < n_cols(); j++) {
-            size_t matrix_idx = i * n_cols() + j;
-            res[i] += (*storage)[matrix_idx] * x[j];
-        }
-    }
-
-    return res;
+    auto out = matrix_vector_product(*storage, x);
+    return out;
 }
 
 const DenseOperator::DataT& DenseOperator::data() const {

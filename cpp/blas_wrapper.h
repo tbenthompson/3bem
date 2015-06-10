@@ -34,6 +34,9 @@ std::vector<double> svd_pseudoinverse(const SVDPtr& svd);
 std::vector<double> svd_solve(const SVDPtr& svd, const std::vector<double>& b);
 double condition_number(const SVDPtr& svd); 
 
+std::vector<double> matrix_vector_product(const std::vector<double>& matrix,
+    const std::vector<double>& vector);
+
 } // end namespace tbem
 
 #endif

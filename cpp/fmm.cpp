@@ -394,7 +394,7 @@ template <size_t dim, size_t R, size_t C>
 void FMMOperator<dim,R,C>::L2P(const Octree<dim>& cell,
     double* locals, std::vector<double>& out) const
 {
-    //TODO: Code is essentially identical to M2P
+    //TODO: Code is essentially identical to M2P, refactor out a coeffs2P function
     NBodyData<dim> l2p;
     l2p.src_locs = down_equiv_surface.move(cell.bounds);
     l2p.src_normals = down_equiv_surface.normals;
