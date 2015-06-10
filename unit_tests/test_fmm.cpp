@@ -4,6 +4,7 @@
 #include "elastic_kernels.h"
 #include "identity_kernels.h"
 #include "nbody_operator.h"
+#include "util.h"
 
 using namespace tbem;
 

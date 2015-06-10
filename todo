@@ -1,7 +1,6 @@
 CURRENT: 
 ** acceptance test: setup fmm operators for python wrapper, solve a large problem in 2D and confirm (log)linear time cost with refinement
 ** specify fmm from the python interface -- including the parameters
-** precompute the tasks for FMM
 
 ** fix the singular vs nearfield identification code
 

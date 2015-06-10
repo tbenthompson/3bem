@@ -6,7 +6,6 @@
 #include "kernel.h"
 #include "octree.h"
 #include "numbers.h"
-#include "util.h"
 #include "blas_wrapper.h"
 #include "operator.h"
 

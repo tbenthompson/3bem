@@ -40,7 +40,7 @@ static void fmm_hypersingular_apply(benchmark::State& state)
     FMMOperator<dim,dim,dim> tree(
         ElasticHypersingular<dim>(30e9, 0.25),
         data,
-        {0.35, order, n_per_cell, 0.05, false}
+        {0.35, order, n_per_cell, 0.05, true}
     );
 
     while (state.KeepRunning())
@@ -74,11 +74,11 @@ BENCHMARK_TEMPLATE(fmm_hypersingular_apply, 3)
     // ->ArgPair(10000, 20)
     // ->ArgPair(10000, 60)
     ->ArgPair(10000, 100)
-    ->ArgPair(10000, 250);
-    // ->ArgPair(100000, 20)
-    // ->ArgPair(100000, 60)
-    // ->ArgPair(100000, 100)
-    // ->ArgPair(100000, 250)
+    ->ArgPair(10000, 250)
+    ->ArgPair(100000, 20)
+    ->ArgPair(100000, 60)
+    ->ArgPair(100000, 100)
+    ->ArgPair(100000, 250);
     // ->ArgPair(500000, 20)
     // ->ArgPair(500000, 60)
     // ->ArgPair(500000, 100)
