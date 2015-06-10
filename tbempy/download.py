@@ -24,6 +24,10 @@ def download_libs():
         download_gte()
     else:
         print('Not downloading Geometric Tools Engine.')
+    if not os.path.exists('lib/benchmark'):
+        download_google_benchmark()
+    else:
+        print('Not downloading Google Benchmark')
     print('To redownload a library, delete the lib directory')
 
 def download_catch():
@@ -68,3 +72,11 @@ def download_gte():
     shutil.move('GeometricTools/GTEngine', os.path.join('lib', 'gte'))
     os.rmdir('GeometricTools')
 
+def download_google_benchmark():
+    cmd = [
+        'git',
+        'clone',
+        'git@github.com:google/benchmark.git',
+        os.path.join('lib', 'benchmark')
+    ]
+    subprocess.Popen(cmd).wait()

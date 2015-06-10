@@ -136,6 +136,7 @@ struct FMMOperator: public OperatorI {
     const FMMConfig config;
     const CheckToEquiv up_check_to_equiv;
     const CheckToEquiv down_check_to_equiv;
+    FMMTasks<dim> tasks;
 
     FMMOperator(const Kernel<dim,R,C>& K, const NBodyData<dim>& data,
         const FMMConfig& config);

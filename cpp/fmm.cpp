@@ -93,7 +93,12 @@ FMMOperator<dim,R,C>::FMMOperator(const Kernel<dim,R,C>& K,
     down_check_to_equiv(
         build_check_to_equiv(obs_oct, 0, down_equiv_surface, down_check_surface)
     )
-{}
+{
+    upward_traversal(src_oct, tasks);
+    dual_tree(obs_oct, src_oct, tasks);
+    downward_traversal(obs_oct, tasks);
+}
+
 
 
 template <size_t dim, size_t R, size_t C>
@@ -529,11 +534,6 @@ template <size_t dim, size_t R, size_t C>
 std::vector<double> FMMOperator<dim,R,C>::apply(const std::vector<double>& x) const 
 {
     assert(x.size() == C * data.src_locs.size());
-
-    FMMTasks<dim> tasks;
-    upward_traversal(src_oct, tasks);
-    dual_tree(obs_oct, src_oct, tasks);
-    downward_traversal(obs_oct, tasks);
 
     auto out = execute_tasks(tasks, x, up_check_to_equiv, down_check_to_equiv);
 

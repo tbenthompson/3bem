@@ -110,7 +110,7 @@ def get_extension_config():
     link_args = [
         '-fopenmp'
     ]
-    includes = ['cpp', 'lib']
+    includes = ['cpp', 'lib', 'lib/benchmark/include']
     return dict(
         sources = get_tbempy_srces(),
         include_dirs = includes,

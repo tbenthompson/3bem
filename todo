@@ -4,7 +4,6 @@ CURRENT:
 ** precompute the tasks for FMM
 
 ** fix the singular vs nearfield identification code
-** some benchmarking, what is slow?
 
 NEXT: hanging nodes 
 ** acceptance test #1: fault intersecting surface not at point
