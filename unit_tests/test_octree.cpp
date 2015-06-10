@@ -212,8 +212,7 @@ TEST_CASE("impossible subdivision", "[octree]")
         {{0, 0}, 0.5},
         {{0, 0}, 1.0}
     };
-    REQUIRE(false);
-    /* auto oct = make_octree(bs, 1); */
+    auto oct = make_octree(bs, 1);
 }
 
 TEST_CASE("find closest nonempty child", "[nearest_neighbors]")

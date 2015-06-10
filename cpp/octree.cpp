@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <limits>
+#include <algorithm>
 #include "octree.h"
 #include "numerics.h"
 #include "vec_ops.h"
@@ -117,16 +118,25 @@ build_children(const Box<dim>& bounds,
         for (size_t pt_idx = 0; pt_idx < child_indices[i].size(); pt_idx++) {
             tight_pts[pt_idx] = pts[child_indices[i][pt_idx]];
         }
-        auto tight_bounds = Box<dim>::bounding_box(tight_pts).
-            expand_by_max_axis_multiple(1e-5);
+        auto tight_bounds = Box<dim>::bounding_box(tight_pts);
+
+        auto largest_ball = std::max_element(tight_pts.begin(), tight_pts.end(),
+            [](const Ball<dim>& a, const Ball<dim>& b) {
+                return a.radius < b.radius;
+            });
 
         typename Octree<dim>::ChildrenType sub_children;
-        if (any(tight_bounds.half_width != 0.0)) {
+        //TODO: Documentation should be precise that min_pts_per_cell is not a 
+        //guarantee. Because of this shortcircuiting that prevents impossible
+        //infinitely subdivision, the number of pts in a cell could be larger.
+        //But, that's unlikely for any reasonable set of points.
+        if (any(tight_bounds.half_width != (*largest_ball).radius)) {
             sub_children = build_children(
                 child_bounds, pts, child_indices[i],
                 child_level, min_pts_per_cell, next_index
             );
         }
+        auto expanded_tight_bounds = tight_bounds.expand_by_max_axis_multiple(1e-5);
 
         size_t child_idx;
 #pragma omp critical 
@@ -135,8 +145,8 @@ build_children(const Box<dim>& bounds,
             next_index++;
         }
         children[i] = std::unique_ptr<Octree<dim>>(new Octree<dim>{
-            child_bounds, tight_bounds, child_indices[i], child_level, child_idx,
-            std::move(sub_children)
+            child_bounds, expanded_tight_bounds, child_indices[i],
+            child_level, child_idx, std::move(sub_children)
         });
     }
     return std::move(children);

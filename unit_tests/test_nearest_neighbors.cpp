@@ -48,11 +48,11 @@ TEST_CASE("nearest facet timing", "[nearest_neighbors]")
     auto pts = random_pts<2>(n);
 
     std::vector<size_t> fast(n);
-    TIC
+    // TIC
     NearestNeighborData<2> nn_data(fs, 30);
 #pragma omp parallel for
     for (size_t i = 0; i < n; i++) {
         fast[i] = nearest_facet(pts[i], nn_data).idx;
     }
-    TOC(std::to_string(n) + " nn-queries");
+    // TOC(std::to_string(n) + " nn-queries");
 }
