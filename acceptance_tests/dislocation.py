@@ -50,11 +50,11 @@ def solve(dim, surface, fault, mthd, slip, **kwargs):
 
     cm = faulted_surface_constraints(tbem, surface, fault, dim)
 
-    rhs_op = tbem.integral_operator(surface, fault, mthd, all_mesh)
+    rhs_op = tbem.boundary_operator(surface, fault, mthd, all_mesh)
     all_dofs_rhs = rhs_op.apply(slip)
     rhs = -tbem.condense_vector(cm, all_dofs_rhs)
 
-    lhs = tbem.integral_operator(surface, surface, mthd, all_mesh)
+    lhs = tbem.boundary_operator(surface, surface, mthd, all_mesh)
     soln = linear_solver(tbem, cm, lhs, rhs)
     full_soln = tbem.distribute_vector(cm, soln, n_dofs)
     soln_components = []

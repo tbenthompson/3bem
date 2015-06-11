@@ -169,6 +169,13 @@ void FMMOperator<dim,R,C>::P2M(const Octree<dim>& cell,
 
     std::vector<double> src_str(n_src * C);
     for (size_t i = 0; i < n_src; i++) {
+        // std::cout << s2c.src_locs.size() << std::endl;
+        // std::cout << data.src_locs.size() << std::endl;
+        // std::cout << cell.indices.size() << std::endl;
+        // std::cout << cell.index << std::endl;
+        // std::cout << i << std::endl;
+        // std::cout << cell.indices[i] << std::endl;
+        // std::cout << cell.indices[0] << std::endl;
         s2c.src_locs[i] = data.src_locs[cell.indices[i]];
         s2c.src_normals[i] = data.src_normals[cell.indices[i]];
         s2c.src_weights[i] = data.src_weights[cell.indices[i]];
@@ -251,6 +258,8 @@ void FMMOperator<dim,R,C>::P2P(const Octree<dim>& obs_cell,
     p2p.src_weights.resize(n_src);
     std::vector<double> src_str(C * n_src);
     for (size_t j = 0; j < n_src; j++) {
+        // std::cout << data.src_locs.size() << std::endl;
+        // std::cout << src_cell.indices[j] << std::endl;
         p2p.src_locs[j] = data.src_locs[src_cell.indices[j]];
         p2p.src_normals[j] = data.src_normals[src_cell.indices[j]];
         p2p.src_weights[j] = data.src_weights[src_cell.indices[j]];

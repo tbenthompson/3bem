@@ -73,5 +73,5 @@ CAPACITY TESTING/BUILD TESTING:
 ** capacity test: time to perform 3D nearfield integration
 ** capacity test: solve a laplace problem
 ** capacity test: reuse the adaptively refined okada problem, but time it, realistic!
-** need a compilation time test -- a recompile using ccache should take < 2 seconds? also would like a compilation time test for the initial compile -- under 20 seconds would be nice
+** a compilation time test -- a recompile using ccache should take < 2 seconds? also would like a compilation time test for the initial compile -- under 20 seconds would be nice
 ** compilation timing code is in tbempy/setup.py indicating which files take longer to compile

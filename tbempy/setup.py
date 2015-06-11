@@ -103,14 +103,16 @@ def get_extension_config():
         '-fopenmp',
         '-UNDEBUG',
         '-DDEBUG=1',
-        '-O3',
+        # '-O3',
+        '-Og',
+        '-g',
         '-Wall',
         '-Wextra'
     ]
     link_args = [
         '-fopenmp'
     ]
-    includes = ['cpp', 'lib', 'lib/benchmark/include']
+    includes = ['cpp', 'lib']
     return dict(
         sources = get_tbempy_srces(),
         include_dirs = includes,

@@ -59,7 +59,7 @@ def test_convergence():
     rs = np.arange(2,8)
     hs = 1.0 / (2 ** rs)
     for refine in rs:
-        es.append(run(solve_iterative, integral_operator,
+        es.append(run(solve_iterative, boundary_operator,
                       refine, log_u, make_log_dudn)[0])
     # plt.loglog(hs, es)
     # plt.show()
@@ -72,15 +72,15 @@ def test_convergence():
         assert(r > 1.85)
 
 def test_log_u():
-    for mthd in [(solve_direct, dense_integral_operator),
-                 (solve_iterative, integral_operator)]:
+    for mthd in [(solve_direct, dense_boundary_operator),
+                 (solve_iterative, boundary_operator)]:
         bdry_error, int_error = run(mthd[0], mthd[1], 7, log_u, make_log_dudn)
         assert(bdry_error < 1e-5)
         assert(int_error < 2e-5)
 
 def test_theta_u():
-    for mthd in [(solve_direct, dense_integral_operator),
-                 (solve_iterative, integral_operator)]:
+    for mthd in [(solve_direct, dense_boundary_operator),
+                 (solve_iterative, boundary_operator)]:
         bdry_error, int_error = run(mthd[0], mthd[1], 7, theta_u, make_theta_dudn)
         assert(bdry_error < 1e-5)
         assert(int_error < 2e-5)

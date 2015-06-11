@@ -87,6 +87,12 @@ struct FMMConfig {
     //TODO: Add the translation surface inner and outer radii as parameters.
     //
     const bool account_for_small_cells;
+
+    FMMConfig(double mac, size_t order, size_t min_pts_per_cell,
+        double d, bool account_for_small_cells):
+        mac(mac), order(order), min_pts_per_cell(min_pts_per_cell),
+        d(d), account_for_small_cells(account_for_small_cells)
+    {}
 };
 
 template <size_t dim>

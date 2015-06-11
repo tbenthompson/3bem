@@ -32,10 +32,10 @@ def test_corners():
     double_kernel = LaplaceDouble()
 
     single_mthd = make_adaptive_integrator(1e-5, 4, 10, 3.0, single_kernel)
-    single_op = dense_integral_operator(surface, surface, single_mthd, surface)
+    single_op = dense_boundary_operator(surface, surface, single_mthd, surface)
 
     double_mthd = make_adaptive_integrator(1e-5, 4, 10, 3.0, double_kernel)
-    double_op = dense_integral_operator(surface, surface, double_mthd, surface)
+    double_op = dense_boundary_operator(surface, surface, double_mthd, surface)
 
     mass_op = mass_operator_scalar(surface, 2)
 

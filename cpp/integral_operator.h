@@ -57,11 +57,10 @@ struct IntegralOperator: public OperatorI {
 };
 
 //TODO Lots of ugly duplication in this file
-//TODO Rename to boundary_operator and dense_*
 template <size_t dim, size_t R, size_t C>
-IntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
+IntegralOperator<dim,R,C> boundary_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationStrategy<dim,R,C>& mthd,
-    const Mesh<dim>& all_mesh) 
+    const FMMConfig& fmm_config, const Mesh<dim>& all_mesh) 
 {
     auto obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_quad, all_mesh);
     auto nearfield = make_nearfield_operator(obs_pts, src_mesh, mthd);
@@ -70,12 +69,12 @@ IntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
     auto nbody_data = nbody_data_from_bem(
         obs_mesh, src_mesh, mthd.obs_quad, mthd.src_far_quad
     );
-    // auto farfield = std::make_shared<FMMOperator<dim,R,C>>(
-    //     FMMOperator<dim,R,C>(*mthd.K, nbody_data, {0.3, 30, 20, 0.05, true})
-    // );
-    auto farfield = std::make_shared<DenseOperator>(
-        make_direct_nbody_operator(nbody_data, *mthd.K)
+    auto farfield = std::make_shared<FMMOperator<dim,R,C>>(
+        FMMOperator<dim,R,C>(*mthd.K, nbody_data, fmm_config)
     );
+    // auto farfield = std::make_shared<DenseOperator>(
+    //     make_direct_nbody_operator(nbody_data, *mthd.K)
+    // );
     std::shared_ptr<OperatorI> farfield_ptr = farfield;
 
     auto galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_quad);
@@ -89,7 +88,7 @@ IntegralOperator<dim,R,C> integral_operator(const Mesh<dim>& obs_mesh,
 }
 
 template <size_t dim, size_t R, size_t C>
-DenseOperator dense_integral_operator(const Mesh<dim>& obs_mesh,
+DenseOperator dense_boundary_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationStrategy<dim,R,C>& mthd,
     const Mesh<dim>& all_mesh)
 {

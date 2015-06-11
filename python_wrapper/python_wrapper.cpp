@@ -8,6 +8,7 @@ namespace np = boost::numpy;
 void export_util();
 void export_linalg();
 void export_constraints();
+void export_fmm_config();
 template <size_t dim>
 void export_dimension();
 
@@ -26,6 +27,7 @@ BOOST_PYTHON_MODULE(_tbempy)
     export_util();
     export_linalg();
     export_constraints();
+    export_fmm_config();
 
     {
         p::scope scope2D = start_module("TwoD");

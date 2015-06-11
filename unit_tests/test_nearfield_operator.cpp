@@ -101,7 +101,7 @@ TEST_CASE("Constrained nearfield matrix", "[nearfield_operator]")
     auto dense_matrix = matrix.to_dense();
 
     SECTION("Dense operator equals galerkin nearfield") {
-        auto dense_matrix2 = *dense_integral_operator(m, m, mthd, {m}).storage;
+        auto dense_matrix2 = *dense_boundary_operator(m, m, mthd, {m}).storage;
         REQUIRE_ARRAY_CLOSE(dense_matrix2, dense_matrix, dense_matrix2.size(), 1e-12);
     }
 

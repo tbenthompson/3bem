@@ -91,10 +91,10 @@ void export_dimension() {
         .def_readonly("nearfield", &IntegralOperator<dim,dim,dim>::nearfield);
     export_operator<IntegralOperator<dim,dim,dim>>(integral_op_tensor);
 
-    def("integral_operator", integral_operator<dim,1,1>);
-    def("integral_operator", integral_operator<dim,dim,dim>);
-    def("dense_integral_operator", dense_integral_operator<dim,1,1>);
-    def("dense_integral_operator", dense_integral_operator<dim,dim,dim>);
+    def("boundary_operator", boundary_operator<dim,1,1>);
+    def("boundary_operator", boundary_operator<dim,dim,dim>);
+    def("dense_boundary_operator", dense_boundary_operator<dim,1,1>);
+    def("dense_boundary_operator", dense_boundary_operator<dim,dim,dim>);
 
     def("dense_interior_operator", dense_interior_operator<dim,1,1>);
     def("dense_interior_operator", dense_interior_operator<dim,dim,dim>);
@@ -102,7 +102,7 @@ void export_dimension() {
     auto mass_op = class_<MassOperator<dim>>("MassOperator", no_init);
     export_operator<MassOperator<dim>>(mass_op);
 
-    // mass_operator cannot be overloaded like integral_operator, because there
+    // mass_operator cannot be overloaded like boundary_operator, because there
     // is no kernel parameter to decide on the tensor shape
     def("mass_operator_scalar", mass_operator<dim,1,1>);
     def("mass_operator_tensor", mass_operator<dim,dim,dim>);

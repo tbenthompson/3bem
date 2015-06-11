@@ -33,5 +33,8 @@ def test_dim():
     assert(TwoD.dim == 2)
     assert(ThreeD.dim == 3)
 
+def test_fmm_config():
+    config = TwoD.FMMConfig(0.3, 20, 100, 0.05, False)
+
 if __name__ == "__main__":
     test_mesh_union()

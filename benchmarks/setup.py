@@ -16,6 +16,8 @@ benchmark_path = os.path.join('lib', 'benchmark')
 benchmark_src_path = os.path.join(benchmark_path, 'src')
 benchmark_include_path = os.path.join(benchmark_path, 'include')
 
+# This requires the machine to cmake and make installed. That's okay
+# because only developers need to run this.
 def build_google_benchmark():
     cur_dir = os.getcwd()
     os.chdir(benchmark_path)
@@ -43,7 +45,6 @@ def make_config(path, prefix):
     return configuration
 
 if __name__ == "__main__":
-
     setup_tests(
         os.path.join('benchmarks', 'runner'),
         make_config('benchmarks', 'bench_')
