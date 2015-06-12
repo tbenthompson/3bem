@@ -24,6 +24,10 @@ NearfieldFacetFinder<dim>::find(const Vec<double,dim>& pt)
     auto closest_facet_idx = nearest_neighbor.idx;
     auto closest_pt = nearest_neighbor.pt;
 
+    if (nn_data.facets.size() == 0) {
+        return {{}, 0, {0, 0}, 0};
+    }
+
     //-- determine the search radius for nearfield facets
     auto closest_facet = nn_data.facets[closest_facet_idx];
     auto closest_facet_ball = facet_ball(closest_facet);
@@ -67,6 +71,10 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     double safety_factor, 
     double epsilon) 
 {
+    if (nearfield_facets.facet_indices.size() == 0) {
+        return zeros<Vec<double,dim>>::make();
+    }
+
     const auto& closest_facet = facets[nearfield_facets.nearest_facet_idx];
     // TODO: The length scale here needs to be exactly double the length scale
     // used in finding the nearest facets, which means that the functions should
@@ -85,6 +93,8 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     // centroid of the facet. Out of the plane of the facet, the limit direction
     // will point in the same direction as the facet's normal, with a magnitude
     // similar to the length scale of the facet.
+    // TODO: There are edge cases where this vector could lie exactly on an element
+    // producing some big confusions!
     auto close_center = centroid(closest_facet);
     auto close_dir = unscaled_normal(closest_facet); 
     auto end_pt = close_center + normalized(close_dir) * len_scale;
@@ -92,6 +102,7 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     // Check if the vector intersects any facets.
     // If it does, back up to halfway between the intersection point and the
     // singular point
+    // TODO: make this a function called backup_halfway_from_intersection
     for (auto f_idx: nearfield_facets.facet_indices) {
         if (f_idx == nearfield_facets.nearest_facet_idx) {
             continue;
@@ -101,7 +112,11 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
             seg_facet_intersection<dim>(f, {end_pt, pt});
         assert(intersections.size() != 2);
         if (intersections.size() == 1 && intersections[0] != pt) {
-            end_pt = pt + (intersections[0] - pt) / 2.0;
+            auto to_intersection_dir = intersections[0] - pt;
+            if (hypot(to_intersection_dir) < 1e-15 * len_scale) {
+                continue;
+            }
+            end_pt = pt + to_intersection_dir / 2.0;
         }
     }
 

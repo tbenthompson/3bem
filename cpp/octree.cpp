@@ -163,9 +163,9 @@ Octree<dim> make_octree(const std::vector<Ball<dim>>& pts, size_t min_pts_per_ce
     auto children = build_children(
         box, pts, all_indices, 0, min_pts_per_cell, next_index
     );
-    for (size_t i = 0; i < all_indices.size(); i++) {
-        std::cout << all_indices[i] << std::endl;
-    }
+    // for (size_t i = 0; i < all_indices.size(); i++) {
+    //     std::cout << all_indices[i] << std::endl;
+    // }
     return Octree<dim>{
         expanded_box, expanded_box, all_indices, 0, 0, std::move(children)
     };

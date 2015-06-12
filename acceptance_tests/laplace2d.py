@@ -54,12 +54,19 @@ def run(linear_solver, operator_builder, refine, u_fnc, dudn_fnc_builder,
     return solve(2, circle, linear_solver, operator_builder,
                  obs_pts, u_fnc, dudn_fnc_builder(center), far_threshold)
 
+def dense_boundary_operator_builder(obs_mesh, src_mesh, mthd, mesh):
+    return dense_boundary_operator(obs_mesh, src_mesh, mthd, mesh)
+
+def fmm_boundary_operator_builder(obs_mesh, src_mesh, mthd, mesh):
+    fmm_config = FMMConfig(0.3, 30, 250, 0.1, True)
+    return boundary_operator(obs_mesh, src_mesh, mthd, fmm_config, mesh)
+
 def test_convergence():
     es = []
     rs = np.arange(2,8)
     hs = 1.0 / (2 ** rs)
     for refine in rs:
-        es.append(run(solve_iterative, boundary_operator,
+        es.append(run(solve_iterative, fmm_boundary_operator_builder,
                       refine, log_u, make_log_dudn)[0])
     # plt.loglog(hs, es)
     # plt.show()
@@ -72,15 +79,15 @@ def test_convergence():
         assert(r > 1.85)
 
 def test_log_u():
-    for mthd in [(solve_direct, dense_boundary_operator),
-                 (solve_iterative, boundary_operator)]:
+    for mthd in [(solve_direct, dense_boundary_operator_builder),
+                 (solve_iterative, fmm_boundary_operator_builder)]:
         bdry_error, int_error = run(mthd[0], mthd[1], 7, log_u, make_log_dudn)
         assert(bdry_error < 1e-5)
         assert(int_error < 2e-5)
 
 def test_theta_u():
-    for mthd in [(solve_direct, dense_boundary_operator),
-                 (solve_iterative, boundary_operator)]:
+    for mthd in [(solve_direct, dense_boundary_operator_builder),
+                 (solve_iterative, fmm_boundary_operator_builder)]:
         bdry_error, int_error = run(mthd[0], mthd[1], 7, theta_u, make_theta_dudn)
         assert(bdry_error < 1e-5)
         assert(int_error < 2e-5)

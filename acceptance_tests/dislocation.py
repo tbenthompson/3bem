@@ -30,7 +30,6 @@ def default_linear_solver(tbem, cm, lhs, rhs):
         soln = tbem.distribute_vector(cm, v, lhs.n_rows())
         applied = lhs.apply(soln)
         out = tbem.condense_vector(cm, applied)
-        print(mv.it)
         return out
     mv.it = 0
 
@@ -50,11 +49,15 @@ def solve(dim, surface, fault, mthd, slip, **kwargs):
 
     cm = faulted_surface_constraints(tbem, surface, fault, dim)
 
-    rhs_op = tbem.boundary_operator(surface, fault, mthd, all_mesh)
+    fmm_order = 35
+    if dim == 3:
+        fmm_order = 100
+    fmm_config = tbem.FMMConfig(0.3, fmm_order, 250, 0.1, True)
+    rhs_op = tbem.boundary_operator(surface, fault, mthd, fmm_config, all_mesh)
     all_dofs_rhs = rhs_op.apply(slip)
     rhs = -tbem.condense_vector(cm, all_dofs_rhs)
 
-    lhs = tbem.boundary_operator(surface, surface, mthd, all_mesh)
+    lhs = tbem.boundary_operator(surface, surface, mthd, fmm_config, all_mesh)
     soln = linear_solver(tbem, cm, lhs, rhs)
     full_soln = tbem.distribute_vector(cm, soln, n_dofs)
     soln_components = []

@@ -10,7 +10,11 @@ def full_space():
 
     double_kernel = LaplaceDouble()
     mthd = make_adaptive_integrator(1e-13, 5, 8, 4.0, double_kernel)
-    double_layer = boundary_operator(surface, fault, mthd, fault)
+    double_layer = boundary_operator(
+        surface, fault, mthd,
+        FMMConfig(0.3, 30, 250, 0.05, True),
+        fault
+    )
 
     def fnc(x):
         if x[0] == 0.0:
@@ -30,11 +34,12 @@ def solve_half_space(slip, fault, surface):
     hypersingular_mthd = make_adaptive_integrator(
         1e-5, 5, 10, 3.0, LaplaceHypersingular()
     )
-    rhs_op = boundary_operator(surface, fault, hypersingular_mthd, all_mesh)
+    fmm_config = FMMConfig(0.3, 30, 250, 0.05, True)
+    rhs_op = boundary_operator(surface, fault, hypersingular_mthd, fmm_config, all_mesh)
     full_rhs = (rhs_op.apply(slip))
     rhs = condense_vector(constraint_matrix, full_rhs)
 
-    lhs_op = boundary_operator(surface, surface, hypersingular_mthd, all_mesh)
+    lhs_op = boundary_operator(surface, surface, hypersingular_mthd, fmm_config, all_mesh)
 
     def mv(v):
         distributed = distribute_vector(constraint_matrix, v, surface.n_dofs())

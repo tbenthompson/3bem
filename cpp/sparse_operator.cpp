@@ -18,7 +18,6 @@ SparseOperator::SparseOperator(size_t n_rows, size_t n_cols,
 
 std::vector<double> SparseOperator::apply(const std::vector<double>& x) const 
 {
-    assert(x.size() == n_cols());
     std::vector<double> out(n_rows(), 0.0);
     for (size_t i = 0; i < row_ptrs.size() - 1; i++) {
         for (size_t c_idx = row_ptrs[i]; c_idx < row_ptrs[i + 1]; c_idx++) {

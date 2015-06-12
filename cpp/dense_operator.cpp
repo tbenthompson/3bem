@@ -34,6 +34,9 @@ size_t DenseOperator::n_elements() const {
 
 std::vector<double> DenseOperator::apply(const std::vector<double>& x) const {
     assert(x.size() == n_cols());
+    if (n_cols() == 0) {
+        return std::vector<double>(n_rows(), 0.0);
+    }
     auto out = matrix_vector_product(*storage, x);
     return out;
 }

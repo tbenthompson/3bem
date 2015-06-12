@@ -172,6 +172,9 @@ std::vector<double> matrix_vector_product(const std::vector<double>& matrix,
 {
     char TRANS = 'T';
     int n_cols = static_cast<int>(vector.size());
+    if (n_cols == 0) {
+        return {};
+    }
     int n_matrix_els = static_cast<int>(matrix.size());
     int n_rows = n_matrix_els / n_cols;
     double alpha = 1;

@@ -103,9 +103,9 @@ def get_extension_config():
         '-fopenmp',
         '-UNDEBUG',
         '-DDEBUG=1',
-        # '-O3',
-        '-Og',
-        '-g',
+        '-O3',
+        # '-Og',
+        # '-g',
         '-Wall',
         '-Wextra'
     ]

@@ -69,12 +69,12 @@ IntegralOperator<dim,R,C> boundary_operator(const Mesh<dim>& obs_mesh,
     auto nbody_data = nbody_data_from_bem(
         obs_mesh, src_mesh, mthd.obs_quad, mthd.src_far_quad
     );
-    auto farfield = std::make_shared<FMMOperator<dim,R,C>>(
-        FMMOperator<dim,R,C>(*mthd.K, nbody_data, fmm_config)
-    );
-    // auto farfield = std::make_shared<DenseOperator>(
-    //     make_direct_nbody_operator(nbody_data, *mthd.K)
+    // auto farfield = std::make_shared<FMMOperator<dim,R,C>>(
+    //     FMMOperator<dim,R,C>(*mthd.K, nbody_data, fmm_config)
     // );
+    auto farfield = std::make_shared<DenseOperator>(
+        make_direct_nbody_operator(nbody_data, *mthd.K)
+    );
     std::shared_ptr<OperatorI> farfield_ptr = farfield;
 
     auto galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_quad);

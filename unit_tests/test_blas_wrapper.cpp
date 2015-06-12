@@ -93,3 +93,9 @@ TEST_CASE("matrix vector non-square", "[blas_wrapper]")
     auto result = matrix_vector_product(matrix, {4, -2, 0.5});
     REQUIRE_ARRAY_CLOSE(result, std::vector<double>{6.5, 0}, 2, 1e-15);
 }
+
+TEST_CASE("matrix vector 0 columns", "[blas_wrapper]")
+{
+    auto result = matrix_vector_product({}, {});
+    REQUIRE(result.size() == 0);
+}

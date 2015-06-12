@@ -39,9 +39,7 @@ struct NearestNeighborData {
         facets(facets),
         facet_balls(make_facet_balls(facets)),
         oct(make_octree<dim>(facet_balls, n_facets_per_leaf))
-    {
-        assert(facets.size() > 0);
-    }
+    {}
 };
 
 template <size_t dim>
