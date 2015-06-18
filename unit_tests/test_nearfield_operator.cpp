@@ -10,6 +10,25 @@
 
 using namespace tbem;
 
+void test_polygon(const std::vector<Vec<double,2>>& polygon, size_t refine)
+{
+    // turn the points into a 3bem mesh
+    std::vector<Mesh<2>> mesh_pieces;
+    for (size_t i = 0; i < polygon.size() - 1; i++) {
+        mesh_pieces.push_back(line_mesh(polygon[i], polygon[i + 1]));
+    }
+    auto m = Mesh<2>::create_union(mesh_pieces).refine_repeatedly(refine);
+
+    // generate the observation points for a galerkin evaluation
+    auto pts = galerkin_obs_pts(m, gauss_facet<2>(2), m);
+    
+    // and check that they are all with the polygon
+    for(auto p: pts) {
+        auto success = in_polygon(polygon, p.loc + p.richardson_dir);
+        REQUIRE(success);
+    }
+}
+
 TEST_CASE("richardson points always inside", "[nearfield_operator]")
 {
     //TODO: This test should probably be in the test_limit_direction file
@@ -32,29 +51,14 @@ TEST_CASE("richardson points always inside", "[nearfield_operator]")
         // the polygon must be closed (note that this cannot be done before 
         // the clockwise check because vertices are swapped
         polygon.push_back(polygon[0]);
-        
-        // turn the points into a 3bem mesh
-        std::vector<Mesh<2>> mesh_pieces;
-        for (size_t i = 0; i < polygon.size() - 1; i++) {
-            mesh_pieces.push_back(line_mesh(polygon[i], polygon[i + 1]));
-        }
-        auto refine_level = 5;
-        auto m = Mesh<2>::create_union(mesh_pieces).refine_repeatedly(refine_level);
 
-        // generate the observation points for a galerkin evaluation
-        auto pts = galerkin_obs_pts(m, gauss_facet<2>(2), m);
-        
-        // and check that they are all with the polygon
-        for(auto p: pts) {
-            auto success = in_polygon(polygon, p.loc + p.richardson_dir);
-            if (!success) {
-                std::cout << polygon[0] << std::endl; 
-                std::cout << polygon[1] << std::endl; 
-                std::cout << polygon[2] << std::endl; 
-            }
-            REQUIRE(success);
-        }
+        test_polygon(polygon, 5);
     }
+}
+
+TEST_CASE("richardson points inside wedge -- regression test", "[nearfield_operator]")
+{
+    test_polygon({{0, 0}, {150e3, -25e3}, {200e3, 0}, {150e3, 5e3}, {0, 0}}, 6);
 }
 
 TEST_CASE("interior obs pts", "[nearfield_operator]")

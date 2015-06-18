@@ -14,6 +14,8 @@ NearfieldFacetFinder<dim>::NearfieldFacetFinder(
     far_threshold(far_threshold)
 {}
 
+
+
 template <size_t dim> 
 NearfieldFacets<dim> 
 NearfieldFacetFinder<dim>::find(const Vec<double,dim>& pt)
@@ -65,6 +67,31 @@ template struct NearfieldFacetFinder<2>;
 template struct NearfieldFacetFinder<3>;
 
 template <size_t dim>
+Vec<double,dim> backup_halfway_from_intersection(Vec<double,dim> end_pt, 
+    double len_scale, const Vec<double,dim>& pt,
+    const NearfieldFacets<dim>& nearfield_facets, 
+    const std::vector<Vec<Vec<double,dim>,dim>>& facets)
+{
+    for (auto f_idx: nearfield_facets.facet_indices) {
+        if (f_idx == nearfield_facets.nearest_facet_idx) {
+            continue;
+        }
+        auto& f = facets[f_idx];
+        std::vector<Vec<double,dim>> intersections =
+            seg_facet_intersection<dim>(f, {end_pt, pt});
+        assert(intersections.size() != 2);
+        if (intersections.size() == 1 && intersections[0] != pt) {
+            auto to_intersection_dir = intersections[0] - pt;
+            if (hypot(to_intersection_dir) < 1e-12 * len_scale) {
+                continue;
+            }
+            end_pt = pt + to_intersection_dir / 2.0;
+        }
+    }
+    return end_pt;
+}
+
+template <size_t dim>
 Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     const NearfieldFacets<dim>& nearfield_facets, 
     const std::vector<Vec<Vec<double,dim>,dim>>& facets, 
@@ -76,10 +103,9 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     }
 
     const auto& closest_facet = facets[nearfield_facets.nearest_facet_idx];
-    // TODO: The length scale here needs to be exactly double the length scale
-    // used in finding the nearest facets, which means that the functions should
-    // be unified. Basically, the function to find nearfield_facets deserves to be
-    // in this file.
+
+    // The length scale here needs to be exactly double the length scale
+    // used in finding the nearest facets.
     double len_scale = facet_ball(closest_facet).radius * 2;
 
     // If the point isn't lying precisely on any facet, then no limit 
@@ -93,32 +119,23 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     // centroid of the facet. Out of the plane of the facet, the limit direction
     // will point in the same direction as the facet's normal, with a magnitude
     // similar to the length scale of the facet.
-    // TODO: There are edge cases where this vector could lie exactly on an element
-    // producing some big confusions!
     auto close_center = centroid(closest_facet);
     auto close_dir = unscaled_normal(closest_facet); 
     auto end_pt = close_center + normalized(close_dir) * len_scale;
 
+    // Make sure that the end point is within the interior of the mesh (the
+    // line segment from the centroid of the element to the end_pt does not
+    // intersect any edges)
+    end_pt = backup_halfway_from_intersection(
+        end_pt, len_scale, close_center, nearfield_facets, facets
+    );
+
     // Check if the vector intersects any facets.
     // If it does, back up to halfway between the intersection point and the
     // singular point
-    // TODO: make this a function called backup_halfway_from_intersection
-    for (auto f_idx: nearfield_facets.facet_indices) {
-        if (f_idx == nearfield_facets.nearest_facet_idx) {
-            continue;
-        }
-        auto& f = facets[f_idx];
-        std::vector<Vec<double,dim>> intersections =
-            seg_facet_intersection<dim>(f, {end_pt, pt});
-        assert(intersections.size() != 2);
-        if (intersections.size() == 1 && intersections[0] != pt) {
-            auto to_intersection_dir = intersections[0] - pt;
-            if (hypot(to_intersection_dir) < 1e-15 * len_scale) {
-                continue;
-            }
-            end_pt = pt + to_intersection_dir / 2.0;
-        }
-    }
+    end_pt = backup_halfway_from_intersection(
+        end_pt, len_scale, pt, nearfield_facets, facets
+    );
 
     // Scaling from facet length scale down after doing the 
     // intersection tests is safer because a wider range of

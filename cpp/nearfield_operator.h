@@ -22,7 +22,7 @@ std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
             auto loc = ref_to_real(ref_loc, obs_face.face);
             auto nf = nearfield_finder.find(loc);
 
-            auto rich_dir = decide_limit_dir(loc, nf, all_mesh.facets, 0.4, 1e-10);
+            auto rich_dir = decide_limit_dir(loc, nf, all_mesh.facets, 0.4, 1e-2);
 
             out.push_back({loc, obs_face.normal, rich_dir});
         }
@@ -38,7 +38,7 @@ std::vector<ObsPt<dim>> interior_obs_pts(const std::vector<Vec<double,dim>>& loc
     NearfieldFacetFinder<dim> nearfield_finder(all_mesh.facets, 1.0);
     for (size_t pt_idx = 0; pt_idx < locs.size(); pt_idx++) {
         auto nf = nearfield_finder.find(locs[pt_idx]);
-        auto rich_dir = decide_limit_dir(locs[pt_idx], nf, all_mesh.facets, 0.4, 1e-10);
+        auto rich_dir = decide_limit_dir(locs[pt_idx], nf, all_mesh.facets, 0.4, 1e-2);
         out.push_back({locs[pt_idx], normals[pt_idx], rich_dir});
     }
     return out;

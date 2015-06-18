@@ -146,17 +146,25 @@ TEST_CASE("limit direction no information", "[limit_direction]")
     REQUIRE_ARRAY_CLOSE(dir, zeros<Vec<double,2>>::make(), 3, 1e-12);
 }
 
-TEST_CASE("limit direction at element junction", "[limit_direction]")
+TEST_CASE("limit direction precisely at corner", "[limit_direction]")
 {
     Facet<2> f{{{0, 0}, {1, 0}}};
     Facet<2> f2{{{0.5, 0.5}, {0, 0}}};
     Vec<double,2> p{0, 0};
     
     auto dir = decide_limit_dir(p, {{0, 1}, 0, p, 0.0}, {f, f2}, 0.5);
-    std::cout << dir << std::endl;
-    REQUIRE(dir == (Vec<double,2>{0.25, 0.5}));
+    REQUIRE(dir == (Vec<double,2>{0.25, 0.125}));
 
     auto dir2 = decide_limit_dir(p, {{0, 1}, 1, p, 0.0}, {f, f2}, 0.5);
-    std::cout << dir2 << std::endl;
-    REQUIRE(dir2 == (Vec<double,2>{0.5, 0.25}));
+    REQUIRE(dir2 == (Vec<double,2>{0.1875, 0.0625}));
+}
+
+TEST_CASE("limit direction two identical facets", "[limit_direction]")
+{
+    Facet<2> f{{{0, 0}, {1, 0}}};
+    Facet<2> f2{{{0, 0}, {1, 0}}};
+    Vec<double,2> p{0, 0};
+    
+    auto dir = decide_limit_dir(p, {{0, 1}, 0, p, 0.0}, {f, f2}, 0.5);
+    REQUIRE(dir == (Vec<double,2>{0.25, 0.5}));
 }
