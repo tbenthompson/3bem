@@ -28,6 +28,8 @@ struct DenseOperator: public OperatorI {
     const DataT& data() const;
     double& operator[] (size_t idx); 
     const double& operator[] (size_t idx) const;
+
+    DenseOperator add(const DenseOperator& B);
 };
 
 } // end namespace tbem

@@ -62,12 +62,15 @@ IntegralOperator<dim,R,C> boundary_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationStrategy<dim,R,C>& mthd,
     const FMMConfig& fmm_config, const Mesh<dim>& all_mesh) 
 {
-    auto obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_quad, all_mesh);
-    auto nearfield = make_nearfield_operator(obs_pts, src_mesh, mthd);
-    auto far_correction = make_farfield_correction_operator(obs_pts, src_mesh, mthd);
+    (void)fmm_config;
+    auto near_obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_near_quad, all_mesh);
+    auto nearfield = make_nearfield_operator(near_obs_pts, src_mesh, mthd);
+    auto far_obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_far_quad, all_mesh);
+    auto far_correction = make_farfield_correction_operator(far_obs_pts, src_mesh, mthd);
+    auto near_galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_near_quad);
 
     auto nbody_data = nbody_data_from_bem(
-        obs_mesh, src_mesh, mthd.obs_quad, mthd.src_far_quad
+        obs_mesh, src_mesh, mthd.obs_far_quad, mthd.src_far_quad
     );
     // auto farfield = std::make_shared<FMMOperator<dim,R,C>>(
     //     FMMOperator<dim,R,C>(*mthd.K, nbody_data, fmm_config)
@@ -77,13 +80,13 @@ IntegralOperator<dim,R,C> boundary_operator(const Mesh<dim>& obs_mesh,
     );
     std::shared_ptr<OperatorI> farfield_ptr = farfield;
 
-    auto galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_quad);
+    auto far_galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_far_quad);
     auto interp = make_interpolation_operator(C, src_mesh, mthd.src_far_quad);
 
     return IntegralOperator<dim,R,C>(
-        galerkin.right_multiply(nearfield),
-        galerkin.right_multiply(far_correction),
-        galerkin, farfield_ptr, interp
+        near_galerkin.right_multiply(nearfield),
+        far_galerkin.right_multiply(far_correction),
+        far_galerkin, farfield_ptr, interp
     );
 }
 
@@ -92,27 +95,31 @@ DenseOperator dense_boundary_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationStrategy<dim,R,C>& mthd,
     const Mesh<dim>& all_mesh)
 {
-    auto obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_quad, all_mesh);
-    auto nearfield = make_nearfield_operator(obs_pts, src_mesh, mthd);
-    auto far_correction = make_farfield_correction_operator(obs_pts, src_mesh, mthd);
+    auto near_obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_near_quad, all_mesh);
+    auto nearfield = make_nearfield_operator(near_obs_pts, src_mesh, mthd);
+    auto far_obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_far_quad, all_mesh);
+    auto far_correction = make_farfield_correction_operator(far_obs_pts, src_mesh, mthd);
+    auto near_galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_near_quad);
 
     auto nbody_data = nbody_data_from_bem(
-        obs_mesh, src_mesh, mthd.obs_quad, mthd.src_far_quad
+        obs_mesh, src_mesh, mthd.obs_far_quad, mthd.src_far_quad
     );
     auto farfield = make_direct_nbody_operator(nbody_data, *mthd.K);
 
-    auto galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_quad);
+    auto far_galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_far_quad);
     auto interp = make_interpolation_operator(C, src_mesh, mthd.src_far_quad);
 
-    auto out = galerkin.right_multiply_with_dense(
-        far_correction.add_with_dense(
-            nearfield.add_with_dense(
+    auto out = far_galerkin.right_multiply_with_dense(
+            far_correction.add_with_dense(
                 interp.left_multiply_with_dense(
                     farfield
                 )
             )
-        )
-    );
+        ).add(
+            near_galerkin.right_multiply_with_dense(
+                nearfield.to_dense()
+            )
+        );
     return out;
 }
 

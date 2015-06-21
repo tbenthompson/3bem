@@ -139,14 +139,14 @@ void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K)
     }
 }
 
-TEST_CASE("SinhSufficientAccuracy", "[integral_term]") 
+TEST_CASE("sinh sufficient accuracy", "[integral_term]") 
 {
     // sinh_sufficient_accuracy(LaplaceSingle<3>());
     // sinh_sufficient_accuracy(ElasticTraction<3>(1.0, 0.25));
     /* sinh_sufficient_accuracy(ElasticHypersingular<3>(1.0, 0.25)); */
 }
 
-TEST_CASE("TensorKernel", "[integral_term]") 
+TEST_CASE("tensor kernel", "[integral_term]") 
 {
     ElasticDisplacement<2> k(1.0, 0.25);
     auto facet_info = FacetInfo<2>::build({{{-1.0, 0.0}, {1.0, 0.0}}});
@@ -163,7 +163,7 @@ TEST_CASE("TensorKernel", "[integral_term]")
     REQUIRE(result[1][1][0] == 0.0);
 }
 
-TEST_CASE("Kernel inline in mthd creation call", "[integral_term]")
+TEST_CASE("kernel inline in mthd creation call", "[integral_term]")
 {
     // When kernels were not copied, this test would segfault because the
     // LaplaceDouble<3> object would go out of scope after the make_..._mthd
@@ -172,4 +172,21 @@ TEST_CASE("Kernel inline in mthd creation call", "[integral_term]")
         1e-4, 2, 8, 3.0, LaplaceDouble<3>()
     );
     integral_laplace_double(mthd_adapt);
+}
+
+TEST_CASE("scale shouldn't matter laplacedouble", "[integral_term]")
+{
+    double value = -0.25;
+    for (size_t steps = 2; steps < 10; steps++) {
+        double L = std::pow(10, steps - 2);
+        auto mthd = make_adaptive_integrator(
+            1e-7, 2, 8, 3.0, LaplaceDouble<2>()
+        );
+        auto facet_info = FacetInfo<2>::build({{{0, 0}, {L, 0}}});
+        ObsPt<2> obs{{L / 2, 0}, {0.0, 1.0}, {0.0, L / 3.0}};
+        IntegralTerm<2,1,1> term{obs, facet_info};
+        auto nearest_pt = FarNearLogic<2>{3.0, 1.0}.decide(obs.loc, facet_info);
+        auto result = mthd.compute_term(term, nearest_pt);
+        REQUIRE_CLOSE(result[0][0][0], value, 1e-6);
+    }
 }

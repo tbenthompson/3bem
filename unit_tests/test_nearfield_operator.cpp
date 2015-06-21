@@ -98,8 +98,8 @@ TEST_CASE("Constrained nearfield matrix", "[nearfield_operator]")
     // be nearfield.
     LaplaceDouble<2> k;
     auto mthd = make_adaptive_integrator(1e-4, 3, 8, 300000, k);
-    auto galerkin = make_galerkin_operator(1, m, mthd.obs_quad);
-    auto obs_pts = galerkin_obs_pts(m, mthd.obs_quad, m);
+    auto galerkin = make_galerkin_operator(1, m, mthd.obs_far_quad);
+    auto obs_pts = galerkin_obs_pts(m, mthd.obs_far_quad, m);
     auto nearfield = make_nearfield_operator(obs_pts, m, mthd);
     auto matrix = galerkin.right_multiply(nearfield);
     auto dense_matrix = matrix.to_dense();

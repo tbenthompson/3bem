@@ -70,7 +70,8 @@ template <size_t dim,size_t R, size_t C>
 struct IntegrationStrategy {
     std::shared_ptr<Kernel<dim,R,C>> K;
     QuadRule<dim-1> src_far_quad;
-    QuadRule<dim-1> obs_quad;
+    QuadRule<dim-1> obs_near_quad;
+    QuadRule<dim-1> obs_far_quad;
     std::vector<double> singular_steps;
     double far_threshold;
     std::shared_ptr<NearfieldIntegratorI<dim,R,C>> nearfield_integrator;
@@ -108,6 +109,7 @@ IntegrationStrategy<dim,R,C> make_integrator(
     return {
         K.clone(), 
         gauss_facet<dim>(obs_order),
+        gauss_facet<dim>(obs_order + 1),
         gauss_facet<dim>(obs_order + 1),
         make_singular_steps(n_singular_steps),
         far_threshold,

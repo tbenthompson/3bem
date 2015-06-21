@@ -16,3 +16,4 @@ benchmarks/runner
 .tox/*
 MANIFEST
 dist/*
+sandbox

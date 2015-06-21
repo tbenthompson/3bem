@@ -126,21 +126,24 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     // Make sure that the end point is within the interior of the mesh (the
     // line segment from the centroid of the element to the end_pt does not
     // intersect any edges)
-    end_pt = backup_halfway_from_intersection(
-        end_pt, len_scale, close_center, nearfield_facets, facets
-    );
+    // TODO:
+    auto interior_pt = end_pt; 
+    // interior_pt = backup_halfway_from_intersection(
+    //     end_pt, len_scale, close_center, nearfield_facets, facets
+    // );
 
     // Check if the vector intersects any facets.
     // If it does, back up to halfway between the intersection point and the
     // singular point
-    end_pt = backup_halfway_from_intersection(
-        end_pt, len_scale, pt, nearfield_facets, facets
+    auto backup_pt = backup_halfway_from_intersection(
+        interior_pt, len_scale, pt, nearfield_facets, facets
     );
 
     // Scaling from facet length scale down after doing the 
     // intersection tests is safer because a wider range of
     // facet intersections are checked and avoided.
-    return (end_pt - pt) * safety_factor;
+    auto limit_dir = (backup_pt - pt) * safety_factor;
+    return limit_dir;
 }
 
 template Vec<double,2> 

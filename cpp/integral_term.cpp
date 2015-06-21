@@ -198,7 +198,8 @@ inline QuadRule<1> choose_sinh_quad<2>(size_t sinh_order,
     }
     else {
         size_t n = static_cast<size_t>(sinh_order * (1 + std::log(S / l)));
-        return sinh_transform(gauss(n), singular_pt[0], l, false);
+        //TODO: l / S? probably wrong!
+        return sinh_transform(gauss(n), singular_pt[0], l / S, false);
     }
 }
 
