@@ -174,19 +174,34 @@ TEST_CASE("kernel inline in mthd creation call", "[integral_term]")
     integral_laplace_double(mthd_adapt);
 }
 
-TEST_CASE("scale shouldn't matter laplacedouble", "[integral_term]")
+TEST_CASE("sinh integration -- scale shouldn't matter 2D", "[integral_term]")
 {
-    double value = -0.25;
     for (size_t steps = 2; steps < 10; steps++) {
         double L = std::pow(10, steps - 2);
-        auto mthd = make_adaptive_integrator(
-            1e-7, 2, 8, 3.0, LaplaceDouble<2>()
+        auto mthd = make_sinh_integrator(
+            12, 2, 8, 3.0, LaplaceDouble<2>()
         );
         auto facet_info = FacetInfo<2>::build({{{0, 0}, {L, 0}}});
         ObsPt<2> obs{{L / 2, 0}, {0.0, 1.0}, {0.0, L / 3.0}};
         IntegralTerm<2,1,1> term{obs, facet_info};
         auto nearest_pt = FarNearLogic<2>{3.0, 1.0}.decide(obs.loc, facet_info);
         auto result = mthd.compute_term(term, nearest_pt);
-        REQUIRE_CLOSE(result[0][0][0], value, 1e-6);
+        REQUIRE_CLOSE(result[0][0][0], -0.25, 1e-7);
+    }
+}
+
+TEST_CASE("sinh integration -- scale shouldn't matter 3D", "[integral_term]")
+{
+    for (size_t steps = 2; steps < 10; steps++) {
+        double L = std::pow(30, steps - 2);
+        auto mthd = make_sinh_integrator(
+            5, 2, 8, 3.0, LaplaceDouble<3>()
+        );
+        auto facet_info = FacetInfo<3>::build({{{0, 0, 0}, {L, 0, 0}, {0, L, 0}}});
+        ObsPt<3> obs{{L / 4, L / 4, 0}, {0.0, 0.0, 1.0}, {0.0, 0.0, L / 10.0}};
+        IntegralTerm<3,1,1> term{obs, facet_info};
+        auto nearest_pt = FarNearLogic<3>{3.0, 1.0}.decide(obs.loc, facet_info);
+        auto result = mthd.compute_term(term, nearest_pt);
+        REQUIRE_CLOSE(result[0][0][0], -0.25, 1e-7);
     }
 }
