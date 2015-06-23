@@ -4,7 +4,7 @@
 #include "galerkin_operator.h"
 #include "interpolation_operator.h"
 #include "sparse_operator.h"
-#include "quadrature.h"
+#include "gauss_quad.h"
 
 namespace tbem {
 

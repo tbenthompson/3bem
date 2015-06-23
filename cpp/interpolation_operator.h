@@ -2,16 +2,12 @@
 #define TBEMKLJLKJLKJNNBMBMNV_INTERPOLATION_OPERATOR_H
 
 #include <cstdlib>
-#include <vector>
+#include "quad_rule.h"
 
 namespace tbem {
 
 struct SparseOperator;
 template <size_t dim> struct Mesh;
-template <size_t dim>
-struct QuadPt;
-template <size_t dim>
-using QuadRule = std::vector<QuadPt<dim>>;
 
 template <size_t dim>
 SparseOperator make_interpolation_operator(size_t n_components,

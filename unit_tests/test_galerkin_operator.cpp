@@ -1,6 +1,6 @@
 #include "catch.hpp"
 #include "galerkin_operator.h"
-#include "quadrature.h"
+#include "gauss_quad.h"
 #include "mesh.h"
 #include "sparse_operator.h"
 

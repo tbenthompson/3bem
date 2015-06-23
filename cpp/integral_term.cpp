@@ -2,7 +2,7 @@
 #include "integral_term.h"
 #include "richardson.h"
 #include "adaptive_quad.h"
-#include "sinh_quadrature.h"
+#include "sinh_quad.h"
 #include "numerics.h"
 #include "gte_wrapper.h"
 

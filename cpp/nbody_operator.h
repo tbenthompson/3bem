@@ -8,8 +8,8 @@
 #include "operator.h"
 #include "dense_operator.h"
 #include "mesh.h"
-#include "quadrature.h"
 #include "facet_info.h"
+#include "quad_rule.h"
 
 namespace tbem {
 

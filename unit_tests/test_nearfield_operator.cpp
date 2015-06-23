@@ -1,7 +1,7 @@
 #include "catch.hpp"
 #include "nearfield_operator.h"
 #include "continuity_builder.h"
-#include "quadrature.h"
+#include "gauss_quad.h"
 #include "laplace_kernels.h"
 #include "mesh_gen.h"
 #include "integral_operator.h"

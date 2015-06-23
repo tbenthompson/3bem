@@ -1,5 +1,4 @@
-#include "sinh_quadrature.h"
-#include "quadrature.h"
+#include "sinh_quad.h"
 #include "numerics.h"
 #include <cmath>
 

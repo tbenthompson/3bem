@@ -4,7 +4,7 @@
 #include "vec.h"
 #include "kernel.h"
 #include "facet_info.h"
-#include "quadrature.h"
+#include "gauss_quad.h"
 
 namespace tbem {
 

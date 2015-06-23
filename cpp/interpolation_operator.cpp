@@ -1,6 +1,6 @@
 #include "interpolation_operator.h"
 #include "mesh.h"
-#include "quadrature.h"
+#include "gauss_quad.h"
 #include "sparse_operator.h"
 #include "numerics.h"
 

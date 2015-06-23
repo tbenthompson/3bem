@@ -1,8 +1,8 @@
 #include "catch.hpp"
-#include "sinh_quadrature.h"
-#include "quadrature.h"
+#include "sinh_quad.h"
 #include "vec_ops.h"
 #include "adaptive_quad.h"
+#include "gauss_quad.h"
 #include <functional>
 
 using namespace tbem;

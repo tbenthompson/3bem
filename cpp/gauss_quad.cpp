@@ -1,4 +1,4 @@
-#include "quadrature.h"
+#include "gauss_quad.h"
 #include "numerics.h"
 #include <cmath>
 
@@ -150,5 +150,18 @@ QuadRule<2> tensor_gauss(size_t n_pts) {
 QuadRule<2> tri_gauss(size_t n_pts) {
     return square_to_tri(tensor_gauss(n_pts));
 }
+
+template <>
+QuadRule<2> gauss_facet<3>(size_t n_q) 
+{
+    return tri_gauss(n_q);
+}
+
+template <>
+QuadRule<1> gauss_facet<2>(size_t n_q) 
+{
+    return gauss(n_q);
+}
+
 
 } //END NAMESPACE tbem

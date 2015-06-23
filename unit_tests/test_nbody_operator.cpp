@@ -3,6 +3,7 @@
 #include "laplace_kernels.h"
 #include "util.h"
 #include "mesh_gen.h"
+#include "gauss_quad.h"
 
 using namespace tbem;
 
