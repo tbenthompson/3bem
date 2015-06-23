@@ -12,24 +12,23 @@ template <size_t dim>
 NearestPoint<dim> FarNearLogic<dim>::decide(const Vec<double,dim>& pt,
     const FacetInfo<dim>& facet) 
 {
-    auto near_ref_pt = closest_pt_facet(pt, facet.face);
-    auto near_pt = ref_to_real(near_ref_pt, facet.face);
-    auto exact_dist2 = dist2(near_pt, pt);
-    auto appx_dist2 = exact_dist2;//appx_face_dist2(obs.loc, facet.face);
-    bool nearfield = appx_dist2 < pow(far_threshold, 2) * facet.area_scale;
+    auto near_ref_pt = closest_pt_facet(pt, facet.facet);
+    auto near_pt = ref_to_real(near_ref_pt, facet.facet);
+    auto exact_dist = dist(near_pt, pt);
+    bool nearfield = exact_dist < far_threshold * facet.length_scale;
     if (nearfield) {
-        bool singular = appx_dist2 < singular_threshold * facet.area_scale;
+        bool singular = exact_dist < singular_threshold * facet.length_scale;
         if (singular) { 
             return {
-                near_ref_pt, near_pt, std::sqrt(exact_dist2), FarNearType::Singular
+                near_ref_pt, near_pt, exact_dist, FarNearType::Singular
             };
         } else {
             return {
-                near_ref_pt, near_pt, std::sqrt(exact_dist2), FarNearType::Nearfield
+                near_ref_pt, near_pt, exact_dist, FarNearType::Nearfield
             };
         }
     } else {
-        return {near_ref_pt, near_pt, std::sqrt(exact_dist2), FarNearType::Farfield};
+        return {near_ref_pt, near_pt, exact_dist, FarNearType::Farfield};
     }
 }
 
@@ -41,7 +40,7 @@ Vec<Vec<Vec<double,C>,R>,dim> IntegralTerm<dim,R,C>::eval_point_influence(
     const Kernel<dim,R,C>& k, const Vec<double,dim-1>& x_hat,
     const Vec<double,dim>& moved_obs_loc) const 
 {
-    const auto src_pt = ref_to_real(x_hat, src_face.face);
+    const auto src_pt = ref_to_real(x_hat, src_face.facet);
     auto kernel_val = k(moved_obs_loc, src_pt, obs.normal, src_face.normal);
     return outer_product(linear_basis(x_hat), kernel_val * src_face.jacobian);
 }
@@ -64,12 +63,15 @@ Vec<Vec<Vec<double,C>,R>,dim> IntegrationStrategy<dim,R,C>::compute_term(
 {
     switch (nearest_pt.type) {
         case FarNearType::Singular:
+            std::cout << "SINGULAR" << std::endl;
             return compute_singular(term, nearest_pt);
             break;
         case FarNearType::Nearfield:
+            std::cout << "NEARFIELD" << std::endl;
             return nearfield_integrator->compute_nearfield(*K, term, nearest_pt);
             break;
         case FarNearType::Farfield:
+            std::cout << "FARFIELD" << std::endl;
             return compute_farfield(term, nearest_pt);
             break;
     }

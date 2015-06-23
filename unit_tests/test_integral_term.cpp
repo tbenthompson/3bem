@@ -9,6 +9,35 @@
 
 using namespace tbem;
 
+TEST_CASE("FacetInfo2D", "[dense_builder]") 
+{
+    Facet<2> f{Vec2<double>{0.0, 0.0}, Vec2<double>{3.0, 0.0}};
+    auto face_info = FacetInfo<2>::build(f);
+    REQUIRE(face_info.length_scale == 1.5);
+    REQUIRE(face_info.jacobian == 1.5);
+    REQUIRE(face_info.normal == (Vec2<double>{0.0, 1.0}));
+}
+
+TEST_CASE("FacetInfo3D", "[dense_builder]") 
+{
+    Facet<3> f{
+        Vec3<double>{0.0, 0.0, 0.0},
+        Vec3<double>{2.0, 0.0, 0.0},
+        Vec3<double>{0.0, 2.0, 0.0}
+    };
+    auto face_info = FacetInfo<3>::build(f);
+    REQUIRE(face_info.length_scale == facet_ball(f).radius);
+    REQUIRE(face_info.jacobian == 4.0);
+    REQUIRE(face_info.normal == (Vec3<double>{0.0, 0.0, 1.0}));
+}
+
+TEST_CASE("get_facet_info", "[dense_builder]") 
+{
+    auto m = line_mesh({0, 0}, {1, 0}).refine_repeatedly(4);
+    auto f = get_facet_info(m);
+    REQUIRE(f.size() == m.n_facets());
+}
+
 TEST_CASE("IntegralOne", "[integral_term]") 
 {
     IdentityScalar<2> identity;
@@ -101,7 +130,7 @@ void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K)
             auto loc = on_facet_pt + z * facet_info.normal;
             ObsPt<dim> obs{loc, facet_info.normal, facet_info.normal};
             IntegralTerm<dim,R,C> term{obs, facet_info};
-            auto nearest_pt = FarNearLogic<dim>{3.0, 1.0}.decide(obs.loc, facet_info);
+            auto nearest_pt = FarNearLogic<dim>{3.0, 2.0}.decide(obs.loc, facet_info);
 
             auto sinh_eval = mthd_sinh.compute_term(term, nearest_pt);
             auto adapt_eval = mthd_adapt.compute_term(term, nearest_pt);
@@ -114,6 +143,7 @@ void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K)
                 sum(sum(sum(error * error))) / n_vals
             );
             double l2_error_ratio = l2_error / l2_adapt;
+            std::cout << loc << " " << l2_error_ratio << std::endl;
             REQUIRE_CLOSE(l2_error_ratio, 0.0, 1e-2);
         }
     }
@@ -121,8 +151,11 @@ void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K)
 
 TEST_CASE("sinh sufficient accuracy 2D", "[integral_term]") 
 {
+    std::cout << "integrating U" << std::endl << std::endl;
     sinh_sufficient_accuracy(ElasticDisplacement<2>(1.0, 0.25));
+    std::cout << "integrating T" << std::endl << std::endl;
     sinh_sufficient_accuracy(ElasticTraction<2>(1.0, 0.25));
+    std::cout << "integrating W" << std::endl << std::endl;
     sinh_sufficient_accuracy(ElasticHypersingular<2>(1.0, 0.25));
     // sinh_sufficient_accuracy(ElasticDisplacement<3>(1.0, 0.25));
     // sinh_sufficient_accuracy(ElasticTraction<3>(1.0, 0.25));

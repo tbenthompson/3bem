@@ -19,7 +19,7 @@ std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
         auto obs_face = FacetInfo<dim>::build(obs_mesh.facets[obs_idx]);
         for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
             auto ref_loc = obs_quad[obs_q].x_hat;
-            auto loc = ref_to_real(ref_loc, obs_face.face);
+            auto loc = ref_to_real(ref_loc, obs_face.facet);
             auto nf = nearfield_finder.find(loc);
 
             auto rich_dir = decide_limit_dir(loc, nf, all_mesh.facets, 0.4, 1e-2);
