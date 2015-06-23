@@ -2,6 +2,7 @@
 #include "integral_term.h"
 #include "richardson.h"
 #include "adaptive_quad.h"
+#include "sinh_quadrature.h"
 #include "numerics.h"
 #include "gte_wrapper.h"
 
@@ -205,7 +206,7 @@ QuadRule<2> make_sinh_quad<3>(size_t order, Vec<double,2> singular_pt,
 }
 
 template <size_t dim>
-QuadRule<dim-1> choose_sinh_quad(size_t sinh_order,
+QuadRule<dim-1> choose_sinh_quad(size_t far_order, size_t order_growth_rate,
     double S, double l, Vec<double,dim-1> singular_pt)
 {
     double scaled_distance = l / S;
@@ -213,20 +214,19 @@ QuadRule<dim-1> choose_sinh_quad(size_t sinh_order,
     if (far_enough_that_sinh_quadrature_is_unnecessary) {
         return gauss_facet<dim>(10); 
     }
-    size_t n = sinh_order * (1 - std::log(scaled_distance));
+    size_t n = far_order + (order_growth_rate * (-std::log(scaled_distance)));
     return make_sinh_quad<dim>(n, singular_pt, scaled_distance);
 }
 
 template <size_t dim, size_t R, size_t C>
 Vec<Vec<Vec<double,C>,R>,dim> 
 SinhIntegrator<dim,R,C>::compute_nearfield(const Kernel<dim,R,C>& K, 
-    const IntegralTerm<dim,R,C>& term,
-    const NearestPoint<dim>& nearest_pt) const 
+    const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& nearest_pt) const 
 {
     auto l = nearest_pt.distance;
     assert(l > 0);
     auto S = term.src_face.length_scale;
-    auto q = choose_sinh_quad<dim>(sinh_order, S, l, nearest_pt.ref_pt);
+    auto q = choose_sinh_quad<dim>(sinh_order, sinh_order, S, l, nearest_pt.ref_pt);
     auto integrals = zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make();
     for (size_t i = 0; i < q.size(); i++) {
         integrals += term.eval_point_influence(K, q[i].x_hat, term.obs.loc) * q[i].w;

@@ -248,10 +248,13 @@ template <typename T>
 T sum(const Vec3<T>& a) {
     return a[0] + a[1] + a[2];
 }
-
 template <typename T>
 T sum(const Vec2<T>& a) {
     return a[0] + a[1];
+}
+template <typename T>
+T sum(const Vec1<T>& a) {
+    return a[0];
 }
 
 using std::fabs;

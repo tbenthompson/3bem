@@ -84,4 +84,13 @@ BENCHMARK_TEMPLATE(fmm_hypersingular_apply, 3)
     // ->ArgPair(500000, 100)
     // ->ArgPair(500000, 250);
 
+// TEST_CASE("all pairs performance", "[intersect_balls]") 
+// {
+//     size_t n = 50000;
+//     auto pts = line_pts(n);
+//     //TODO: Capacity test
+//     auto result = intersect_balls_all_pairs(pts, pts);
+// }
+
+
 BENCHMARK_MAIN()

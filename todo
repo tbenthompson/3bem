@@ -9,6 +9,7 @@ CURRENT:
 ** fix the singular vs nearfield identification code
 ** integration logger?
 
+
 NEXT: hanging nodes 
 ** acceptance test #1: fault intersecting surface not at point
 ** acceptance test #2: adaptively refined okada solution (using the real error as the refinement criterion, so not technically adaptive meshing yet)
@@ -26,7 +27,7 @@ INTEGRATION:
 ** try other nearly-singular quadrature methods (not sinh-sigmoidal)
 
 MISC:
-** characterize the sinh-sigmoidal method
+** systematic tests and understanding for the 3D sinh-sigmoidal method
 ** use iterators for traversing point sets?
 ** characterize the galerkin BEM for hypersingular kernels
 ** split out the fmm scheduler/traversal

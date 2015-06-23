@@ -29,6 +29,9 @@ std::vector<Vec<double,dim>> random_pts(size_t N, double a, double b)
     }
     return out;
 }
+template std::vector<Vec<double,2>> random_pts<2>(size_t N, double a, double b); 
+template std::vector<Vec<double,3>> random_pts<3>(size_t N, double a, double b);
+
 
 template <>
 double random<double>(double min, double max) 
@@ -48,8 +51,21 @@ size_t random<size_t>(size_t min, size_t max)
     return dis(gen);
 }
 
-template std::vector<Vec<double,2>> random_pts<2>(size_t N, double a, double b); 
-template std::vector<Vec<double,3>> random_pts<3>(size_t N, double a, double b);
+template <>
+Vec<double,2> random_pt_facet<2>(const Vec<Vec<double,2>,2>& facet) 
+{
+    auto x_hat = random<double>(-1, 1);
+    return ref_to_real({x_hat}, facet);
+}
+
+template <>
+Vec<double,3> random_pt_facet<3>(const Vec<Vec<double,3>,3>& facet) 
+{
+    auto x_hat = random<double>(0, 1);
+    auto y_hat = (1 - x_hat) * random<double>(0, 1);
+    return ref_to_real({x_hat, y_hat}, facet);
+}
+
 
 template <size_t dim>
 Vec<double,dim> random_pt() 
@@ -58,6 +74,7 @@ Vec<double,dim> random_pt()
 }
 template Vec<double,2> random_pt<2>();
 template Vec<double,3> random_pt<3>();
+
 
 template <size_t dim>
 std::vector<Ball<dim>> random_balls(size_t n, double r_max)
@@ -70,7 +87,6 @@ std::vector<Ball<dim>> random_balls(size_t n, double r_max)
     }
     return balls;
 }
-
 template std::vector<Ball<2>> random_balls(size_t n, double r_max);
 template std::vector<Ball<3>> random_balls(size_t n, double r_max);
 

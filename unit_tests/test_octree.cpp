@@ -21,14 +21,14 @@ TEST_CASE("make child idx 2d", "[octree]")
 
 TEST_CASE("check law of large numbers", "[octree]") 
 {
-    int n = 1000000;
+    int n = 100000;
     auto pts = random_pts<3>(n);
     //TODO: Make a octree capacity test
     auto tree = make_octree(pts, 100);
     for (size_t i = 0; i < 8; i++) {
         int n_pts = tree.children[i]->indices.size();
         int diff = abs(n_pts - (n / 8));
-        CHECK(diff < (n / 32));
+        CHECK(diff < (n / 16));
     }
 }
 

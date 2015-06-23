@@ -1,9 +1,10 @@
-#ifndef TBEMTEST_SHARED_H
-#define TBEMTEST_SHARED_H
+#ifndef TBEMUTIL_H
+#define TBEMUTIL_H
 
 #include <vector>
 #include <chrono>
 #include "vec.h"
+#include "numerics.h"
 
 namespace tbem {
 
@@ -30,8 +31,11 @@ T random(T min, T max);
 
 template <size_t dim>
 std::vector<Vec<double,dim>> random_pts(size_t N, double a = 0, double b = 1);
-
 //TODO: Should this be here? Or in geometry.h
+
+template <size_t dim>
+Vec<double,dim> random_pt_facet(const Vec<Vec<double,dim>,dim>& facet);
+
 template <size_t dim> struct Ball;
 template <size_t dim>
 std::vector<Ball<dim>> random_balls(size_t n, double r_max);

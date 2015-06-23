@@ -55,12 +55,3 @@ TEST_CASE("all pairs", "[intersect_balls]")
     // 1000 pairs like (k, k). 998 pairs like (k, k+1) and (k+1, k)
     REQUIRE(result.size() == 1998);
 }
-
-TEST_CASE("all pairs performance", "[intersect_balls]") 
-{
-    size_t n = 50000;
-    auto pts = line_pts(n);
-    //TODO: Capacity test
-    auto result = intersect_balls_all_pairs(pts, pts);
-}
-
