@@ -111,13 +111,13 @@ inline Vec2<double> unit<double,2>(const int k)
 }
 
 inline Vec3<double> 
-unscaled_normal(const std::array<Vec3<double>,3>& corners) 
+unscaled_normal(const Vec<Vec3<double>,3>& corners) 
 {
     return cross(corners[2] - corners[0], corners[2] - corners[1]);
 }
 
 inline Vec2<double> 
-unscaled_normal(const std::array<Vec2<double>,2>& corners) 
+unscaled_normal(const Vec<Vec2<double>,2>& corners) 
 {
     return {
         -(corners[1][1] - corners[0][1]),
@@ -126,10 +126,16 @@ unscaled_normal(const std::array<Vec2<double>,2>& corners)
 }
 
 template <size_t dim>
-Vec<double,dim> facet_normal(const std::array<Vec<double,dim>,dim>& corners) 
+Vec<double,dim> facet_normal(const Vec<Vec<double,dim>,dim>& corners) 
 {
     auto unscaled = unscaled_normal(corners);
     return normalized(unscaled);
+}
+
+template <size_t dim>
+double facet_jacobian(const Vec<Vec<double,dim>,dim>& corners) 
+{
+    return 0.0;
 }
 
 inline double tri_area(const Vec3<double>& unscaled_normal) 
@@ -137,7 +143,7 @@ inline double tri_area(const Vec3<double>& unscaled_normal)
     return 0.5 * hypot(unscaled_normal);
 }
 
-inline double tri_area(const std::array<Vec3<double>,3>& corners) 
+inline double tri_area(const Vec<Vec3<double>,3>& corners) 
 {
     return tri_area(unscaled_normal(corners));
 }
@@ -148,7 +154,7 @@ enum Side {FRONT, INTERSECT, BEHIND};
  * the provided point is on.
  */
 template <size_t dim>
-Side which_side_point(const std::array<Vec<double,dim>,dim>& face,
+Side which_side_point(const Vec<Vec<double,dim>,dim>& face,
                 const Vec<double,dim>& pt) 
 {
     auto normal = unscaled_normal(face);
@@ -160,10 +166,10 @@ Side which_side_point(const std::array<Vec<double,dim>,dim>& face,
 
 /* Returns the side of a plane that a triangle/segment is on. */
 template <size_t dim>
-Side facet_side(std::array<Side,dim> s);
+Side facet_side(const std::array<Side,dim>& s);
 
 template <>
-inline Side facet_side<2>(std::array<Side,2> s) 
+inline Side facet_side<2>(const std::array<Side,2>& s) 
 {
     if (s[0] == s[1]) { return s[0]; } 
     else if(s[0] == INTERSECT) { return s[1]; }
@@ -172,7 +178,7 @@ inline Side facet_side<2>(std::array<Side,2> s)
 }
 
 template <>
-inline Side facet_side<3>(std::array<Side,3> s) 
+inline Side facet_side<3>(const std::array<Side,3>& s) 
 {
     auto edge0 = facet_side<2>({s[0], s[1]});
     auto edge1 = facet_side<2>({s[0], s[2]});
@@ -194,8 +200,8 @@ inline Side facet_side<3>(std::array<Side,3> s)
  * that the given triangle/segment is on
  */
 template <size_t dim>
-Side which_side_facet(const std::array<Vec<double,dim>,dim>& plane,
-    const std::array<Vec<double,dim>,dim>& face) 
+Side which_side_facet(const Vec<Vec<double,dim>,dim>& plane,
+    const Vec<Vec<double,dim>,dim>& face) 
 {
     std::array<Side,dim> sides;
     for (int d = 0; d < dim; d++) {

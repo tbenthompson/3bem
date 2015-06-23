@@ -8,8 +8,8 @@
 #include "operator.h"
 #include "dense_operator.h"
 #include "mesh.h"
-#include "facet_info.h"
 #include "quad_rule.h"
+#include "numerics.h"
 
 namespace tbem {
 
@@ -43,11 +43,11 @@ NBodyObservationPoints<dim> nbody_obs_from_bem(const Mesh<dim>& obs_mesh,
     std::vector<Vec<double,dim>> obs_locs(n_obs_dofs);
     std::vector<Vec<double,dim>> obs_normals(n_obs_dofs);
     for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) {
-        auto obs_face = FacetInfo<dim>::build(obs_mesh.facets[obs_idx]);
+        auto obs_face = obs_mesh.facets[obs_idx];
         for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
             auto obs_dof = obs_idx * obs_quad.size() + obs_q;
-            obs_normals[obs_dof] = obs_face.normal;
-            obs_locs[obs_dof] = ref_to_real(obs_quad[obs_q].x_hat, obs_face.face);
+            obs_normals[obs_dof] = facet_normal<dim>(obs_face);
+            obs_locs[obs_dof] = ref_to_real(obs_quad[obs_q].x_hat, obs_face);
         }
     }
     return {obs_locs, obs_normals};
@@ -62,12 +62,13 @@ NBodySourcePoints<dim> nbody_src_from_bem(const Mesh<dim>& src_mesh,
     std::vector<Vec<double,dim>> src_normals(n_src_dofs);
     std::vector<double> src_weights(n_src_dofs);
     for (size_t src_idx = 0; src_idx < src_mesh.facets.size(); src_idx++) {
-        auto src_face = FacetInfo<dim>::build(src_mesh.facets[src_idx]);
+        auto src_face = src_mesh.facets[src_idx];
         for (size_t src_q = 0; src_q < src_quad.size(); src_q++) {
             auto src_dof = src_idx * src_quad.size() + src_q;
-            src_weights[src_dof] = src_quad[src_q].w * src_face.jacobian;
-            src_normals[src_dof] = src_face.normal;
-            src_locs[src_dof] = ref_to_real(src_quad[src_q].x_hat, src_face.face);
+            auto jacobian = facet_jacobian<dim>(src_face);
+            src_weights[src_dof] = src_quad[src_q].w * jacobian;
+            src_normals[src_dof] = facet_normal<dim>(src_face);
+            src_locs[src_dof] = ref_to_real(src_quad[src_q].x_hat, src_face);
         }
     }
 

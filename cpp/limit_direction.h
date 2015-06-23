@@ -14,6 +14,7 @@ template <size_t dim>
 struct NearfieldFacets {
     const std::vector<size_t> facet_indices;
     const size_t nearest_facet_idx;
+    const Vec<double,dim-1> ref_pt;
     const Vec<double,dim> pt;
     const double distance;
 };
