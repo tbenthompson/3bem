@@ -128,7 +128,7 @@ void sinh_sufficient_accuracy(const Kernel<dim,R,C>& K)
             double z = std::pow(10.0, log_z);
             
             auto loc = on_facet_pt + z * facet_info.normal;
-            ObsPt<dim> obs{loc, facet_info.normal, facet_info.normal};
+            ObsPt<dim> obs{loc, facet_info.normal, facet_info.normal * 0.3};
             IntegralTerm<dim,R,C> term{obs, facet_info};
             auto nearest_pt = FarNearLogic<dim>{3.0, 2.0}.decide(obs.loc, facet_info);
 

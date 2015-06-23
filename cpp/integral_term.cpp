@@ -63,15 +63,12 @@ Vec<Vec<Vec<double,C>,R>,dim> IntegrationStrategy<dim,R,C>::compute_term(
 {
     switch (nearest_pt.type) {
         case FarNearType::Singular:
-            std::cout << "SINGULAR" << std::endl;
             return compute_singular(term, nearest_pt);
             break;
         case FarNearType::Nearfield:
-            std::cout << "NEARFIELD" << std::endl;
             return nearfield_integrator->compute_nearfield(*K, term, nearest_pt);
             break;
         case FarNearType::Farfield:
-            std::cout << "FARFIELD" << std::endl;
             return compute_farfield(term, nearest_pt);
             break;
     }

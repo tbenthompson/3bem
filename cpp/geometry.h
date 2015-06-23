@@ -132,12 +132,6 @@ Vec<double,dim> facet_normal(const Vec<Vec<double,dim>,dim>& corners)
     return normalized(unscaled);
 }
 
-template <size_t dim>
-double facet_jacobian(const Vec<Vec<double,dim>,dim>& corners) 
-{
-    return 0.0;
-}
-
 inline double tri_area(const Vec3<double>& unscaled_normal) 
 {
     return 0.5 * hypot(unscaled_normal);
