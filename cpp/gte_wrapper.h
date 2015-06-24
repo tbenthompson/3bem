@@ -13,7 +13,13 @@ std::vector<Vec<double,dim>> seg_facet_intersection(const Vec<Vec<double,dim>,di
 bool in_polygon(const std::vector<Vec<double,2>>& poly, const Vec<double,2>& pt);
 
 template <size_t dim>
-Vec<double,dim-1> closest_pt_facet(const Vec<double,dim>& pt,
+struct NearestPoint {
+    const Vec<double,dim-1> ref_pt;
+    const Vec<double,dim> pt;
+    const double distance;
+};
+template <size_t dim>
+NearestPoint<dim> closest_pt_facet(const Vec<double,dim>& pt,
     const Vec<Vec<double,dim>,dim> tri);
 
 

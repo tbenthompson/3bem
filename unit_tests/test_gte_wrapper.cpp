@@ -63,43 +63,43 @@ TEST_CASE("in polygon", "[gte_wrapper]")
 TEST_CASE("nearest point endpoint", "[gte_wrapper]") 
 {
     Vec<Vec<double,2>,2> f{{{1,1},{2,1}}};
-    auto result = ref_to_real(closest_pt_facet<2>({0, 0}, f), f);
-    REQUIRE(result == f[0]);
+    auto result = closest_pt_facet<2>({0, 0}, f);
+    REQUIRE(result.pt == f[0]);
 }
 
 TEST_CASE("nearest point not endpoint", "[gte_wrapper]") 
 {
     Vec<Vec<double,2>,2> f{{{-1,-1},{1,-1}}};
-    auto result = ref_to_real(closest_pt_facet<2>({0, 0}, f), f);
-    REQUIRE(result == (Vec<double,2>{0,-1}));
+    auto result = closest_pt_facet<2>({0, 0}, f);
+    REQUIRE(result.pt == (Vec<double,2>{0,-1}));
 }
 
 TEST_CASE("nearest point triangle above vertex", "[gte_wrapper]") 
 {
     Vec<Vec<double,3>,3> f{{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}};
-    auto result = ref_to_real(closest_pt_facet<3>({0, 0, 1}, f), f);
-    REQUIRE(result == (Vec<double,3>{0,0,0}));
+    auto result = closest_pt_facet<3>({0, 0, 1}, f);
+    REQUIRE(result.pt == (Vec<double,3>{0,0,0}));
 }
 
 TEST_CASE("nearest point triangle vertex", "[gte_wrapper]") 
 {
     Vec<Vec<double,3>,3> f{{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}};
-    auto result = ref_to_real(closest_pt_facet<3>({0, 0, 1}, f), f);
-    REQUIRE(result == (Vec<double,3>{0,0,0}));
+    auto result = closest_pt_facet<3>({0, 0, 1}, f);
+    REQUIRE(result.pt == (Vec<double,3>{0,0,0}));
 }
 
 TEST_CASE("nearest point triangle interior", "[gte_wrapper]") 
 {
     Vec<Vec<double,3>,3> f{{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}};
-    auto result = ref_to_real(closest_pt_facet<3>({0.5, 0.1, 1}, f), f);
-    REQUIRE(result == (Vec<double,3>{0.5, 0.1, 0}));
+    auto result = closest_pt_facet<3>({0.5, 0.1, 1}, f);
+    REQUIRE(result.pt == (Vec<double,3>{0.5, 0.1, 0}));
 }
 
 TEST_CASE("nearest point triangle outside", "[gte_wrapper]") 
 {
     Vec<Vec<double,3>,3> f{{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}};
-    auto result = ref_to_real(closest_pt_facet<3>({1.5, 1.1, 1}, f), f);
-    REQUIRE_CLOSE(result, Vec<double,3>{0.7, 0.3, 0}, 1e-12);
+    auto result = closest_pt_facet<3>({1.5, 1.1, 1}, f);
+    REQUIRE_CLOSE(result.pt, Vec<double,3>{0.7, 0.3, 0}, 1e-12);
 }
 
 TEST_CASE("intersect ball box 3d", "[gte_wrapper]") 

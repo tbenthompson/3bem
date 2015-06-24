@@ -20,7 +20,12 @@ struct FacetInfo {
 template <size_t dim>
 FacetInfo<dim> FacetInfo<dim>::build(const Facet<dim>& facet) {
     return FacetInfo<dim>{
-        facet, facet_ball(facet).radius,
+        //TODO: Remove the radius -> diameter scaling here
+        //things that will need to change:
+        //-- growth rates for sinh quadrature orders
+        //-- farfield quadrature orders
+        //-- the singular vs. nearfield decider
+        facet, 2 * facet_ball(facet).radius,
         facet_jacobian(facet), facet_normal(facet)
     };
 }

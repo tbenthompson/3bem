@@ -36,34 +36,12 @@ struct IntegralTerm {
         const Vec<double,dim-1>& x_hat) const; 
 };
 
-enum class FarNearType {
-    Singular,
-    Nearfield,
-    Farfield 
-};
-
-//TODO: This mostly duplicates the return type of the gte distance query
-template <size_t dim>
-struct NearestPoint {
-    const Vec<double,dim-1> ref_pt;
-    const Vec<double,dim> pt;
-    const double distance;
-    const FarNearType type;
-};
-
-template <size_t dim>
-struct FarNearLogic {
-    double far_threshold;
-    double singular_threshold;
-    
-    NearestPoint<dim> decide(const Vec<double,dim>& pt, const FacetInfo<dim>& facet);
-};
-
+template <size_t dim> struct NearestPoint;
 template <size_t dim,size_t R, size_t C>
 struct NearfieldIntegratorI {
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
     compute_nearfield(const Kernel<dim,R,C>&, const IntegralTerm<dim,R,C>&,
-        const NearestPoint<dim>&) const = 0;
+        const NearestPoint<dim>&) = 0;
 };
 
 template <size_t dim,size_t R, size_t C>
@@ -73,20 +51,16 @@ struct IntegrationStrategy {
     QuadRule<dim-1> obs_near_quad;
     QuadRule<dim-1> obs_far_quad;
     std::vector<double> singular_steps;
+    double singular_threshold;
     double far_threshold;
     std::shared_ptr<NearfieldIntegratorI<dim,R,C>> nearfield_integrator;
-
-    Vec<Vec<Vec<double,C>,R>,dim>
-    compute_singular(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
-
-    Vec<Vec<Vec<double,C>,R>,dim> 
-    compute_farfield(const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&) const;
 
     /* Compute the full influence of a source facet on an observation point, given
      * a kernel function/Green's function
      */
-    Vec<Vec<Vec<double,C>,R>,dim> compute_term(const IntegralTerm<dim,R,C>& term,
-        const NearestPoint<dim>& nearest_pt) const;
+    Vec<Vec<Vec<double,C>,R>,dim> compute_term(const IntegralTerm<dim,R,C>& term) const;
+    Vec<Vec<Vec<double,C>,R>,dim> compute_singular(const IntegralTerm<dim,R,C>&) const;
+    Vec<Vec<Vec<double,C>,R>,dim> compute_farfield(const IntegralTerm<dim,R,C>&) const;
 };
 
 //TODO: Maybe this should be combined with richardson.h and limitdirection.h
@@ -112,6 +86,7 @@ IntegrationStrategy<dim,R,C> make_integrator(
         gauss_facet<dim>(obs_order + 1),
         gauss_facet<dim>(obs_order + 1),
         make_singular_steps(n_singular_steps),
+        1.0,
         far_threshold,
         std::move(nearfield)
     };
@@ -127,7 +102,7 @@ struct AdaptiveIntegrator: public NearfieldIntegratorI<dim,R,C> {
 
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
     compute_nearfield(const Kernel<dim,R,C>& K, const IntegralTerm<dim,R,C>&,
-        const NearestPoint<dim>&) const;
+        const NearestPoint<dim>&);
 };
 
 template <size_t dim,size_t R, size_t C>
@@ -151,7 +126,7 @@ struct SinhIntegrator: public NearfieldIntegratorI<dim,R,C> {
 
     virtual Vec<Vec<Vec<double,C>,R>,dim> 
     compute_nearfield(const Kernel<dim,R,C>& K, const IntegralTerm<dim,R,C>&,
-        const NearestPoint<dim>&) const;
+        const NearestPoint<dim>&);
 };
 
 template <size_t dim,size_t R, size_t C>

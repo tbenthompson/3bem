@@ -14,7 +14,6 @@ namespace tbem {
 template <size_t dim>
 struct NearestNeighbor {
     size_t idx;
-    Vec<double,dim-1> ref_pt;
     Vec<double,dim> pt;
     double distance;
 };
@@ -50,24 +49,20 @@ NearestNeighbor<dim> nearest_facet_brute_force(const Vec<double,dim>& pt,
 {
     double dist_to_closest_facet = std::numeric_limits<double>::max();
     size_t closest_facet_idx = 0;
-    auto nearest_ref_pt = zeros<Vec<double,dim-1>>::make();
     auto nearest_pt = pt;
     for (auto facet_idx: indices) {
         auto ball = nn_data.facet_balls[facet_idx];
         if (dist(ball.center, pt) > dist_to_closest_facet + ball.radius) {
             continue;
         }
-        auto ref_pt = closest_pt_facet(pt, nn_data.facets[facet_idx]);
-        auto mesh_pt = ref_to_real(ref_pt, nn_data.facets[facet_idx]);
-        auto dist2_to_mesh = dist2(pt, mesh_pt);
-        if (dist2_to_mesh < std::pow(dist_to_closest_facet, 2)) {
-            dist_to_closest_facet = std::sqrt(dist2_to_mesh);
+        auto closest_pt = closest_pt_facet(pt, nn_data.facets[facet_idx]);
+        if (closest_pt.distance < dist_to_closest_facet) {
+            dist_to_closest_facet = closest_pt.distance;
             closest_facet_idx = facet_idx;
-            nearest_ref_pt = ref_pt;
-            nearest_pt = mesh_pt;
+            nearest_pt = closest_pt.pt;
         }
     }
-    return {closest_facet_idx, nearest_ref_pt, nearest_pt, dist_to_closest_facet};
+    return {closest_facet_idx, nearest_pt, dist_to_closest_facet};
 }
 
 template <size_t dim>

@@ -45,9 +45,8 @@ std::vector<ObsPt<dim>> interior_obs_pts(const std::vector<Vec<double,dim>>& loc
 }
 
 template <size_t dim, size_t R, size_t C>
-using NearfieldFnc = std::function<Vec<Vec<Vec<double,C>,R>,dim>(
-    const IntegralTerm<dim,R,C>&, const NearestPoint<dim>&
-    )>;
+using NearfieldFnc =
+    std::function<Vec<Vec<Vec<double,C>,R>,dim>(const IntegralTerm<dim,R,C>&)>;
 
 template <size_t dim, size_t R, size_t C>
 SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
@@ -64,21 +63,9 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
         auto pt = obs_pts[pt_idx];
         auto nearfield = nearfield_finder.find(pt.loc);
         for (auto i: nearfield.facet_indices) {
-            //TODO: This is accessing an internal of integrationstrategy, maybe 
-            //that's a bit of a code smell, seems like this should be within the
-            //integration strategy
-            //TODO: This should be merged in with the nearfieldfacetfinder so that
-            //nearfield facets are found once and for all and in a O(logn) time
-            //fashion
-            //At the moment this is done twice. Working out the best way to organize
-            //the data structure will be somewhat complex
-            FarNearLogic<dim> far_near_logic{mthd.far_threshold, 1.0};
-            auto nearest_pt = far_near_logic.decide(pt.loc, src_facet_info[i]);
-            if (nearest_pt.type == FarNearType::Farfield) {
-                continue; 
-            }
 
-            auto eval = f({pt, src_facet_info[i]}, nearest_pt);
+            auto eval = f({pt, src_facet_info[i]});
+
             for (size_t basis_idx = 0; basis_idx < dim; basis_idx++) {
                 auto src_dof_idx = i * dim + basis_idx; 
                 for (size_t d1 = 0; d1 < R; d1++) {
@@ -108,8 +95,8 @@ SparseOperator make_nearfield_operator(
     const IntegrationStrategy<dim,R,C>& mthd) 
 {
     NearfieldFnc<dim,R,C> f = 
-        [&] (const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& pt) {
-            return mthd.compute_term(term, pt); 
+        [&] (const IntegralTerm<dim,R,C>& term) {
+            return mthd.compute_term(term); 
         };
     return nearfield_inner_integral(obs_pts, src_mesh, mthd, f);
 }
@@ -120,8 +107,8 @@ SparseOperator make_farfield_correction_operator(
     const IntegrationStrategy<dim,R,C>& mthd) 
 {
     NearfieldFnc<dim,R,C> f = 
-        [&] (const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& pt) {
-            return -mthd.compute_farfield(term, pt); 
+        [&] (const IntegralTerm<dim,R,C>& term) {
+            return -mthd.compute_farfield(term); 
         };
     return nearfield_inner_integral(obs_pts, src_mesh, mthd, f);
 }

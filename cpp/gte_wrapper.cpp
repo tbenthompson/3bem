@@ -76,7 +76,7 @@ bool in_polygon(const std::vector<Vec<double,2>>& poly,
     return gte_poly.Contains({pt[0], pt[1]});
 }
 
-Vec<double,1> closest_pt_seg(const Vec<double,2>& pt, const Vec<Vec<double,2>,2> seg)
+NearestPoint<2> closest_pt_seg(const Vec<double,2>& pt, const Vec<Vec<double,2>,2> seg)
 {
     gte::Segment<2,double> gte_seg(
         gte::Vector<2,double>({seg[0][0], seg[0][1]}),
@@ -85,17 +85,14 @@ Vec<double,1> closest_pt_seg(const Vec<double,2>& pt, const Vec<Vec<double,2>,2>
     gte::Vector<2,double> gte_pt({pt[0], pt[1]});
     gte::DCPQuery<double,gte::Vector<2,double>,gte::Segment<2,double>> Q;
     auto result = Q(gte_pt, gte_seg);
-    return {2 * result.segmentParameter - 1};
+    return {
+        {2 * result.segmentParameter - 1},
+        {result.segmentClosest[0], result.segmentClosest[1]},
+        result.distance
+    };
 }
 
-/* Find the closest reference point on a triangle. I took this from somewhere 
- * online and can't remember where. 
- *
- * A faster approach might be to treat the problem as a quadratic minimization
- * for the triangle reference coordinates. (see Ericson's Real-Time Collision
- * Detection)
- */
-Vec<double,2> closest_pt_tri(const Vec<double,3>& pt, const Vec<Vec<double,3>,3> tri) 
+NearestPoint<3> closest_pt_tri(const Vec<double,3>& pt, const Vec<Vec<double,3>,3> tri) 
 {
     gte::Triangle3<double> gte_tri(
         gte::Vector<3,double>({tri[0][0], tri[0][1], tri[0][2]}),
@@ -105,18 +102,22 @@ Vec<double,2> closest_pt_tri(const Vec<double,3>& pt, const Vec<Vec<double,3>,3>
     gte::Vector<3,double> gte_pt({pt[0], pt[1], pt[2]});
     gte::DCPQuery<double,gte::Vector<3,double>,gte::Triangle<3,double>> Q;
     auto result = Q(gte_pt, gte_tri);
-    return {result.parameter[1], result.parameter[2]};
+    return {
+        {result.parameter[1], result.parameter[2]},
+        {result.closest[0], result.closest[1], result.closest[2]},
+        result.distance
+    };
 }
 
 template <>
-Vec<double,1> closest_pt_facet(const Vec<double,2>& pt,
+NearestPoint<2> closest_pt_facet(const Vec<double,2>& pt,
     const Vec<Vec<double,2>,2> tri) 
 {
     return closest_pt_seg(pt, tri);
 }
 
 template <>
-Vec<double,2> closest_pt_facet(const Vec<double,3>& pt,
+NearestPoint<3> closest_pt_facet(const Vec<double,3>& pt,
     const Vec<Vec<double,3>,3> tri) 
 {
     return closest_pt_tri(pt, tri);

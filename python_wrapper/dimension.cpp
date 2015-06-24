@@ -5,7 +5,6 @@
 
 #include "mesh.h"
 #include "continuity_builder.h"
-#include "quadrature.h"
 #include "vertex_iterator.h"
 #include "integral_operator.h"
 #include "mass_operator.h"

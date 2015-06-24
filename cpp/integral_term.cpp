@@ -8,33 +8,6 @@
 
 namespace tbem {
 
-template <size_t dim>
-NearestPoint<dim> FarNearLogic<dim>::decide(const Vec<double,dim>& pt,
-    const FacetInfo<dim>& facet) 
-{
-    auto near_ref_pt = closest_pt_facet(pt, facet.facet);
-    auto near_pt = ref_to_real(near_ref_pt, facet.facet);
-    auto exact_dist = dist(near_pt, pt);
-    bool nearfield = exact_dist < far_threshold * facet.length_scale;
-    if (nearfield) {
-        bool singular = exact_dist < singular_threshold * facet.length_scale;
-        if (singular) { 
-            return {
-                near_ref_pt, near_pt, exact_dist, FarNearType::Singular
-            };
-        } else {
-            return {
-                near_ref_pt, near_pt, exact_dist, FarNearType::Nearfield
-            };
-        }
-    } else {
-        return {near_ref_pt, near_pt, exact_dist, FarNearType::Farfield};
-    }
-}
-
-template struct FarNearLogic<2>;
-template struct FarNearLogic<3>;
-
 template <size_t dim, size_t R, size_t C>
 Vec<Vec<Vec<double,C>,R>,dim> IntegralTerm<dim,R,C>::eval_point_influence(
     const Kernel<dim,R,C>& k, const Vec<double,dim-1>& x_hat,
@@ -58,54 +31,48 @@ template struct IntegralTerm<3,1,1>;
 template struct IntegralTerm<3,3,3>;
 
 template <size_t dim, size_t R, size_t C>
-Vec<Vec<Vec<double,C>,R>,dim> IntegrationStrategy<dim,R,C>::compute_term(
-    const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& nearest_pt) const
+Vec<Vec<Vec<double,C>,R>,dim> 
+IntegrationStrategy<dim,R,C>::compute_term(const IntegralTerm<dim,R,C>& term) const
 {
-    switch (nearest_pt.type) {
-        case FarNearType::Singular:
-            return compute_singular(term, nearest_pt);
-            break;
-        case FarNearType::Nearfield:
+    auto nearest_pt = closest_pt_facet(term.obs.loc, term.src_face.facet);
+    auto length_scale = term.src_face.length_scale;
+    bool nearfield = nearest_pt.distance < far_threshold * length_scale;
+    if (nearfield) {
+        bool very_close = nearest_pt.distance < singular_threshold * length_scale;
+        bool nonzero_richardson_direction =
+            hypot2(term.obs.richardson_dir) > 1e-10 * length_scale;
+        if (very_close && nonzero_richardson_direction) { 
+            return compute_singular(term);
+        } else {
             return nearfield_integrator->compute_nearfield(*K, term, nearest_pt);
-            break;
-        case FarNearType::Farfield:
-            return compute_farfield(term, nearest_pt);
-            break;
+        }
     }
-    throw std::exception();
+    return compute_farfield(term);
 }
 
 template <size_t dim, size_t R, size_t C>
 Vec<Vec<Vec<double,C>,R>,dim> 
-IntegrationStrategy<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>& term,
-    const NearestPoint<dim>& nearest_pt) const 
+IntegrationStrategy<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>& term) const
 {
-    (void)nearest_pt;
     std::vector<Vec<Vec<Vec<double,C>,R>,dim>> steps(singular_steps.size());
 
     for (int step_idx = 0; step_idx < singular_steps.size(); step_idx++) {
         auto step_loc = get_step_loc(term.obs, singular_steps[step_idx]);
-        auto shifted_near_pt = FarNearLogic<dim>{far_threshold, 1.0}
-            .decide(step_loc, term.src_face);
+        ObsPt<dim> shifted_obs_pt{step_loc, term.obs.normal, term.obs.richardson_dir};
+        auto shifted_nearest_pt = closest_pt_facet(step_loc, term.src_face.facet);
+        IntegralTerm<dim,R,C> shifted_term{shifted_obs_pt, term.src_face};
         steps[step_idx] = nearfield_integrator->compute_nearfield(
-            *K,
-            {
-                {step_loc, term.obs.normal, term.obs.richardson_dir},
-                term.src_face
-            },
-            shifted_near_pt
+            *K, shifted_term, shifted_nearest_pt
         );
     }
 
-    return richardson_limit(2, steps);
+    return richardson_limit(2.0, steps);
 }
 
 template <size_t dim, size_t R, size_t C>
 Vec<Vec<Vec<double,C>,R>,dim> 
-IntegrationStrategy<dim,R,C>::compute_farfield(const IntegralTerm<dim,R,C>& term,
-    const NearestPoint<dim>& nearest_pt) const 
+IntegrationStrategy<dim,R,C>::compute_farfield(const IntegralTerm<dim,R,C>& term) const
 {
-    (void)nearest_pt;
     auto integrals = zeros<Vec<Vec<Vec<double,C>,R>,dim>>::make();
     for (size_t i = 0; i < src_far_quad.size(); i++) {
         integrals += term.eval_point_influence(*K, src_far_quad[i].x_hat) *
@@ -172,7 +139,7 @@ template <size_t dim, size_t R, size_t C>
 Vec<Vec<Vec<double,C>,R>,dim> 
 AdaptiveIntegrator<dim,R,C>::compute_nearfield(const Kernel<dim,R,C>& K, 
     const IntegralTerm<dim,R,C>& term,
-    const NearestPoint<dim>& nearest_pt) const 
+    const NearestPoint<dim>& nearest_pt) 
 {
     (void)nearest_pt;
     return UnitFacetAdaptiveIntegrator<dim>()(K, near_tol, term, term.obs.loc);
@@ -220,7 +187,7 @@ QuadRule<dim-1> choose_sinh_quad(size_t far_order, size_t order_growth_rate,
 template <size_t dim, size_t R, size_t C>
 Vec<Vec<Vec<double,C>,R>,dim> 
 SinhIntegrator<dim,R,C>::compute_nearfield(const Kernel<dim,R,C>& K, 
-    const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& nearest_pt) const 
+    const IntegralTerm<dim,R,C>& term, const NearestPoint<dim>& nearest_pt)
 {
     auto l = nearest_pt.distance;
     assert(l > 0);

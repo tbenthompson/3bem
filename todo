@@ -1,12 +1,9 @@
 CURRENT: 
 ** inhomogenous constraint handling
-** scale the limit vector with closeness to the element tip?
 ** some kind of problem with the limit direction in 3D
-** corner integration test
 ** why does a debug build break things?!
 ** acceptance test: setup fmm operators for python wrapper, solve a large problem in 2D and confirm (log)linear time cost with refinement
 ** specify fmm from the python interface -- including the parameters
-** fix the singular vs nearfield identification code
 ** integration logger?
 
 
