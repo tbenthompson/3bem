@@ -207,7 +207,7 @@ Side which_side_facet(const Vec<Vec<double,dim>,dim>& plane,
 template <size_t dim>
 Vec<double,dim> centroid(const Vec<Vec<double,dim>,dim>& f) 
 {
-    Vec<double,dim> centroid; 
+    Vec<double,dim> centroid = zeros<Vec<double,dim>>::make(); 
     for (size_t d = 0; d < dim; d++) {
         centroid += f[d];
     }

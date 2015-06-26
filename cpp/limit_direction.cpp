@@ -114,17 +114,16 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     // will point in the same direction as the facet's normal, with a magnitude
     // similar to the length scale of the facet.
     auto close_center = centroid(closest_facet);
-    auto close_dir = unscaled_normal(closest_facet); 
-    auto end_pt = close_center + normalized(close_dir) * len_scale;
+    auto end_pt = close_center + facet_normal(closest_facet) * len_scale;
 
     // Make sure that the end point is within the interior of the mesh (the
     // line segment from the centroid of the element to the end_pt does not
     // intersect any edges)
-    auto interior_pt = end_pt;
+    // auto interior_pt = end_pt;
     // TODO: Figure out why this doesn't work in 3D
-    // auto interior_pt = backup_halfway_from_intersection(
-    //     end_pt, len_scale, close_center, nearfield_facets, facets
-    // );
+    auto interior_pt = backup_halfway_from_intersection(
+        end_pt, len_scale, close_center, nearfield_facets, facets
+    );
 
     // Check if the vector intersects any facets.
     // If it does, back up to halfway between the intersection point and the

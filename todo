@@ -1,12 +1,6 @@
 CURRENT: 
-** why does a debug build break things?!
-** figure out all the errors when the code is compiled in debug mode
-
-** some kind of problem with the limit direction in 3D
-
-** refactor the elastic solver to allow identifying which parts of the matrices belong where
-** also add in some logging of the meshes, the observation points, etc, basically the inputs to nearfield
-** integration logger?
+** debug the remaining problems with the wedge -- figure out which parts of the matrix don't converge with refinement if any
+** refactor the elastic solver to allow identifying which parts of the matrices come from which kernels and obs/src meshes
 
 ** inhomogenous constraint handling
 
@@ -40,7 +34,7 @@ MISC:
 
 COMPILER:
 ** clang openmp problem?
-** https://github.com/tghosgor/threadpool11 looks like a good alternative to openmp that would get me using c++11 threads instead which provide a lot more flexibility, also would work on clang!
+** https://github.com/progschj/ThreadPool looks like a good alternative to openmp that would get me using c++11 threads instead which provide a lot more flexibility, also would work on clang!
 ** start using clang as the primary compiler because it compiles faster -- faster edit-compile-test cycle!
 -- http://petereisentraut.blogspot.com/2011/05/ccache-and-clang.html
 -- http://peter.eisentraut.org/blog/2014/12/01/ccache-and-clang-part-3/

@@ -13,19 +13,16 @@ template <size_t dim>
 std::vector<ObsPt<dim>> galerkin_obs_pts(const Mesh<dim>& obs_mesh,
     const QuadRule<dim-1>& obs_quad, const Mesh<dim>& all_mesh)
 {
-    std::vector<ObsPt<dim>> out;
-    NearfieldFacetFinder<dim> nearfield_finder(all_mesh.facets, 1.0);
+    std::vector<Vec<double,dim>> locs;
+    std::vector<Vec<double,dim>> normals;
     for (size_t obs_idx = 0; obs_idx < obs_mesh.facets.size(); obs_idx++) {
         auto obs_face = FacetInfo<dim>::build(obs_mesh.facets[obs_idx]);
         for (size_t obs_q = 0; obs_q < obs_quad.size(); obs_q++) {
-            auto ref_loc = obs_quad[obs_q].x_hat;
-            auto loc = ref_to_real(ref_loc, obs_face.facet);
-            auto nf = nearfield_finder.find(loc);
-            auto rich_dir = decide_limit_dir(loc, nf, all_mesh.facets, 0.4, 1e-2);
-            out.push_back({loc, obs_face.normal, rich_dir});
+            locs.push_back(ref_to_real(obs_quad[obs_q].x_hat, obs_face.facet));
+            normals.push_back(obs_face.normal);
         }
     }
-    return out;
+    return interior_obs_pts(locs, normals, all_mesh);
 }
 
 template <size_t dim>
@@ -51,8 +48,11 @@ using NearfieldFnc =
 template <size_t dim, size_t R, size_t C>
 SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
     const Mesh<dim>& src_mesh, const IntegrationStrategy<dim,R,C>& mthd,
-    const NearfieldFnc<dim,R,C>& f)
+    const NearfieldFnc<dim,R,C>& integrate)
 {
+    //TODO: an idea for logging a bit of stuff
+    // logger.log_nearfield_inner_integral(obs_pts, src_mesh, mthd)
+    // logger.log_method_used(mthd)
     size_t n_src_dofs = src_mesh.n_dofs();
     auto src_facet_info = get_facet_info(src_mesh);
 
@@ -64,7 +64,7 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
         auto nearfield = nearfield_finder.find(pt.loc);
         for (auto i: nearfield.facet_indices) {
 
-            auto eval = f({pt, src_facet_info[i]});
+            auto matrix_entries = integral({pt, src_facet_info[i]});
 
             for (size_t basis_idx = 0; basis_idx < dim; basis_idx++) {
                 auto src_dof_idx = i * dim + basis_idx; 
@@ -74,7 +74,7 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
                         auto col_idx = d2 * n_src_dofs + src_dof_idx;
 #pragma omp critical
                         entries.push_back({
-                            row_idx, col_idx, eval[basis_idx][d1][d2]
+                            row_idx, col_idx, matrix_entries[basis_idx][d1][d2]
                         });
                     }
                 }

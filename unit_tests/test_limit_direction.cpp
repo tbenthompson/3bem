@@ -143,7 +143,7 @@ TEST_CASE("limit direction no information", "[limit_direction]")
 {
     Vec<double,2> p{0.5, 0};
     auto dir = decide_limit_dir(p, {{}, 0, p, 0}, {}, 0.5);
-    REQUIRE_ARRAY_CLOSE(dir, zeros<Vec<double,2>>::make(), 3, 1e-12);
+    REQUIRE_ARRAY_CLOSE(dir, zeros<Vec<double,2>>::make(), 2, 1e-12);
 }
 
 TEST_CASE("limit direction precisely at corner", "[limit_direction]")

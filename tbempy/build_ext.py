@@ -48,9 +48,9 @@ class tbempyBuildExt(_build_ext.build_ext):
               ' so OpenMP will be turned off. \nTo use a different compiler, try: '
               '\nCXX=compilername python ' + ' '.join(sys.argv))
         print('Continue (y/n):', end='')
-        response = raw_input()
-        if (response.lower() == 'n'):
-            sys.exit()
+        # response = raw_input()
+        # if (response.lower() == 'n'):
+        #     sys.exit()
         ext.extra_compile_args.remove('-fopenmp')
         ext.extra_link_args.remove('-fopenmp')
 

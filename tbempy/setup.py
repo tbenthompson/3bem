@@ -97,7 +97,11 @@ def get_blas_flags():
     return blas_lapack_info
 
 def get_extension_config():
-    # -UNDEBUG and -DDEBUG=1 ensure that asserts are turned on
+    # -UNDEBUG and -DDEBUG=1 ensure that asserts are turned on and do not
+    # influence whether the build is a "debug" or a "release" build which only
+    # depends on the optimization level and whether debug information is added
+    # by the compiler allowing the use a debugger like GDB
+
     # These compile arguments are modified depending on the compiler by
     # build_ext.py
     compile_args = [
@@ -105,9 +109,6 @@ def get_extension_config():
         '-fopenmp',
         '-UNDEBUG',
         '-DDEBUG=1',
-        # '-O3',
-        '-O0',
-        '-g',
         '-Wall',
         '-Wextra',
         '-Wno-missing-braces'
@@ -116,6 +117,13 @@ def get_extension_config():
         '-fopenmp'
     ]
     includes = ['cpp', 'lib']
+
+    build_type = 'release'
+    if build_type is 'release':
+        compile_args.extend(['-O3'])
+    elif build_type is 'debug':
+        compile_args.extend(['-O0', '-g'])
+
     return dict(
         sources = get_tbempy_srces(),
         include_dirs = includes,
