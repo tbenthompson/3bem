@@ -19,7 +19,7 @@ T richardson_limit(double step_ratio, const std::vector<T>& values)
     for (size_t m = 1; m < n_steps; m++) {
         this_level.resize(n_steps - m);
 
-        for (int i = 0; i < n_steps - m; i++) {
+        for (size_t i = 0; i < n_steps - m; i++) {
             auto mult = std::pow(step_ratio, m);
             auto factor = 1.0 / (mult - 1.0);
             auto low = last_level[i];

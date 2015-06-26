@@ -91,9 +91,9 @@ Mesh<dim>::refine(const std::vector<size_t>& refine_these) const {
     std::sort(sorted_refines.begin(), sorted_refines.end());
 
     // The next index of sorted_refines.
-    int current = 0;
+    size_t current = 0;
 
-    for (unsigned int i = 0; i < facets.size(); i++) {
+    for (size_t i = 0; i < facets.size(); i++) {
         if (i == refine_these[current]) {
             auto refined = refine_facet(facets[i]);
             for (const auto& r: refined) {
@@ -129,7 +129,7 @@ Mesh<dim>
 Mesh<dim>::create_union(const std::vector<Mesh<dim>>& meshes) {
 
     std::vector<Facet<dim>> new_facets;
-    for (int i = 0; i < meshes.size(); i++) {
+    for (size_t i = 0; i < meshes.size(); i++) {
         for (const auto& f: meshes[i].facets) {
             new_facets.push_back(f);
         }
@@ -144,11 +144,11 @@ Mesh<dim>::create_union(const std::vector<Mesh<dim>>& meshes) {
 template <size_t dim>
 Mesh<dim>
 Mesh<dim>::from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
-                         const std::vector<std::array<int,dim>>& facets_by_vert_idx) {
+                         const std::vector<std::array<size_t,dim>>& facets_by_vert_idx) {
     std::vector<Facet<dim>> facets;
-    for (const auto& in_facet: facets_by_vert_idx) { 
+    for (auto in_facet: facets_by_vert_idx) { 
         Facet<dim> out_verts;
-        for (int d = 0; d < dim; d++) {
+        for (size_t d = 0; d < dim; d++) {
             out_verts[d] = vertices[in_facet[d]];
         }
         facets.push_back(out_verts);

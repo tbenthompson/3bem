@@ -98,16 +98,19 @@ def get_blas_flags():
 
 def get_extension_config():
     # -UNDEBUG and -DDEBUG=1 ensure that asserts are turned on
+    # These compile arguments are modified depending on the compiler by
+    # build_ext.py
     compile_args = [
         '-std=c++11',
         '-fopenmp',
         '-UNDEBUG',
         '-DDEBUG=1',
-        '-O3',
-        # '-Og',
-        # '-g',
+        # '-O3',
+        '-O0',
+        '-g',
         '-Wall',
-        '-Wextra'
+        '-Wextra',
+        '-Wno-missing-braces'
     ]
     link_args = [
         '-fopenmp'

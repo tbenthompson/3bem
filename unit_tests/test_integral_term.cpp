@@ -17,6 +17,7 @@ struct NearfieldIntegratorFake: public NearfieldIntegratorI<2,1,1> {
     compute_nearfield(const Kernel<2,1,1>&, const IntegralTerm<2,1,1>& term, 
         const NearestPoint<2>& np) 
     {
+        (void)np;
         count++; 
         obs_locs.push_back(term.obs.loc);
         return zeros<Vec<Vec<Vec<double,1>,1>,2>>::make();

@@ -54,6 +54,13 @@ class tbempyBuildExt(_build_ext.build_ext):
         ext.extra_compile_args.remove('-fopenmp')
         ext.extra_link_args.remove('-fopenmp')
 
+    def ignore_unused_arguments_if_clang(self, compiler, ext):
+        if compiler != 'clang++':
+            return
+
+        ext.extra_compile_args.append('-Qunused-arguments')
+        ext.extra_link_args.append('-Qunused-arguments')
+
     def build_extension(self, ext):
         # Some warning parameters that are set in the distutils.sysconfig
         # for clang on Mac OS X do not work on gcc. A simple solution is to
@@ -75,4 +82,5 @@ class tbempyBuildExt(_build_ext.build_ext):
 
         compiler = check_compiler(self._cxx_compiler.compiler_so[0])
         self.warn_and_remove_openmp_if_clang(compiler, ext)
+        self.ignore_unused_arguments_if_clang(compiler, ext)
         _build_ext.build_ext.build_extension(self, ext)

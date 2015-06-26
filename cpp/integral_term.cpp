@@ -50,13 +50,20 @@ IntegrationStrategy<dim,R,C>::compute_term(const IntegralTerm<dim,R,C>& term) co
     return compute_farfield(term);
 }
 
+template <size_t dim>
+Vec<double,dim> get_step_loc(const ObsPt<dim>& obs, double step_size) {
+    const double safe_dist_ratio = 1.0;
+    double step_distance = safe_dist_ratio * step_size;
+    return obs.loc + step_distance * obs.richardson_dir;
+}
+
 template <size_t dim, size_t R, size_t C>
 Vec<Vec<Vec<double,C>,R>,dim> 
 IntegrationStrategy<dim,R,C>::compute_singular(const IntegralTerm<dim,R,C>& term) const
 {
     std::vector<Vec<Vec<Vec<double,C>,R>,dim>> steps(singular_steps.size());
 
-    for (int step_idx = 0; step_idx < singular_steps.size(); step_idx++) {
+    for (size_t step_idx = 0; step_idx < singular_steps.size(); step_idx++) {
         auto step_loc = get_step_loc(term.obs, singular_steps[step_idx]);
         ObsPt<dim> shifted_obs_pt{step_loc, term.obs.normal, term.obs.richardson_dir};
         auto shifted_nearest_pt = closest_pt_facet(step_loc, term.src_face.facet);
@@ -126,13 +133,6 @@ struct UnitFacetAdaptiveIntegrator<3> {
             }, 0.0, 1.0, tolerance);
     }
 };
-
-template <size_t dim>
-Vec<double,dim> get_step_loc(const ObsPt<dim>& obs, double step_size) {
-    const double safe_dist_ratio = 1.0;
-    double step_distance = safe_dist_ratio * step_size;
-    return obs.loc + step_distance * obs.richardson_dir;
-}
 
 
 template <size_t dim, size_t R, size_t C>

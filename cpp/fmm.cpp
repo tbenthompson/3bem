@@ -1,6 +1,5 @@
 #include "fmm.h"
 #include "nbody_operator.h"
-//TODO: remove
 #include "util.h"
 
 namespace tbem {

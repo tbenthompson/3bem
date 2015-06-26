@@ -36,7 +36,7 @@ QuadRule<2> sinh_sigmoidal_transform(const QuadRule<1>& gauss_theta,
 QuadRule<2> transform_to_tri(const QuadRule<2>& q, Vec<Vec<double,3>,3> tri) {
     QuadRule<2> out;
     double jacobian = 2.0 * tri_area(tri);
-    for (const auto& unit_facet_pt: q) {
+    for (auto unit_facet_pt: q) {
         auto pt = ref_to_real(unit_facet_pt.x_hat, tri); 
         assert(pt[2] == 0.0);
         out.push_back({{pt[0], pt[1]}, unit_facet_pt.w * jacobian});
@@ -59,15 +59,15 @@ QuadRule<2> sinh_sigmoidal_transform(const QuadRule<1>& gauss_theta,
     
     // upper left tri
     auto ul_pts = transform_to_tri(unit_facet_rule, {singular_pt, pt0, pt2});
-    for (const auto& p: ul_pts) {out.push_back(p);}
+    for (auto p: ul_pts) {out.push_back(p);}
 
     // upper right tri
     auto ur_pts = transform_to_tri(unit_facet_rule, {singular_pt, pt2, pt1});
-    for (const auto& p: ur_pts) {out.push_back(p);}
+    for (auto p: ur_pts) {out.push_back(p);}
 
     // lower
     auto l_pts = transform_to_tri(unit_facet_rule, {singular_pt, pt0, pt1});
-    for (const auto& p: l_pts) {out.push_back(p);}
+    for (auto p: l_pts) {out.push_back(p);}
 
     return out;
 }

@@ -11,9 +11,9 @@ using namespace tbem;
 
 template <size_t dim>
 Vec<double,dim> vec_from_indices(std::vector<std::string> row_entries,
-                                 const int indices[]) {
+                                 const size_t indices[]) {
     Vec<double,dim> out;
-    for (int d = 0; d < dim; d++) {
+    for (size_t d = 0; d < dim; d++) {
         out[d] = std::stod(row_entries[indices[d]]);
     }
     return out;
@@ -53,10 +53,10 @@ Vec<Vec<double,dim>,dim> call_kernel(const Vec<double,dim>& obs_loc,
 
 template <size_t dim>
 void test_elastic_kernel(std::string name) {
-    const int src_loc_indices[3] = {8, 9, 10};
-    const int obs_loc_indices[3] = {11, 12, 13};
-    const int src_n_indices[3] = {14, 15, 16};
-    const int obs_n_indices[3] = {17, 18, 19};
+    size_t src_loc_indices[3] = {8, 9, 10};
+    size_t obs_loc_indices[3] = {11, 12, 13};
+    size_t src_n_indices[3] = {14, 15, 16};
+    size_t obs_n_indices[3] = {17, 18, 19};
 
     std::ifstream test_data;
     std::string line;
@@ -72,8 +72,8 @@ void test_elastic_kernel(std::string name) {
             es.push_back(entry);
         }
 
-        int k = std::stoi(es[2]);
-        int j = std::stoi(es[3]);
+        size_t k = std::stoi(es[2]);
+        size_t j = std::stoi(es[3]);
         if (es[1] != name) {
             continue;
         }

@@ -34,7 +34,7 @@ struct Mesh {
     static Mesh<dim> create_union(const std::vector<Mesh<dim>>& others);
 
     static Mesh<dim> from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
-        const std::vector<std::array<int,dim>>& facets_by_vert_idx);
+        const std::vector<std::array<size_t,dim>>& facets_by_vert_idx);
 };
 
 } //END NAMESPACE tbem

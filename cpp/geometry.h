@@ -198,7 +198,7 @@ Side which_side_facet(const Vec<Vec<double,dim>,dim>& plane,
     const Vec<Vec<double,dim>,dim>& face) 
 {
     std::array<Side,dim> sides;
-    for (int d = 0; d < dim; d++) {
+    for (size_t d = 0; d < dim; d++) {
         sides[d] = which_side_point<dim>(plane, face[d]);
     }
     return facet_side<dim>(sides);

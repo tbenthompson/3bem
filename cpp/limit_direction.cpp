@@ -70,7 +70,7 @@ Vec<double,dim> backup_halfway_from_intersection(Vec<double,dim> end_pt,
         if (f_idx == nearfield_facets.nearest_facet_idx) {
             continue;
         }
-        auto& f = facets[f_idx];
+        auto f = facets[f_idx];
         std::vector<Vec<double,dim>> intersections =
             seg_facet_intersection<dim>(f, {end_pt, pt});
         assert(intersections.size() != 2);
@@ -96,7 +96,7 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
         return zeros<Vec<double,dim>>::make();
     }
 
-    const auto& closest_facet = facets[nearfield_facets.nearest_facet_idx];
+    auto closest_facet = facets[nearfield_facets.nearest_facet_idx];
 
     // The length scale here needs to be exactly double the length scale
     // used in finding the nearest facets.
@@ -120,9 +120,9 @@ Vec<double,dim> decide_limit_dir(const Vec<double,dim>& pt,
     // Make sure that the end point is within the interior of the mesh (the
     // line segment from the centroid of the element to the end_pt does not
     // intersect any edges)
-    // TODO:
-    auto interior_pt = end_pt; 
-    // interior_pt = backup_halfway_from_intersection(
+    auto interior_pt = end_pt;
+    // TODO: Figure out why this doesn't work in 3D
+    // auto interior_pt = backup_halfway_from_intersection(
     //     end_pt, len_scale, close_center, nearfield_facets, facets
     // );
 

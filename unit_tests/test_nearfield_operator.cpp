@@ -8,6 +8,9 @@
 #include "gte_wrapper.h"
 #include "util.h"
 
+//TODO: remove
+#include <iomanip>
+
 using namespace tbem;
 
 void test_polygon(const std::vector<Vec<double,2>>& polygon, size_t refine)
@@ -24,7 +27,15 @@ void test_polygon(const std::vector<Vec<double,2>>& polygon, size_t refine)
     
     // and check that they are all with the polygon
     for(auto p: pts) {
-        auto success = in_polygon(polygon, p.loc + p.richardson_dir);
+        auto furthest_limit_pt = p.loc + p.richardson_dir;
+        auto success = in_polygon(polygon, furthest_limit_pt);
+        // std::cout << "polygon:" << std::endl;
+        // for (size_t i = 0; i < polygon.size(); i++) {
+        //     std::cout << polygon[i] << std::endl;
+        // }
+        // std::cout << "loc: " << std::setprecision(17) << p.loc << std::endl;
+        // std::cout << "dir: " << p.richardson_dir << std::endl;
+        // std::cout << "limitpt: " << furthest_limit_pt << std::endl;
         REQUIRE(success);
     }
 }
@@ -63,24 +74,18 @@ TEST_CASE("richardson points inside wedge -- regression test", "[nearfield_opera
 
 TEST_CASE("interior obs pts", "[nearfield_operator]")
 {
-    auto pts = interior_obs_pts<2>(
-        {{0,1}, {1,0}},
-        {{1,0}, {0,1}},
+    auto pts = interior_obs_pts<2>({{0, 1}, {1, 0}}, {{0, 1}, {0, 1}},
         Mesh<2>{{
             {{
                 {0, 0}, {1, 0}
             }}
         }}
     );
-    
-    SECTION("size") {
-        REQUIRE(pts.size() == 2);
-    }
+    REQUIRE(pts.size() == 2);
 
-    SECTION("richardson length") {
-        REQUIRE(hypot(pts[0].richardson_dir) == 0.0);
-        REQUIRE_CLOSE(hypot(pts[1].richardson_dir), std::sqrt(1.25) * 0.4, 1e-12);
-    }
+    REQUIRE(hypot(pts[0].richardson_dir) == 0.0);
+    auto correct = std::sqrt(1.25) * 0.4;
+    REQUIRE_CLOSE(hypot(pts[1].richardson_dir), correct, 1e-12);
 }
 
 TEST_CASE("nearfield obs pts", "[nearfield_operator]")

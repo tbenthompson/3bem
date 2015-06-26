@@ -66,10 +66,10 @@ Box<dim> Box<dim>::bounding_box(const std::vector<Ball<dim>>& pts)
     }
     auto min_corner = pts[0].center - pts[0].radius;
     auto max_corner = pts[0].center + pts[0].radius;
-    for (int i = 1; i < pts.size(); ++i) {
+    for (size_t i = 1; i < pts.size(); i++) {
         auto c = pts[i].center;
         auto r = pts[i].radius;
-        for (unsigned int d = 0; d < dim; ++d) {
+        for (size_t d = 0; d < dim; d++) {
             min_corner[d] = std::min(min_corner[d], c[d] - r);
             max_corner[d] = std::max(max_corner[d], c[d] + r);
         }
@@ -94,7 +94,7 @@ size_t Box<dim>::find_containing_subcell(const Vec<double,dim>& pt) const
     return child_idx;
 }
 
-template class Box<2>;
-template class Box<3>;
+template struct Box<2>;
+template struct Box<3>;
 
 } // end namespace tbem
