@@ -33,7 +33,7 @@ FacetInfo<dim> FacetInfo<dim>::build(const Facet<dim>& facet) {
 template <size_t dim>
 std::vector<FacetInfo<dim>> get_facet_info(const Mesh<dim>& m) {
     std::vector<FacetInfo<dim>> out;
-    for (const auto& f: m.facets) {
+    for (auto f: m.facets) {
         out.push_back(FacetInfo<dim>::build(f));
     }
     return out;

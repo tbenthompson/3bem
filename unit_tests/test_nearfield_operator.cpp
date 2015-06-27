@@ -122,5 +122,6 @@ TEST_CASE("Constrained nearfield matrix", "[nearfield_operator]")
         auto correct = condense_matrix(cm, cm, dense_matrix).data();
         REQUIRE(test.size() == correct.size());
         REQUIRE_ARRAY_CLOSE(test, correct, correct.size(), 1e-12);
+        //TODO: add a test for the rhs
     }
 }

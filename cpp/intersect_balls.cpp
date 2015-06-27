@@ -26,8 +26,8 @@ std::vector<std::pair<size_t,size_t>> intersect_balls_all_pairs(
     if (cellA.is_leaf() && cellB.is_leaf()) {
         // the cells are intersecting leaf cells. perform a direct intersection
         std::vector<std::pair<size_t,size_t>> out_pairs;
-        for (const auto& idxA: cellA.indices) {
-            for (const auto& idxB: cellB.indices) {
+        for (auto idxA: cellA.indices) {
+            for (auto idxB: cellB.indices) {
                 if (balls_intersect(ptsA[idxA], ptsB[idxB])) {
                     out_pairs.push_back({idxA, idxB});
                 }

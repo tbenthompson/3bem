@@ -30,7 +30,7 @@ Mesh<3> sphere_mesh(const Vec3<double>& center, double r, size_t refinements) {
         .refine_repeatedly(refinements);
 
     std::vector<Facet<3>> spherified_facets;
-    for (const auto& f: prototype.facets) {
+    for (auto f: prototype.facets) {
         spherified_facets.push_back({
             spherify(center, r, f[0]),
             spherify(center, r, f[1]),
@@ -75,7 +75,7 @@ Mesh<2> circle_mesh(const Vec2<double>& c, double r, size_t refinements) {
         .refine_repeatedly(refinements);
 
     std::vector<Facet<2>> circlified_facets;
-    for (const auto& f: prototype.facets) {
+    for (auto f: prototype.facets) {
         circlified_facets.push_back({
             circlify(c, r, f[0]),
             circlify(c, r, f[1])

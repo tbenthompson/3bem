@@ -70,10 +70,10 @@ RearrangedConstraintEQ isolate_term_on_lhs(const ConstraintEQ& c,
     size_t constrained_index) 
 {
     assert(constrained_index < c.terms.size());
-    const auto& constrained_term = c.terms[constrained_index]; 
+    auto constrained_term = c.terms[constrained_index]; 
 
     std::vector<LinearTerm> divided_negated_terms;
-    for (const auto& t: c.terms) {
+    for (auto t: c.terms) {
         if (t == constrained_term) {
             continue;
         }
@@ -127,7 +127,7 @@ void remove(std::vector<T>& vec, size_t pos)
 ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
     const RearrangedConstraintEQ& subs_in) 
 {
-    const auto& constrained_term = c.terms[constrained_dof_index];
+    auto constrained_term = c.terms[constrained_dof_index];
     assert(constrained_term.dof == subs_in.constrained_dof);
     double multiplicative_factor = constrained_term.weight;
 
@@ -137,8 +137,8 @@ ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
         if (i == constrained_dof_index) {
             continue;
         }
-        const auto& term = c.terms[i];
-        const auto& subs_term = find_term_with_dof(subs_in.terms, term.dof);
+        auto term = c.terms[i];
+        auto subs_term = find_term_with_dof(subs_in.terms, term.dof);
 
         if (none_found(subs_term, subs_in.terms)) {
             out_terms.push_back(term); 
@@ -152,7 +152,7 @@ ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
     }
 
     for (size_t subs_term_index: which_subs_terms_unused) {
-        const auto& subs_term = subs_in.terms[subs_term_index];
+        auto subs_term = subs_in.terms[subs_term_index];
         double additive_weight = subs_term.weight * multiplicative_factor;
         out_terms.push_back(LinearTerm{subs_term.dof, additive_weight});
     }
@@ -164,7 +164,7 @@ ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
 ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps) 
 {
     std::vector<LinearTerm> out_terms;
-    for(const auto& t: c.terms) {
+    for(auto t: c.terms) {
         if (std::fabs(t.weight) > eps) {
             out_terms.push_back(t);
         }

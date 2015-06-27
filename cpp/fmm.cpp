@@ -137,14 +137,14 @@ CheckToEquiv FMMOperator<dim,R,C>::build_check_to_equiv(const Octree<dim>& cell,
         ops.push_back(svd_inverse_nbody(*K, down_data));
     }
 
-    for (const auto& c: cell.children) {
+    for (auto& c: cell.children) {
         if (c == nullptr) {
             continue;
         }
         auto child_ops = build_check_to_equiv(
             *c, start_level + ops.size(), equiv_surf, check_surf
         );
-        for (const auto& c_op: child_ops) {
+        for (auto c_op: child_ops) {
             ops.push_back(c_op);
         }
     }
@@ -453,7 +453,7 @@ std::vector<double> FMMOperator<dim,R,C>::execute_tasks(const FMMTasks<dim>& tas
     for (size_t i = 0; i < tasks.p2ms.size(); i++) {
         auto& cell = tasks.p2ms[i].cell;
         assert(cell.level < up_check_to_equiv.size());
-        auto& check_to_equiv_op = up_check_to_equiv[cell.level];
+        auto check_to_equiv_op = up_check_to_equiv[cell.level];
         P2M(cell, check_to_equiv_op, x, multipoles.data() + src_equiv_start(cell));
     }
 
@@ -461,7 +461,7 @@ std::vector<double> FMMOperator<dim,R,C>::execute_tasks(const FMMTasks<dim>& tas
     for (size_t i = 0; i < tasks.m2ms.size(); i++) {
         auto& cell = tasks.m2ms[i].cell;
         assert(cell.level < up_check_to_equiv.size());
-        auto& check_to_equiv_op = up_check_to_equiv[cell.level];
+        auto check_to_equiv_op = up_check_to_equiv[cell.level];
         std::vector<double*> child_data_ptrs(Octree<dim>::split);
         for (size_t c = 0; c < Octree<dim>::split; c++) {
             if (cell.children[c] == nullptr) {
@@ -498,7 +498,7 @@ std::vector<double> FMMOperator<dim,R,C>::execute_tasks(const FMMTasks<dim>& tas
     for (size_t i = 0; i < tasks.p2ls.size(); i++) {
         auto t = tasks.p2ls[i];
         assert(t.obs_cell.level < down_check_to_equiv.size());
-        auto& check_to_equiv_op = down_check_to_equiv[t.obs_cell.level];
+        auto check_to_equiv_op = down_check_to_equiv[t.obs_cell.level];
         auto data_ptr = locals.data() + obs_equiv_start(t.obs_cell);
         P2L(t.obs_cell, t.src_cell, check_to_equiv_op, x, data_ptr);
     }
@@ -507,7 +507,7 @@ std::vector<double> FMMOperator<dim,R,C>::execute_tasks(const FMMTasks<dim>& tas
     for (size_t i = 0; i < tasks.m2ls.size(); i++) {
         auto t = tasks.m2ls[i];
         assert(t.obs_cell.level < down_check_to_equiv.size());
-        auto& check_to_equiv_op = down_check_to_equiv[t.obs_cell.level];
+        auto check_to_equiv_op = down_check_to_equiv[t.obs_cell.level];
         auto multipole_data = multipoles.data() + src_equiv_start(t.src_cell);
         auto local_data = locals.data() + obs_equiv_start(t.obs_cell);
         M2L(t.obs_cell, t.src_cell, check_to_equiv_op, multipole_data, local_data);
@@ -517,7 +517,7 @@ std::vector<double> FMMOperator<dim,R,C>::execute_tasks(const FMMTasks<dim>& tas
     for (size_t i = 0; i < tasks.l2ls.size(); i++) {
         auto& cell = tasks.l2ls[i].cell;
         assert(cell.level + 1 < down_check_to_equiv.size());
-        auto& check_to_equiv_op = down_check_to_equiv[cell.level + 1];
+        auto check_to_equiv_op = down_check_to_equiv[cell.level + 1];
         std::vector<double*> child_data_ptrs(Octree<dim>::split);
         for (size_t c = 0; c < Octree<dim>::split; c++) {
             if (cell.children[c] == nullptr) {

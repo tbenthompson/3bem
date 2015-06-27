@@ -12,8 +12,7 @@ typedef std::unordered_map<int,RearrangedConstraintEQ> ConstraintMatrix;
 
 bool is_constrained(const ConstraintMatrix& dof_constraint_map, size_t dof);
 
-RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
-    const ConstraintMatrix& map);
+ConstraintEQ make_lower_triangular(const ConstraintEQ& c, const ConstraintMatrix& map);
 
 ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints);
 

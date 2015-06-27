@@ -51,7 +51,7 @@ find_overlapping_vertices(const VertexIterator<dim>& A_begin,
     for (auto A_it = A_begin; !A_it.is_end(); ++A_it) {
         auto A_pt = *A_it;
         auto ident_pts_indices = intersect_balls({A_pt, eps}, target_pts, oct);
-        for (const auto& idx: ident_pts_indices) {
+        for (auto idx: ident_pts_indices) {
             overlaps.push_back({A_it, B_begin + idx});
         }
     }
@@ -65,7 +65,7 @@ find_overlapping_vertices_same_mesh(const VertexIterator<dim>& A_begin,
 {
     auto overlap_map = find_overlapping_vertices(A_begin, A_begin, eps);
     std::vector<OverlapPair<dim>> filtered_overlaps;
-    for (const auto& o: overlap_map) {
+    for (auto o: overlap_map) {
         if (o.first.absolute_index() < o.second.absolute_index()) {
             filtered_overlaps.push_back({o.first, o.second});
         }
@@ -77,9 +77,9 @@ template <size_t dim>
 bool continuity_pair_crosses_cut(const VertexIterator<dim>& facet0_it,
     const VertexIterator<dim>& facet1_it, const VertexIterator<dim>& discontinuity_it) 
 {
-    const auto& facet0 = facet0_it.get_facet();
-    const auto& facet1 = facet1_it.get_facet();
-    const auto& disc_facet = discontinuity_it.get_facet();
+    auto facet0 = facet0_it.get_facet();
+    auto facet1 = facet1_it.get_facet();
+    auto disc_facet = discontinuity_it.get_facet();
 
     auto facet0_side = which_side_facet(disc_facet, facet0);
     auto facet1_side = which_side_facet(disc_facet, facet1);
@@ -104,9 +104,9 @@ OverlapMap<dim> cut_at_intersection(const OverlapMap<dim>& continuity,
     auto out_continuity = continuity;
 
     auto cut_pairs = find_overlapping_vertices(mesh_begin_iter, cut_begin_iter);
-    for (const auto& p: cut_pairs) {
-        const auto& continuity_it = p.first; 
-        const auto& discontinuity_it = p.second;
+    for (auto p: cut_pairs) {
+        auto continuity_it = p.first; 
+        auto discontinuity_it = p.second;
 
         auto range = out_continuity.equal_range(continuity_it);
         for (auto potential_cut = range.first;
@@ -128,7 +128,7 @@ OverlapMap<dim> cut_at_intersection(const OverlapMap<dim>& continuity,
 template <size_t dim>
 std::vector<ConstraintEQ> convert_to_constraints(const OverlapMap<dim>& continuity) {
     std::vector<ConstraintEQ> constraints;
-    for (const auto& p: continuity) {
+    for (auto p: continuity) {
         auto c = continuity_constraint(p.first.absolute_index(),
             p.second.absolute_index());
         constraints.push_back(c);
@@ -145,7 +145,7 @@ std::vector<ConstraintEQ> form_neighbor_bcs(
 {
     auto overlaps = find_overlapping_vertices(continuous_mesh, neighbor_mesh);
     std::vector<ConstraintEQ> constraints;
-    for (const auto& o: overlaps) {
+    for (auto o: overlaps) {
         auto constrained_dof = o.first.absolute_index();
         auto bc_val = values[o.second.absolute_index()];
         auto c = boundary_condition(constrained_dof, bc_val);

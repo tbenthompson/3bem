@@ -30,9 +30,10 @@ TEST_CASE("MakeLowerTriangular", "[constraint_matrix]")
     //4x_2 = 4.0
     ConstraintEQ in{{LinearTerm{2,4}, LinearTerm{3,-1}}, 0.0};
     auto c_lower_tri = make_lower_triangular(in, constraint_set);
-    REQUIRE(c_lower_tri.constrained_dof == 2);
-    REQUIRE(c_lower_tri.terms.size() == 0);
-    REQUIRE(c_lower_tri.rhs == 1);
+    REQUIRE(c_lower_tri.terms.size() == 1);
+    REQUIRE(c_lower_tri.terms[0].dof == 2);
+    REQUIRE(c_lower_tri.terms[0].weight == 4.0);
+    REQUIRE(c_lower_tri.rhs == 4.0);
 }
 
 void check_distribute_vector(const ConstraintMatrix& cm, 

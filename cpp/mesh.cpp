@@ -96,7 +96,7 @@ Mesh<dim>::refine(const std::vector<size_t>& refine_these) const {
     for (size_t i = 0; i < facets.size(); i++) {
         if (i == refine_these[current]) {
             auto refined = refine_facet(facets[i]);
-            for (const auto& r: refined) {
+            for (auto r: refined) {
                 out_facets.push_back(r);
             }
             current++;
@@ -130,7 +130,7 @@ Mesh<dim>::create_union(const std::vector<Mesh<dim>>& meshes) {
 
     std::vector<Facet<dim>> new_facets;
     for (size_t i = 0; i < meshes.size(); i++) {
-        for (const auto& f: meshes[i].facets) {
+        for (auto f: meshes[i].facets) {
             new_facets.push_back(f);
         }
     }

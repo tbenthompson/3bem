@@ -64,7 +64,7 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
         auto nearfield = nearfield_finder.find(pt.loc);
         for (auto i: nearfield.facet_indices) {
 
-            auto matrix_entries = integral({pt, src_facet_info[i]});
+            auto matrix_entries = integrate({pt, src_facet_info[i]});
 
             for (size_t basis_idx = 0; basis_idx < dim; basis_idx++) {
                 auto src_dof_idx = i * dim + basis_idx; 

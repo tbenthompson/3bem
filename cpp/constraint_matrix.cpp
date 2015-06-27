@@ -6,29 +6,28 @@ namespace tbem {
 
 bool is_constrained(const ConstraintMatrix& dof_constraint_map, size_t dof) 
 {
-    const auto& it = dof_constraint_map.find(dof);
+    auto it = dof_constraint_map.find(dof);
     if (it == dof_constraint_map.end()) {
         return false;
     }
     return true;
 }
 
-RearrangedConstraintEQ make_lower_triangular(const ConstraintEQ& c,
+ConstraintEQ make_lower_triangular(const ConstraintEQ& c,
     const ConstraintMatrix& matrix) 
 {
     if (c.terms.size() == 0) {
-        throw std::invalid_argument("ConstraintMatrix: make_lower_triangular has found either an empty constraint or a cyclic set of constraints.");
+        return c;
     }
-
     auto last_dof_index = find_last_dof_index(c);
     auto last_dof = c.terms[last_dof_index].dof;
     if (is_constrained(matrix, last_dof)) {
-        const auto& last_dof_constraint = matrix.find(last_dof)->second;
+        auto last_dof_constraint = matrix.find(last_dof)->second;
         ConstraintEQ c_subs = substitute(c, last_dof_index, last_dof_constraint);
         ConstraintEQ c_subs_filtered = filter_zero_terms(c_subs);
         return make_lower_triangular(c_subs_filtered, matrix);
     }
-    return isolate_term_on_lhs(c, last_dof_index);
+    return c;
 }
 
 
@@ -38,13 +37,13 @@ ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints)
 
     for (size_t i = 0; i < constraints.size(); i++) {
         const auto zeros_filtered = filter_zero_terms(constraints[i]);
-        try {
-            auto lower_tri_constraint = make_lower_triangular(zeros_filtered, new_mat);
-            new_mat.insert(std::make_pair(lower_tri_constraint.constrained_dof,
-                                          lower_tri_constraint));
-        } catch (const std::invalid_argument& e) {
+        auto lower_tri_constraint = make_lower_triangular(zeros_filtered, new_mat);
+        if (lower_tri_constraint.terms.size() == 0) {
             continue;
         }
+        auto last_dof_index = find_last_dof_index(lower_tri_constraint);
+        auto separated = isolate_term_on_lhs(lower_tri_constraint, last_dof_index);
+        new_mat.insert(std::make_pair(separated.constrained_dof, separated));
     }
 
     return ConstraintMatrix{new_mat};
@@ -70,6 +69,7 @@ std::vector<double> distribute_vector(const ConstraintMatrix& matrix,
             continue;
         }
         auto constraint = matrix.find(dof_index)->second;
+
         auto val = constraint.rhs;
         for (size_t j = 0; j < constraint.terms.size(); j++) {
             assert(constraint.terms[j].dof < dof_index);
@@ -88,10 +88,10 @@ void add_term_with_constraints(const ConstraintMatrix& matrix,
         return;
     }
 
-    const auto& constraint = matrix.find(entry.dof)->second;
-    const auto& terms = constraint.terms;
+    auto constraint = matrix.find(entry.dof)->second;
+    auto terms = constraint.terms;
     std::vector<LinearTerm> out_terms;
-    for (const auto& t: terms) {
+    for (auto t: terms) {
         double recurse_weight = t.weight * entry.weight;
         modifiable_vec[t.dof] += recurse_weight;
     }
@@ -147,10 +147,10 @@ void add_entry_with_constraints(const ConstraintMatrix& row_cm,
     }
 
     auto constrained_dof = entry.loc[constrained_axis];
-    const auto& constraint = cm->find(constrained_dof)->second;
-    const auto& terms = constraint.terms;
+    auto constraint = cm->find(constrained_dof)->second;
+    auto terms = constraint.terms;
 
-    for (const auto& t: terms) {
+    for (auto t: terms) {
         double recurse_weight = t.weight * entry.value;
         size_t loc[2];
         loc[constrained_axis] = t.dof;
@@ -216,7 +216,8 @@ DenseOperator condense_matrix(const ConstraintMatrix& row_cm,
         }
     }
     
-    return remove_constrained(row_cm, col_cm, condensed);
+    auto out = remove_constrained(row_cm, col_cm, condensed);
+    return out;
 }
 
 //TODO: This could be used in dense condensation and vector condensation too.
@@ -285,7 +286,8 @@ SparseOperator condense_matrix(const ConstraintMatrix& row_cm,
     );
     auto out_rows = n_in_rows - row_cm.size();
     auto out_cols = n_in_cols - col_cm.size();
-    return SparseOperator::csr_from_coo(out_rows, out_cols, entries);
+    auto out = SparseOperator::csr_from_coo(out_rows, out_cols, entries);
+    return out;
 }
 
 } // END namespace tbem
