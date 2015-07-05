@@ -1,4 +1,4 @@
-from distutils.core import setup
+import setuptools
 from numpy.distutils.misc_util import Configuration
 from numpy.distutils.core import setup
 import numpy.distutils.command.build_ext as _build_ext

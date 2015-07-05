@@ -39,9 +39,10 @@ def create_mesh(facets):
     meshpy_facets = np.arange(meshpy_vs.shape[0]).reshape(
         (facets.shape[0], facets.shape[1])
     )
+    meshpy_markers = np.arange(meshpy_facets.shape[0])
     info = triangle.MeshInfo()
     info.set_points(meshpy_vs)
-    info.set_facets(meshpy_facets)
+    info.set_facets(meshpy_facets, facet_markers = meshpy_markers)
     mesh = triangle.build(info, generate_faces = True)
     pts = np.array(mesh.points)
     tris = np.array(mesh.elements)

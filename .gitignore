@@ -17,3 +17,4 @@ benchmarks/runner
 MANIFEST
 dist/*
 sandbox
+*.egg-info

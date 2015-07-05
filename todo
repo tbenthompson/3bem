@@ -1,4 +1,8 @@
-** scan in the geometry of the HRF wedge, add a few internal faults
+** redesign the elastic input system to take more flexible input -- maybe various types that all implement some general element interface
+** add a step in the elastic preprocessing to cut surfaces where displacement is unknown at fault intersections
+** add an option in the elastic solver to perform adaptive mesh refinement
+
+** reproduce simple infinite critical taper wedge models
 ** reproduce yin 1993 results
 
 ** frictional bcs -- constraint that says shear = f * normal, with f a constant, i.e. no friction law
