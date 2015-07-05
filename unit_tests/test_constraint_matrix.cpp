@@ -269,3 +269,12 @@ TEST_CASE("Sparse matrix larger matrix", "[constraint_matrix]")
     REQUIRE_ARRAY_EQUAL(result.column_indices, correct.column_indices, nnz);
     REQUIRE_ARRAY_EQUAL(result.row_ptrs, correct.row_ptrs, correct.n_rows() + 1);
 }
+
+TEST_CASE("homogenize constraint matrix", "[constraint_matrix]")
+{
+    auto cm = bcs1_and_continuity0234(1, 2.0);
+    auto homogenized = homogenize_constraints(cm);
+    for (auto it = homogenized.begin(); it != homogenized.end(); ++it) {
+        REQUIRE(it->second.rhs == 0.0);
+    }
+}

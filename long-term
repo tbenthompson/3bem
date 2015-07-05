@@ -59,11 +59,10 @@ CRACK TIPS:
 -- Going to be a tough route. Lots of code. Hard to parallelize. Super intense stuff...
 -- Precompute the DAG of FMM/direct inversion operations -- this will allow simple, but powerful  and scalable parallelism -- look at starpu for a runtime system
 
-- see how FMM accuracy changes as a function of
-    1) radius of equivalent surface
-    2) radius of check surface
-    3) order of expansion
-    4) multipole acceptance criteria
+
+AUTOMATED SYSTEM TESTING:
+** automated testing tools against pdetool? -- probably excessive
+** a systematic golden master testing system?
 
 CAPACITY TESTING/BUILD TESTING:
 ** turn the mac mini into a jenkins build server, put it in a VM or docker container, see what packages are required (in ubuntu)
@@ -75,3 +74,25 @@ CAPACITY TESTING/BUILD TESTING:
 ** capacity test: reuse the adaptively refined okada problem, but time it, realistic!
 ** a compilation time test -- a recompile using ccache should take < 2 seconds? also would like a compilation time test for the initial compile -- under 20 seconds would be nice
 ** compilation timing code is in tbempy/setup.py indicating which files take longer to compile
+
+EFFICIENCY:
+    ** think about and implement an interpolation test for the singular integration, can this be precomputed?
+    ** acceptance test: setup fmm operators for python wrapper, solve a large problem in 2D and confirm (log)linear time cost with refinement
+    ** specify fmm from the python interface -- including the parameters
+    ** robust fmm usage
+        - see how FMM accuracy changes as a function of
+            1) radius of equivalent surface
+            2) radius of check surface
+            3) order of expansion
+            4) multipole acceptance criteria
+    ** split out the fmm scheduler/traversal
+    ** ILU preconditioning for elastic solver
+    ** move obs, src loop into the kernel functions which will reduce the number of function calls and also allow sse/avx implementations of those kernel functions
+    ** if a large number of obs and src points are passed to the kernel functions simultaneously, then maybe the output can simply be a vector rather than using the templated tensor arrays
+    ** remove the templating on kernel tensor shape in favor of returning a large double array from a kernel function called with a bunch of inputs simultaneously
+    ** faster (AVX, GPU) kernel implementations + capacity test
+
+3D:
+    ** acceptance test: 3D problem with sinh-sigmoidal quadrature
+    ** systematic tests and understanding for the 3D sinh-sigmoidal method
+    ** try other nearly-singular quadrature methods (not sinh-sigmoidal)

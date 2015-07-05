@@ -1,0 +1,13 @@
+the integral of the hypersingular kernel over an isolated element has
+singularities at the end points of the element. this means that the galerkin
+integral may not converge. but, these singularities will cancel with 
+singularities on the adjacent elements. 
+
+as a result:
+the hypersingular galerkin formulation is only valid when continuity is imposed
+between the unknown displacement fields on neighboring elements. this is simple
+for the BCs -- they should already be continuous. for a simple traction BC 
+element, it is also simple, just impose continuity. at a displacement/traction
+corner, the single DOF at the end of the traction BC element must be constrained
+by the displacement BC at the corner. also, i think the displacement 
+discontinuity should be continuous -- i am not currently doing this. try it!

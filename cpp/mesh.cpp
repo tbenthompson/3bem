@@ -20,29 +20,34 @@ const Vec<double,dim>& Mesh<dim>::get_vertex_from_dof(size_t absolute_index) con
 }
 
 template <size_t dim>
-size_t Mesh<dim>::n_facets() const {
+size_t Mesh<dim>::n_facets() const 
+{
     return facets.size();
 }
 
 template <size_t dim>
-size_t Mesh<dim>::n_dofs() const {
+size_t Mesh<dim>::n_dofs() const 
+{
     return dim * n_facets();
 }
 
 template <size_t dim>
-VertexIterator<dim> Mesh<dim>::begin() const {
+VertexIterator<dim> Mesh<dim>::begin() const 
+{
     return VertexIterator<dim>(*this, 0, 0);
 }
 
 template <size_t dim>
-VertexIterator<dim> Mesh<dim>::end() const {
+VertexIterator<dim> Mesh<dim>::end() const 
+{
     return VertexIterator<dim>(*this, facets.size(), 0);
 }
 
 /* Produces 2 new segments by splitting the current segment 
  * in half. 
  */
-std::array<Facet<2>,2> refine_facet(const Facet<2>& f) {
+std::array<Facet<2>,2> refine_facet(const Facet<2>& f) 
+{
     auto midpt = (f[0] + f[1]) / 2.0;
     return {{
         {{f[0], midpt}},
@@ -58,8 +63,10 @@ std::array<Facet<2>,2> refine_facet(const Facet<2>& f) {
  *      /______\    /__\/__\
  *      (My first ever ASCII art, a masterpiece that will
  *      stand the test of time!)
+ *      Approximate date of creation: October 2014
  */
-std::array<Facet<3>,4> refine_facet(const Facet<3>& f) {
+std::array<Facet<3>,4> refine_facet(const Facet<3>& f) 
+{
     auto midpt01 = (f[0] + f[1]) / 2.0;
     auto midpt12 = (f[1] + f[2]) / 2.0;
     auto midpt20 = (f[2] + f[0]) / 2.0;
@@ -78,7 +85,8 @@ std::array<Facet<3>,4> refine_facet(const Facet<3>& f) {
 
 template <size_t dim>
 Mesh<dim> 
-Mesh<dim>::refine(const std::vector<size_t>& refine_these) const {
+Mesh<dim>::refine(const std::vector<size_t>& refine_these) const 
+{
     if (refine_these.empty()) {
         return *this;
     }
@@ -87,14 +95,18 @@ Mesh<dim>::refine(const std::vector<size_t>& refine_these) const {
 
     // Sort the refined edges so that we only have to check the
     // next one at any point in the loop.
-    std::vector<size_t> sorted_refines = refine_these;
+    auto sorted_refines = refine_these;
     std::sort(sorted_refines.begin(), sorted_refines.end());
 
     // The next index of sorted_refines.
     size_t current = 0;
 
     for (size_t i = 0; i < facets.size(); i++) {
-        if (i == refine_these[current]) {
+        if (current == sorted_refines.size()) {
+            out_facets.push_back(facets[i]);
+            continue;
+        }
+        if (i == sorted_refines[current]) {
             auto refined = refine_facet(facets[i]);
             for (auto r: refined) {
                 out_facets.push_back(r);
@@ -110,23 +122,26 @@ Mesh<dim>::refine(const std::vector<size_t>& refine_these) const {
 /* A helper function to refine all the facets. */
 template <size_t dim>
 Mesh<dim> 
-Mesh<dim>::refine() const {
+Mesh<dim>::refine_once() const 
+{
     return refine(range(facets.size()));
 }
 
 /* A helper function to refine all the facets multiple times. */
 template <size_t dim>
 Mesh<dim> 
-Mesh<dim>::refine_repeatedly(size_t times) const {
+Mesh<dim>::refine_repeatedly(size_t times) const 
+{
     if (times == 0) {
         return *this;
     }
-    return refine_repeatedly(times - 1).refine();
+    return refine_repeatedly(times - 1).refine_once();
 }
 
 template <size_t dim>
 Mesh<dim> 
-Mesh<dim>::create_union(const std::vector<Mesh<dim>>& meshes) {
+Mesh<dim>::create_union(const std::vector<Mesh<dim>>& meshes) 
+{
 
     std::vector<Facet<dim>> new_facets;
     for (size_t i = 0; i < meshes.size(); i++) {
@@ -144,7 +159,8 @@ Mesh<dim>::create_union(const std::vector<Mesh<dim>>& meshes) {
 template <size_t dim>
 Mesh<dim>
 Mesh<dim>::from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,
-                         const std::vector<std::array<size_t,dim>>& facets_by_vert_idx) {
+                         const std::vector<std::array<size_t,dim>>& facets_by_vert_idx) 
+{
     std::vector<Facet<dim>> facets;
     for (auto in_facet: facets_by_vert_idx) { 
         Facet<dim> out_verts;

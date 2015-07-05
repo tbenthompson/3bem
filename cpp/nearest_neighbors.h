@@ -19,16 +19,6 @@ struct NearestNeighbor {
 };
 
 template <size_t dim>
-std::vector<Ball<dim>> make_facet_balls(const std::vector<Vec<Vec<double,dim>,dim>>& f)
-{
-    std::vector<Ball<dim>> out(f.size());
-    for (size_t i = 0; i < f.size(); i++) {
-        out[i] = facet_ball(f[i]);
-    }
-    return out;
-}
-
-template <size_t dim>
 struct NearestNeighborData {
     const std::vector<Vec<Vec<double,dim>,dim>> facets;
     const std::vector<Ball<dim>> facet_balls;

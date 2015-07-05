@@ -86,12 +86,13 @@ NBodyData<dim> nbody_data_from_bem(const Mesh<dim>& obs_mesh, const Mesh<dim>& s
 
 template <size_t dim, size_t R, size_t C>
 std::vector<double>
-nbody_matrix(const Kernel<dim,R,C>& K, const NBodyData<dim>& data) 
+nbody_matrix(const Kernel<dim,R,C>& K, const NBodyData<dim>& data, bool parallel = false) 
 {
     auto n_pairs = data.obs_locs.size() * data.src_locs.size();
     auto n_blocks = R * C;
     std::vector<double> op(n_pairs * n_blocks);
 
+#pragma omp parallel for if(parallel)
     for (size_t i = 0; i < data.obs_locs.size(); i++) {
         for (size_t j = 0; j < data.src_locs.size(); j++) {
             auto kernel_val = data.src_weights[j] * K(
@@ -146,7 +147,7 @@ DenseOperator make_direct_nbody_operator(const NBodyData<dim>& data,
     return DenseOperator(
         R * data.obs_locs.size(),
         C * data.src_locs.size(),
-        nbody_matrix(K, data)
+        nbody_matrix(K, data, true)
     );
 }
 

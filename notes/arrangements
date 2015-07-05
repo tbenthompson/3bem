@@ -1,0 +1,15 @@
+In order to determine the "interior" of the domain or to separate different subdomains that are permitted to have different material properties, I need algorithms that take a set of facets and determine the cells from that data. This problem is called the "Arrangements" problem. Determining the "interior" is very useful for evaluating the solution at interior points. It is also necessary for any problem where there may be volume integral terms. For both these cases, it's even nicer to start with an interior mesh that separates the volume into tris/tets. 
+
+General info on the arrangements problem:
+https://en.wikipedia.org/wiki/Arrangement_of_lines
+http://acg.cs.tau.ac.il/courses/applied-computational-geometry/general/lecture-summaries/4-arrg-3d-pp.pdf
+http://link.springer.com/article/10.1007/BF02716578#page-1
+CGAL has some code for 2D arrangements
+
+But, I want to do this in a relatively simple case where the number of cells is much less than the number of facets. And I also want to end up with a mesh of the domain. So, the problem is somewhat different with the dual goal of (mesh, identify cells). So, my own algorithm:
+-- surround the entire domain with a box. 
+-- generate a mesh of the entire domain making sure to include all the vertices of the boundary mesh and to prevent any new vertices on the boundary mesh
+-- do a graph search (DFS, BFS) from mesh tri/tet to nearby tris/tets to identify regions. don't cross boundaries, that way each region can get its own identifier. 
+-- then when i want to specify a region from the outermost interfaces, simply specify a point in space that i know is within that region. 
+
+To do this, I need an efficient mesh generation tool for arbitrary 2D and 3D domains. I don't know of any good free software mesh generation tools. MeshPy uses Triangle and TetGen. Both seem fine, but they both have restrictive licensing. Can I write a really simple mesh generator of my own using boxes/rects, as long as i don't mind hanging nodes?

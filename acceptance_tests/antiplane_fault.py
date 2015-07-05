@@ -36,7 +36,7 @@ def solve_half_space(slip, fault, surface):
     )
     fmm_config = FMMConfig(0.3, 30, 250, 0.05, True)
     rhs_op = boundary_operator(surface, fault, hypersingular_mthd, fmm_config, all_mesh)
-    full_rhs = (rhs_op.apply(slip))
+    full_rhs = rhs_op.apply(slip)
     rhs = condense_vector(constraint_matrix, full_rhs)
 
     lhs_op = boundary_operator(surface, surface, hypersingular_mthd, fmm_config, all_mesh)

@@ -46,7 +46,7 @@ ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints)
         new_mat.insert(std::make_pair(separated.constrained_dof, separated));
     }
 
-    return ConstraintMatrix{new_mat};
+    return new_mat;
 };
 
 std::vector<double> distribute_vector(const ConstraintMatrix& matrix,
@@ -287,6 +287,17 @@ SparseOperator condense_matrix(const ConstraintMatrix& row_cm,
     auto out_rows = n_in_rows - row_cm.size();
     auto out_cols = n_in_cols - col_cm.size();
     auto out = SparseOperator::csr_from_coo(out_rows, out_cols, entries);
+    return out;
+}
+
+ConstraintMatrix homogenize_constraints(const ConstraintMatrix& cm)
+{
+    ConstraintMatrix out;
+    for (auto it = cm.begin(); it != cm.end(); ++it) {
+        out.insert(std::make_pair(it->first, RearrangedConstraintEQ{
+            it->second.constrained_dof, it->second.terms, 0.0
+        }));
+    }
     return out;
 }
 

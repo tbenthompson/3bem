@@ -1,5 +1,4 @@
 #ifndef TBEMASKDJAWERWFJS_CONTINUITY_BUILDER_H
-
 #define TBEMASKDJAWERWFJS_CONTINUITY_BUILDER_H
 #include <unordered_map>
 
@@ -158,12 +157,14 @@ template <size_t dim>
 std::vector<ConstraintEQ> interpolate_bc_constraints(
     const Mesh<dim>& m,
     const std::vector<size_t>& which_dofs,
-    const std::function<double(const Vec<double,dim>&)>& f) 
+    const std::function<double(const Vec<double,dim>&)>& bc_fnc) 
 {
     std::vector<ConstraintEQ> out;
     for (auto dof: which_dofs) {
         assert(dof < m.n_dofs());
-        out.push_back(boundary_condition(dof, f(m.get_vertex_from_dof(dof)))); 
+        out.push_back(
+            boundary_condition(dof, bc_fnc(m.get_vertex_from_dof(dof)))
+        ); 
     }
     return out;
 }

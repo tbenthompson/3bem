@@ -7,8 +7,12 @@
 namespace tbem {
 
 template <size_t dim> 
-std::vector<Vec<double,dim>> seg_facet_intersection(const Vec<Vec<double,dim>,dim>& f,
-    const Vec<Vec<double,dim>,2>& seg);
+std::vector<Vec<double,dim>> seg_facet_intersection(
+    const Vec<Vec<double,dim>,dim>& f, const Vec<Vec<double,dim>,2>& seg);
+
+template <size_t dim> 
+std::vector<Vec<double,dim>> facet_facet_intersection(
+    const Vec<Vec<double,dim>,dim>& fA, const Vec<Vec<double,dim>,dim>& fB);
 
 bool in_polygon(const std::vector<Vec<double,2>>& poly, const Vec<double,2>& pt);
 

@@ -3,9 +3,7 @@
 #include "iterable_converter.h"
 #include "op_wrap.h"
 
-#include "mesh.h"
 #include "continuity_builder.h"
-#include "vertex_iterator.h"
 #include "integral_operator.h"
 #include "mass_operator.h"
 #include "basis.h"
@@ -42,6 +40,8 @@ std::vector<ConstraintEQ> interpolate_bc_constraints_wrapper(
 } //end namespace tbem
 
 template <size_t dim>
+void export_mesh();
+template <size_t dim>
 void export_integration();
 template <size_t dim>
 void export_kernels();
@@ -51,19 +51,7 @@ void export_dimension() {
     using namespace boost::python;
     using namespace tbem;
 
-    class_<VertexIterator<dim>>("VertexIterator", no_init);
-    class_<Mesh<dim>>("Mesh", init<std::vector<Facet<dim>>>())
-        .add_property("facets", 
-            make_getter(&Mesh<dim>::facets, return_value_policy<return_by_value>()))
-        .def("get_vertex", &Mesh<dim>::get_vertex,
-               return_value_policy<reference_existing_object>())
-        .def("refine_repeatedly", &Mesh<dim>::refine_repeatedly)
-        .def("begin", &Mesh<dim>::begin)
-        .def("n_facets", &Mesh<dim>::n_facets)
-        .def("n_dofs", &Mesh<dim>::n_dofs)
-        .def("create_union", &Mesh<dim>::create_union).staticmethod("create_union");
-    VectorFromIterable().from_python<std::vector<Mesh<dim>>>();
-    
+    export_mesh<dim>(); 
 
     class_<OverlapMap<dim>>("OverlapMap")
         .def("size", &OverlapMap<dim>::size);

@@ -21,6 +21,7 @@ void export_constraints() {
 
     class_<ConstraintMatrix>("ConstraintMatrix", no_init);
     def("shift_constraints", shift_constraints);
+    def("homogenize_constraints", homogenize_constraints);
     def("from_constraints", from_constraints);
     def("condense_vector", &condense_vector);
 

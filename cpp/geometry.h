@@ -144,6 +144,7 @@ inline double tri_area(const Vec<Vec3<double>,3>& corners)
 
 enum Side {FRONT, INTERSECT, BEHIND};
 
+    //TODO: 
 /* Determine which side of the plane/line defined by triangle/segment 
  * the provided point is on.
  */
@@ -166,8 +167,8 @@ template <>
 inline Side facet_side<2>(const std::array<Side,2>& s) 
 {
     if (s[0] == s[1]) { return s[0]; } 
-    else if(s[0] == INTERSECT) { return s[1]; }
-    else if(s[1] == INTERSECT) { return s[0]; }
+    else if (s[0] == INTERSECT) { return s[1]; }
+    else if (s[1] == INTERSECT) { return s[0]; }
     else { return INTERSECT; }
 }
 
@@ -265,6 +266,17 @@ Ball<dim> facet_ball(const Vec<Vec<double,dim>,dim>& f)
     }
     return {c, std::sqrt(r2)};
 }
+
+template <size_t dim>
+std::vector<Ball<dim>> make_facet_balls(const std::vector<Vec<Vec<double,dim>,dim>>& f)
+{
+    std::vector<Ball<dim>> out(f.size());
+    for (size_t i = 0; i < f.size(); i++) {
+        out[i] = facet_ball(f[i]);
+    }
+    return out;
+}
+
 
 
 } // end namespace tbem

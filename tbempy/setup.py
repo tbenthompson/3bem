@@ -56,6 +56,9 @@ def files_in_dir(directory, ext):
 def get_tbempy_srces():
     return files_in_dir('cpp', 'cpp')
 
+def get_gte_srces():
+    return [os.path.join('lib', 'gte', 'Source', 'GteWrapper.cpp')]
+
 def get_wrapper_srces():
     return files_in_dir('python_wrapper', 'cpp')
 
@@ -116,7 +119,7 @@ def get_extension_config():
     link_args = [
         '-fopenmp'
     ]
-    includes = ['cpp', 'lib']
+    includes = ['cpp', 'lib', os.path.join('lib', 'gte', 'Include')]
 
     build_type = 'release'
     if build_type is 'release':
@@ -125,7 +128,7 @@ def get_extension_config():
         compile_args.extend(['-O0', '-g'])
 
     return dict(
-        sources = get_tbempy_srces(),
+        sources = get_tbempy_srces() + get_gte_srces(),
         include_dirs = includes,
         extra_compile_args = compile_args,
         extra_link_args = link_args,
