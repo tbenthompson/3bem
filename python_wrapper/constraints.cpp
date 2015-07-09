@@ -7,12 +7,14 @@ void export_constraints() {
     using namespace boost::python;
     using namespace tbem;
 
-    class_<LinearTerm>("LinearTerm")
+    class_<LinearTerm>("LinearTerm", init<size_t,double>())
         .def_readonly("dof", &LinearTerm::dof)
         .def_readonly("weight", &LinearTerm::weight);
     class_<std::vector<LinearTerm>>("VectorOfLinearTerm", no_init)
         .def(vector_indexing_suite<std::vector<LinearTerm>>());
-    class_<ConstraintEQ>("ConstraintEQ")
+    VectorFromIterable().from_python<std::vector<LinearTerm>>();
+
+    class_<ConstraintEQ>("ConstraintEQ", init<std::vector<LinearTerm>,double>())
         .def_readonly("terms", &ConstraintEQ::terms)
         .def_readonly("rhs", &ConstraintEQ::rhs);
     class_<std::vector<ConstraintEQ>>("VectorOfConstraints", no_init)

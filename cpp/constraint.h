@@ -22,6 +22,10 @@ struct LinearTerm {
     size_t dof;
     double weight;
 
+    LinearTerm(size_t dof, double weight):
+        dof(dof), weight(weight) 
+    {}
+
     bool operator==(const LinearTerm& other) const;
     friend std::ostream& operator<<(std::ostream& os, const LinearTerm& lt);
 };
@@ -37,6 +41,10 @@ struct LinearTerm {
 struct ConstraintEQ {
     std::vector<LinearTerm> terms;
     double rhs;
+
+    ConstraintEQ(std::vector<LinearTerm> terms, double rhs):
+        terms(terms), rhs(rhs) 
+    {}
 
     bool operator==(const ConstraintEQ& other) const;
     friend std::ostream& operator<<(std::ostream& os, const ConstraintEQ& c);

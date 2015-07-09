@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 def test_vector_to_array():
-    circle = TwoD.circle_mesh([0, 0], 1.0, 2)
+    circle = TwoD.circle_mesh([0, 0], 1.0, 2, False)
     np.testing.assert_almost_equal(
         circle.facets[3,:,:],
         [[0.31622777, 0.9486833], [0.0, 1.0]],

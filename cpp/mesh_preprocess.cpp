@@ -91,8 +91,12 @@ MeshPreprocessor<dim>::split_facets_at_intersections(
 
     // TODO: Very similar to the Mesh::refine function in mesh.cpp. Can I consolidate
     // the two functions somehow in order to prevent bugs?
+    // TODO: BAD
+    // TODO: BAD
+    // TODO: BAD
+    // TODO: BAD
     for (size_t i = 0; i < facetsA.size(); i++) {
-        if (current = sorted_intersections.size()) {
+        if (current == sorted_intersections.size()) {
             out_facets.push_back(facetsA[i]);
             continue;
         }

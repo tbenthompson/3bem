@@ -1,17 +1,40 @@
+completed tasks:
+-refactoring of elastic solver, the code in the elastic solver is not really there yet and is a bit of a mess with all the logic of what to do with different types of input
+-better logging for elastic solver
+-function to determine which kernel/meshes each entry of the final matrix comes from
+-discovered that real stress singularities probably occur in the wedge problem
+-read a bunch of articles about common mistakes in mathematical modelling of elastic deformation -- mostly from a FEA perspective, but still applicable
+-proof of concept for the interpolation approach to evaluating the inner integral
+-implemented the remainder of the facet-facet intersection in order to effectively determine where a fault intersects a surface and cut the surface at that point
+-implemented a proof of concept for adaptive mesh refinement using 3bem, mostly does not need to interact with the core code and can live on top
+-determined what needs to be done to automate interior plotting
+-thought about the problem of arrangements -- basically the block closure problem with extensions to 3D -- conclusion: meshing solves the problem
+-thought about automated meshing software, all the good software has either GPL or restrictive licensing. going to go for it, but i'll keep a clear interface so that this can be replaced in the future. using triangle/tetgen
+-working on creating the link to triangle/tetgen
+-used a graph digitizer to get the geometry out of the decelles paper
+-loading the decelles geometry and solving for displacement field for the wedge, realized that the fault-surface intersecting at a non-vertex stuff needs to be activated in the elastic solver before any of this will work
+-determined that free slip elements were not being properly implemented. only one unconstrained 
+-the way that BCs were being handled was not flexible enough to do it easily, so working on a better of BCs using 
+
+WED:
+** any facet that is fully constrained in either displacement or traction should have its rows pre-removed from the system and have its columns pre-evaluated
 ** redesign the elastic input system to take more flexible input -- maybe various types that all implement some general element interface
+** it seems like the free_slip_traction elements are not properly implemented. it seems like there are too many constraints on such an element. the traction is constrained and the normal direction slip is constrained.
+
+LATER:
 ** add a step in the elastic preprocessing to cut surfaces where displacement is unknown at fault intersections
 ** add an option in the elastic solver to perform adaptive mesh refinement
 
-** reproduce simple infinite critical taper wedge models
+** reproduce simple infinite critical taper wedge models, given a wedge is it stable, or will it develop faults and change taper? find the boundary between normal and thrust faulting numerically to confirm that things are working!
 ** reproduce yin 1993 results
 
 ** frictional bcs -- constraint that says shear = f * normal, with f a constant, i.e. no friction law
 ** non-fault mixed bcs
-** continuous displacement discontinuities?
 
 ** logging in the c++ layer, how to integrate with logging in the python layer
 
 ARRANGEMENTS AND VOLUMETRIC MESHING
+** start outlining the algorithm to take the meshed geometry and split space into regions with it
 ** interior meshing allowing beautiful interior plots
 ** identifying the interior from just the boundary
 ** make interior plotting easier

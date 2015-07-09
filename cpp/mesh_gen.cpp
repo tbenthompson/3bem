@@ -5,11 +5,13 @@
 
 namespace tbem {
 
-Vec3<double> spherify(const Vec3<double>& center, double r, const Vec3<double>& x) {
+Vec3<double> spherify(const Vec3<double>& center, double r, const Vec3<double>& x) 
+{
     return (r / dist(x, center)) * (x - center) + center;
 }
 
-Mesh<3> sphere_mesh(const Vec3<double>& center, double r, size_t refinements) {
+Mesh<3> sphere_mesh(const Vec3<double>& center, double r, size_t refinements) 
+{
     std::vector<Vec3<double>> vertices =
     {
         {0.0, -r, 0.0}, {r, 0.0, 0.0}, {0.0, 0.0, r},
@@ -41,7 +43,8 @@ Mesh<3> sphere_mesh(const Vec3<double>& center, double r, size_t refinements) {
 }
         
 Mesh<3> rect_mesh(const Vec3<double>& lower_left, const Vec3<double>& upper_left,
-    const Vec3<double>& upper_right, const Vec3<double>& lower_right) {
+    const Vec3<double>& upper_right, const Vec3<double>& lower_right) 
+{
 
     std::vector<Vec3<double>> vertices = {
         lower_left, upper_left, upper_right, lower_right
@@ -52,21 +55,29 @@ Mesh<3> rect_mesh(const Vec3<double>& lower_left, const Vec3<double>& upper_left
     return Mesh<3>::from_vertices_faces(vertices, faces);
 }
 
-Mesh<2> line_mesh(const Vec2<double>& a, const Vec2<double>& b) {
+Mesh<2> line_mesh(const Vec2<double>& a, const Vec2<double>& b) 
+{
     std::vector<Vec<double,2>> vertices = {a, b};
     std::vector<std::array<size_t,2>> segs = {{0, 1}};
     return Mesh<2>::from_vertices_faces(vertices, segs);
 }
 
 
-Vec2<double> circlify(const Vec2<double>& center, double r, const Vec2<double>& x) {
+Vec2<double> circlify(const Vec2<double>& center, double r, const Vec2<double>& x) 
+{
     return (r / dist(x, center)) * (x - center) + center;
 }
 
-Mesh<2> circle_mesh(const Vec2<double>& c, double r, size_t refinements) {
+Mesh<2> circle_mesh(const Vec2<double>& c, double r, size_t refinements, bool reverse) 
+{
     std::vector<std::array<double,2>> vertices = {
-        {c[0] + r, c[1]}, {c[0], c[1] + r}, {c[0] - r, c[1]}, {c[0], c[1] - r},
+        {c[0] + r, c[1]}, {c[0], c[1] + r}, {c[0] - r, c[1]}, {c[0], c[1] - r}
     };
+    if (reverse) {
+        vertices = {
+            {c[0] + r, c[1]}, {c[0], c[1] - r}, {c[0] - r, c[1]}, {c[0], c[1] + r},
+        };
+    }
     std::vector<std::array<size_t, 2>> segs = {
         {0, 1}, {1, 2}, {2, 3}, {3, 0}
     };

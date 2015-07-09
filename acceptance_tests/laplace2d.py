@@ -50,7 +50,7 @@ def run(linear_solver, operator_builder, refine, u_fnc, dudn_fnc_builder,
     n_test_pts = 100
 
     obs_pts = make_interior_pts(100, center, obs_radius)
-    circle = circle_mesh(center, r, refine)
+    circle = circle_mesh(center, r, refine, False)
     return solve(2, circle, linear_solver, operator_builder,
                  obs_pts, u_fnc, dudn_fnc_builder(center), far_threshold)
 

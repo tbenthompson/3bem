@@ -32,7 +32,7 @@ TEST_CASE("Refine2DMesh", "[mesh]")
 TEST_CASE("RefineSubset", "[mesh]") 
 {
     auto m2 = line_mesh({0,0}, {1,0}).refine({0}).refine({0});
-    REQUIRE(m2.n_facets() == 4);
+    REQUIRE(m2.n_facets() == 3);
     REQUIRE(m2.facets[1][0] == (Vec2<double>{0.25,0.0}));
 }
 
@@ -48,6 +48,20 @@ TEST_CASE("CircleMesh", "[mesh]")
     REQUIRE_CLOSE(src_circle.facets[16][0][1], 19.0, 1e-4);
     REQUIRE_CLOSE(src_circle.facets[32][0][1], 0.0, 1e-4);
     REQUIRE_CLOSE(src_circle.facets[48][0][1], -19.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[0][0][1], 0.0, 1e-4);
+}
+
+TEST_CASE("reverse circle mesh", "[mesh]")
+{
+    std::array<double, 2> center = {20.0, 0.0};
+    auto src_circle = circle_mesh(center, 19.0, 4, true);
+    REQUIRE_CLOSE(src_circle.facets[16][0][0], 20.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[32][0][0], 1.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[48][0][0], 20.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[0][0][0], 39.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[16][0][1], -19.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[32][0][1], 0.0, 1e-4);
+    REQUIRE_CLOSE(src_circle.facets[48][0][1], 19.0, 1e-4);
     REQUIRE_CLOSE(src_circle.facets[0][0][1], 0.0, 1e-4);
 }
 

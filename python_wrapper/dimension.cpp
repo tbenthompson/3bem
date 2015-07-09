@@ -59,6 +59,7 @@ void export_dimension() {
     def("cut_at_intersection", cut_at_intersection<dim>);
     def("normal_constraints", normal_constraints<dim>);
     def("form_neighbor_bcs", form_neighbor_bcs<dim>);
+    def("bc_constraints", bc_constraints<dim>);
 
     def("convert_to_constraints", convert_to_constraints<dim>);
     def("interpolate_bc_constraints", interpolate_bc_constraints_wrapper<dim>);
@@ -86,9 +87,6 @@ void export_dimension() {
 
     def("dense_interior_operator", dense_interior_operator<dim,1,1>);
     def("dense_interior_operator", dense_interior_operator<dim,dim,dim>);
-
-    auto mass_op = class_<MassOperator<dim>>("MassOperator", no_init);
-    export_operator<MassOperator<dim>>(mass_op);
 
     // mass_operator cannot be overloaded like boundary_operator, because there
     // is no kernel parameter to decide on the tensor shape

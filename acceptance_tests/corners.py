@@ -10,7 +10,7 @@ def test_corners():
     refine_level = 8;
     linear_solve_tol = 1e-7;
     switch_dof = 500
-    surface = circle_mesh(center, r, refine_level);
+    surface = circle_mesh(center, r, refine_level, False);
     n_dofs = surface.n_dofs();
     if switch_dof > n_dofs:
         switch_dof = n_dofs

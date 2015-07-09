@@ -154,6 +154,17 @@ std::vector<ConstraintEQ> form_neighbor_bcs(
 }
 
 template <size_t dim>
+std::vector<ConstraintEQ> bc_constraints(
+    const Mesh<dim>& m, const std::vector<double>& bcs) 
+{
+    std::vector<ConstraintEQ> out;
+    for (size_t i = 0; i < m.n_dofs(); i++) {
+        out.push_back(boundary_condition(i, bcs[i])); 
+    }
+    return out;
+}
+
+template <size_t dim>
 std::vector<ConstraintEQ> interpolate_bc_constraints(
     const Mesh<dim>& m,
     const std::vector<size_t>& which_dofs,
