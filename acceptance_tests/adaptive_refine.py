@@ -18,9 +18,11 @@ def refiner(error_fnc):
 
     refine_fraction = 0.3
     iterations = 0
+    all_steps = []
     while surface.n_facets() < 4000:
         n_facets = surface.n_facets()
         soln = solve_half_space(slip, fault, surface)
+        all_steps.append((surface, soln))
         # plot_soln(surface, soln)
         facet_error, _ = error_fnc(slip, fault, surface, soln)
         _, l2_error = exact_errors(slip, fault, surface, soln)
@@ -34,6 +36,7 @@ def refiner(error_fnc):
 
         surface = surface.refine(refine_me)
         iterations += 1
+    animate(all_steps)
     return iterations
 
 def exact_errors(slip, fault, surface, soln):
@@ -69,13 +72,29 @@ def local_and_global_errors(dof_error, surface):
     l2_error = np.sqrt(np.mean(facet_error ** 2))
     return facet_error, l2_error
 
-def plot_soln(surface, soln):
+def plot_soln(surface, soln, show = True):
     xs, exact = get_exact(surface)
     import matplotlib.pyplot as plt
     minx = np.min(xs)
     maxx = np.max(xs)
     x = np.linspace(minx, maxx, 500)
-    plt.plot(x, np.arctan(1.0 / x) / np.pi, 'r*-')
+    # plt.plot(x, np.arctan(1.0 / x) / np.pi, 'r*-')
     plt.plot(xs, soln, 'b*-')
-    plt.show()
+    if show:
+        plt.show()
+
+def animate(all_steps):
+    import matplotlib.pyplot as plt
+    def f(step_idx):
+        surface = all_steps[step_idx][0]
+        soln = all_steps[step_idx][1]
+        plt.cla()
+        xs, exact = get_exact(surface)
+        plt.plot(xs, soln, 'b*-')
+        plt.ylim([-0.7, 0.7])
+    fig = plt.figure(figsize = (5,4))
+    from matplotlib import animation
+    anim = animation.FuncAnimation(fig, f, frames = len(all_steps))
+    anim.save('antiplane_refine.gif', writer = 'imagemagick', fps = 1)
+
 

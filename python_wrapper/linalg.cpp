@@ -20,6 +20,7 @@ void export_linalg() {
     export_operator<SparseOperator>(
         p::class_<SparseOperator>("SparseOperator", p::no_init)
         .def("nnz", &SparseOperator::nnz)
+        .def("to_dense", &SparseOperator::to_dense)
         .add_property("values", make_getter(
                 &SparseOperator::values, 
                 p::return_value_policy<p::return_by_value>()))

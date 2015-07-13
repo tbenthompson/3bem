@@ -39,7 +39,6 @@ TEST_CASE("TensorMassTerm", "[mass_operator]") {
     auto res = mass_op.apply(str);
     REQUIRE(mass_op.n_rows() == 3 * sphere.n_dofs());
     REQUIRE(mass_op.n_cols() == 3 * sphere.n_dofs());
-    REQUIRE(mass_op.galerkin.n_cols() == 3 * sphere.n_facets() * 4);
     REQUIRE(res.size() == mass_op.n_rows());
 
     double true_area = 0.0;

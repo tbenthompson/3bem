@@ -14,11 +14,12 @@ completed tasks:
 -used a graph digitizer to get the geometry out of the decelles paper
 -loading the decelles geometry and solving for displacement field for the wedge, realized that the fault-surface intersecting at a non-vertex stuff needs to be activated in the elastic solver before any of this will work
 -determined that free slip elements were not being properly implemented. only one unconstrained 
--the way that BCs were being handled was not flexible enough to do it easily, so working on a better of BCs using 
+-the way that BCs were being handled was not flexible enough to do it easily, so working on a better of BCs using constraints. Form the whole system assuming nothing is known, then form the RHS from the BCs
+-fixed bugs in the same the linear systems were arranged. 
+-got the row/column scaling to finally interact correctly with inhomogeneous constraints work correctly
 
 WED:
 ** any facet that is fully constrained in either displacement or traction should have its rows pre-removed from the system and have its columns pre-evaluated
-** redesign the elastic input system to take more flexible input -- maybe various types that all implement some general element interface
 ** it seems like the free_slip_traction elements are not properly implemented. it seems like there are too many constraints on such an element. the traction is constrained and the normal direction slip is constrained.
 
 LATER:
