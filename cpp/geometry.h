@@ -217,6 +217,17 @@ Vec<double,dim> centroid(const Vec<Vec<double,dim>,dim>& f)
 }
 
 template <size_t dim>
+Vec<Vec<double,dim>,dim> expand_facet(const Vec<Vec<double,dim>,dim>& f, double factor)
+{
+    auto C = centroid(f);
+    Vec<Vec<double,dim>,dim> out;
+    for (size_t d = 0; d < dim; d++) {
+        out[d] = (f[d] - C) * (1.0 + factor) + C;
+    }
+    return out;
+}
+
+template <size_t dim>
 struct Ball 
 {
     Vec<double,dim> center;

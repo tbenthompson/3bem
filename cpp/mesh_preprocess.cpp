@@ -6,6 +6,9 @@
 
 namespace tbem {
 
+double intersection_eps = 1e-14;
+
+
 template <size_t dim>
 std::vector<FacetIntersection<dim>> MeshPreprocessor<dim>::find_intersections(
     const std::vector<Vec<Vec<double,dim>,dim>>& facetsA,
@@ -16,10 +19,17 @@ std::vector<FacetIntersection<dim>> MeshPreprocessor<dim>::find_intersections(
     auto ball_intersections = intersect_balls_all_pairs(ballsA, ballsB);
     std::vector<FacetIntersection<dim>> out;
     for (size_t i = 0; i < ball_intersections.size(); i++) {
-        auto real_intersection = facet_facet_intersection(
-            facetsA[ball_intersections[i].first],
-            facetsB[ball_intersections[i].second]
-        );
+        // Due to finite precision arithmetic, some endpoint intersections will
+        // not be found. To get around this, expand each facet by a very small
+        // amount (order machine epsilon) so that the intersection will
+        // definitely be within the facet. Even if it catches some intersections
+        // that don't actually exist, this is good, because it's okay to fail with
+        // ridiculous geometries that vary of scales of order machine epsilon.
+        auto A_idx = ball_intersections[i].first;
+        auto B_idx = ball_intersections[i].second;
+        auto expandedA = expand_facet(facetsA[A_idx], intersection_eps);
+        auto expandedB = expand_facet(facetsB[B_idx], intersection_eps);
+        auto real_intersection = facet_facet_intersection(expandedA, expandedB);
         if (real_intersection.size() == 0) {
             continue;
         }
@@ -36,7 +46,7 @@ template <size_t dim>
 bool intersection_is_endpoint(const Vec<Vec<double,dim>,dim>& f,
     const FacetIntersection<dim>& intersection) 
 {
-    double threshold = 1e-14 * facet_ball(f).radius;
+    double threshold = intersection_eps * 10 * facet_ball(f).radius;
     for (size_t d = 0; d < dim; d++) {
         if (hypot(f[d] - intersection.pts[0]) < threshold) {
             return true;

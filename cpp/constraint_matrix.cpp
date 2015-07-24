@@ -36,7 +36,8 @@ ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints)
     ConstraintMatrix new_mat;
 
     for (size_t i = 0; i < constraints.size(); i++) {
-        const auto zeros_filtered = filter_zero_terms(constraints[i]);
+        auto combined = combine_terms(constraints[i]);
+        auto zeros_filtered = filter_zero_terms(combined);
         auto lower_tri_constraint = make_lower_triangular(zeros_filtered, new_mat);
         if (lower_tri_constraint.terms.size() == 0) {
             continue;

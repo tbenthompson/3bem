@@ -58,6 +58,8 @@ size_t find_last_dof_index(const ConstraintEQ& c);
 
 ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps = 1e-15);
 
+ConstraintEQ combine_terms(const ConstraintEQ& c);
+
 /* This structure represents a constraint that has been rearranged so that
  * the constrained dof is alone on the left hand side.
  * A constraint:

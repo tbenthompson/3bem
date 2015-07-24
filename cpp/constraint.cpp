@@ -104,8 +104,8 @@ typedef std::vector<LinearTerm>::const_iterator LinearTermIterator;
 LinearTermIterator find_term_with_dof(const std::vector<LinearTerm>& terms, size_t dof) 
 {
     return std::find_if(terms.begin(), terms.end(),
-        [&] (const LinearTerm& sub_lt) {
-            return sub_lt.dof == dof;
+        [&] (const LinearTerm& lt) {
+            return lt.dof == dof;
         }
     );
 }
@@ -145,7 +145,7 @@ ConstraintEQ substitute(const ConstraintEQ& c, size_t constrained_dof_index,
         } else {
             double additive_weight = subs_term->weight * multiplicative_factor;
             out_terms.push_back(LinearTerm{term.dof, term.weight + additive_weight});
-            size_t subs_term_index = std::distance(subs_in.terms.begin(), subs_term);
+            size_t subs_term_index = subs_term - subs_in.terms.begin();
             assert(subs_term_index < subs_in.terms.size());
             remove(which_subs_terms_unused, subs_term_index);
         } 
@@ -167,6 +167,21 @@ ConstraintEQ filter_zero_terms(const ConstraintEQ& c, double eps)
     for(auto t: c.terms) {
         if (std::fabs(t.weight) > eps) {
             out_terms.push_back(t);
+        }
+    }
+    return {out_terms, c.rhs};
+}
+
+ConstraintEQ combine_terms(const ConstraintEQ& c) 
+{
+    std::vector<LinearTerm> out_terms;
+    for(auto t: c.terms) {
+        auto same_term = find_term_with_dof(out_terms, t.dof);
+        if (none_found(same_term, out_terms)) {
+            out_terms.push_back(t);
+        } else {
+            size_t same_term_idx = same_term - out_terms.begin();
+            out_terms[same_term_idx].weight += t.weight;
         }
     }
     return {out_terms, c.rhs};

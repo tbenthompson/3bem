@@ -1,5 +1,6 @@
 #include "catch.hpp"
 #include "mesh_preprocess.h"
+#include <iomanip>
 
 using namespace tbem;
 
@@ -13,6 +14,17 @@ TEST_CASE("two intersecting segments", "[mesh_preprocess]")
     REQUIRE(intersections[0].facet_idx_B == 0);
     REQUIRE(intersections[0].pts.size() == 1);
     REQUIRE(intersections[0].pts[0] == (Vec<double,2>{0.5, 0}));
+}
+
+TEST_CASE("regression test intersection", "[mesh_preprocess]")
+{
+    Vec<Vec<double,2>,2> f0{{{0.75, 1}, {0.5, 1}}};
+    Vec<Vec<double,2>,2> f1{{
+        {0.2 + (0.553182 - 0.2) * (3.0 / 4.0), 0.65},
+        {0.553182, 1.0}
+    }};
+    auto intersections = MeshPreprocessor<2>().find_intersections({f0}, {f1});
+    REQUIRE(intersections.size() == 1);
 }
 
 TEST_CASE("three intersections", "[mesh_preprocess]")
@@ -42,8 +54,8 @@ TEST_CASE("two intersecting triangles", "[mesh_preprocess]")
     REQUIRE(intersections[0].facet_idx_A == 0);
     REQUIRE(intersections[0].facet_idx_B == 0);
     REQUIRE(intersections[0].pts.size() == 2);
-    REQUIRE(intersections[0].pts[0] == (Vec<double,3>{0.0, 0.0, 0.0}));
-    REQUIRE(intersections[0].pts[1] == (Vec<double,3>{0.5, 0.5, 0.0}));
+    REQUIRE_CLOSE(intersections[0].pts[1], (Vec<double,3>{0.0, 0.0, 0.0}), 1e-14);
+    REQUIRE_CLOSE(intersections[0].pts[0], (Vec<double,3>{0.5, 0.5, 0.0}), 1e-14);
 }
 
 TEST_CASE("split at intersection 2D", "[mesh_preprocess]")

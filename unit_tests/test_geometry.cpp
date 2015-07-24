@@ -275,3 +275,12 @@ TEST_CASE("not intersecting balls", "[geometry]")
     auto bs = balls_from_centers_radii<2>({{0, 0}, {2, 0}}, {1, 0.5});
     REQUIRE(!balls_intersect(bs[0], bs[1]));
 }
+
+TEST_CASE("expand facet", "[geometry]")
+{
+    auto result = expand_facet<2>({{{0, 0}, {1, 1}}}, 0.5);
+    REQUIRE_ARRAY_EQUAL(
+        result,
+        (Vec<Vec<double,2>,2>{{{-0.25, -0.25}, {1.25, 1.25}}}), 2
+    );
+}

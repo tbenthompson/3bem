@@ -34,7 +34,7 @@ std::vector<ObsPt<dim>> interior_obs_pts(const std::vector<Vec<double,dim>>& loc
     for (size_t pt_idx = 0; pt_idx < locs.size(); pt_idx++) {
         auto nf = nearfield_finder.find(locs[pt_idx]);
         auto rich_dir = decide_limit_dir(
-            locs[pt_idx], nf, all_mesh.facets, 0.4, 1e-2
+            locs[pt_idx], nf, all_mesh.facets, 0.4, 1e-12
         );
         out.push_back({locs[pt_idx], normals[pt_idx], rich_dir});
     }
