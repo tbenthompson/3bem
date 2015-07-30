@@ -63,11 +63,11 @@ IntegralOperator<dim,R,C> boundary_operator(const Mesh<dim>& obs_mesh,
     const FMMConfig& fmm_config, const Mesh<dim>& all_mesh) 
 {
     (void)fmm_config;
-    auto near_obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_near_quad, all_mesh);
+    auto near_obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_far_quad, all_mesh);
     auto nearfield = make_nearfield_operator(near_obs_pts, src_mesh, mthd);
     auto far_obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_far_quad, all_mesh);
     auto far_correction = make_farfield_correction_operator(far_obs_pts, src_mesh, mthd);
-    auto near_galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_near_quad);
+    auto near_galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_far_quad);
 
     auto nbody_data = nbody_data_from_bem(
         obs_mesh, src_mesh, mthd.obs_far_quad, mthd.src_far_quad
@@ -95,11 +95,11 @@ DenseOperator dense_boundary_operator(const Mesh<dim>& obs_mesh,
     const Mesh<dim>& src_mesh, const IntegrationStrategy<dim,R,C>& mthd,
     const Mesh<dim>& all_mesh)
 {
-    auto near_obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_near_quad, all_mesh);
+    auto near_obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_far_quad, all_mesh);
     auto nearfield = make_nearfield_operator(near_obs_pts, src_mesh, mthd);
     auto far_obs_pts = galerkin_obs_pts(obs_mesh, mthd.obs_far_quad, all_mesh);
     auto far_correction = make_farfield_correction_operator(far_obs_pts, src_mesh, mthd);
-    auto near_galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_near_quad);
+    auto near_galerkin = make_galerkin_operator(R, obs_mesh, mthd.obs_far_quad);
 
     auto nbody_data = nbody_data_from_bem(
         obs_mesh, src_mesh, mthd.obs_far_quad, mthd.src_far_quad

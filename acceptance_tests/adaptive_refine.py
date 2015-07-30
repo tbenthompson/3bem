@@ -54,7 +54,7 @@ def estimated_errors(slip, fault, surface, soln):
     all_mesh = tbem.Mesh.create_union([surface, fault])
 
     double_mthd = tbem.make_adaptive_integrator(
-        1e-5, 5, 10, 3.0, tbem.LaplaceDouble()
+        1e-5, 6, 5, 10, 3.0, tbem.LaplaceDouble()
     )
     fmm_config = tbem.FMMConfig(0.3, 30, 250, 0.05, True)
     rhs_op = tbem.boundary_operator(surface, fault, double_mthd, fmm_config, all_mesh)

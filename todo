@@ -3,15 +3,14 @@ four goals:
 ** fix failure of fault split algo for decelles
 ** try adaptivity with wedge.py
 ** need to solve the traction evaluation problems. 
-a systematic test of the different integrations and the errors involved:
-- sources of error
-** sinh quadrature
-** backup high order gaussian quadrature in sinh quadrature
-** adaptive quadrature is an alternative
-** limit taking error
-** farfield quadrature order error
-** galerkin quadrature errors
-** interior quadrature errors
+** a systematic test of the different integrations and the errors involved:
+---sinh quadrature
+---backup high order gaussian quadrature in sinh quadrature
+---adaptive quadrature is an alternative
+---limit taking error
+---farfield quadrature order error
+---galerkin quadrature errors
+---interior quadrature errors
 
 2. INTERIOR EVALUATION IMPROVEMENTS.
 ** investigate occasional interior evaluation failures

@@ -16,14 +16,14 @@ TEST_CASE("interior operator", "[dense_builder]")
     std::vector<double> src_strength(sphere.n_dofs(), 1.0);
 
     SECTION("sphere surface area") {
-        auto mthd = make_adaptive_integrator(1e-2, 2, 3, 2.0, IdentityScalar<3>());
+        auto mthd = make_adaptive_integrator(1e-2, 2, 2, 3, 2.0, IdentityScalar<3>());
         auto op = dense_interior_operator({obs_pt}, {obs_n}, sphere, mthd, sphere);
         auto result = op.apply(src_strength)[0];
         REQUIRE_CLOSE(result, 4 * M_PI * 9, 1e-1);
     }
 
     SECTION("constant laplace") {
-        auto mthd = make_adaptive_integrator(1e-2, 2, 3, 2.0, LaplaceDouble<3>());
+        auto mthd = make_adaptive_integrator(1e-2, 2, 2, 3, 2.0, LaplaceDouble<3>());
         auto op = dense_interior_operator({obs_pt}, {obs_n}, sphere, mthd, sphere);
         auto result = op.apply(src_strength)[0];
         REQUIRE_CLOSE(result, -1.0, 1e-3);
@@ -33,7 +33,7 @@ TEST_CASE("interior operator", "[dense_builder]")
 void test_boundary_operator(Mesh<2> m1, Mesh<2> m2) 
 {
     LaplaceDouble<2> k;
-    auto mthd = make_adaptive_integrator(1e-4, 3, 8, 3.0, k);
+    auto mthd = make_adaptive_integrator(1e-4, 4, 3, 8, 3.0, k);
     FMMConfig fmm_config{0.3, 30, 10000, 0.1, true};
     std::vector<double> v(random_list(m2.n_dofs()));
     auto correct = dense_boundary_operator(m1, m2, mthd, {m2}).apply(v);
@@ -62,7 +62,7 @@ TEST_CASE("IntegralOperatorTensor", "[boundary_operator]")
     auto m1 = circle_mesh({0, 0}, 1.0, 3);
     auto m2 = m1;
     ElasticHypersingular<2> k(1.0, 0.25);
-    auto mthd = make_adaptive_integrator(1e-4, 3, 8, 3.0, k);
+    auto mthd = make_adaptive_integrator(1e-4, 4, 3, 8, 3.0, k);
     FMMConfig fmm_config{0.3, 30, 10000, 0.1, true};
     auto v = random_list(2 * m2.n_dofs());
     auto correct = dense_boundary_operator(m1, m2, mthd, {m2}).apply(v);
@@ -78,7 +78,7 @@ TEST_CASE("nearfield matrix", "[boundary_operator]")
     auto m = circle_mesh({0, 0}, 1.0, 3);
     //far threshold of 1e10 forces nearfield matrix to be equivalent to the
     //full matrix
-    auto mthd = make_adaptive_integrator(1e-4, 3, 8, 1e10, LaplaceDouble<2>());
+    auto mthd = make_adaptive_integrator(1e-4, 4, 3, 8, 1e10, LaplaceDouble<2>());
     FMMConfig fmm_config{0.3, 30, 10000, 0.1, true};
     auto op = boundary_operator(m, m, mthd, fmm_config, m);
     auto v = random_list(m.n_dofs());

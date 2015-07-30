@@ -9,7 +9,7 @@ def full_space():
     surface = line_mesh([-10, -0.5], [10, -0.5]).refine_repeatedly(8)
 
     double_kernel = LaplaceDouble()
-    mthd = make_adaptive_integrator(1e-13, 5, 8, 4.0, double_kernel)
+    mthd = make_adaptive_integrator(1e-13, 6, 5, 8, 4.0, double_kernel)
     double_layer = boundary_operator(
         surface, fault, mthd,
         FMMConfig(0.3, 30, 250, 0.05, True),
@@ -32,7 +32,7 @@ def solve_half_space(slip, fault, surface):
     all_mesh = Mesh.create_union([surface, fault])
 
     hypersingular_mthd = make_adaptive_integrator(
-        1e-5, 5, 10, 3.0, LaplaceHypersingular()
+        1e-5, 6, 5, 10, 3.0, LaplaceHypersingular()
     )
     fmm_config = FMMConfig(0.3, 30, 250, 0.05, True)
     rhs_op = boundary_operator(surface, fault, hypersingular_mthd, fmm_config, all_mesh)
@@ -88,8 +88,8 @@ def half_space_interior(refine):
 
     double_kernel = LaplaceDouble()
     hypersingular_kernel = LaplaceHypersingular()
-    double_mthd = make_adaptive_integrator(1e-5, 5, 10, 3.0, double_kernel)
-    hypersingular_mthd = make_adaptive_integrator(1e-5, 5, 10, 3.0, hypersingular_kernel)
+    double_mthd = make_adaptive_integrator(1e-5, 6, 5, 10, 3.0, double_kernel)
+    hypersingular_mthd = make_adaptive_integrator(1e-5, 6, 5, 10, 3.0, hypersingular_kernel)
 
     mtpo = dense_interior_operator
     disp = mtpo(pts, normalsx, fault, double_mthd, all_mesh).apply(slip) -\

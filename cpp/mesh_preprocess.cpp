@@ -73,6 +73,8 @@ template <>
 std::vector<Vec<Vec<double,3>,3>> split_facet<3>(const Vec<Vec<double,3>,3>& f,
     const FacetIntersection<3>& intersection) 
 {
+    (void)f;
+    (void)intersection;
     //TODO: Not implemented yet.
     return {};
 }

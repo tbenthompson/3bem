@@ -62,7 +62,7 @@ def test_ILU():
     slip = np.ones(2 * fault.n_dofs())
 
     mthd = tbempy.TwoD.make_adaptive_integrator(
-        1e-4, 3, 8, 5.0,
+        1e-4, 4, 3, 8, 5.0,
         tbempy.TwoD.ElasticHypersingular(shear_modulus, 0.25)
     )
     solver = Solver()

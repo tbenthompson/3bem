@@ -38,7 +38,7 @@ def planestrain_with_integration_mthd(mthd):
     check_planestrain_error(surface, soln)
 
 def test_planestrain():
-    mthd = make_adaptive_integrator(1e-4, 3, 8, 3.0, ElasticHypersingular(30e9, 0.25))
+    mthd = make_adaptive_integrator(1e-4, 4, 3, 8, 3.0, ElasticHypersingular(30e9, 0.25))
     planestrain_with_integration_mthd(mthd)
 
 if __name__ == "__main__":

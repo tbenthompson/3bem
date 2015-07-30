@@ -102,7 +102,7 @@ TEST_CASE("Constrained nearfield matrix", "[nearfield_operator]")
     // Use a very large nearfield range (300000) to force everything to
     // be nearfield.
     LaplaceDouble<2> k;
-    auto mthd = make_adaptive_integrator(1e-4, 3, 8, 300000, k);
+    auto mthd = make_adaptive_integrator(1e-4, 4, 3, 8, 300000, k);
     auto galerkin = make_galerkin_operator(1, m, mthd.obs_far_quad);
     auto obs_pts = galerkin_obs_pts(m, mthd.obs_far_quad, m);
     auto nearfield = make_nearfield_operator(obs_pts, m, mthd);

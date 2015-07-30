@@ -47,7 +47,7 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc,
 
     double_kernel = tbem.LaplaceDouble()
     double_mthd = tbem.make_adaptive_integrator(
-        1e-5, 3, 8, far_threshold, double_kernel
+        1e-5, 4, 3, 8, far_threshold, double_kernel
     )
     rhs_double = operator_builder(mesh, mesh, double_mthd, mesh).apply(u)
 
@@ -58,7 +58,7 @@ def solve(dim, mesh, linear_solver, operator_builder, obs_pts, u_fnc, dudn_fnc,
 
     single_kernel = tbem.LaplaceSingle()
     single_mthd = tbem.make_adaptive_integrator(
-        1e-5, 3, 8, far_threshold, single_kernel
+        1e-5, 4, 3, 8, far_threshold, single_kernel
     )
     matrix = operator_builder(mesh, mesh, single_mthd, mesh);
 
