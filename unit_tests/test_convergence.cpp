@@ -115,19 +115,21 @@ TEST_CASE("farfield gauss convergence", "[convergence]")
 
 TEST_CASE("inner integrals limit steps", "[convergence]")
 {
-    auto xs = linspace(0.05, 0.95, 10);
+    auto xs = linspace(0.05, 0.95, 6);
+    std::vector<double> ys{0.0, 0.001, 0.1, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0};
     for (size_t i = 0; i < xs.size(); i++) {
-        std::vector<double> ys{0.0, 0.0001, 0.001, 0.01, 0.1, 0.5};
         for (size_t j = 0; j < ys.size(); j++) {
-            auto error = integral_convergence_test(10, {xs[i], ys[j]},
+            auto error = integral_convergence_test(11, {xs[i], ys[j]},
                 [] (IntegralTerm<2,1,1>& term, size_t step) {
                     LaplaceHypersingular<2> K;
-                    auto integrator = make_sinh_integrator(12, 1, 1, step + 2, 3.0, K);
+                    auto integrator = make_sinh_integrator(
+                        step + 2, 1, step + 3, step + 2, 3.0, K
+                    );
                     return integrator.compute_term(term);
                 }
             );
-            std::cout << xs[i] << " " << ys[j] << " " << error.back() << std::endl;
-            // REQUIRE(error.back() < 1e-8);
+            // std::cout << xs[i] << " " << ys[j] << " " << error.back() << std::endl;
+            REQUIRE(error.back() < 1e-8);
         }
     }
 }

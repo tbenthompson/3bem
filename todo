@@ -2,15 +2,9 @@ four goals:
 1. GET THE WEDGE MODELS WORKING CORRECTLY.
 ** fix failure of fault split algo for decelles
 ** try adaptivity with wedge.py
-** need to solve the traction evaluation problems. 
-** a systematic test of the different integrations and the errors involved:
----sinh quadrature
----backup high order gaussian quadrature in sinh quadrature
----adaptive quadrature is an alternative
----limit taking error
----farfield quadrature order error
----galerkin quadrature errors
----interior quadrature errors
+
+** add the sinh quadrature backup gauss order as a parameter? or simply remove the backup gauss quadrature?
+** fix the nearfield observation quadrature
 
 2. INTERIOR EVALUATION IMPROVEMENTS.
 ** investigate occasional interior evaluation failures
