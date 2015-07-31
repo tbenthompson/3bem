@@ -178,9 +178,6 @@ TEST_CASE("observation quadrature convergence", "[convergence]")
             return make_sinh_integrator(12, 4 * step + 3, 2, 10, 8, 3.0, K); 
         }
     );
-    for (auto e: error) {
-        std::cout << e << std::endl;
-    }
     //TODO: Nearfield quadrature convergences sufficiently assuming continuity.
     //But, it does so slowly. How can it be sped up? What about a tanh-sinh 
     //quadrature rule? At the very least, nearfield observation order should
