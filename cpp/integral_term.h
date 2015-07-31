@@ -48,6 +48,7 @@ template <size_t dim,size_t R, size_t C>
 struct IntegrationStrategy {
     std::shared_ptr<Kernel<dim,R,C>> K;
     QuadRule<dim-1> src_far_quad;
+    QuadRule<dim-1> obs_near_quad;
     QuadRule<dim-1> obs_far_quad;
     std::vector<double> singular_steps;
     double singular_threshold;
@@ -74,13 +75,14 @@ inline std::vector<double> make_singular_steps(size_t n_steps) {
 template <size_t dim,size_t R, size_t C>
 IntegrationStrategy<dim,R,C> make_integrator(
     std::unique_ptr<NearfieldIntegratorI<dim,R,C>>& nearfield,
-    size_t obs_far_order, size_t src_far_order, 
-    size_t n_singular_steps, double far_threshold,
-    const Kernel<dim,R,C>& K)
+    size_t obs_near_order, size_t obs_far_order,
+    size_t src_far_order, size_t n_singular_steps,
+    double far_threshold, const Kernel<dim,R,C>& K)
 {
     return {
         K.clone(), 
         gauss_facet<dim>(src_far_order),
+        gauss_facet<dim>(obs_near_order),
         gauss_facet<dim>(obs_far_order),
         make_singular_steps(n_singular_steps),
         1.0,
@@ -104,7 +106,7 @@ struct AdaptiveIntegrator: public NearfieldIntegratorI<dim,R,C> {
 
 template <size_t dim,size_t R, size_t C>
 IntegrationStrategy<dim,R,C> make_adaptive_integrator(double near_tol,
-    size_t obs_far_order, size_t src_far_order,
+    size_t obs_near_order, size_t obs_far_order, size_t src_far_order,
     size_t n_singular_steps, double far_threshold,
     const Kernel<dim,R,C>& K) 
 {
@@ -112,7 +114,8 @@ IntegrationStrategy<dim,R,C> make_adaptive_integrator(double near_tol,
         new AdaptiveIntegrator<dim,R,C>(near_tol)
     );
     return make_integrator(
-        near, obs_far_order, src_far_order, n_singular_steps, far_threshold, K
+        near, obs_near_order, obs_far_order, src_far_order,
+        n_singular_steps, far_threshold, K
     );
 }
 
@@ -131,7 +134,7 @@ struct SinhIntegrator: public NearfieldIntegratorI<dim,R,C> {
 
 template <size_t dim,size_t R, size_t C>
 IntegrationStrategy<dim,R,C> make_sinh_integrator(size_t sinh_order,
-    size_t obs_far_order, size_t src_far_order,
+    size_t obs_near_order, size_t obs_far_order, size_t src_far_order,
     size_t n_singular_steps, double far_threshold,
     const Kernel<dim,R,C>& K) 
 {
@@ -139,7 +142,8 @@ IntegrationStrategy<dim,R,C> make_sinh_integrator(size_t sinh_order,
         new SinhIntegrator<dim,R,C>(sinh_order)
     );
     return make_integrator(
-        near, obs_far_order, src_far_order, n_singular_steps, far_threshold, K
+        near, obs_near_order, obs_far_order, src_far_order,
+        n_singular_steps, far_threshold, K
     );
 }
 

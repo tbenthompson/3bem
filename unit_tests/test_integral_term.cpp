@@ -43,7 +43,7 @@ std::vector<Vec<double,2>> integral_locs(const IntegrationStrategy<2,1,1>& integ
 IntegrationStrategy<2,1,1> fake_integral(const ObsPt<2>& pt)
 {
     auto in = std::unique_ptr<NearfieldIntegratorI<2,1,1>>(new NearfieldIntegratorFake);
-    auto integrator = make_integrator(in, 2, 2, 8, 3.0, LaplaceSingle<2>());
+    auto integrator = make_integrator(in, 2, 2, 2, 8, 3.0, LaplaceSingle<2>());
 
     Facet<2> f{{{0, 0}, {1, 0}}};
     auto facet_info = FacetInfo<2>::build(f);
@@ -123,7 +123,7 @@ TEST_CASE("sinh integration -- scale shouldn't matter 2D", "[integral_term]")
     for (size_t steps = 2; steps < 10; steps++) {
         double L = std::pow(10, steps - 2);
         auto mthd = make_sinh_integrator(
-            12, 2, 2, 8, 3.0, LaplaceDouble<2>()
+            12, 2, 2, 2, 8, 3.0, LaplaceDouble<2>()
         );
         auto facet_info = FacetInfo<2>::build({{{0, 0}, {L, 0}}});
         ObsPt<2> obs{{L / 2, 0}, {0.0, 1.0}, {0.0, L / 3.0}};
@@ -138,7 +138,7 @@ TEST_CASE("sinh integration -- scale shouldn't matter 3D", "[integral_term]")
     for (size_t steps = 2; steps < 10; steps += 3) {
         double L = std::pow(30, steps - 2);
         auto mthd = make_sinh_integrator(
-            5, 2, 2, 8, 3.0, LaplaceDouble<3>()
+            5, 2, 2, 2, 8, 3.0, LaplaceDouble<3>()
         );
         auto facet_info = FacetInfo<3>::build({{{0, 0, 0}, {L, 0, 0}, {0, L, 0}}});
         ObsPt<3> obs{{L / 4, L / 4, 0}, {0.0, 0.0, 1.0}, {0.0, 0.0, L / 10.0}};
@@ -171,9 +171,9 @@ void integral_laplace_single(const IntegrationStrategy<3,1,1>& mthd)
 TEST_CASE("IntegralLaplaceSingle", "[convergence]") 
 {
     LaplaceSingle<3> single_kernel;
-    auto mthd_adapt = make_adaptive_integrator(1e-4, 2, 2, 8, 3.0, single_kernel);
+    auto mthd_adapt = make_adaptive_integrator(1e-4, 2, 2, 2, 8, 3.0, single_kernel);
     integral_laplace_single(mthd_adapt);
-    auto mthd_sinh = make_sinh_integrator(3, 2, 2, 8, 3.0, single_kernel);
+    auto mthd_sinh = make_sinh_integrator(3, 2, 2, 2, 8, 3.0, single_kernel);
     integral_laplace_single(mthd_sinh);
 }
 
@@ -188,16 +188,16 @@ void integral_laplace_double(const IntegrationStrategy<3,1,1>& mthd)
 TEST_CASE("IntegralLaplaceDouble", "[convergence]") 
 {
     LaplaceDouble<3> double_kernel;
-    auto mthd_adapt = make_adaptive_integrator(1e-4, 2, 2, 8, 3.0, double_kernel);
+    auto mthd_adapt = make_adaptive_integrator(1e-4, 2, 2, 2, 8, 3.0, double_kernel);
     integral_laplace_double(mthd_adapt);
-    auto mthd_sinh = make_sinh_integrator(4, 2, 2, 8, 3.0, double_kernel);
+    auto mthd_sinh = make_sinh_integrator(4, 2, 2, 2, 8, 3.0, double_kernel);
     integral_laplace_double(mthd_sinh);
 }
 
 TEST_CASE("IntegralElasticDisplacement", "[convergence]") 
 {
     ElasticDisplacement<3> k(1.0, 0.25);
-    auto mthd = make_sinh_integrator(3, 2, 2, 8, 3.0, k);
+    auto mthd = make_sinh_integrator(3, 2, 2, 2, 8, 3.0, k);
     integral_term_test(mthd, 20.0, 0.00265);
     integral_term_test(mthd, 1.0, 0.0495);
     integral_term_test(mthd, 1e-1, 0.1607);

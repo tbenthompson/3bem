@@ -1,6 +1,6 @@
 #include "gauss_quad.h"
 #include "numerics.h"
-#include <cmath>
+#include <math.h>
 
 namespace tbem {
 
