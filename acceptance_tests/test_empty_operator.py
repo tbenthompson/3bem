@@ -2,7 +2,7 @@ from tbempy.ThreeD import *
 import numpy as np
 
 def unused_operator(obs_mesh, src_mesh):
-    mthd = make_adaptive_integrator(1e-5, 6, 5, 10, 3.0, LaplaceHypersingular())
+    mthd = make_adaptive_integrator(1e-5, 6, 6, 5, 10, 3.0, LaplaceHypersingular())
     fmm_config = FMMConfig(0.3, 30, 250, 0.05, True)
     rhs_op = boundary_operator(obs_mesh, src_mesh, mthd, fmm_config, src_mesh)
 

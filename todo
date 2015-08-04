@@ -3,9 +3,6 @@ four goals:
 ** fix failure of fault split algo for decelles
 ** try adaptivity with wedge.py
 
-** add the sinh quadrature backup gauss order as a parameter? or simply remove the backup gauss quadrature?
-** fix the nearfield observation quadrature
-
 2. INTERIOR EVALUATION IMPROVEMENTS.
 ** investigate occasional interior evaluation failures
 ** start outlining the algorithm to take the meshed geometry and split space into regions with it
@@ -15,8 +12,8 @@ four goals:
 
 3. FASTER. CUT BY A FACTOR OF 10.
 ** remove constrained dofs
-** integral interpolation idea
 ** the kernel work
+** integral interpolation idea?
 
 4. GENERAL PURPOSE ADAPTIVE MESHING.
 ** design a surface-based input system for elastic
@@ -26,3 +23,4 @@ four goals:
 MISC:
 ** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
 ** logging in the c++ layer, how to integrate with logging in the python layer
+** why do obs_far_order and obs_near_order need to be the same?

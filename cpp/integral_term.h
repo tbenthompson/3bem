@@ -85,7 +85,7 @@ IntegrationStrategy<dim,R,C> make_integrator(
         gauss_facet<dim>(obs_near_order),
         gauss_facet<dim>(obs_far_order),
         make_singular_steps(n_singular_steps),
-        1.0,
+        1.0, //TODO: Understand this parameter better!
         far_threshold,
         std::move(nearfield)
     };

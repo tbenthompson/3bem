@@ -278,3 +278,29 @@ TEST_CASE("homogenize constraint matrix", "[constraint_matrix]")
         REQUIRE(it->second.rhs == 0.0);
     }
 }
+
+TEST_CASE("average field value constraint", "[constraint_matrix]") 
+{
+    size_t n = 8;
+    std::vector<LinearTerm> terms;
+    for (size_t i = 0; i < n; i++) {
+        terms.push_back(LinearTerm{i, 1.0});
+    }
+    ConstraintEQ avg_field_constraints{terms, 0.0};
+    auto cm = from_constraints({
+        continuity_constraint(0, 1),
+        continuity_constraint(2, 3),
+        continuity_constraint(4, 5),
+        continuity_constraint(6, 7),
+        avg_field_constraints
+    });
+    auto half_minus_one = n / 2 - 1;
+    auto result = distribute_vector(cm, std::vector<double>(half_minus_one, 1.0), n);
+    double result_sum = 0.0;
+    for (size_t i = 0; i < n; i++) {
+        result_sum += result[i];
+    }
+    REQUIRE(result_sum == 0.0);
+    REQUIRE(-result[n - 1] == half_minus_one);
+    REQUIRE(-result[n - 2] == half_minus_one);
+}

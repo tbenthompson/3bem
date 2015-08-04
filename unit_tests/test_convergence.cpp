@@ -162,26 +162,38 @@ std::vector<double> operator_convergence_test(size_t steps, Mesh<2>& obs_mesh,
     return error;
 }
 
-TEST_CASE("observation quadrature convergence", "[convergence]")
+// TEST_CASE("observation quadrature convergence nearfield", "[convergence]")
+// {
+//     //To see convergence in this test, I had to make two modifications to
+//     //the original quadrature parameters. First, I had to ensure continuity.
+//     //Otherwise, there are singularities in the integrand of the outer
+//     //observation point integral. 
+//     //Second, I had to increase the source quadrature orders. Otherwise, 
+//     //convergence plateaued at ~1e-5 error. 
+//     //Third, I had to make sure that the near and farfield observation quadrature
+//     //orders are the same.
+//     LaplaceHypersingular<2> K;
+//     auto m = circle_mesh({0, 0}, 1.0, 3); 
+//     auto error = operator_convergence_test(8, m, m,
+//         [&] (size_t step) 
+//         {
+//             return make_sinh_integrator(12, 4 * step + 3, 3, 2, 8, 3.0, K); 
+//         }
+//     );
+//     REQUIRE(error.back() < 5e-5);
+// }
+
+TEST_CASE("observation quadrature convergence far-near boundary", "[convergence]")
 {
-    //To see convergence in this test, I had to make two modifications to
-    //the original quadrature parameters. First, I had to ensure continuity.
-    //Otherwise, there are singularities in the integrand of the outer
-    //observation point integral. 
-    //Second, I had to increase the source quadrature orders. Otherwise, 
-    //convergence plateaued at ~1e-5 error. 
     LaplaceHypersingular<2> K;
-    auto m = circle_mesh({0, 0}, 1.0, 0); 
-    auto error = operator_convergence_test(8, m, m,
+    auto m1 = circle_mesh({0, 0}, 1.0, 3); 
+    auto m2 = circle_mesh({2.3, 0}, 1.0, 3); 
+    auto error = operator_convergence_test(10, m1, m2,
         [&] (size_t step) 
         {
-            return make_sinh_integrator(12, 4 * step + 3, 2, 10, 8, 3.0, K); 
+            return make_sinh_integrator(12, 10, 3, 4, 8, 10.0 * step + 3.0, K); 
         }
     );
-    //TODO: Nearfield quadrature convergences sufficiently assuming continuity.
-    //But, it does so slowly. How can it be sped up? What about a tanh-sinh 
-    //quadrature rule? At the very least, nearfield observation order should
-    //be separated from farfield observation order.
     REQUIRE(error.back() < 5e-5);
 }
 

@@ -176,11 +176,8 @@ QuadRule<dim-1> choose_sinh_quad(size_t far_order, size_t order_growth_rate,
     double S, double l, Vec<double,dim-1> singular_pt)
 {
     double scaled_distance = l / S;
-    bool far_enough_that_sinh_quadrature_is_unnecessary = scaled_distance > 0.5;
-    if (far_enough_that_sinh_quadrature_is_unnecessary) {
-        return gauss_facet<dim>(10); 
-    }
-    size_t n = far_order + (order_growth_rate * (-std::log(scaled_distance)));
+    int n = far_order + (order_growth_rate * (-std::log(scaled_distance)));
+    n = std::max(n, static_cast<int>(far_order));
     return make_sinh_quad<dim>(n, singular_pt, scaled_distance);
 }
 

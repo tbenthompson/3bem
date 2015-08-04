@@ -199,7 +199,6 @@ std::vector<ConstraintEQ> normal_constraints(const Mesh<dim>& m,
     return constraints;
 }
 
-
 } //END namespace tbem
 
 #endif
