@@ -53,7 +53,7 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
     //TODO: an idea for logging a bit of stuff
     // logger.log_nearfield_inner_integral(obs_pts, src_mesh, mthd)
     // logger.log_method_used(mthd)
-    size_t n_src_dofs = nearfield_finder.n_dofs();
+    size_t n_src_dofs = nearfield_finder.n_underlying_dofs();
 
     std::vector<MatrixEntry> entries;
 #pragma omp parallel for
@@ -63,7 +63,7 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
         for (size_t i = 0; i < nearfield.facet_indices.size(); i++) {
 
             auto facet_idx = nearfield.facet_indices[i];
-            auto facet_info = nearfield.facet_infos[i];
+            auto facet_info = nearfield_finder.get_facet_info(facet_idx);
             auto matrix_entries = integrate({pt, facet_info});
 
             for (size_t basis_idx = 0; basis_idx < dim; basis_idx++) {

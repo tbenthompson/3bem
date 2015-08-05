@@ -17,6 +17,9 @@ void export_linalg() {
              p::return_value_policy<p::return_by_value>())
     );
 
+    VectorFromIterable().from_python<std::vector<DenseOperator>>();
+    p::def("compose_dense_ops", &compose_dense_ops); 
+
     export_operator<SparseOperator>(
         p::class_<SparseOperator>("SparseOperator", p::no_init)
         .def("nnz", &SparseOperator::nnz)

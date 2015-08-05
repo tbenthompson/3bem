@@ -32,6 +32,10 @@ struct DenseOperator: public OperatorI {
     DenseOperator add(const DenseOperator& B);
 };
 
+DenseOperator compose_dense_ops(const std::vector<DenseOperator>& ops,
+    const std::vector<size_t>& start_rows, const std::vector<size_t>& start_cols,
+    const std::vector<double>& multipliers, size_t n_out_rows, size_t n_out_cols);
+
 } // end namespace tbem
 
 #endif

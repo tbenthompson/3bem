@@ -26,7 +26,7 @@ NearfieldFacetFinder<dim>::find(const Vec<double,dim>& pt) const
     auto closest_facet_idx = nearest_neighbor.idx;
 
     if (nn_data.facets.size() == 0) {
-        return {{}, {}, 0, zeros<Vec<double,dim>>::make(), 0};
+        return {{}, 0, zeros<Vec<double,dim>>::make(), 0};
     }
 
     //-- determine the search radius for nearfield facets
@@ -44,18 +44,16 @@ NearfieldFacetFinder<dim>::find(const Vec<double,dim>& pt) const
     //-- filter the facet balls to find the facets that actually intersected 
     //by the sphere (rather than just the surrounding ball)
     std::vector<size_t> close_facet_indices;
-    std::vector<FacetInfo<dim>> close_facet_info;
     for (size_t facet_idx: near_ball_indices) {
         auto f = nn_data.facets[facet_idx];
         auto closest_pt = closest_pt_facet(pt, f);
         if (closest_pt.distance <= search_ball.radius) {
             close_facet_indices.push_back(facet_idx);
-            close_facet_info.push_back(FacetInfo<dim>::build(f));
         } 
     }
 
     return {
-        close_facet_indices, close_facet_info, closest_facet_idx,
+        close_facet_indices, closest_facet_idx,
         nearest_neighbor.pt, nearest_neighbor.distance
     };
 }

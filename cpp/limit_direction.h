@@ -14,7 +14,6 @@ template <size_t dim> struct Ball;
 template <size_t dim>
 struct NearfieldFacets {
     const std::vector<size_t> facet_indices;
-    const std::vector<FacetInfo<dim>> facet_infos;
     const size_t nearest_facet_idx;
     const Vec<double,dim> pt;
     const double distance;
@@ -30,9 +29,13 @@ struct NearfieldFacetFinder {
 
     NearfieldFacets<dim> find(const Vec<double,dim>& pt) const;
 
-    size_t n_dofs() const 
+    size_t n_underlying_dofs() const 
     {
         return nn_data.facets.size() * dim;
+    }
+
+    FacetInfo<dim> get_facet_info(size_t facet_idx) const {
+        return FacetInfo<dim>::build(nn_data.facets[facet_idx]);
     }
 };
 

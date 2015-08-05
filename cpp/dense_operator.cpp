@@ -71,4 +71,26 @@ DenseOperator DenseOperator::add(const DenseOperator& B)
     return DenseOperator(n_rows(), n_cols(), out_data);
 }
 
+DenseOperator compose_dense_ops(const std::vector<DenseOperator>& ops,
+    const std::vector<size_t>& start_rows, const std::vector<size_t>& start_cols,
+    const std::vector<double>& multipliers, size_t n_out_rows, size_t n_out_cols)
+{
+    DenseOperator result(n_out_rows, n_out_cols, 0.0);
+    for (size_t i = 0; i < ops.size(); i++) {
+        auto s_row = start_rows[i];
+        auto s_col = start_cols[i];
+        auto n_rows = ops[i].n_rows();
+        auto n_cols = ops[i].n_cols();
+        auto mult = multipliers[i];
+        for (size_t row = 0; row < n_rows; row++) {
+            for (size_t col = 0; col < n_cols; col++) {
+                auto out_entry = (row + s_row) * n_out_cols + (col + s_col);
+                auto in_entry = row * n_cols + col;
+                result[out_entry] += ops[i][in_entry] * mult;
+            }
+        }
+    }
+    return result;
+}
+
 }//end namespace tbem
