@@ -1,7 +1,8 @@
 four goals:
-1. GET THE WEDGE MODELS WORKING CORRECTLY.
-** fix failure of fault split algo for decelles
-** try adaptivity with wedge.py
+1. FASTER. CUT BY A FACTOR OF 10.
+** remove constrained dofs
+** the kernel work
+** integral interpolation idea?
 
 2. INTERIOR EVALUATION IMPROVEMENTS.
 ** investigate occasional interior evaluation failures
@@ -10,10 +11,9 @@ four goals:
 ** identifying the interior from just the boundary
 ** make interior plotting easier
 
-3. FASTER. CUT BY A FACTOR OF 10.
-** remove constrained dofs
-** the kernel work
-** integral interpolation idea?
+3. GET THE WEDGE MODELS WORKING CORRECTLY.
+** fix failure of fault split algo for decelles
+** try adaptivity with wedge.py
 
 4. GENERAL PURPOSE ADAPTIVE MESHING.
 ** design a surface-based input system for elastic
