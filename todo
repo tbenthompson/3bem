@@ -1,7 +1,7 @@
 four goals:
 1. FASTER. CUT BY A FACTOR OF 10.
-** remove constrained dofs
 ** the kernel work
+** remove source constrained dofs?
 ** integral interpolation idea?
 
 2. INTERIOR EVALUATION IMPROVEMENTS.
@@ -24,3 +24,11 @@ MISC:
 ** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
 ** logging in the c++ layer, how to integrate with logging in the python layer
 ** why do obs_far_order and obs_near_order need to be the same?
+
+** certain pieces of the 3bem library seem like they come closer to belonging
+in the elastic library
+-- facetskipper
+
+could separate code into two pieces:
+-- integration
+-- constraints and dof handling

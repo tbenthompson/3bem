@@ -31,6 +31,8 @@ struct Mesh {
     Mesh<dim> refine_once() const;
     Mesh<dim> refine_repeatedly(size_t times) const;
 
+    Mesh<dim> remove_facets(const std::vector<size_t>& remove_these) const;
+
     static Mesh<dim> create_union(const std::vector<Mesh<dim>>& others);
 
     static Mesh<dim> from_vertices_faces(const std::vector<Vec<double,dim>>& vertices,

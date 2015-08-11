@@ -26,6 +26,7 @@ void export_constraints() {
     def("homogenize_constraints", homogenize_constraints);
     def("from_constraints", from_constraints);
     def("condense_vector", &condense_vector);
+    def("identify_ignored_dofs", &identify_ignored_dofs); 
 
     DenseOperator (*condense_dense)(const ConstraintMatrix&,
         const ConstraintMatrix&, const DenseOperator&) = &condense_matrix;

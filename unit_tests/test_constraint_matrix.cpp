@@ -7,19 +7,19 @@ ConstraintMatrix two_bcs_constraint_map()
 {
     ConstraintEQ eqtn0{{LinearTerm{3,1}}, 4.0};
     ConstraintEQ eqtn1{{LinearTerm{1,1}}, 2.0};
-    ConstraintMatrix constraint_set;
+    ConstraintMatrixData constraint_set;
     constraint_set.insert(std::make_pair(1, isolate_term_on_lhs(eqtn1, 0)));
     constraint_set.insert(std::make_pair(3, isolate_term_on_lhs(eqtn0, 0)));
-    return constraint_set;
+    return {constraint_set};
 }
 
 TEST_CASE("IsConstrained", "[constraint_matrix]") 
 {
     auto constraint_set = two_bcs_constraint_map();
-    REQUIRE(is_constrained(constraint_set, 0) == false);
-    REQUIRE(is_constrained(constraint_set, 1) == true);
-    REQUIRE(is_constrained(constraint_set, 2) == false);
-    REQUIRE(is_constrained(constraint_set, 3) == true);
+    REQUIRE(is_constrained(constraint_set.map, 0) == false);
+    REQUIRE(is_constrained(constraint_set.map, 1) == true);
+    REQUIRE(is_constrained(constraint_set.map, 2) == false);
+    REQUIRE(is_constrained(constraint_set.map, 3) == true);
 }
 
 TEST_CASE("MakeLowerTriangular", "[constraint_matrix]") 
@@ -29,7 +29,7 @@ TEST_CASE("MakeLowerTriangular", "[constraint_matrix]")
     //4x_2 - 4.0 = 0 -->
     //4x_2 = 4.0
     ConstraintEQ in{{LinearTerm{2,4}, LinearTerm{3,-1}}, 0.0};
-    auto c_lower_tri = make_lower_triangular(in, constraint_set);
+    auto c_lower_tri = make_lower_triangular(in, constraint_set.map);
     REQUIRE(c_lower_tri.terms.size() == 1);
     REQUIRE(c_lower_tri.terms[0].dof == 2);
     REQUIRE(c_lower_tri.terms[0].weight == 4.0);
@@ -99,7 +99,7 @@ TEST_CASE("ZeroWeightConstraint", "[constraint_matrix]")
     auto cm = from_constraints({
         ConstraintEQ{{{0, 1.0}, {1, 0.0}}, 0.0},
     });
-    REQUIRE(cm.at(0).terms.size() == 0);
+    REQUIRE(cm.map.at(0).terms.size() == 0);
 }
 
 TEST_CASE("EmptyConstraint", "[constraint_matrix]") 
@@ -274,7 +274,7 @@ TEST_CASE("homogenize constraint matrix", "[constraint_matrix]")
 {
     auto cm = bcs1_and_continuity0234(1, 2.0);
     auto homogenized = homogenize_constraints(cm);
-    for (auto it = homogenized.begin(); it != homogenized.end(); ++it) {
+    for (auto it = homogenized.map.begin(); it != homogenized.map.end(); ++it) {
         REQUIRE(it->second.rhs == 0.0);
     }
 }
@@ -304,3 +304,40 @@ TEST_CASE("average field value constraint", "[constraint_matrix]")
     REQUIRE(-result[n - 1] == half_minus_one);
     REQUIRE(-result[n - 2] == half_minus_one);
 }
+
+TEST_CASE("identify ignored dofs", "[constraint_matrix]")
+{
+    auto cm = from_constraints({
+        boundary_condition(0, 5),
+        boundary_condition(2, 10),
+        continuity_constraint(1, 4)
+    });
+    auto constrained = identify_ignored_dofs(cm);
+    REQUIRE(constrained.size() == 2);
+    REQUIRE_ARRAY_EQUAL(constrained, std::vector<double>{0, 2}, 2);
+}
+
+TEST_CASE("identify ignored dofs none", "[constraint_matrix]")
+{
+    auto cm = from_constraints({
+        continuity_constraint(2, 3),
+        continuity_constraint(4, 3),
+        continuity_constraint(1, 4)
+    });
+    auto constrained = identify_ignored_dofs(cm);
+    REQUIRE(constrained.size() == 0);
+}
+
+TEST_CASE("identify ignored dofs with dependencies", "[constraint_matrix]")
+{
+    auto cm = from_constraints({
+        boundary_condition(0, 5),
+        boundary_condition(2, 10),
+        continuity_constraint(2, 3),
+        continuity_constraint(3, 5)
+    });
+    auto constrained = identify_ignored_dofs(cm);
+    REQUIRE(constrained.size() == 4);
+    REQUIRE_ARRAY_EQUAL(constrained, std::vector<double>{0, 2, 3, 5}, 4);
+}
+

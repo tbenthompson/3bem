@@ -86,3 +86,12 @@ TEST_CASE("refine out of order elements", "[mesh]")
     auto m2 = line_mesh({0,0}, {1,0}).refine_repeatedly(4).refine({0, 10, 3, 4, 2});
     REQUIRE(m2.n_facets() == 21);
 }
+
+TEST_CASE("remove facets", "[mesh]")
+{
+    auto m = circle_mesh({0, 0}, 1.0, 0);
+    auto m2 = m.remove_facets({1, 3});
+    REQUIRE(m2.n_facets() == 2);
+    REQUIRE(m2.facets[0][0][0] == 1.0);
+    REQUIRE(m2.facets[1][0][0] == -1.0);
+}

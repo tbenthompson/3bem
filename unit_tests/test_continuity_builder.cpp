@@ -81,7 +81,7 @@ TEST_CASE("ConstraintMesh", "[continuity_builder]")
     auto matrix = from_constraints(constraints);
     REQUIRE((3 * sphere.facets.size() == 384));
     REQUIRE(matrix.size() == 318);
-    auto my_c = matrix.begin()->second.terms;
+    auto my_c = matrix.map.begin()->second.terms;
     REQUIRE(my_c[0].weight == 1);
 }
 

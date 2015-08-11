@@ -2,24 +2,34 @@
 #define TBEMASDASDQ12123_CONSTRAINT_MATRIX_H
 #include <vector>
 #include <unordered_map>
+#include <set>
 #include "constraint.h"
 #include "dense_operator.h"
 #include "sparse_operator.h"
 
 namespace tbem {
 
-typedef std::unordered_map<int,RearrangedConstraintEQ> ConstraintMatrix;
+typedef std::unordered_map<size_t,RearrangedConstraintEQ> ConstraintMatrixData;
 
-bool is_constrained(const ConstraintMatrix& dof_constraint_map, size_t dof);
+bool is_constrained(const ConstraintMatrixData& dof_constraint_map, size_t dof);
 
-ConstraintEQ make_lower_triangular(const ConstraintEQ& c, const ConstraintMatrix& map);
+ConstraintEQ make_lower_triangular(const ConstraintEQ& c, const ConstraintMatrixData& map);
+
+struct ConstraintMatrix {
+    ConstraintMatrixData map;
+
+    size_t size() const {
+        return map.size();
+    }
+    //TODO: Move the constraint matrix functions in here.
+};
 
 ConstraintMatrix from_constraints(const std::vector<ConstraintEQ>& constraints);
 
 /* Accepts a reduced DOF vector and returns the full DOF vector. 
  */
 std::vector<double> distribute_vector(const ConstraintMatrix& matrix, 
-    const std::vector<double>& in, size_t total_dofs);
+    const std::vector<double>& in, size_t n_total_dofs);
 
 /* Accepts a full DOF vector and returns the reduced DOF vector.  
  */
@@ -45,6 +55,8 @@ SparseOperator condense_matrix(const ConstraintMatrix& row_cm,
 
 /* Set the rhs of each constraint equation to 0. */
 ConstraintMatrix homogenize_constraints(const ConstraintMatrix& cm);
+
+std::vector<size_t> identify_ignored_dofs(const ConstraintMatrix& cm);
 
 } // end namespace tbem
 

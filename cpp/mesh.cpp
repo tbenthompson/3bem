@@ -2,6 +2,7 @@
 #include "vertex_iterator.h"
 #include "vec_ops.h"
 #include <algorithm>
+#include <set>
 
 namespace tbem {
 
@@ -136,6 +137,20 @@ Mesh<dim>::refine_repeatedly(size_t times) const
         return *this;
     }
     return refine_repeatedly(times - 1).refine_once();
+}
+
+template <size_t dim> 
+Mesh<dim> 
+Mesh<dim>::remove_facets(const std::vector<size_t>& remove_these) const
+{
+    std::set<size_t> remove_set(remove_these.begin(), remove_these.end());
+    std::vector<Facet<dim>> out_facets;
+    for (size_t i = 0; i < n_facets(); i++) {
+        if (remove_set.count(i) == 0) {
+            out_facets.push_back(facets[i]);
+        }
+    }
+    return {out_facets};
 }
 
 template <size_t dim>

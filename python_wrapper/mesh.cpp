@@ -16,6 +16,7 @@ void export_mesh() {
                p::return_value_policy<p::reference_existing_object>())
         .def("refine_repeatedly", &Mesh<dim>::refine_repeatedly)
         .def("refine", &Mesh<dim>::refine)
+        .def("remove_facets", &Mesh<dim>::remove_facets)
         .def("begin", &Mesh<dim>::begin)
         .def("n_facets", &Mesh<dim>::n_facets)
         .def("n_dofs", &Mesh<dim>::n_dofs)
