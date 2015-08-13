@@ -2,18 +2,25 @@
 #define TBEM_NEW_LAPLACE_KERNELS_H
 
 #include "new_kernel.h"
+#include "geometry.h"
 
 namespace tbem {
 
 <%
-    name = 'LaplaceSingle'
-    dim = 2
+    name = 'NEWLaplaceSingle'
     component_rows = 1
     component_cols = 1
-    expr = 'std::log(r) / (2 * M_PI)'
 %>
 template <size_t dim>
 struct ${name};
+
+<%
+    dim = 2
+    import math
+    import tbempy.templating
+    denom = 1.0 / (2 * math.pi)
+    expr = 'std::log(r) * ' + str(denom)
+%>
 
 template <>
 struct ${name}<${dim}>: public NEWKernel<${dim}> 
@@ -31,16 +38,17 @@ struct ${name}<${dim}>: public NEWKernel<${dim}>
         std::vector<double> out_matrix(
             n_obs * n_src * ${component_rows} * ${component_cols}
         );
-        auto component_entries = ${component_rows} * ${component_cols}
+        auto component_entries = ${component_rows} * ${component_cols};
         for (size_t i = 0; i < n_obs; i++) {
             auto row_start_index = i * n_src * component_entries;
             for (size_t j = 0; j < n_src; j++) {
                 auto col_offset = j * component_entries;
                 auto r = dist(obs_pts[i], src_pts[j]);
                 for (size_t d1 = 0; d1 < ${component_rows}; d1++) {
-                    auto 
                     for (size_t d2 = 0; d2 < ${component_cols}; d2++) {
-                        out_matrix[i * n_src + j] = ${expr}
+                        auto component_offset = d1 * ${component_cols} + d2;
+                        auto index = row_start_index + col_offset + component_offset;
+                        out_matrix[index] = ${expr};
                     }
                 }
             }

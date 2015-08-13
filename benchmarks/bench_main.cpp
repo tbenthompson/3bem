@@ -13,8 +13,7 @@ static void construct_octree(benchmark::State& state)
 {
     int n = state.range_x();
     auto pts = random_pts<3>(n);
-    while (state.KeepRunning())
-    {
+    while (state.KeepRunning()) {
         auto oct = make_octree(pts, 20); 
     }
 }
@@ -43,8 +42,7 @@ static void fmm_hypersingular_apply(benchmark::State& state)
         {0.35, order, n_per_cell, 0.05, true}
     );
 
-    while (state.KeepRunning())
-    {
+    while (state.KeepRunning()) {
         auto out = tree.apply(x);
     }
 }

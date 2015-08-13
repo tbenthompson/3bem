@@ -1,6 +1,11 @@
 four goals:
 1. FASTER. CUT BY A FACTOR OF 10.
-** the kernel work
+** the kernel upgrade work
+-- first, redesign to separate quadrature planning from quadrature from kernels
+-- then make very fast 
+** move some of the convergence tests to speed up the unit tests
+** why do obs_far_order and obs_near_order need to be the same?
+------- maybe:
 ** remove source constrained dofs?
 ** integral interpolation idea?
 
@@ -22,11 +27,6 @@ four goals:
 MISC:
 ** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
 ** logging in the c++ layer, how to integrate with logging in the python layer
-** why do obs_far_order and obs_near_order need to be the same?
-
-** certain pieces of the 3bem library seem like they come closer to belonging
-in the elastic library
--- facetskipper
 
 could separate code into two pieces:
 -- integration
