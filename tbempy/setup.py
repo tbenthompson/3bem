@@ -56,6 +56,9 @@ def files_in_dir(directory, ext):
 def get_tbempy_srces():
     return files_in_dir('cpp', 'cpp')
 
+def get_tbempy_headers():
+    return files_in_dir('cpp', 'h')
+
 def get_gte_srces():
     return [os.path.join('lib', 'gte', 'Source', 'GteWrapper.cpp')]
 

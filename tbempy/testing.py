@@ -1,6 +1,7 @@
 from build_ext import tbempyBuildExt
 from setup import setup_parallel_compile, files_in_dir, get_extension_config
 from download import download_libs
+from templating import process_templated_code
 import os
 import sys
 from numpy.distutils.core import setup
@@ -25,6 +26,7 @@ class TestBuildExt(tbempyBuildExt):
 
 def setup_tests(executable_path, config_fnc):
     download_libs()
+    process_templated_code()
     setup_parallel_compile()
 
     metadata = dict(name = 'tbempy')

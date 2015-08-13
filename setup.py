@@ -1,12 +1,13 @@
-import setuptools
-from numpy.distutils.misc_util import Configuration
-from numpy.distutils.core import setup
-import numpy.distutils.command.build_ext as _build_ext
 from tbempy.build_ext import tbempyBuildExt
 from tbempy.download import download_libs
+from tbempy.templating import process_templated_code
 import sys
 import os
 import shutil
+import setuptools
+import numpy.distutils.command.build_ext as _build_ext
+from numpy.distutils.misc_util import Configuration
+from numpy.distutils.core import setup
 
 def configuration(parent_package='', top_path = None):
     config = Configuration(None, parent_package, top_path)
@@ -15,6 +16,7 @@ def configuration(parent_package='', top_path = None):
 
 def setup_package():
     download_libs()
+    process_templated_code()
 
     metadata = dict(
         name = 'tbempy',

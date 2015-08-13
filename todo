@@ -5,7 +5,6 @@ four goals:
 ** integral interpolation idea?
 
 2. INTERIOR EVALUATION IMPROVEMENTS.
-** investigate occasional interior evaluation failures
 ** start outlining the algorithm to take the meshed geometry and split space into regions with it
 ** interior meshing allowing beautiful interior plots
 ** identifying the interior from just the boundary

@@ -36,7 +36,7 @@ def refiner(error_fnc):
 
         surface = surface.refine(refine_me)
         iterations += 1
-    animate(all_steps)
+    # animate(all_steps)
     return iterations
 
 def exact_errors(slip, fault, surface, soln):
