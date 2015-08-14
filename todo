@@ -1,5 +1,6 @@
 four goals:
 1. FASTER. CUT BY A FACTOR OF 10.
+** fix the iterative methods
 ** centralize workload.
 -- create a c++ layer dof map.
 -- get the mesh_provider.distribute_zeros out of python
