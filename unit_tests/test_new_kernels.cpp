@@ -20,7 +20,7 @@ TEST_CASE("Laplace", "[new_kernels]")
                 obs_pts[i], src_pts[j],
                 obs_normals[i], src_normals[j]
             );
-            REQUIRE(correct[0][0] == result[i * n + j]);
+            REQUIRE_CLOSE(correct[0][0], result[i * n + j], 1e-10);
         }
     }
 }

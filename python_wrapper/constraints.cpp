@@ -36,4 +36,5 @@ void export_constraints() {
     def("condense_matrix", condense_sparse);
 
     def("distribute_vector", &distribute_vector);
+    def("distribute_row_zeros", &distribute_row_zeros);
 }

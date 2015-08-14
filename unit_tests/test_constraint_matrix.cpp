@@ -341,3 +341,23 @@ TEST_CASE("identify ignored dofs with dependencies", "[constraint_matrix]")
     REQUIRE_ARRAY_EQUAL(constrained, std::vector<double>{0, 2, 3, 5}, 4);
 }
 
+TEST_CASE("distribute row zeros", "[constraint_matrix]")
+{
+    std::vector<double> matrix{
+        {1,0,0  ,  0,1,0  ,  0,0,1}
+    };
+    auto result = distribute_row_zeros(
+        DenseOperator(3, 3, matrix),
+        from_constraints({
+            boundary_condition(0, 5),
+            boundary_condition(1, 10),
+        })
+    );
+    REQUIRE(result.n_rows() == 5);
+    REQUIRE(result.n_cols() == 3);
+    std::vector<double> correct{
+        {0,0,0, 0,0,0, 1,0,0, 0,1,0, 0,0,1}
+    };
+    REQUIRE_ARRAY_EQUAL(result, correct, 15);
+}
+

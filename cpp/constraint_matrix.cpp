@@ -322,8 +322,7 @@ size_t max_constrained_dof(const ConstraintMatrixData& cm)
     return max_dof;
 }
 
-std::vector<size_t> 
-identify_ignored_dofs(const ConstraintMatrix& cm)
+std::set<size_t> _identify_ignored_dofs_set(const ConstraintMatrix& cm)
 {
     std::set<size_t> ignored;
 
@@ -336,9 +335,37 @@ identify_ignored_dofs(const ConstraintMatrix& cm)
             ignored.insert(constraint.constrained_dof);
         }
     }
+    return ignored;
+}
 
+std::vector<size_t> identify_ignored_dofs(const ConstraintMatrix& cm)
+{
+    auto ignored = _identify_ignored_dofs_set(cm);
     std::vector<size_t> out(ignored.begin(), ignored.end());
     return out;
+}
+
+DenseOperator distribute_row_zeros(const DenseOperator& matrix, 
+    const ConstraintMatrix& cm)
+{
+    auto ignored_rows = _identify_ignored_dofs_set(cm);
+    auto n_total_rows = matrix.n_rows() + ignored_rows.size();
+    auto next_in_row = 0;
+    std::vector<double> out_data(n_total_rows * matrix.n_cols());
+    for (size_t i = 0; i < n_total_rows; i++) {
+        if (ignored_rows.count(i) > 0) {
+            for (size_t j = 0; j < matrix.n_cols(); j++) {
+                out_data[i * matrix.n_cols() + j] = 0.0;
+            }
+        } else {
+            for (size_t j = 0; j < matrix.n_cols(); j++) {
+                auto value = matrix[next_in_row * matrix.n_cols() + j];
+                out_data[i * matrix.n_cols() + j] = value;
+            }
+            next_in_row++;
+        }
+    }
+    return DenseOperator(n_total_rows, matrix.n_cols(), out_data);
 }
 
 } // END namespace tbem

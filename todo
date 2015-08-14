@@ -1,5 +1,8 @@
 four goals:
 1. FASTER. CUT BY A FACTOR OF 10.
+** centralize workload.
+-- create a c++ layer dof map.
+-- get the mesh_provider.distribute_zeros out of python
 ** the kernel upgrade work
 -- first, redesign to separate quadrature planning from quadrature from kernels
 -- then make very fast 
