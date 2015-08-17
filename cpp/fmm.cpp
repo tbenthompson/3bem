@@ -100,6 +100,13 @@ FMMOperator<dim,R,C>::FMMOperator(const Kernel<dim,R,C>& K,
     downward_traversal(obs_oct, tasks);
 }
 
+template <size_t dim, size_t R, size_t C>
+std::unique_ptr<OperatorI> FMMOperator<dim,R,C>::clone() const
+{
+    return std::unique_ptr<OperatorI>(new FMMOperator<dim,R,C>(
+        *K, data, config
+    ));
+}
 
 
 template <size_t dim, size_t R, size_t C>

@@ -10,8 +10,10 @@ namespace p = boost::python;
 void export_linalg() {
     using namespace tbem;
 
+    p::class_<OperatorI, boost::noncopyable>("OperatorI", p::no_init);
+
     export_operator<DenseOperator>(
-        p::class_<DenseOperator>("DenseOperator",
+        p::class_<DenseOperator, p::bases<OperatorI>>("DenseOperator",
             p::init<size_t, size_t, std::vector<double>>())
         .def("data", &DenseOperator::data,
              p::return_value_policy<p::return_by_value>())
@@ -21,7 +23,7 @@ void export_linalg() {
     p::def("compose_dense_ops", &compose_dense_ops); 
 
     export_operator<SparseOperator>(
-        p::class_<SparseOperator>("SparseOperator", p::no_init)
+        p::class_<SparseOperator, p::bases<OperatorI>>("SparseOperator", p::no_init)
         .def("nnz", &SparseOperator::nnz)
         .def("to_dense", &SparseOperator::to_dense)
         .add_property("values", make_getter(

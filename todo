@@ -1,11 +1,11 @@
-four goals:
+three goals:
 1. FASTER. CUT BY A FACTOR OF 10.
 ** fix the iterative methods
 ** centralize workload.
 -- create a c++ layer dof map.
 -- get the mesh_provider.distribute_zeros out of python
 ** the kernel upgrade work
--- first, redesign to separate quadrature planning from quadrature from kernels
+-- first, redesign to separate (quadrature planning, quadrature, kernels)
 -- then make very fast 
 ** move some of the convergence tests to speed up the unit tests
 ** why do obs_far_order and obs_near_order need to be the same?
@@ -13,17 +13,11 @@ four goals:
 ** remove source constrained dofs?
 ** integral interpolation idea?
 
-2. INTERIOR EVALUATION IMPROVEMENTS.
-** start outlining the algorithm to take the meshed geometry and split space into regions with it
-** interior meshing allowing beautiful interior plots
-** identifying the interior from just the boundary
-** make interior plotting easier
-
-3. GET THE WEDGE MODELS WORKING CORRECTLY.
+2. GET THE WEDGE MODELS WORKING CORRECTLY.
 ** fix failure of fault split algo for decelles
 ** try adaptivity with wedge.py
 
-4. GENERAL PURPOSE ADAPTIVE MESHING.
+3. GENERAL PURPOSE ADAPTIVE MESHING.
 ** design a surface-based input system for elastic
 ** for 3D: hanging nodes should be relatively easy now that the facet-facet intersection algorithms work well
 ** acceptance test #2: adaptively refined okada solution (using the real error as the refinement criterion, so not technically adaptive meshing yet)
@@ -31,6 +25,9 @@ four goals:
 MISC:
 ** BUILTIN_FLOAT_DTYPE(16) in boost_numpy fails on odyssey
 ** logging in the c++ layer, how to integrate with logging in the python layer
+** Rename "Op" in elastic to something like "OpWrapper" or "OpAndSpec", or "PyOpWrapper"
+** clean up the variable names in compute.py
+** kill std::shared_ptr or write a note on why it won't work
 
 could separate code into two pieces:
 -- integration

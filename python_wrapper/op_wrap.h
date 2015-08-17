@@ -6,7 +6,8 @@ void export_operator(BPObj& class_obj)
 {
    auto c = class_obj.def("apply", &T::apply)
         .def("n_rows", &T::n_rows)
-        .def("n_cols", &T::n_cols);
+        .def("n_cols", &T::n_cols)
+        .def("clone", &T::clone);
 }
 
 #endif

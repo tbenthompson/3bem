@@ -71,6 +71,13 @@ DenseOperator DenseOperator::add(const DenseOperator& B)
     return DenseOperator(n_rows(), n_cols(), out_data);
 }
 
+std::unique_ptr<OperatorI> DenseOperator::clone() const 
+{
+    return std::unique_ptr<DenseOperator>(new DenseOperator(
+        shape.n_rows, shape.n_cols, *storage
+    ));
+}
+
 DenseOperator compose_dense_ops(const std::vector<DenseOperator>& ops,
     const std::vector<size_t>& start_rows, const std::vector<size_t>& start_cols,
     const std::vector<double>& multipliers, size_t n_out_rows, size_t n_out_cols)

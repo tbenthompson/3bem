@@ -39,6 +39,13 @@ DenseOperator SparseOperator::to_dense() const
     return DenseOperator(n_rows(), n_cols(), dense);
 }
 
+std::unique_ptr<OperatorI> SparseOperator::clone() const
+{
+    return std::unique_ptr<SparseOperator>(new SparseOperator(
+        shape.n_rows, shape.n_cols, values, column_indices, row_ptrs
+    ));
+}
+
 DenseOperator SparseOperator::left_multiply_with_dense(const DenseOperator& other) const
 {
     assert(n_rows() == other.n_cols());

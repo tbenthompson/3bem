@@ -145,6 +145,7 @@ struct FMMOperator: public OperatorI {
 
     FMMOperator(const Kernel<dim,R,C>& K, const NBodyData<dim>& data,
         const FMMConfig& config);
+    virtual std::unique_ptr<OperatorI> clone() const;
 
     /* Construct the operators relating the influence of a set of
      * a sources on the check surface to the equivalent set of sources on

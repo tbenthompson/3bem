@@ -56,12 +56,6 @@ SparseOperator condense_matrix(const ConstraintMatrix& row_cm,
 /* Set the rhs of each constraint equation to 0. */
 ConstraintMatrix homogenize_constraints(const ConstraintMatrix& cm);
 
-std::vector<size_t> identify_ignored_dofs(const ConstraintMatrix& cm);
-
-//TODO: This seems fishy. 
-DenseOperator distribute_row_zeros(const DenseOperator& matrix, 
-    const ConstraintMatrix& cm); 
-
 } // end namespace tbem
 
 #endif

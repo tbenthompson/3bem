@@ -37,6 +37,8 @@ struct SparseOperator: public OperatorI
     virtual std::vector<double> apply(const std::vector<double>& x) const;
     DenseOperator to_dense() const; 
 
+    virtual std::unique_ptr<OperatorI> clone() const;
+
     /* Left multiply a sparse matrix by a dense matrix getting a dense matrix
      * as output:
      * (dense) * (sparse) = out

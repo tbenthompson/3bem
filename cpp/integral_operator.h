@@ -43,6 +43,13 @@ struct IntegralOperator: public OperatorI {
         interp(interp)
     {}
 
+    virtual std::unique_ptr<OperatorI> clone() const
+    {
+        return std::unique_ptr<OperatorI>(new IntegralOperator<dim,R,C>(
+            nearfield, farfield_correction, galerkin, farfield->clone(), interp
+        ));
+    }
+
     virtual size_t n_rows() const {return galerkin.n_rows();} 
     virtual size_t n_cols() const {return nearfield.n_cols();}
     virtual std::vector<double> apply(const std::vector<double>& x) const {

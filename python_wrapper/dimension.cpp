@@ -48,50 +48,50 @@ void export_kernels();
 
 template <size_t dim>
 void export_dimension() {
-    using namespace boost::python;
     using namespace tbem;
 
     export_mesh<dim>(); 
 
-    class_<OverlapMap<dim>>("OverlapMap")
+    p::class_<OverlapMap<dim>>("OverlapMap")
         .def("size", &OverlapMap<dim>::size);
-    def("mesh_continuity", mesh_continuity<dim>);
-    def("cut_at_intersection", cut_at_intersection<dim>);
-    def("normal_constraints", normal_constraints<dim>);
-    def("form_neighbor_bcs", form_neighbor_bcs<dim>);
-    def("bc_constraints", bc_constraints<dim>);
+    p::def("mesh_continuity", mesh_continuity<dim>);
+    p::def("cut_at_intersection", cut_at_intersection<dim>);
+    p::def("normal_constraints", normal_constraints<dim>);
+    p::def("form_neighbor_bcs", form_neighbor_bcs<dim>);
+    p::def("bc_constraints", bc_constraints<dim>);
 
-    def("convert_to_constraints", convert_to_constraints<dim>);
-    def("interpolate_bc_constraints", interpolate_bc_constraints_wrapper<dim>);
+    p::def("convert_to_constraints", convert_to_constraints<dim>);
+    p::def("interpolate_bc_constraints", interpolate_bc_constraints_wrapper<dim>);
 
-    def("interpolate", interpolate_wrapper<dim>); 
+    p::def("interpolate", interpolate_wrapper<dim>); 
 
     export_kernels<dim>();
     export_integration<dim>();
 
-    auto integral_op_scalar = class_<
-            IntegralOperator<dim,1,1>
-        >("IntegralOperatorScalar", no_init)
+    auto integral_op_scalar = p::class_<
+        IntegralOperator<dim,1,1>, p::bases<OperatorI>>(
+            "IntegralOperatorScalar", p::no_init)
         .def_readonly("nearfield", &IntegralOperator<dim,1,1>::nearfield);
     export_operator<IntegralOperator<dim,1,1>>(integral_op_scalar);
 
-    auto integral_op_tensor = class_<IntegralOperator<dim,dim,dim>>(
-            "IntegralOperatorTensor", no_init)
+    auto integral_op_tensor = p::class_<
+        IntegralOperator<dim,dim,dim>, p::bases<OperatorI>>(
+            "IntegralOperatorTensor", p::no_init)
         .def_readonly("nearfield", &IntegralOperator<dim,dim,dim>::nearfield);
     export_operator<IntegralOperator<dim,dim,dim>>(integral_op_tensor);
 
-    def("boundary_operator", boundary_operator<dim,1,1>);
-    def("boundary_operator", boundary_operator<dim,dim,dim>);
-    def("dense_boundary_operator", dense_boundary_operator<dim,1,1>);
-    def("dense_boundary_operator", dense_boundary_operator<dim,dim,dim>);
+    p::def("boundary_operator", boundary_operator<dim,1,1>);
+    p::def("boundary_operator", boundary_operator<dim,dim,dim>);
+    p::def("dense_boundary_operator", dense_boundary_operator<dim,1,1>);
+    p::def("dense_boundary_operator", dense_boundary_operator<dim,dim,dim>);
 
-    def("dense_interior_operator", dense_interior_operator<dim,1,1>);
-    def("dense_interior_operator", dense_interior_operator<dim,dim,dim>);
+    p::def("dense_interior_operator", dense_interior_operator<dim,1,1>);
+    p::def("dense_interior_operator", dense_interior_operator<dim,dim,dim>);
 
     // mass_operator cannot be overloaded like boundary_operator, because there
     // is no kernel parameter to decide on the tensor shape
-    def("mass_operator_scalar", mass_operator<dim,1,1>);
-    def("mass_operator_tensor", mass_operator<dim,dim,dim>);
+    p::def("mass_operator_scalar", mass_operator<dim,1,1>);
+    p::def("mass_operator_tensor", mass_operator<dim,dim,dim>);
 }
 template void export_dimension<2>();
 template void export_dimension<3>();

@@ -30,6 +30,8 @@ struct DenseOperator: public OperatorI {
     const double& operator[] (size_t idx) const;
 
     DenseOperator add(const DenseOperator& B);
+
+    virtual std::unique_ptr<OperatorI> clone() const; 
 };
 
 DenseOperator compose_dense_ops(const std::vector<DenseOperator>& ops,
