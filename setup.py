@@ -1,10 +1,10 @@
+import setuptools
 from tbempy.build_ext import tbempyBuildExt
 from tbempy.download import download_libs
 from tbempy.templating import process_templated_code
 import sys
 import os
 import shutil
-import setuptools
 import numpy.distutils.command.build_ext as _build_ext
 from numpy.distutils.misc_util import Configuration
 from numpy.distutils.core import setup
