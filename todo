@@ -28,6 +28,7 @@ MISC:
 ** Rename "Op" in elastic to something like "OpWrapper" or "OpAndSpec", or "PyOpWrapper"
 ** clean up the variable names in compute.py
 ** kill std::shared_ptr or write a note on why it won't work
+** consider changing Mesh to contain separate lists of vertices and triangles
 
 could separate code into two pieces:
 -- integration

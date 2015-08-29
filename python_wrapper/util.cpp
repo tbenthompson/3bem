@@ -227,6 +227,10 @@ void export_util() {
                         VectorOfArraysToNPArray<double,2>>();
     to_python_converter<std::vector<std::array<double,3>>,
                         VectorOfArraysToNPArray<double,3>>();
+    to_python_converter<std::vector<std::array<size_t,2>>,
+                        VectorOfArraysToNPArray<size_t,2>>();
+    to_python_converter<std::vector<std::array<size_t,3>>,
+                        VectorOfArraysToNPArray<size_t,3>>();
 
     NPArrayToVectorOfArrays<double,2>();
     NPArrayToVectorOfArrays<double,3>();

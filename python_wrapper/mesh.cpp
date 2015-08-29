@@ -3,6 +3,7 @@
 #include "vertex_iterator.h"
 #include "mesh.h"
 #include "mesh_preprocess.h"
+#include "mesh_converter.h"
 namespace p = boost::python;
 
 template <size_t dim>
@@ -11,7 +12,8 @@ void export_mesh() {
     p::class_<VertexIterator<dim>>("VertexIterator", p::no_init);
     p::class_<Mesh<dim>>("Mesh", p::init<std::vector<Facet<dim>>>())
         .add_property("facets", 
-            make_getter(&Mesh<dim>::facets, p::return_value_policy<p::return_by_value>()))
+            make_getter(&Mesh<dim>::facets,
+                p::return_value_policy<p::return_by_value>()))
         .def("get_vertex", &Mesh<dim>::get_vertex,
                p::return_value_policy<p::reference_existing_object>())
         .def("refine_repeatedly", &Mesh<dim>::refine_repeatedly)
@@ -29,6 +31,15 @@ void export_mesh() {
         .def("find_intersections", &MeshPreprocessor<dim>::find_intersections)
         .def("split_facets_at_intersections",
             &MeshPreprocessor<dim>::split_facets_at_intersections);
+
+    p::class_<PtIndexMesh<dim>>("PtIndexMesh")
+        .add_property("points", 
+            make_getter(&PtIndexMesh<dim>::points,
+                p::return_value_policy<p::return_by_value>()))
+        .add_property("facets", 
+            make_getter(&PtIndexMesh<dim>::facets,
+                p::return_value_policy<p::return_by_value>()));
+    p::def("convert_facet_to_pt_index", convert_facet_to_pt_index<dim>);
 }
 
 template void export_mesh<2>();
