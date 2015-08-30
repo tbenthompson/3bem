@@ -234,6 +234,8 @@ void export_util() {
 
     NPArrayToVectorOfArrays<double,2>();
     NPArrayToVectorOfArrays<double,3>();
+    NPArrayToVectorOfArrays<size_t,2>();
+    NPArrayToVectorOfArrays<size_t,3>();
     NPArrayToVectorOfTensors<double,2>();
     NPArrayToVectorOfTensors<double,3>();
 
