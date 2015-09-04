@@ -210,26 +210,32 @@ struct NPArrayToVectorOfTensors {
 
 } //end namespace tbem
 
+template <typename T1, typename T2>
+void export_pair(std::string name) {
+    p::class_<std::pair<T1,T2>>(name.c_str())
+        .def_readwrite("first", &std::pair<T1,T2>::first)
+        .def_readwrite("second", &std::pair<T1,T2>::second); 
+}
+
 void export_util() {
-    using namespace boost::python;
     using namespace tbem;
 
-    to_python_converter<std::vector<std::array<std::array<double,2>,2>>, 
+    p::to_python_converter<std::vector<std::array<std::array<double,2>,2>>, 
                         TensorsToNPArray<2>>();
-    to_python_converter<std::vector<std::array<std::array<double,3>,3>>, 
+    p::to_python_converter<std::vector<std::array<std::array<double,3>,3>>, 
                         TensorsToNPArray<3>>();
-    to_python_converter<std::vector<double>, VectorToNPArray<double>>();
-    to_python_converter<std::vector<int>, VectorToNPArray<int>>();
-    to_python_converter<std::vector<size_t>, VectorToNPArray<size_t>>();
-    to_python_converter<std::array<double,2>, ArrayToNPArray<double,2>>();
-    to_python_converter<std::array<double,3>, ArrayToNPArray<double,3>>();
-    to_python_converter<std::vector<std::array<double,2>>,
+    p::to_python_converter<std::vector<double>, VectorToNPArray<double>>();
+    p::to_python_converter<std::vector<int>, VectorToNPArray<int>>();
+    p::to_python_converter<std::vector<size_t>, VectorToNPArray<size_t>>();
+    p::to_python_converter<std::array<double,2>, ArrayToNPArray<double,2>>();
+    p::to_python_converter<std::array<double,3>, ArrayToNPArray<double,3>>();
+    p::to_python_converter<std::vector<std::array<double,2>>,
                         VectorOfArraysToNPArray<double,2>>();
-    to_python_converter<std::vector<std::array<double,3>>,
+    p::to_python_converter<std::vector<std::array<double,3>>,
                         VectorOfArraysToNPArray<double,3>>();
-    to_python_converter<std::vector<std::array<size_t,2>>,
+    p::to_python_converter<std::vector<std::array<size_t,2>>,
                         VectorOfArraysToNPArray<size_t,2>>();
-    to_python_converter<std::vector<std::array<size_t,3>>,
+    p::to_python_converter<std::vector<std::array<size_t,3>>,
                         VectorOfArraysToNPArray<size_t,3>>();
 
     NPArrayToVectorOfArrays<double,2>();
@@ -246,8 +252,10 @@ void export_util() {
     VectorFromIterable().from_python<std::vector<double>>();
     VectorFromIterable().from_python<std::vector<size_t>>();
 
-    def("line_mesh", line_mesh);
-    def("circle_mesh", circle_mesh);
-    def("sphere_mesh", sphere_mesh);
-    def("rect_mesh", rect_mesh);
+    export_pair<bool,size_t>("BoolSizeTPair");
+
+    p::def("line_mesh", line_mesh);
+    p::def("circle_mesh", circle_mesh);
+    p::def("sphere_mesh", sphere_mesh);
+    p::def("rect_mesh", rect_mesh);
 }

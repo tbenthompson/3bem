@@ -205,14 +205,14 @@ Side which_side_facet(const Vec<Vec<double,dim>,dim>& plane,
     return facet_side<dim>(sides);
 }
 
-template <size_t dim>
-Vec<double,dim> centroid(const Vec<Vec<double,dim>,dim>& f) 
+template <size_t NP, size_t dim>
+Vec<double,dim> centroid(const Vec<Vec<double,dim>,NP>& f) 
 {
     Vec<double,dim> centroid = zeros<Vec<double,dim>>::make(); 
-    for (size_t d = 0; d < dim; d++) {
+    for (size_t d = 0; d < NP; d++) {
         centroid += f[d];
     }
-    centroid /= static_cast<double>(dim);
+    centroid /= static_cast<double>(NP);
     return centroid;
 }
 
@@ -267,19 +267,19 @@ std::vector<Ball<dim>> balls_from_centers_radii(
 //To test for minimum bounding ball, I could check that either
 //2 or 3 points touch the bounding ball in 3D. If only one 
 //touches, then the ball can be improved.
-template <size_t dim>
-Ball<dim> facet_ball(const Vec<Vec<double,dim>,dim>& f)
+template <size_t NP, size_t dim>
+Ball<dim> facet_ball(const Vec<Vec<double,dim>,NP>& f)
 {
     auto c = centroid(f);
     double r2 = dist2(f[0], c);
-    for (size_t d = 1; d < dim; d++) {
+    for (size_t d = 1; d < NP; d++) {
         r2 = std::max(r2, dist2(f[d], c));
     }
     return {c, std::sqrt(r2)};
 }
 
-template <size_t dim>
-std::vector<Ball<dim>> make_facet_balls(const std::vector<Vec<Vec<double,dim>,dim>>& f)
+template <size_t NP, size_t dim>
+std::vector<Ball<dim>> make_facet_balls(const std::vector<Vec<Vec<double,dim>,NP>>& f)
 {
     std::vector<Ball<dim>> out(f.size());
     for (size_t i = 0; i < f.size(); i++) {
@@ -287,6 +287,8 @@ std::vector<Ball<dim>> make_facet_balls(const std::vector<Vec<Vec<double,dim>,di
     }
     return out;
 }
+
+
 
 
 

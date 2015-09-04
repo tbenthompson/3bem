@@ -120,18 +120,18 @@ TEST_CASE("seg tri edge partial overlap 2", "[gte_wrapper]")
     REQUIRE(pts[1] == (Vec<double,3>{0.5, 0.1, 0}));
 }
 
-TEST_CASE("in polygon", "[gte_wrapper]")
+TEST_CASE("is point in polygon", "[gte_wrapper]")
 {
     std::vector<Vec<double,2>> poly{
         {0, 0}, {2, 0}, {2, 2}, {0, 2}
     };
 
     SECTION("yes") {
-        in_polygon(poly, {1, 1});
+        is_point_in_polygon({1, 1}, poly);
     }
 
     SECTION("no") {
-        in_polygon(poly, {-1, 0});
+        is_point_in_polygon({-1, 0}, poly);
     }
 }
 
@@ -139,11 +139,11 @@ TEST_CASE("intersect ball box 3d", "[gte_wrapper]")
 {
     Box<3> b{{0, 0, 0}, {1, 1, 1}};
 
-    SECTION("fully contained") {
+    SECTION("fully contained is intersection") {
         REQUIRE(is_intersection_box_ball<3>(b, {{0.5, 0.5, 0.5}, 0.1}));
     }
 
-    SECTION("partially contained") {
+    SECTION("partially contained is intersection") {
         REQUIRE(is_intersection_box_ball<3>(b, {{1.1, 0.5, 0.5}, 0.9}));
     }
 
@@ -156,12 +156,12 @@ TEST_CASE("intersect ball box 2d", "[gte_wrapper]")
 {
     Box<3> b{{3, 3}, {1, 1}};
 
-    SECTION("fully contained") {
+    SECTION("fully contained is intersection") {
         REQUIRE(is_intersection_box_ball<3>(b, {{3.5, 3.5}, 0.1}));
         REQUIRE(is_intersection_box_ball<3>(b, {{3.0, 3.0}, 0.0}));
     }
 
-    SECTION("partially contained") {
+    SECTION("partially contained is intersection") {
         REQUIRE(is_intersection_box_ball<3>(b, {{4.1, 3.5}, 0.9}));
         REQUIRE(is_intersection_box_ball<3>(b, {{3.9, 3.9}, 0.2}));
     }
@@ -169,6 +169,16 @@ TEST_CASE("intersect ball box 2d", "[gte_wrapper]")
     SECTION("outside") {
         REQUIRE(!is_intersection_box_ball<3>(b, {{4.5, 3.5}, 0.1}));
     }
+}
+
+TEST_CASE("is point in ball", "[gte_wrapper]")
+{
+    REQUIRE(is_point_in_ball<2>({2.01, 1.05}, {{2, 1}, 0.1}));
+}
+
+TEST_CASE("is point in triangle", "[gte_wrapper]")
+{
+    REQUIRE(is_point_in_triangle({0.1, 1.0}, {{{0.05, 0.0}, {1.0, 1.0}, {0.0, 1.5}}}));
 }
 
 TEST_CASE("tri tri parallel", "[gte_wrapper]")

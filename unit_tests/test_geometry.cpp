@@ -284,3 +284,12 @@ TEST_CASE("expand facet", "[geometry]")
         (Vec<Vec<double,2>,2>{{{-0.25, -0.25}, {1.25, 1.25}}}), 2
     );
 }
+
+TEST_CASE("different number of points and dimension triangle", "[geometry]")
+{
+    auto result = facet_ball<3,2>({{{0, 1}, {1, 1}, {0, 0}}});
+    auto correct = facet_ball<3,3>({{{0, 1, 0}, {1, 1, 0}, {0, 0, 0}}});
+    REQUIRE(result.center[0] == correct.center[0]);
+    REQUIRE(result.center[1] == correct.center[1]);
+    REQUIRE(result.radius == correct.radius);
+}

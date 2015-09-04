@@ -5,6 +5,7 @@
 #include "mesh_preprocess.h"
 #include "mesh_converter.h"
 #include "interior_mesh.h"
+#include "containing_tri.h"
 namespace p = boost::python;
 
 template <size_t dim>
@@ -42,6 +43,8 @@ void export_mesh() {
                 p::return_value_policy<p::return_by_value>()));
     p::def("convert_facet_to_pt_index", convert_facet_to_pt_index<dim>);
     p::def("identify_regions", identify_regions);
+
+    p::def("find_containing_tri_idx", &find_containing_tri_idx);
 }
 
 template void export_mesh<2>();

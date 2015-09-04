@@ -28,7 +28,7 @@ void test_polygon(const std::vector<Vec<double,2>>& polygon, size_t refine)
     // and check that they are all with the polygon
     for(auto p: pts) {
         auto furthest_limit_pt = p.loc + p.richardson_dir;
-        auto success = in_polygon(polygon, furthest_limit_pt);
+        auto success = is_point_in_polygon(furthest_limit_pt, polygon);
         // std::cout << "polygon:" << std::endl;
         // for (size_t i = 0; i < polygon.size(); i++) {
         //     std::cout << polygon[i] << std::endl;

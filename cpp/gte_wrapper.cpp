@@ -253,8 +253,8 @@ std::vector<Vec<double,3>> facet_facet_intersection(
     return tri_tri_intersection(fA, fB);
 }
 
-bool in_polygon(const std::vector<Vec<double,2>>& poly,
-    const Vec<double,2>& pt) 
+bool is_point_in_polygon(const Vec<double,2>& pt,
+    const std::vector<Vec<double,2>>& poly)
 {
     std::vector<gte::Vector<2,double>> gte_pts;
     for (size_t i = 0; i < poly.size(); i++) {
@@ -279,9 +279,21 @@ bool is_intersection_box_ball(const Box<dim>& box, const Ball<dim>& ball)
     return Q(B, S).intersect;
 }
 
+template <size_t dim>
+bool is_point_in_ball(const Vec<double,dim>& pt, const Ball<dim>& ball) 
+{
+    Box<dim> pt_box{pt, zeros<Vec<double,dim>>::make()}; 
+    return is_intersection_box_ball(pt_box, ball);
+}
+
 template 
-bool is_intersection_box_ball<2>(const Box<2>& box, const Ball<2>& ball);
+bool is_point_in_ball(const Vec<double,2>& pt, const Ball<2>& ball);
 template 
-bool is_intersection_box_ball<3>(const Box<3>& box, const Ball<3>& ball);
+bool is_point_in_ball(const Vec<double,3>& pt, const Ball<3>& ball); 
+
+bool is_point_in_triangle(const Vec<double,2>& pt, const Vec<Vec<double,2>,3>& tri)
+{
+    return is_point_in_polygon(pt, {tri[0], tri[1], tri[2]});  
+}
 
 } //end namespace tbem
