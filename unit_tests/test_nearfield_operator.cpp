@@ -3,6 +3,7 @@
 #include "continuity_builder.h"
 #include "gauss_quad.h"
 #include "laplace_kernels.h"
+#include "elastic_kernels.h"
 #include "mesh_gen.h"
 #include "integral_operator.h"
 #include "gte_wrapper.h"
@@ -123,5 +124,19 @@ TEST_CASE("Constrained nearfield matrix", "[nearfield_operator]")
         REQUIRE(test.size() == correct.size());
         REQUIRE_ARRAY_CLOSE(test, correct, correct.size(), 1e-12);
         //TODO: add a test for the rhs
+    }
+}
+
+TEST_CASE("nearfield element midpoint", "[nearfield_operator]")
+{
+    std::vector<Facet<2>> facets;
+    facets.push_back({{{0.0, 0.0}, {1.0, 0.0}}});
+    Mesh<2> m{facets};
+    auto obs_pts = interior_obs_pts({{0.5, 0.0}}, {{0.0, 1.0}}, m);
+    ElasticAdjointTraction<2> k(1.0, 0.25);
+    auto mthd = make_adaptive_integrator(1e-4, 4, 4, 3, 8, 300000, k);
+    auto op = make_farfield_correction_operator(obs_pts, m, mthd);
+    for (size_t i = 0; i < op.values.size(); i++) {
+        REQUIRE(!std::isnan(op.values[i]));
     }
 }

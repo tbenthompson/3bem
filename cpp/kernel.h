@@ -24,6 +24,10 @@ struct Kernel {
     {
         const auto d = src_pt - obs_pt;
         const auto r2 = dot_product(d, d);
+        if (r2 == 0) {
+            //TODO: log something in this circumstance?
+            return zeros<OperatorType>::make();
+        }
         return call(r2, d, obs_normal, src_normal);
     }
 

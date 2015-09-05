@@ -72,11 +72,6 @@ SparseOperator nearfield_inner_integral(const std::vector<ObsPt<dim>>& obs_pts,
                     auto row_idx = d1 * obs_pts.size() + pt_idx;
                     for (size_t d2 = 0; d2 < C; d2++) {
                         auto col_idx = d2 * n_src_dofs + src_dof_idx;
-                        if (std::isnan(matrix_entries[basis_idx][d1][d2])) {
-                            std::cout << facet_info.facet << std::endl;
-                            std::cout << pt.loc << std::endl;
-                            std::cout << pt.richardson_dir << std::endl;
-                        }
 #pragma omp critical
                         entries.push_back({
                             row_idx, col_idx, matrix_entries[basis_idx][d1][d2]
