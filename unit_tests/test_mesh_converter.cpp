@@ -5,10 +5,9 @@ using namespace tbem;
 
 TEST_CASE("facet_to_pt_index simple", "[mesh_converter]")
 {
-    Mesh<2> in{
+    auto out = convert_facet_to_pt_index<2>({
         {{{{0, 0}, {1, 0}}}, {{{1, 0}, {0, 1}}}, {{{0, 1}, {0, 0}}}}
-    };
-    auto out = convert_facet_to_pt_index<2>(in);
+    });
 
     REQUIRE(out.points.size() == 3);
     REQUIRE_ARRAY_EQUAL(out.points[0], std::vector<double>{0, 0}, 2);
@@ -23,23 +22,21 @@ TEST_CASE("facet_to_pt_index simple", "[mesh_converter]")
 
 TEST_CASE("facet_to_pt_index harder", "[mesh_converter]")
 {
-    Mesh<2> in{{
+    auto out = convert_facet_to_pt_index<2>({{
         {{{0, 0}, {1, 0}}}, {{{1, 0}, {1, 1}}}, 
-        {{{1, 1}, {0, 1}}}, {{{0, 1}, {0, 0}}}, {{{0, 0}, {1, 1}}}}
-    };
-    auto out = convert_facet_to_pt_index<2>(in);
+        {{{1, 1}, {0, 1}}}, {{{0, 1}, {0, 0}}}, {{{0, 0}, {1, 1}}}
+    }});
     REQUIRE(out.points.size() == 4);
     REQUIRE(out.facets.size() == 5);
 }
 
 TEST_CASE("round trip", "[mesh_converter]")
 {
-    
-    Mesh<2> in{{
+    std::vector<Vec<Vec<double,2>,2>> in = {{
         {{{0, 0}, {1, 0}}}, {{{1, 0}, {1, 1}}}, 
-        {{{1, 1}, {0, 1}}}, {{{0, 1}, {0, 0}}}, {{{0, 0}, {1, 1}}}}
-    };
+        {{{1, 1}, {0, 1}}}, {{{0, 1}, {0, 0}}}, {{{0, 0}, {1, 1}}}
+    }};
     auto out = convert_facet_to_pt_index<2>(in);
     auto roundtrip = convert_pt_index_to_facet(out.facets, out.points);
-    REQUIRE_ARRAY_EQUAL((double*)in.facets.data(), (double*)roundtrip.data(), 20);
+    REQUIRE_ARRAY_EQUAL((double*)in.data(), (double*)roundtrip.data(), 20);
 }

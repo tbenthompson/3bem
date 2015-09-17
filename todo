@@ -31,6 +31,11 @@ MISC:
 ** consider changing Mesh to contain separate lists of vertices and triangles
 ** good new set of test cases: generate tractions and displacement
 
+** SOLVE FOR STRESSES INSTEAD OF TRACTIONS?
+
+
+** Boost logging?
+
 
 ** extract constraints code into a separate project? with better tests?
 ** pieces:
@@ -39,5 +44,6 @@ MISC:
 -- runtime system (name?)
 -- elastic solver (name?)
 -- KIFMM code (name?)
+-- kernels library (name?)
 -- geometry
 -- dof handling?

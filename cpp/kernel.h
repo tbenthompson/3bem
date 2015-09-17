@@ -24,7 +24,8 @@ struct Kernel {
     {
         const auto d = src_pt - obs_pt;
         const auto r2 = dot_product(d, d);
-        if (r2 == 0) {
+        //TODO: 1e-12 should be dependent on length scale... 
+        if (r2 < 1e-12) {
             //TODO: log something in this circumstance?
             return zeros<OperatorType>::make();
         }

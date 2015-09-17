@@ -2,7 +2,6 @@
 #define TBEM_MESH_FORMAT_CONVERTER_H
 
 #include "vec.h"
-#include "mesh.h"
 #include "vertex_iterator.h"
 #include "continuity_builder.h"
 #include <vector>
@@ -17,8 +16,10 @@ struct PtIndexMesh {
 };
 
 template <size_t dim>
-PtIndexMesh<dim> convert_facet_to_pt_index(const Mesh<dim>& m)
+PtIndexMesh<dim> convert_facet_to_pt_index(
+    const std::vector<Vec<Vec<double,dim>,dim>>& facets)
 {
+    Mesh<dim> m{facets};
     auto overlaps = find_overlapping_vertices_same_mesh(m.begin());
     auto n_input_vertices = m.n_facets() * dim;
 
